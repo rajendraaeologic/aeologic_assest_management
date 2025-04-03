@@ -9,8 +9,8 @@ import pick from "@/lib/pick";
 const createBranch = catchAsync(async (req, res) => {
   try {
     const branch = await branchService.createBranch({
-      name: req.body.name,
-      location: req.body.location,
+      branchName: req.body.branchName,
+      branchLocation: req.body.branchLocation,
       companyId: req.body.companyId,
     } as Branch);
 

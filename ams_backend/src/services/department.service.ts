@@ -6,7 +6,7 @@ import { DepartmentKeys } from "@/utils/selects.utils";
 
 //createDepartment
 const createDepartment = async (
-  department: Pick<Department, "name" | "location" | "branchId">
+  department: Pick<Department, "departmentName" | "branchId">
 ): Promise<Omit<Department, "id"> | null> => {
   if (!department) return null;
 
@@ -19,20 +19,19 @@ const createDepartment = async (
   }
 
   const existingDepartment = await db.department.findFirst({
-    where: { name: department.name, branchId: department.branchId },
+    where: { departmentName: department.departmentName, branchId: department.branchId },
   });
 
   if (existingDepartment) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `Department with name "${department.name}" already exists in this branch.`
+      `Department with name "${department.departmentName}" already exists in this branch.`
     );
   }
 
   return await db.department.create({
     data: {
-      name: department.name,
-      location: department.location,
+      departmentName: department.departmentName,
       branch: { connect: { id: department.branchId } },
     },
   });

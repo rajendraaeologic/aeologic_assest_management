@@ -6,26 +6,26 @@ import { OrganizationKeys } from "@/utils/selects.utils";
 
 //createOrganization
 const createOrganization = async (
-  organization: Pick<Organization, "name">
+  organization: Pick<Organization, "organizationName">
 ): Promise<Omit<Organization, "id"> | null> => {
   if (!organization) {
     return null;
   }
 
   const existingOrganization = await db.organization.findFirst({
-    where: { name: organization.name },
+    where: { organizationName: organization.organizationName },
   });
 
   if (existingOrganization) {
     throw new ApiError(
       httpStatus.CONFLICT,
-      `Organization name "${existingOrganization.name}" already exist`
+      `Organization name "${existingOrganization.organizationName}" already exist`
     );
   }
 
   return await db.organization.create({
     data: {
-      name: organization.name,
+      organizationName: organization.organizationName,
     },
   });
 };

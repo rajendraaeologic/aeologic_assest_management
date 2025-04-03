@@ -5,7 +5,7 @@ import ApiError from "@/lib/ApiError";
 import { BranchKeys } from "@/utils/selects.utils";
 // createBranch
 const createBranch = async (
-  branch: Pick<Branch, "name" | "location" | "companyId">
+  branch: Pick<Branch, "branchName" | "branchLocation" | "companyId">
 ): Promise<Omit<Branch, "id"> | null> => {
   if (!branch) {
     return null;
@@ -20,20 +20,20 @@ const createBranch = async (
   }
 
   const existingBranchByName = await db.branch.findFirst({
-    where: { name: branch.name },
+    where: { branchName: branch.branchName },
   });
 
   if (existingBranchByName) {
     throw new ApiError(
       httpStatus.CONFLICT,
-      `Branch  name   "${branch.name}" already exists `
+      `Branch  name   "${branch.branchName}" already exists `
     );
   }
 
   return await db.branch.create({
     data: {
-      name: branch.name,
-      location: branch.location,
+      branchName: branch.branchName,
+      branchLocation: branch.branchLocation,
       companyId: branch.companyId,
     },
   });

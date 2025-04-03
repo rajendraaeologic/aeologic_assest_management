@@ -9,8 +9,7 @@ import { applyDateFilter } from "@/utils/filters.utils";
 const createDepartment = catchAsync(async (req, res) => {
   try {
     const department = await departmentService.createDepartment({
-      name: req.body.name,
-      location: req.body.location,
+      departmentName: req.body.departmentName,
       branchId: req.body.branchId,
     } as Department);
 

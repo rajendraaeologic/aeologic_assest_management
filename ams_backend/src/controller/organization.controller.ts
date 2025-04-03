@@ -10,7 +10,7 @@ import { applyDateFilter } from "@/utils/filters.utils";
 const createOrganization = catchAsync(async (req, res) => {
   try {
     const organization = await organizationService.createOrganization({
-      name: req.body.name,
+      organizationName: req.body.organizationName,
     } as Organization);
 
     res

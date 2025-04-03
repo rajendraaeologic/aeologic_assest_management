@@ -10,7 +10,7 @@ import {applyDateFilter} from "@/utils/filters.utils";
 const createUser = catchAsync(async (req, res) => {
     try{
         const user = await userService.createUser({
-            name: req.body.name,
+            userName: req.body.userName,
             phone: req.body.phone,
             email: req.body.email,
             password: await encryptPassword(req.body.password),

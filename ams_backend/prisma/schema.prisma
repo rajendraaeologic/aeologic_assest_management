@@ -72,41 +72,41 @@ model UserNotification {
 }
 
 model Organization {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  branches  Branch[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  organizationName String
+  branches         Branch[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
 }
 
 model Branch {
-  id          String       @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  location    String
-  companyId   String       @db.ObjectId
-  company     Organization @relation(fields: [companyId], references: [id])
-  assets      Asset[]
-  users       User[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @default(now()) @updatedAt
-  departments Department[]
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
+  branchName     String
+  branchLocation String
+  companyId      String       @db.ObjectId
+  company        Organization @relation(fields: [companyId], references: [id])
+  assets         Asset[]
+  users          User[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
+  departments    Department[]
 }
 
 model Department {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  location  String
-  branchId  String   @db.ObjectId
-  branch    Branch   @relation(fields: [branchId], references: [id])
-  users     User[] // Relationship to users within the department
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  Asset     Asset[]
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  departmentName String
+  //location       String
+  branchId       String   @db.ObjectId
+  branch         Branch   @relation(fields: [branchId], references: [id])
+  users          User[] // Relationship to users within the department
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+  Asset          Asset[]
 }
 
 model User {
   id               String             @id @default(auto()) @map("_id") @db.ObjectId
-  name             String?
+  userName         String?
   phone            String             @unique
   ISDCode          String             @default("91")
   email            String?
@@ -131,10 +131,10 @@ model User {
 
 model Asset {
   id               String            @id @default(auto()) @map("_id") @db.ObjectId
-  name             String
+  assetName        String
   description      String?
   uniqueId         String            @unique
-  categoryId       String            @db.ObjectId
+  //categoryId       String            @db.ObjectId
   brand            String?
   model            String?
   serialNumber     String?
@@ -145,8 +145,8 @@ model Asset {
   locationId       String            @db.ObjectId
   assignedToUserId String?           @db.ObjectId
   assignedUser     User?             @relation(fields: [assignedToUserId], references: [id])
-  category         Category          @relation(fields: [categoryId], references: [id])
-  location         Location          @relation(fields: [locationId], references: [id])
+  //category       Category          @relation(fields: [categoryId], references: [id])
+  assetLocation    Location          @relation(fields: [locationId], references: [id])
   assetHistory     AssetHistory[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -157,22 +157,22 @@ model Asset {
   department       Department?       @relation(fields: [departmentId], references: [id]) // Relation to Department
 }
 
-model Category {
-  id          String        @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  assets      Asset[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  AssetReport AssetReport[]
-}
+// model Category {
+//   id          String        @id @default(auto()) @map("_id") @db.ObjectId
+//   name        String
+//   assets      Asset[]
+//   createdAt   DateTime      @default(now())
+//   updatedAt   DateTime      @updatedAt
+//   AssetReport AssetReport[]
+// }
 
 model Location {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  address   String?
-  assets    Asset[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  locationName String
+  address      String?
+  assets       Asset[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model AssetHistory {
@@ -191,7 +191,7 @@ model AssetReport {
   totalValue  Float
   reportDate  DateTime @default(now())
   categoryId  String   @db.ObjectId
-  category    Category @relation(fields: [categoryId], references: [id])
+  //category    Category @relation(fields: [categoryId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

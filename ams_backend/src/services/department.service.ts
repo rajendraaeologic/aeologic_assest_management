@@ -1,0 +1,193 @@
+import { Department, Prisma } from "@prisma/client";
+import db from "@/lib/db";
+import httpStatus from "http-status";
+import ApiError from "@/lib/ApiError";
+import { DepartmentKeys } from "@/utils/selects.utils";
+
+//createDepartment
+const createDepartment = async (
+  department: Pick<Department, "name" | "location" | "branchId">
+): Promise<Omit<Department, "id"> | null> => {
+  if (!department) return null;
+
+  const branchExists = await db.branch.findUnique({
+    where: { id: department.branchId },
+  });
+
+  if (!branchExists) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Branch ID");
+  }
+
+  const existingDepartment = await db.department.findFirst({
+    where: { name: department.name, branchId: department.branchId },
+  });
+
+  if (existingDepartment) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Department with name "${department.name}" already exists in this branch.`
+    );
+  }
+
+  return await db.department.create({
+    data: {
+      name: department.name,
+      location: department.location,
+      branch: { connect: { id: department.branchId } },
+    },
+  });
+};
+
+//   queryDepartments
+const queryDepartments = async (
+  filter: object,
+  options: {
+    limit?: number;
+    page?: number;
+    sortBy?: string;
+    sortType?: "asc" | "desc";
+  }
+): Promise<any[]> => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
+  const skip = (page - 1) * limit || 0;
+  const sortBy = options.sortBy;
+  const sortType = options.sortType ?? "desc";
+
+  return await db.department.findMany({
+    where: { ...filter },
+    select: DepartmentKeys,
+    skip: skip > 0 ? skip : 0,
+    take: limit,
+    orderBy: sortBy ? { [sortBy]: sortType } : undefined,
+  });
+};
+
+// getDepartmentById
+const getDepartmentById = async (id: string) => {
+  return await db.department.findUnique({
+    where: { id },
+    select: DepartmentKeys,
+  });
+};
+
+// updateDepartmentById
+
+const updateDepartmentById = async (
+  departmentId: string,
+  updateBody: Prisma.DepartmentUpdateInput,
+  selectKeys: Prisma.DepartmentSelect = DepartmentKeys
+): Promise<any | null> => {
+  const department = await db.department.findUnique({
+    where: { id: departmentId },
+  });
+  if (!department) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Department not found");
+  }
+
+  return await db.department.update({
+    where: { id: departmentId },
+    data: updateBody,
+    select: selectKeys,
+  });
+};
+
+// deleteDepartmentById
+const deleteDepartmentById = async (
+  departmentId: string
+): Promise<Omit<Department, "sensitiveField">> => {
+  const department = await getDepartmentById(departmentId);
+  if (!department) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Department not found");
+  }
+  await db.$transaction(async (tx) => {
+    await tx.assetAssignment.deleteMany({
+      where: {
+        OR: [{ asset: { departmentId } }, { user: { departmentId } }],
+      },
+    });
+
+    await tx.assetHistory.deleteMany({
+      where: {
+        OR: [{ asset: { departmentId } }, { user: { departmentId } }],
+      },
+    });
+
+    await tx.asset.deleteMany({
+      where: { departmentId },
+    });
+
+    await tx.user.updateMany({
+      where: { departmentId },
+      data: { departmentId: null },
+    });
+
+    await tx.department.delete({
+      where: { id: department.id },
+    });
+  });
+
+  return department;
+};
+
+//deleteDepartmentsByIds
+const deleteDepartmentsByIds = async (
+  departmentIds: string[]
+): Promise<Omit<Department, "sensitiveField">[]> => {
+  const departments = await db.department.findMany({
+    where: { id: { in: departmentIds } },
+  });
+
+  if (departments.length !== departmentIds.length) {
+    const foundIds = departments.map((d) => d.id);
+    const missingIds = departmentIds.filter((id) => !foundIds.includes(id));
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `Departments not found: ${missingIds.join(", ")}`
+    );
+  }
+
+  await db.$transaction(async (tx) => {
+    await tx.assetAssignment.deleteMany({
+      where: {
+        OR: [
+          { asset: { departmentId: { in: departmentIds } } },
+          { user: { departmentId: { in: departmentIds } } },
+        ],
+      },
+    });
+
+    await tx.assetHistory.deleteMany({
+      where: {
+        OR: [
+          { asset: { departmentId: { in: departmentIds } } },
+          { user: { departmentId: { in: departmentIds } } },
+        ],
+      },
+    });
+
+    await tx.asset.deleteMany({
+      where: { departmentId: { in: departmentIds } },
+    });
+
+    await tx.user.updateMany({
+      where: { departmentId: { in: departmentIds } },
+      data: { departmentId: null },
+    });
+
+    await tx.department.deleteMany({
+      where: { id: { in: departmentIds } },
+    });
+  });
+
+  return departments;
+};
+
+export default {
+  createDepartment,
+  queryDepartments,
+  getDepartmentById,
+  updateDepartmentById,
+  deleteDepartmentById,
+  deleteDepartmentsByIds,
+};

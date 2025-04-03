@@ -1,0 +1,206 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["omitApi"]
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPERADMIN
+  ADMIN
+  MANAGER
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  IN_ACTIVE
+}
+
+enum AssetStatus {
+  ACTIVE
+  IN_USE
+  UNDER_MAINTENANCE
+  RETIRED
+}
+
+enum TokenType {
+  ACCESS
+  REFRESH
+  RESET_PASSWORD
+  VERIFY_EMAIL
+}
+
+type FileDetails {
+  relativePath String?
+  originalName String?
+  mimeType     String?
+}
+
+model Token {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  token       String
+  type        TokenType
+  expires     DateTime
+  blacklisted Boolean
+  createdAt   DateTime  @default(now())
+  User        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String    @db.ObjectId
+}
+
+model PhoneOtp {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  ISDCode   String   @default("91")
+  phone     String   @unique
+  otp       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model UserNotification {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  data      Json?
+  message   String
+  hasRead   Boolean   @default(false)
+  userId    String    @db.ObjectId
+  User      User      @relation(fields: [userId], references: [id], onUpdate: NoAction, onDelete: Cascade)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Organization {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  branches  Branch[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Branch {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  location    String
+  companyId   String       @db.ObjectId
+  company     Organization @relation(fields: [companyId], references: [id])
+  assets      Asset[]
+  users       User[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+  departments Department[]
+}
+
+model Department {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  location  String
+  branchId  String   @db.ObjectId
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  users     User[] // Relationship to users within the department
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  Asset     Asset[]
+}
+
+model User {
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  name             String?
+  phone            String             @unique
+  ISDCode          String             @default("91")
+  email            String?
+  image            String?
+  password         String
+  userRole         UserRole           @default(USER)
+  status           UserStatus         @default(ACTIVE)
+  isEmailVerified  Boolean            @default(false)
+  Token            Token[]
+  assignedAssets   Asset[]
+  UserNotification UserNotification[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @default(now()) @updatedAt
+  branchId         String?            @db.ObjectId
+  branch           Branch?            @relation(fields: [branchId], references: [id])
+  AssetAssignment  AssetAssignment[]
+  AssetHistory     AssetHistory[]
+  departmentId     String?            @db.ObjectId
+  department       Department?        @relation(fields: [departmentId], references: [id])
+  rfidTag          String?            @unique
+}
+
+model Asset {
+  id               String            @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  description      String?
+  uniqueId         String            @unique
+  categoryId       String            @db.ObjectId
+  brand            String?
+  model            String?
+  serialNumber     String?
+  purchaseDate     DateTime?
+  cost             Float?
+  warrantyEndDate  DateTime?
+  status           AssetStatus       @default(ACTIVE)
+  locationId       String            @db.ObjectId
+  assignedToUserId String?           @db.ObjectId
+  assignedUser     User?             @relation(fields: [assignedToUserId], references: [id])
+  category         Category          @relation(fields: [categoryId], references: [id])
+  location         Location          @relation(fields: [locationId], references: [id])
+  assetHistory     AssetHistory[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  AssetAssignment  AssetAssignment[]
+  branchId         String?           @db.ObjectId
+  branch           Branch?           @relation(fields: [branchId], references: [id])
+  departmentId     String?           @db.ObjectId
+  department       Department?       @relation(fields: [departmentId], references: [id]) // Relation to Department
+}
+
+model Category {
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  assets      Asset[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  AssetReport AssetReport[]
+}
+
+model Location {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  address   String?
+  assets    Asset[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AssetHistory {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  assetId   String   @db.ObjectId
+  action    String
+  userId    String   @db.ObjectId
+  timestamp DateTime @default(now())
+  asset     Asset    @relation(fields: [assetId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model AssetReport {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  totalAssets Int
+  totalValue  Float
+  reportDate  DateTime @default(now())
+  categoryId  String   @db.ObjectId
+  category    Category @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model AssetAssignment {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  assetId    String   @db.ObjectId
+  userId     String   @db.ObjectId
+  assignedAt DateTime @default(now())
+  asset      Asset    @relation(fields: [assetId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}

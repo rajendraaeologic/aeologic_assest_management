@@ -7,14 +7,14 @@ import {
 const createOrganizationValidation = {
   body: Joi.object()
     .keys({
-      name: Joi.string().required(),
+      organizationName: Joi.string().required(),
     })
     .min(1),
 };
 
 const getAllOrganizationsValidation = {
   query: Joi.object().keys({
-    name: Joi.string().optional(),
+    organizationName: Joi.string().optional(),
     from_date: Joi.string().optional().isoDate(),
     to_date: Joi.string().optional().isoDate(),
     sortBy: Joi.string(),
@@ -40,7 +40,7 @@ const updateOrganizationValidation = {
   }),
   body: Joi.object()
     .keys({
-      name: Joi.string().optional(),
+      organizationName: Joi.string().optional(),
     })
     .min(1),
 };

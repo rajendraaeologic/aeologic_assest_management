@@ -13,7 +13,7 @@ export const getAllOrganizationsService = async () => {
 export const updateOrganizationService = async (data) => {
   try {
     const updatePayload = {
-      name: data.name,
+      organizationName: data.organizationName,
     };
     const response = await API.put(`/organization/${data.id}`, updatePayload);
     return response.data;

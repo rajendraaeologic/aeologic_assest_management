@@ -21,7 +21,7 @@ const AddOrganization = ({ onClose }) => {
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
-      name: "",
+      organizationName: "",
     },
   });
 
@@ -92,26 +92,26 @@ const AddOrganization = ({ onClose }) => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="w-full">
               <label
-                htmlFor="name"
+                htmlFor="organizationName"
                 className="block text-sm font-medium text-gray-700"
               >
                 Organization Name*
               </label>
               <input
                 ref={firstInputRef}
-                {...register("name", {
+                {...register("organizationName", {
                   required: "Organization name is required",
                 })}
                 type="text"
-                id="name"
+                id="organizationName"
                 placeholder="Enter organization name"
                 className={`mt-1 p-2 w-full border ${
-                  errors.name ? "border-red-500" : "border-gray-300"
+                  errors.organizationName ? "border-red-500" : "border-gray-300"
                 } outline-none rounded-md`}
               />
-              {errors.name && (
+              {errors.organizationName && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.name.message}
+                  {errors.organizationName.message}
                 </p>
               )}
             </div>

@@ -23,14 +23,14 @@ const createOrganization = catchAsync(async (req, res) => {
 
 //getAllOrganizations
 const getAllOrganizations = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ["name", "from_date", "to_date"]);
+  const filter = pick(req.query, ["organizationName", "from_date", "to_date"]);
   const options = pick(req.query, ["sortBy", "sortType", "limit", "page"]);
 
   applyDateFilter(filter);
 
-  if (filter.name) {
+  if (filter.organizationName) {
     filter.name = {
-      contains: filter.name,
+      contains: filter.organizationName,
       mode: "insensitive",
     };
   }

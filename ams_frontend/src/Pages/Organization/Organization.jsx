@@ -27,7 +27,7 @@ const Organization = () => {
 
   const { organizations, selectedOrganizations, currentPage, rowsPerPage } =
     useSelector((state) => state.organizationData);
-  console.log("org", organizations);
+
   useEffect(() => {
     dispatch(getAllOrganizations());
   }, [dispatch, organizations.length]);
@@ -39,25 +39,21 @@ const Organization = () => {
   const totalPages = Math.ceil(organizations.length / rowsPerPage);
 
   const [searchOrganization, setSearchOrganization] = useState({
-    organization: { name: "" },
-    branch: { name: "", location: "" },
-    department: { name: "" },
-    usersName: "",
-    asset: { name: "", status: "" },
+    organizationName: "",
+    branchName: "",
+    branchLocation: "",
+    departmentName: "",
+    userName: "",
+    assetName: "",
+    assetStatus: "",
   });
 
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
-    setSearchOrganization((prev) => {
-      if (name === "organizationName") {
-        return { ...prev, organization: { ...prev.organization, name: value } };
-      } else if (name === "branchName") {
-        return { ...prev, branch: { ...prev.branch, name: value } };
-      } else if (name === "departmentName") {
-        return { ...prev, branch: { ...prev.branch, name: value } };
-      }
-      return { ...prev, [name]: value };
-    });
+    setSearchOrganization((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const filteredOrganizations = organizations?.filter((org) => {
@@ -230,33 +226,33 @@ const Organization = () => {
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      id="orgname"
-                      name="name"
-                      placeholder="Name"
+                      id="organizationName"
+                      name="organizationName"
+                      placeholder="organizationName"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.name}
+                      value={searchOrganization.organizationName}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      id="code"
-                      name="name"
+                      id="branchName"
+                      name="branchName"
                       placeholder="branch name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.branch.name}
+                      value={searchOrganization.branchName}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      id="location"
-                      name="location"
+                      id="branchLocation"
+                      name="branchLocation"
                       placeholder="branch location"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.branch.location}
+                      value={searchOrganization.branchLocation}
                       onChange={handleSearchChange}
                     />
                   </td>
@@ -267,7 +263,7 @@ const Organization = () => {
                       name="departmentName"
                       placeholder="department name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.department.name}
+                      value={searchOrganization.departmentName}
                       onChange={handleSearchChange}
                     />
                   </td>
@@ -276,31 +272,31 @@ const Organization = () => {
                       type="text"
                       name="usersName"
                       id="userName"
-                      placeholder="user Name"
+                      placeholder="user name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.usersName}
+                      value={searchOrganization.userName}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      id="assetname"
-                      name="name"
+                      id="assetName"
+                      name="assetName"
                       placeholder="asset name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.asset.name}
+                      value={searchOrganization.assetName}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      id="status"
-                      name="status"
-                      placeholder="status"
+                      id="assetStatus"
+                      name="assetStatus"
+                      placeholder="asset status"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.asset.status}
+                      value={searchOrganization.assetStatus}
                       onChange={handleSearchChange}
                     />
                   </td>
@@ -319,22 +315,25 @@ const Organization = () => {
                     } hover:bg-gray-200 divide-y divide-gray-300`}
                   >
                     <td className="px-4 py-2 border border-gray-300">
-                      {org.name}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {org.branches?.map((branch) => branch.name).join(", ") ||
-                        "N/A"}
+                      {org.organizationName}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
                       {org.branches
-                        ?.map((branch) => branch.location)
+                        ?.map((branch) => branch.branchName)
+                        .join(", ") || "N/A"}
+                    </td>
+                    <td className="px-4 py-2 border border-gray-300">
+                      {org.branches
+                        ?.map((branch) => branch.branchLocation)
                         .join(", ") || "N/A"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
                       {org.branches
                         ?.flatMap(
                           (branch) =>
-                            branch.departments?.map((dept) => dept.name) || []
+                            branch.departments?.map(
+                              (dept) => dept.departmentName
+                            ) || []
                         )
                         .join(", ") || "N/A"}
                     </td>
@@ -342,7 +341,7 @@ const Organization = () => {
                       {org.branches
                         ?.flatMap(
                           (branch) =>
-                            branch.users?.map((user) => user.name) || []
+                            branch.users?.map((user) => user.userName) || []
                         )
                         .join(", ") || "N/A"}
                     </td>
@@ -350,7 +349,7 @@ const Organization = () => {
                       {org.branches
                         ?.flatMap(
                           (branch) =>
-                            branch.assets?.map((asset) => asset.name) || []
+                            branch.assets?.map((asset) => asset.assetName) || []
                         )
                         .join(", ") || "N/A"}
                     </td>
@@ -358,7 +357,8 @@ const Organization = () => {
                       {org.branches
                         ?.flatMap(
                           (branch) =>
-                            branch.assets?.map((asset) => asset.status) || []
+                            branch.assets?.map((asset) => asset.assetStatus) ||
+                            []
                         )
                         .join(", ") || "N/A"}
                     </td>

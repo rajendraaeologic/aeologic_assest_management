@@ -125,6 +125,7 @@ export const BranchKeys: Prisma.BranchSelect = {
   company: {
     select: {
       id: true,
+      organizationName: true,
     },
   },
   departments: {

@@ -40,36 +40,64 @@ const Branch = () => {
   const totalPages = Math.ceil(branches.length / rowsPerPage);
 
   const [searchBranch, setSearchBranch] = useState({
-    branch: { name: "", location: "" },
-    organization: { name: "" },
-    department: { name: "" },
-    name: "",
-    asset: { name: "", status: "" },
+    branchName: "",
+    branchLocation: "",
+    organizationName: "",
+    departmentName: "",
+    userName: "",
+    assetName: "",
+    status: "",
   });
 
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
-    setSearchBranch((prev) => {
-      if (name === "branchName") {
-        return { ...prev, branch: { ...prev.branch, name: value } };
-      } else if (name === "branchLocation") {
-        return { ...prev, branch: { ...prev.branch, location: value } };
-      } else if (name === "organizationName") {
-        return { ...prev, organization: { ...prev.organization, name: value } };
-      } else if (name === "departmentName") {
-        return { ...prev, department: { ...prev.department, name: value } };
-      }
-      return { ...prev, [name]: value };
-    });
+    setSearchBranch((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const filteredBranches = branches?.filter((branch) => {
-    return Object.entries(searchBranch).every(([key, searchValue]) => {
-      if (typeof searchValue === "object") return true;
-      return (branch[key] || "")
-        .toLowerCase()
-        .includes((searchValue || "").toLowerCase());
-    });
+    return (
+      (searchBranch.branchName === "" ||
+        (branch.branchName || "")
+          .toLowerCase()
+          .includes(searchBranch.branchName.toLowerCase())) &&
+      (searchBranch.branchLocation === "" ||
+        (branch.branchLocation || "")
+          .toLowerCase()
+          .includes(searchBranch.branchLocation.toLowerCase())) &&
+      (searchBranch.organizationName === "" ||
+        (branch.company?.organizationName || "")
+          .toLowerCase()
+          .includes(searchBranch.organizationName.toLowerCase())) &&
+      (searchBranch.departmentName === "" ||
+        branch.departments?.some((dept) =>
+          dept.departmentName
+            .toLowerCase()
+            .includes(searchBranch.departmentName.toLowerCase())
+        ) ||
+        false) &&
+      (searchBranch.userName === "" ||
+        branch.users?.some((user) =>
+          user.userName
+            .toLowerCase()
+            .includes(searchBranch.userName.toLowerCase())
+        ) ||
+        false) &&
+      (searchBranch.assetName === "" ||
+        branch.assets?.some((asset) =>
+          asset.assetName
+            .toLowerCase()
+            .includes(searchBranch.assetName.toLowerCase())
+        ) ||
+        false) &&
+      (searchBranch.status === "" ||
+        branch.assets?.some((asset) =>
+          asset.status.toLowerCase().includes(searchBranch.status.toLowerCase())
+        ) ||
+        false)
+    );
   });
 
   const startIndex = currentPage * rowsPerPage;
@@ -236,7 +264,7 @@ const Branch = () => {
                       name="branchName"
                       placeholder="Branch Name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchBranch.branch.name}
+                      value={searchBranch.branchName}
                       onChange={handleSearchChange}
                     />
                   </td>
@@ -246,7 +274,7 @@ const Branch = () => {
                       name="branchLocation"
                       placeholder="Branch Location"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchBranch.branch.location}
+                      value={searchBranch.branchLocation}
                       onChange={handleSearchChange}
                     />
                   </td>
@@ -256,7 +284,7 @@ const Branch = () => {
                       name="organizationName"
                       placeholder="Organization Name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchBranch.organization.name}
+                      value={searchBranch.organizationName}
                       onChange={handleSearchChange}
                     />
                   </td>
@@ -266,17 +294,17 @@ const Branch = () => {
                       name="departmentName"
                       placeholder="Department Name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchBranch.department.name}
+                      value={searchBranch.departmentName}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      name="usersName"
+                      name="userName"
                       placeholder="User Name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchBranch.name}
+                      value={searchBranch.userName}
                       onChange={handleSearchChange}
                     />
                   </td>
@@ -286,17 +314,17 @@ const Branch = () => {
                       name="assetName"
                       placeholder="Asset Name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchBranch.asset.name}
+                      value={searchBranch.assetName}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      name="assetStatus"
+                      name="status"
                       placeholder="Asset Status"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchBranch.asset.status}
+                      value={searchBranch.status}
                       onChange={handleSearchChange}
                     />
                   </td>
@@ -315,26 +343,27 @@ const Branch = () => {
                     } hover:bg-gray-200 divide-y divide-gray-300`}
                   >
                     <td className="px-4 py-2 border border-gray-300">
-                      {branch.name}
+                      {branch.branchName}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {branch.location}
+                      {branch.branchLocation}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {branch.company?.name || "N/A"}
+                      {branch.company?.organizationName || "N/A"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
                       {branch.departments
-                        ?.map((dept) => dept.name)
+                        ?.map((dept) => dept.departmentName)
                         .join(", ") || "N/A"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {branch.users?.map((user) => user.name).join(", ") ||
+                      {branch.users?.map((user) => user.userName).join(", ") ||
                         "N/A"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {branch.assets?.map((asset) => asset.name).join(", ") ||
-                        "N/A"}
+                      {branch.assets
+                        ?.map((asset) => asset.assetName)
+                        .join(", ") || "N/A"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
                       {branch.assets?.map((asset) => asset.status).join(", ") ||
@@ -406,7 +435,7 @@ const Branch = () => {
           </div>
         </div>
       </div>
-      {/* Modals */}
+
       {isAddBranch && <AddBranch onClose={() => setIsAddBranch(false)} />}
       {isUpdateBranch && (
         <UpdateBranch onClose={() => setIsUpdateBranch(false)} />

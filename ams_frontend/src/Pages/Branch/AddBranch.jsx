@@ -26,8 +26,8 @@ const AddBranch = ({ onClose }) => {
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
-      name: "",
-      location: "",
+      branchName: "",
+      branchLocation: "",
       companyId: "",
     },
   });
@@ -99,53 +99,53 @@ const AddBranch = ({ onClose }) => {
             <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="w-full">
                 <label
-                  htmlFor="name"
+                  htmlFor="branchName"
                   className="block text-sm font-medium text-gray-700"
                 >
                   Branch Name*
                 </label>
                 <input
                   ref={firstInputRef}
-                  {...register("name", {
+                  {...register("branchName", {
                     required: "Branch name is required",
                   })}
                   type="text"
-                  id="name"
-                  name="name"
+                  id="branchName"
+                  name="branchName"
                   placeholder="Branch name"
                   className={`mt-1 p-2 w-full border ${
-                    errors.name ? "border-red-500" : "border-gray-300"
+                    errors.branchName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
                 />
-                {errors.name && (
+                {errors.branchName && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.name.message}
+                    {errors.branchName.message}
                   </p>
                 )}
               </div>
 
               <div className="w-full">
                 <label
-                  htmlFor="location"
+                  htmlFor="branchLocation"
                   className="block text-sm font-medium text-gray-700"
                 >
                   Location*
                 </label>
                 <input
-                  {...register("location", {
-                    required: "Location is required",
+                  {...register("branchLocation", {
+                    required: "Branch location is required",
                   })}
                   type="text"
-                  id="location"
-                  name="location"
+                  id="branchLocation"
+                  name="branchLocation"
                   placeholder="Branch location"
                   className={`mt-1 p-2 w-full border ${
-                    errors.location ? "border-red-500" : "border-gray-300"
+                    errors.branchLocation ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
                 />
-                {errors.location && (
+                {errors.branchLocation && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.location.message}
+                    {errors.branchLocation.message}
                   </p>
                 )}
               </div>
@@ -175,7 +175,7 @@ const AddBranch = ({ onClose }) => {
                   </option>
                   {organizations?.map((org) => (
                     <option key={org.id} value={org.id}>
-                      {org.name}
+                      {org.organizationName}
                     </option>
                   ))}
                 </select>

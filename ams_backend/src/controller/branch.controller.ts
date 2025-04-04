@@ -25,7 +25,7 @@ const createBranch = catchAsync(async (req, res) => {
 
 const getAllBranches = catchAsync(async (req, res) => {
   const filter = pick(req.query, [
-    "name",
+    "branchName",
     "location",
     "companyId",
     "from_date",
@@ -35,9 +35,9 @@ const getAllBranches = catchAsync(async (req, res) => {
 
   applyDateFilter(filter);
 
-  if (filter.name) {
-    filter.name = {
-      contains: filter.name,
+  if (filter.branchName) {
+    filter.branchName = {
+      contains: filter.branchName,
       mode: "insensitive",
     };
   }

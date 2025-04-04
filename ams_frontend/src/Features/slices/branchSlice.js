@@ -11,7 +11,6 @@ export const createBranch = createAsyncThunk(
   "branch/create",
   async (data, { rejectWithValue }) => {
     try {
-      console.log("data", data);
       return await createBranchService(data);
     } catch (error) {
       return rejectWithValue(error.response?.data || "Something went wrong");

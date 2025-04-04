@@ -12,9 +12,8 @@ export const getAllBranchesService = async () => {
 export const updateBranchService = async (data) => {
   try {
     const updatePayload = {
-      name: data.name,
-      location: data.location,
-      companyId: data.companyId,
+      branchName: data.branchName,
+      branchLocation: data.branchLocation,
     };
 
     const response = await API.put(`/branch/${data.id}`, updatePayload);

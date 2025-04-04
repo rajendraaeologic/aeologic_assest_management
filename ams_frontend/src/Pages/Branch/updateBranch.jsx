@@ -8,7 +8,6 @@ import {
   updateBranch,
   getAllBranches,
 } from "../../Features/slices/branchSlice";
-import { getAllOrganizations } from "../../Features/slices/organizationSlice";
 
 const UpdateBranch = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -17,9 +16,6 @@ const UpdateBranch = ({ onClose }) => {
   const modalRef = useRef(null);
 
   const { selectedBranch } = useSelector((state) => state.branchData);
-  const { organizations, loading: orgLoading } = useSelector(
-    (state) => state.organizationData
-  );
 
   const {
     register,
@@ -30,10 +26,7 @@ const UpdateBranch = ({ onClose }) => {
     formState: { errors, isSubmitting },
   } = useForm();
 
-  const companyId = watch("companyId");
-
   useEffect(() => {
-    dispatch(getAllOrganizations());
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
@@ -45,9 +38,8 @@ const UpdateBranch = ({ onClose }) => {
   useEffect(() => {
     if (selectedBranch) {
       reset({
-        name: selectedBranch.name,
-        location: selectedBranch.location,
-        companyId: selectedBranch.organization?.id || "",
+        branchName: selectedBranch.branchName,
+        branchLocation: selectedBranch.branchLocation,
       });
     }
   }, [selectedBranch, reset]);
@@ -69,9 +61,8 @@ const UpdateBranch = ({ onClose }) => {
     try {
       const branchData = {
         id: selectedBranch.id,
-        name: data.name,
-        location: data.location,
-        companyId: data.companyId,
+        branchName: data.branchName,
+        branchLocation: data.branchLocation,
       };
 
       await dispatch(updateBranch(branchData));
@@ -99,7 +90,7 @@ const UpdateBranch = ({ onClose }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[700px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[500px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
@@ -114,24 +105,24 @@ const UpdateBranch = ({ onClose }) => {
 
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Branch Name*
                 </label>
                 <input
                   ref={firstInputRef}
-                  {...register("name", {
+                  {...register("branchName", {
                     required: "Branch name is required",
                   })}
                   type="text"
                   className={`mt-1 p-2 w-full border ${
-                    errors.name ? "border-red-500" : "border-gray-300"
+                    errors.branchName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
                 />
-                {errors.name && (
+                {errors.branchName && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.name.message}
+                    {errors.branchName.message}
                   </p>
                 )}
               </div>
@@ -141,49 +132,17 @@ const UpdateBranch = ({ onClose }) => {
                   Location*
                 </label>
                 <input
-                  {...register("location", {
-                    required: "Location is required",
+                  {...register("branchLocation", {
+                    required: "Branch location is required",
                   })}
                   type="text"
                   className={`mt-1 p-2 w-full border ${
-                    errors.location ? "border-red-500" : "border-gray-300"
+                    errors.branchLocation ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
                 />
-                {errors.location && (
+                {errors.branchLocation && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.location.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Organization*
-                </label>
-                <select
-                  {...register("companyId", {
-                    required: "Organization is required",
-                  })}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.companyId ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                  disabled={orgLoading}
-                  value={companyId}
-                >
-                  <option value="">
-                    {orgLoading
-                      ? "Loading organizations..."
-                      : "Select Organization"}
-                  </option>
-                  {organizations?.map((org) => (
-                    <option key={org.id} value={org.id}>
-                      {org.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.companyId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.companyId.message}
+                    {errors.branchLocation.message}
                   </p>
                 )}
               </div>

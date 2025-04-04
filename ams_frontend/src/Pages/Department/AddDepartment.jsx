@@ -26,8 +26,7 @@ const AddDepartment = ({ onClose }) => {
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
-      name: "",
-      location: "",
+      departmentName: "",
       branchId: "",
     },
   });
@@ -57,7 +56,12 @@ const AddDepartment = ({ onClose }) => {
 
   const onSubmit = async (data) => {
     try {
-      await dispatch(createDepartment(data));
+      await dispatch(
+        createDepartment({
+          departmentName: data.departmentName,
+          branchId: data.branchId,
+        })
+      );
       dispatch(getAllDepartments());
 
       toast.success("Department added successfully!", {
@@ -83,7 +87,7 @@ const AddDepartment = ({ onClose }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[700px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[500px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
@@ -98,56 +102,30 @@ const AddDepartment = ({ onClose }) => {
 
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid sm:grid-cols-1  lg:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-1 lg:grid-cols-1 gap-4">
               <div className="w-full">
                 <label
-                  htmlFor="name"
+                  htmlFor="departmentName"
                   className="block text-sm font-medium text-gray-700"
                 >
                   Department Name*
                 </label>
                 <input
                   ref={firstInputRef}
-                  {...register("name", {
+                  {...register("departmentName", {
                     required: "Department name is required",
                   })}
                   type="text"
-                  id="name"
-                  name="name"
+                  id="departmentName"
+                  name="departmentName"
                   placeholder="Department name"
                   className={`mt-1 p-2 w-full border ${
-                    errors.name ? "border-red-500" : "border-gray-300"
+                    errors.departmentName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
                 />
-                {errors.name && (
+                {errors.departmentName && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="w-full">
-                <label
-                  htmlFor="location"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Department Location*
-                </label>
-                <input
-                  {...register("location", {
-                    required: "Department location is required",
-                  })}
-                  type="text"
-                  id="location"
-                  name="location"
-                  placeholder="Department location"
-                  className={`mt-1 p-2 w-full border ${
-                    errors.location ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                />
-                {errors.location && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.location.message}
+                    {errors.departmentName.message}
                   </p>
                 )}
               </div>
@@ -175,7 +153,7 @@ const AddDepartment = ({ onClose }) => {
                   </option>
                   {branches?.map((branch) => (
                     <option key={branch.id} value={branch.id}>
-                      {branch.name}
+                      {branch.branchName}
                     </option>
                   ))}
                 </select>

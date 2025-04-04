@@ -47,8 +47,7 @@ const UpdateDepartment = ({ onClose }) => {
   useEffect(() => {
     if (selectedDepartment) {
       reset({
-        name: selectedDepartment.name,
-        location: selectedDepartment.location,
+        departmentName: selectedDepartment.departmentName,
         branchId: selectedDepartment.branchId,
       });
     }
@@ -70,9 +69,8 @@ const UpdateDepartment = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       const departmentData = {
-        id: selectedDepartment.id,
-        name: data.name,
-        location: data.location,
+        departmentId: selectedDepartment.id,
+        departmentName: data.departmentName,
         branchId: data.branchId,
       };
 
@@ -102,7 +100,7 @@ const UpdateDepartment = ({ onClose }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[700px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[500px] min-h-40 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
@@ -117,71 +115,24 @@ const UpdateDepartment = ({ onClose }) => {
 
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-1 lg:grid-cols-1 gap-4">
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Department Name*
                 </label>
                 <input
                   ref={firstInputRef}
-                  {...register("name", {
+                  {...register("departmentName", {
                     required: "Department name is required",
                   })}
                   type="text"
                   className={`mt-1 p-2 w-full border ${
-                    errors.name ? "border-red-500" : "border-gray-300"
+                    errors.departmentName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
                 />
-                {errors.name && (
+                {errors.departmentName && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.name.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Department Location*
-                </label>
-                <input
-                  {...register("location", {
-                    required: "Department location is required",
-                  })}
-                  type="text"
-                  className={`mt-1 p-2 w-full border ${
-                    errors.location ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                />
-                {errors.location && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.location.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Branch*
-                </label>
-                <select
-                  {...register("branchId", {
-                    required: "Branch selection is required",
-                  })}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.branchId ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                  disabled={branchLoading}
-                  value={branchId}
-                >
-                  {branches?.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.branchId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.branchId.message}
+                    {errors.departmentName.message}
                   </p>
                 )}
               </div>

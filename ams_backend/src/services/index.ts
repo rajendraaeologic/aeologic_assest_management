@@ -8,3 +8,4 @@ export { default as bulkSmsService } from "./bulkSms.service";
 export { default as organizationService } from "./organization.service";
 export { default as departmentService } from "./department.service";
 export { default as branchService } from "./branch.service";
+export { default as assetService } from "./asset.service";

@@ -7,8 +7,8 @@ import {
 const createDepartmentValidation = {
   body: Joi.object()
     .keys({
-      name: Joi.string().required(),
-      location: Joi.string().required(),
+      departmentName: Joi.string().required(),
+      //location: Joi.string().required(),
       branchId: Joi.string().required(),
     })
     .min(1),
@@ -16,7 +16,7 @@ const createDepartmentValidation = {
 
 const getAllDepartmentsValidation = {
   query: Joi.object().keys({
-    name: Joi.string().optional(),
+    departmentName: Joi.string().optional(),
     location: Joi.string().optional(),
     branchId: Joi.string().optional(),
     from_date: Joi.string().optional().isoDate(),
@@ -44,11 +44,7 @@ const updateDepartmentValidation = {
   }),
   body: Joi.object()
     .keys({
-      name: Joi.string().optional(),
-      location: Joi.string().optional(),
-      branchId: Joi.optional()
-        .custom(isValidMongoDBObjectId)
-        .messages(isValidMongoDBObjectIdCustomMessages),
+      departmentName: Joi.string().optional(),
     })
     .min(1),
 };
@@ -61,7 +57,7 @@ const deleteDepartmentValidation = {
   }),
 };
 
-const bulkDeleteDpartmentsValidation = {
+const bulkDeleteDepartmentsValidation = {
   body: Joi.object().keys({
     departmentIds: Joi.array()
       .items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/))
@@ -80,5 +76,5 @@ export default {
   getDepartmentValidation,
   updateDepartmentValidation,
   deleteDepartmentValidation,
-  bulkDeleteDpartmentsValidation,
+  bulkDeleteDepartmentsValidation,
 };

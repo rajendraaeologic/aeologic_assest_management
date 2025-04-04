@@ -4,169 +4,88 @@ import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import {
-  setUsers,
   setCurrentPage,
   setRowsPerPage,
-  deleteSelectedUsers,
-  toggleSelectUser,
-  selectAllUsers,
-  deselectAllUsers,
-} from "../../Features/UserAssetSlice";
+  toggleSelectAsset,
+  selectAllAssets,
+  deselectAllAssets,
+  setSelectedAsset,
+} from "../../Features/slices/assetSlice";
 import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import AddAsset from "./AddAsset";
 import UpdateAsset from "./UpdateAsset";
 import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
+import { getAllAssets } from "../../Features/slices/assetSlice";
+import { deleteAsset } from "../../Features/slices/assetSlice";
 
 const Asset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isSidebarOpen } = useContext(SliderContext);
 
-  const { assetUsersData, selectedUsers, currentPage, rowsPerPage } =
+  const { assets, selectedAssets, currentPage, rowsPerPage } =
     useSelector((state) => state.assetUserData);
-  const [isAddAssetUser, setIsAddAssetUser] = useState(false);
-  const [isUpdateAssetUser, setIsUpdateAssetUser] = useState(false);
 
   useEffect(() => {
-    dispatch(
-      setUsers([
-        {
-          id: 1,
-          name: "akash",
-          serialno: "LG001234",
-          department: "Accounts",
-          departmentcode: "4001",
-          assettype: "sdgvsd",
-          make: "Mt",
-          assetdetails: "chip",
-          model: "CHIP1001",
-          mtkassetcode: "	MTK1001",
-          hardwaretype: "HARD1",
-          status: "inventory",
-          assetstatus: "working",
-          awb: "	3453535445664",
-          amsowner: "Mohan",
-          usercode: "102",
-          scanstatus: "Not Verified",
-        },
-        {
-          id: 2,
-          name: "vikash",
-          serialno: "LG001234",
-          department: "Accounts",
-          departmentcode: "4001",
-          assettype: "sdgvsd",
-          make: "Mt",
-          assetdetails: "chip",
-          model: "CHIP1001",
-          mtkassetcode: "	MTK1001",
-          hardwaretype: "HARD1",
-          status: "inventory",
-          assetstatus: "working",
-          awb: "	3453535445664",
-          amsowner: "Mohan",
-          usercode: "102",
-          scanstatus: "Not Verified",
-        },
-        {
-          id: 3,
-          name: "akash",
-          serialno: "LG001234",
-          department: "Accounts",
-          departmentcode: "4001",
-          assettype: "sdgvsd",
-          make: "Mt",
-          assetdetails: "chip",
-          model: "CHIP1001",
-          mtkassetcode: "	MTK1001",
-          hardwaretype: "HARD1",
-          status: "inventory",
-          assetstatus: "working",
-          awb: "	3453535445664",
-          amsowner: "Mohan",
-          usercode: "102",
-          scanstatus: "Not Verified",
-        },
-        {
-          id: 4,
-          name: "akash",
-          serialno: "LG001234",
-          department: "Accounts",
-          departmentcode: "4001",
-          assettype: "sdgvsd",
-          make: "Mt",
-          assetdetails: "chip",
-          model: "CHIP1001",
-          mtkassetcode: "	MTK1001",
-          hardwaretype: "HARD1",
-          status: "inventory",
-          assetstatus: "working",
-          awb: "	3453535445664",
-          amsowner: "Mohan",
-          usercode: "102",
-          scanstatus: "Not Verified",
-        },
-        {
-          id: 5,
-          name: "akash",
-          serialno: "LG001234",
-          department: "Accounts",
-          departmentcode: "4001",
-          assettype: "sdgvsd",
-          make: "Mt",
-          assetdetails: "chip",
-          model: "CHIP1001",
-          mtkassetcode: "	MTK1001",
-          hardwaretype: "HARD1",
-          status: "inventory",
-          assetstatus: "working",
-          awb: "	3453535445664",
-          amsowner: "Mohan",
-          usercode: "102",
-          scanstatus: "Not Verified",
-        },
-      ])
-    );
+    dispatch(getAllAssets());
   }, [dispatch]);
 
-  const options = ["5", "10", "25", "50", "100"];
-  const totalPages = Math.ceil(assetUsersData.length / rowsPerPage);
+  const [isAddAsset, setIsAddAsset] = useState(false);
+  const [isUpdateAsset, setIsUpdateAsset] = useState(false);
 
-  const [searchUsers, setSearchUsers] = useState({
-    name: "",
-    serialno: "",
-    department: "",
-    departmentcode: "",
-    assettype: "",
-    make: "",
-    assetdetails: "",
+  const options = ["5", "10", "25", "50", "100"];
+  const totalPages = Math.ceil(assets.length / rowsPerPage);
+
+  const [searchAsset, setSearchAsset] = useState({
+    assetName: "",
+    uniqueId: "",
+    description: "",
+    brand: "",
     model: "",
-    mtkassetcode: "",
-    hardwaretype: "",
+    serialNumber: "",
     status: "",
-    assetstatus: "",
-    awb: "",
-    amsowner: "",
-    usercode: "",
-    scanstatus: "",
+    assignedUser: "",
+    assetLocation: "",
+    branch: "",
+    department: ""
   });
+
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
-    setSearchUsers((prev) => ({
+    setSearchAsset((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
-  const filteredUsers = assetUsersData?.filter((user) => {
-    return Object.entries(searchUsers).every(([key, searchValue]) =>
-      (user[key] || "").toLowerCase().includes(searchValue.toLowerCase())
-    );
+
+  const filteredAssets = assets?.filter((asset) => {
+    return Object.entries(searchAsset).every(([key, searchValue]) => {
+      // Handle nested object searches
+      if (key === "assignedUser" && asset.assignedUser) {
+        return asset.assignedUser.userName?.toLowerCase().includes(searchValue.toLowerCase());
+      }
+      if (key === "assetLocation" && asset.assetLocation) {
+        return asset.assetLocation.locationName.toLowerCase().includes(searchValue.toLowerCase());
+      }
+      if (key === "branch" && asset.branch) {
+        return asset.branch.branchName.toLowerCase().includes(searchValue.toLowerCase());
+      }
+      if (key === "department" && asset.department) {
+        return asset.department.departmentName.toLowerCase().includes(searchValue.toLowerCase());
+      }
+      
+      // Handle direct property searches
+      return (asset[key] || "").toString().toLowerCase().includes(searchValue.toLowerCase());
+    });
   });
 
   const startIndex = currentPage * rowsPerPage;
-  const currentRows = filteredUsers.slice(startIndex, startIndex + rowsPerPage);
+  const currentRows = filteredAssets.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
 
   const handleNavigate = () => {
     navigate("/dashboard");
@@ -180,33 +99,40 @@ const Asset = () => {
     if (currentPage < totalPages - 1) dispatch(setCurrentPage(currentPage + 1));
   };
 
-  const handleDeleteSelectedUsers = () => {
-    dispatch(deleteSelectedUsers());
-  };
-
-  const handleSelectAllUsers = (e) => {
-    if (e.target.checked) {
-      dispatch(selectAllUsers());
-    } else {
-      dispatch(deselectAllUsers());
+  const handleDeleteSelectedAssets = () => {
+    if (selectedAssets.length > 0) {
+      dispatch(deleteAsset(selectedAssets));
     }
   };
 
-  const handleToggleUserSelection = (id) => {
-    dispatch(toggleSelectUser(id));
+  const handleSelectAllAssets = (e) => {
+    if (e.target.checked) {
+      dispatch(selectAllAssets());
+    } else {
+      dispatch(deselectAllAssets());
+    }
+  };
+
+  const handleToggleAssetSelection = (id) => {
+    dispatch(toggleSelectAsset(id));
+  };
+
+  const handleEditAsset = (asset) => {
+    dispatch(setSelectedAsset(asset));
+    setIsUpdateAsset(true);
   };
 
   return (
     <div
-      className={`w-full min-h-screen bg-slate-100 px-2  ${
+      className={`w-full min-h-screen bg-slate-100 px-2 ${
         isSidebarOpen ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"
       }`}
     >
       <div
         className={`mx-auto min-h-screen ${
           isSidebarOpen
-            ? "lg:w-[78%] md:ml-[260px] md:w-[65%]  "
-            : "lg:w-[90%] md:ml-[100px] "
+            ? "lg:w-[78%] md:ml-[260px] md:w-[65%]"
+            : "lg:w-[90%] md:ml-[100px]"
         }`}
       >
         <div className="pt-24">
@@ -217,7 +143,7 @@ const Asset = () => {
                 <CiSaveUp2 className="h-6 w-6" />
               </button>
               <button
-                onClick={() => setIsAddAssetUser(true)}
+                onClick={() => setIsAddAsset(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
               >
                 Add Asset
@@ -226,25 +152,23 @@ const Asset = () => {
           </div>
 
           <div className="mx-5 flex gap-2 mb-4">
-            <button onClick={handleNavigate} className="text-[#6c757D] ">
+            <button onClick={handleNavigate} className="text-[#6c757D]">
               Dashboard
             </button>
             <span>
               <MdKeyboardArrowLeft className="h-6 w-6" />
             </span>
-            <p className="text-[#6c757D]">Asset List</p>
+            <p className="text-[#6c757D]">Asset</p>
           </div>
         </div>
 
-        <div className=" min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex Users-center gap-2 pt-8 ml-3">
+        <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
+          <div className="flex items-center gap-2 pt-8 ml-3">
             <p>Show</p>
             <div className="border-2 flex justify-evenly">
               <select
                 value={rowsPerPage}
-                onChange={(e) =>
-                  dispatch(setRowsPerPage(parseInt(e.target.value)))
-                }
+                onChange={(e) => dispatch(setRowsPerPage(parseInt(e.target.value)))}
                 className="outline-none px-6"
               >
                 {options.map((option, index) => (
@@ -264,73 +188,32 @@ const Asset = () => {
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Name
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Serial No
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Department
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Department Code
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Asset Type
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Make
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Asset Details
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Model
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    MTK Asset Code
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Hardware Type
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Status
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Asset Status
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    AWB Number
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    AMS Owner
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    User Code
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Scan Status
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[100px]">
-                    Action
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[100px]">
-                    <div className="flex justify-center Users-center ">
+                  <th className="px-4 py-4 border border-gray-300">Asset Name</th>
+                  <th className="px-4 py-4 border border-gray-300">Unique ID</th>
+                  <th className="px-4 py-4 border border-gray-300">Brand</th>
+                  <th className="px-4 py-4 border border-gray-300">Model</th>
+                  <th className="px-4 py-4 border border-gray-300">Serial Number</th>
+                  <th className="px-4 py-4 border border-gray-300">Status</th>
+                  <th className="px-4 py-4 border border-gray-300">Assigned To</th>
+                  <th className="px-4 py-4 border border-gray-300">Location</th>
+                  <th className="px-4 py-4 border border-gray-300">Branch</th>
+                  <th className="px-4 py-4 border border-gray-300">Department</th>
+                  <th className="px-4 py-4 border border-gray-300">Action</th>
+                  <th className="px-4 py-4 border border-gray-300">
+                    <div className="flex justify-center items-center">
                       <div className="">
-                        <label className="flex Users-center">
+                        <label className="flex items-center">
                           <input
                             type="checkbox"
                             checked={
-                              selectedUsers.length === assetUsersData.length &&
-                              assetUsersData.length > 0
+                              selectedAssets.length === assets.length && assets.length > 0
                             }
-                            onChange={handleSelectAllUsers}
+                            onChange={handleSelectAllAssets}
                             className="mr-2"
                           />
                         </label>
                       </div>
-                      <button onClick={handleDeleteSelectedUsers}>
+                      <button onClick={handleDeleteSelectedAssets}>
                         <MdDelete className="h-6 w-6" />
                       </button>
                     </div>
@@ -344,164 +227,103 @@ const Asset = () => {
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder=" name"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="name"
-                      value={searchUsers.name}
+                      name="assetName"
+                      placeholder="Asset Name"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.assetName}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="serial no"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="serialno"
-                      value={searchUsers.serialno}
+                      name="uniqueId"
+                      placeholder="Unique ID"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.uniqueId}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="department"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="department"
-                      value={searchUsers.department}
+                      name="brand"
+                      placeholder="Brand"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.brand}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="departmnt code"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="departmentcode"
-                      value={searchUsers.departmentcode}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="asset type"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="assettype"
-                      value={searchUsers.assettype}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="make"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="make"
-                      value={searchUsers.make}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="asset details"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="assetdetails"
-                      value={searchUsers.assetdetails}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="model"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
                       name="model"
-                      value={searchUsers.model}
+                      placeholder="Model"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.model}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="mtk asset code"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="mtkassetcode"
-                      value={searchUsers.mtkassetcode}
+                      name="serialNumber"
+                      placeholder="Serial Number"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.serialNumber}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="hardware type"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="hardwaretype"
-                      value={searchUsers.hardwaretype}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="status"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
                       name="status"
-                      value={searchUsers.status}
+                      placeholder="Status"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.status}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="asset status"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="assetstatus"
-                      value={searchUsers.assetstatus}
+                      name="assignedUser"
+                      placeholder="Assigned To"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.assignedUser}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="awn number"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="awb"
-                      value={searchUsers.awb}
+                      name="assetLocation"
+                      placeholder="Location"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.assetLocation}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="ams owner"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="amsowner"
-                      value={searchUsers.amsowner}
+                      name="branch"
+                      placeholder="Branch"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.branch}
                       onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="user code"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="usercode"
-                      value={searchUsers.usercode}
+                      name="department"
+                      placeholder="Department"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.department}
                       onChange={handleSearchChange}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="scan status"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="scanstatus"
-                      value={searchUsers.scanstatus}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]"></td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]"></td>
                 </tr>
@@ -509,65 +331,46 @@ const Asset = () => {
 
               {/* Table Body */}
               <tbody>
-                {currentRows.map((user, index) => (
+                {currentRows.map((asset, index) => (
                   <tr
-                    key={user.id}
+                    key={asset.id}
                     className={`${
                       index % 2 === 0 ? "bg-gray-50" : "bg-white"
                     } hover:bg-gray-200 divide-y divide-gray-300`}
                   >
                     <td className="px-4 py-2 border border-gray-300">
-                      {user.name}
+                      {asset.assetName}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {user.serialno}
+                      {asset.uniqueId}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {user.department}
+                      {asset.brand}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {user.departmentcode}
+                      {asset.model}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {user.assettype}
+                      {asset.serialNumber}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {user.make}
+                      {asset.status}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {user.assetdetails}
+                      {asset.assignedUser?.userName || "Unassigned"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {user.model}
+                      {asset.assetLocation?.locationName || "-"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {user.mtkassetcode}
+                      {asset.branch?.branchName || "-"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {user.hardwaretype}
+                      {asset.department?.departmentName || "-"}
                     </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.status}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.assetstatus}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.awb}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.amsowner}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.usercode}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.scanstatus}
-                    </td>
-
                     <td className="px-4 py-2 border border-gray-300">
                       <button
-                        onClick={() => setIsUpdateAssetUser(true)}
+                        onClick={() => handleEditAsset(asset)}
                         className="px-3 py-2 rounded-sm bg-[#3BC0C3]"
                       >
                         <FontAwesomeIcon icon={faPen} />
@@ -576,8 +379,8 @@ const Asset = () => {
                     <td className="px-4 py-2 border border-gray-300">
                       <input
                         type="checkbox"
-                        checked={selectedUsers?.includes(user.id) ?? false}
-                        onChange={() => handleToggleUserSelection(user.id)}
+                        checked={selectedAssets?.includes(asset.id) ?? false}
+                        onChange={() => handleToggleAssetSelection(asset.id)}
                       />
                     </td>
                   </tr>
@@ -606,7 +409,6 @@ const Asset = () => {
                 >
                   {currentPage + 1}
                 </span>
-
                 <span
                   className={`${
                     currentPage + 1 === totalPages
@@ -629,9 +431,17 @@ const Asset = () => {
         </div>
       </div>
       {/* Modals */}
-      {isAddAssetUser && <AddAsset onClose={() => setIsAddAssetUser(false)} />}
-      {isUpdateAssetUser && (
-        <UpdateAsset onClose={() => setIsUpdateAssetUser(false)} />
+      {isAddAsset && (
+        <AddAsset 
+          onClose={() => setIsAddAsset(false)} 
+          onSuccess={() => dispatch(getAllAssets())}
+        />
+      )}
+      {isUpdateAsset && (
+        <UpdateAsset 
+          onClose={() => setIsUpdateAsset(false)} 
+          onSuccess={() => dispatch(getAllAssets())}
+        />
       )}
     </div>
   );

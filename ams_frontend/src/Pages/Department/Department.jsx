@@ -40,12 +40,13 @@ const UserDepartment = () => {
 
   const [searchDepartment, setSearchDepartment] = useState({
     departmentName: "",
-    departmentLocation: "",
     branchName: "",
+    branchLocation: "",
     userName: "",
     assetName: "",
-    assetStatus: "",
+    status: "",
   });
+
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
     setSearchDepartment((prev) => ({
@@ -55,12 +56,20 @@ const UserDepartment = () => {
   };
 
   const filteredDepartments = departments?.filter((dep) => {
-    return Object.entries(searchDepartment).every(([key, searchValue]) => {
-      if (typeof searchValue === "object") return true;
-      return (dep[key] || "")
-        .toLowerCase()
-        .includes((searchValue || "").toLowerCase());
-    });
+    return (
+      (searchDepartment.departmentName === "" || 
+       (dep.departmentName || "").toLowerCase().includes(searchDepartment.departmentName.toLowerCase())) &&
+      (searchDepartment.branchName === "" || 
+       (dep.branch?.branchName || "").toLowerCase().includes(searchDepartment.branchName.toLowerCase())) &&
+      (searchDepartment.branchLocation === "" || 
+       (dep.branch?.branchLocation || "").toLowerCase().includes(searchDepartment.branchLocation.toLowerCase())) &&
+      (searchDepartment.userName === "" || 
+       (dep.users?.some(user => user.userName.toLowerCase().includes(searchDepartment.userName.toLowerCase())) || false)) &&
+      (searchDepartment.assetName === "" || 
+       (dep.Asset?.some(asset => asset.assetName.toLowerCase().includes(searchDepartment.assetName.toLowerCase())) || false)) &&
+      (searchDepartment.status === "" || 
+       (dep.Asset?.some(asset => asset.status.toLowerCase().includes(searchDepartment.status.toLowerCase())) || false))
+    );
   });
 
   const startIndex = currentPage * rowsPerPage;
@@ -176,10 +185,10 @@ const UserDepartment = () => {
                     Department Name
                   </th>
                   <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Department Location
+                    Branch Name
                   </th>
                   <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Brnach Name
+                    Branch Location
                   </th>
                   <th className="px-4 py-4 border border-gray-300 w-[240px]">
                     User Name
@@ -190,7 +199,6 @@ const UserDepartment = () => {
                   <th className="px-4 py-4 border border-gray-300 w-[240px]">
                     Asset Status
                   </th>
-
                   <th className="px-4 py-4 border border-gray-300 w-[100px]">
                     Action
                   </th>
@@ -223,9 +231,9 @@ const UserDepartment = () => {
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="department name"
+                      placeholder="Department name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="name"
+                      name="departmentName"
                       value={searchDepartment.departmentName}
                       onChange={handleSearchChange}
                     />
@@ -233,17 +241,7 @@ const UserDepartment = () => {
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder=" department location"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="departmentLocation"
-                      value={searchDepartment.departmentLocation}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="branch name"
+                      placeholder="Branch name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
                       name="branchName"
                       value={searchDepartment.branchName}
@@ -253,7 +251,17 @@ const UserDepartment = () => {
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="user name"
+                      placeholder="Branch location"
+                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
+                      name="branchLocation"
+                      value={searchDepartment.branchLocation}
+                      onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                    <input
+                      type="text"
+                      placeholder="User name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
                       name="userName"
                       value={searchDepartment.userName}
@@ -263,7 +271,7 @@ const UserDepartment = () => {
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="asset name"
+                      placeholder="Asset name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
                       name="assetName"
                       value={searchDepartment.assetName}
@@ -273,14 +281,13 @@ const UserDepartment = () => {
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      placeholder="asset status"
+                      placeholder="Status"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="assetStatus"
-                      value={searchDepartment.assetStatus}
+                      name="status"
+                      value={searchDepartment.status}
                       onChange={handleSearchChange}
                     />
                   </td>
-
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]"></td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]"></td>
                 </tr>
@@ -290,25 +297,25 @@ const UserDepartment = () => {
               <tbody>
                 {currentRows.map((dep, index) => (
                   <tr
-                    key={dep.id || index}
+                    key={dep.departmentId || index}
                     className={`${
                       index % 2 === 0 ? "bg-gray-50" : "bg-white"
                     } hover:bg-gray-200 divide-y divide-gray-300`}
                   >
                     <td className="px-4 py-2 border border-gray-300">
-                      {dep.name}
+                      {dep.departmentName}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {dep.location}
+                      {dep.branch?.branchName || "N/A"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {dep.branch?.name || "N/A"}
+                      {dep.branch?.branchLocation || "N/A"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {dep.users?.map((user) => user.name).join(", ") || "N/A"}
+                      {dep.users?.map((user) => user.userName).join(", ") || "N/A"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
-                      {dep.Asset?.map((asset) => asset.name).join(", ") ||
+                      {dep.Asset?.map((asset) => asset.assetName).join(", ") ||
                         "N/A"}
                     </td>
                     <td className="px-4 py-2 border border-gray-300">

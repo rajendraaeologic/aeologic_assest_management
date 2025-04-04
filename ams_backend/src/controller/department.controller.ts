@@ -25,7 +25,7 @@ const createDepartment = catchAsync(async (req, res) => {
 
 const getAllDepartments = catchAsync(async (req, res) => {
   const filter = pick(req.query, [
-    "name",
+    "departmentName",
     "location",
     "branchId",
     "from_date",
@@ -35,9 +35,9 @@ const getAllDepartments = catchAsync(async (req, res) => {
 
   applyDateFilter(filter);
 
-  if (filter.name) {
-    filter.name = {
-      contains: filter.name,
+  if (filter.departmentName) {
+    filter.departmentName = {
+      contains: filter.departmentName,
       mode: "insensitive",
     };
   }

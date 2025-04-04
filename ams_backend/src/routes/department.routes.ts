@@ -42,7 +42,7 @@ router
 router
   .route("/bulk-delete")
   .post(
-    validate(departmentValidation.bulkDeleteDpartmentsValidation),
+    validate(departmentValidation.bulkDeleteDepartmentsValidation),
     departmentController.deleteDepartments
   );
 

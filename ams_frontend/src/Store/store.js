@@ -6,7 +6,7 @@ import authReducer, { refreshToken } from "../Features/auth/authSlice";
 
 import userRegistrationReducer from "../Features/userRegistrationSlice";
 import DepartmentReducer from "../Features/slices/departmentSlice";
-import userAssetReducer from "../Features/UserAssetSlice";
+import userAssetReducer from "../Features/slices/assetSlice";
 import userAssignTagReducer from "../Features/AssignTagSlice";
 import DateWishReportReducer from "../Features/DateWishReportSlice";
 import OutForDeliveryReducer from "../Features/OutForDeiverySlice";

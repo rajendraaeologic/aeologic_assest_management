@@ -38,7 +38,7 @@ const UpdateOrganization = ({ onClose }) => {
   useEffect(() => {
     if (selectedOrganization) {
       reset({
-        name: selectedOrganization.name,
+        organizationName: selectedOrganization.organizationName,
       });
     }
   }, [selectedOrganization, reset]);
@@ -60,7 +60,7 @@ const UpdateOrganization = ({ onClose }) => {
     try {
       const organizationData = {
         id: selectedOrganization.id,
-        name: data.name,
+        organizationName: data.organizationName,
       };
 
       await dispatch(updateOrganization(organizationData));
@@ -110,17 +110,17 @@ const UpdateOrganization = ({ onClose }) => {
               </label>
               <input
                 ref={firstInputRef}
-                {...register("name", {
+                {...register("organizationName", {
                   required: "Organization name is required",
                 })}
                 type="text"
                 className={`mt-1 p-2 w-full border ${
-                  errors.name ? "border-red-500" : "border-gray-300"
+                  errors.organizationName ? "border-red-500" : "border-gray-300"
                 } outline-none rounded-md`}
               />
-              {errors.name && (
+              {errors.organizationName && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.name.message}
+                  {errors.organizationName.message}
                 </p>
               )}
             </div>

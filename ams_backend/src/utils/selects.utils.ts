@@ -95,6 +95,7 @@ export const DepartmentKeys: Prisma.DepartmentSelect = {
     select: {
       id: true,
       branchName: true,
+      branchLocation: true,
     },
   },
   users: {
@@ -146,4 +147,112 @@ export const BranchKeys: Prisma.BranchSelect = {
       status: true,
     },
   },
+};
+
+//AssetKeys
+export const AssetKeys: Prisma.AssetSelect = {
+  id: true,
+  assetName: true,
+  description: true,
+  uniqueId: true,
+  brand: true,
+  model: true,
+  serialNumber: true,
+  purchaseDate: true,
+  cost: true,
+  warrantyEndDate: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+  assignedUser: {
+    select: {
+      id: true,
+      userName: true,
+      email: true
+    }
+  },
+  assetLocation: {
+    select: {
+      id: true,
+      locationName: true,
+      address: true
+    }
+  },
+  branch: {
+    select: {
+      id: true,
+      branchName: true,
+      branchLocation: true
+    }
+  },
+  department: {
+    select: {
+      id: true,
+      departmentName: true
+    }
+  },
+  assetHistory: {
+    select: {
+      id: true,
+      action: true,
+      timestamp: true,
+      user: {
+        select: {
+          id: true,
+          userName: true
+        }
+      }
+    }
+  },
+  AssetAssignment: {
+    select: {
+      id: true,
+      assignedAt: true,
+      user: {
+        select: {
+          id: true,
+          userName: true,
+          email: true
+        }
+      }
+    }
+  }
+};
+
+export const AssetAssignmentKeys: Prisma.AssetAssignmentSelect = {
+  id: true,
+  assignedAt: true,
+  asset: {
+    select: {
+      id: true,
+      assetName: true,
+      uniqueId: true
+    }
+  },
+  user: {
+    select: {
+      id: true,
+      userName: true,
+      email: true
+    }
+  }
+};
+
+export const AssetHistoryKeys: Prisma.AssetHistorySelect = {
+  id: true,
+  action: true,
+  timestamp: true,
+  asset: {
+    select: {
+      id: true,
+      assetName: true,
+      uniqueId: true
+    }
+  },
+  user: {
+    select: {
+      id: true,
+      userName: true
+    }
+  }
 };

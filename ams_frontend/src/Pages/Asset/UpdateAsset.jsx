@@ -1,17 +1,52 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
-import SelectorAMSOWNER from "./SelectorAMSOWNER";
+import { useDispatch, useSelector } from "react-redux";
+import { updateAsset, setSelectedAsset } from "../../Features/slices/assetSlice";
+import { toast } from "react-toastify";
+import API from "../../App/api/axiosInstance";
 
-const UpdateAsset = ({ onClose }) => {
+const UpdateAsset = ({ onClose, onSuccess }) => {
+  const dispatch = useDispatch();
+  const { selectedAsset } = useSelector((state) => state.assetData);
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
+  // State for dynamic dropdowns
+  const [branches, setBranches] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [users, setUsers] = useState([]);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    uniqueId: "",
+    description: "",
+    brand: "",
+    model: "",
+    serialNumber: "",
+    status: "ACTIVE",
+    categoryId: "",
+    locationId: "",
+    assignedToUserId: "",
+    branchId: "",
+    departmentId: "",
+  });
+
+  // Fetch branches on component mount
   useEffect(() => {
+    const fetchBranches = async () => {
+      try {
+        const response = await API.get("/branch");
+        setBranches(response.data);
+      } catch (error) {
+        console.error("Failed to fetch branches:", error);
+      }
+    };
+
+    fetchBranches();
     firstInputRef.current?.focus();
-
     document.body.style.overflow = "hidden";
-
     setIsVisible(true);
 
     return () => {
@@ -19,9 +54,86 @@ const UpdateAsset = ({ onClose }) => {
     };
   }, []);
 
+  // Populate form when selectedAsset changes
+  useEffect(() => {
+    if (selectedAsset) {
+      setFormData({
+        name: selectedAsset.name || "",
+        uniqueId: selectedAsset.uniqueId || "",
+        description: selectedAsset.description || "",
+        brand: selectedAsset.brand || "",
+        model: selectedAsset.model || "",
+        serialNumber: selectedAsset.serialNumber || "",
+        status: selectedAsset.status || "ACTIVE",
+        categoryId: selectedAsset.categoryId || "",
+        locationId: selectedAsset.locationId || "",
+        assignedToUserId: selectedAsset.assignedToUserId || "",
+        branchId: selectedAsset.branchId || "",
+        departmentId: selectedAsset.departmentId || "",
+      });
+
+      // Fetch departments for the selected branch
+      if (selectedAsset.branchId) {
+        fetchDepartments(selectedAsset.branchId);
+      }
+
+      // Fetch users for the selected department
+      if (selectedAsset.departmentId) {
+        fetchUsers(selectedAsset.departmentId);
+      }
+    }
+  }, [selectedAsset]);
+
+  // Fetch departments when branch is selected
+  const fetchDepartments = async (branchId) => {
+    try {
+      const response = await API.get(`/department?branchId=${branchId}`);
+      setDepartments(response.data);
+    } catch (error) {
+      console.error("Failed to fetch departments:", error);
+    }
+  };
+
+  // Fetch users when department is selected
+  const fetchUsers = async (departmentId) => {
+    try {
+      const response = await API.get(`/user?departmentId=${departmentId}&userRole=USER`);
+      setUsers(response.data);
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+    }
+  };
+
+  const handleBranchChange = (e) => {
+    const branchId = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      branchId,
+      departmentId: "",
+      assignedToUserId: ""
+    }));
+    setDepartments([]);
+    setUsers([]);
+    if (branchId) {
+      fetchDepartments(branchId);
+    }
+  };
+
+  const handleDepartmentChange = (e) => {
+    const departmentId = e.target.value;
+    setFormData(prev => ({
+      ...prev,
+      departmentId,
+      assignedToUserId: ""
+    }));
+    setUsers([]);
+    if (departmentId) {
+      fetchUsers(departmentId);
+    }
+  };
+
   const handleClose = () => {
     setIsVisible(false);
-
     setTimeout(() => {
       onClose();
     }, 300);
@@ -33,9 +145,32 @@ const UpdateAsset = ({ onClose }) => {
     }
   };
 
-  const handleSubmit = (event) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    console.log("Form Submitted!");
+    setLoading(true);
+    try {
+      const updateData = {
+        id: selectedAsset.id,
+        ...formData
+      };
+
+      await dispatch(updateAsset(updateData)).unwrap();
+      toast.success("Asset updated successfully!");
+      onSuccess(); // Refresh the asset list
+      handleClose();
+    } catch (error) {
+      toast.error(error.message || "Failed to update asset");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,262 +197,186 @@ const UpdateAsset = ({ onClose }) => {
 
         {/* Form Fields */}
         <div className="p-5 px-10">
-          <form onClick={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Row 1 */}
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="username"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  User Name
+          <form onSubmit={handleSubmit}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Basic Information */}
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Name*
                 </label>
                 <input
                   ref={firstInputRef}
                   type="text"
-                  id="username"
-                  name="username"
-                  placeholder="Enter your name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  required
+                />
+              </div>
+
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Unique ID*
+                </label>
+                <input
+                  type="text"
+                  name="uniqueId"
+                  value={formData.uniqueId}
+                  onChange={handleChange}
+                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  required
+                />
+              </div>
+
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Brand
+                </label>
+                <input
+                  type="text"
+                  name="brand"
+                  value={formData.brand}
+                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                 />
               </div>
 
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="department"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Department Name
-                </label>
-                <select
-                  id="department"
-                  name="department"
-                  defaultValue=""
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                >
-                  <option value="" disabled>
-                    Department
-                  </option>
-                  <option value="accounts">Accounts</option>
-                  <option value="bio">Bio</option>
-                  <option value="hr">HR Department</option>
-                </select>
-              </div>
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="code"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Code
-                </label>
-                <select
-                  id="code"
-                  name="code"
-                  defaultValue=""
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                >
-                  <option value="" disabled>
-                    Code
-                  </option>
-                </select>
-              </div>
-
-              {/* row 2  */}
-
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="serialno"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Serial No
-                </label>
-                <input
-                  type="text"
-                  id="serialno"
-                  name="serialno"
-                  placeholder="Enter your serial no"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                />
-              </div>
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="assettype"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Asset Type
-                </label>
-                <input
-                  type="text"
-                  id="assettype"
-                  name="assettype"
-                  placeholder=" Enter your asset type"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                />
-              </div>
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="make"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Make
-                </label>
-                <input
-                  type="text"
-                  id="make"
-                  name="make"
-                  placeholder=" Enter your make"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                />
-              </div>
-              {/* Row 3 */}
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="assetdetails"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Asset Details
-                </label>
-                <input
-                  type="text"
-                  id="assetdetails"
-                  name="assetdetails"
-                  placeholder=" Enter your asset details"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                />
-              </div>
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="model"
-                  className="block text-sm font-medium text-gray-700"
-                >
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700">
                   Model
                 </label>
                 <input
                   type="text"
-                  id="model"
                   name="model"
-                  placeholder=" Enter your model"
+                  value={formData.model}
+                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                 />
               </div>
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="assetcode"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  MTK Asset Code
-                </label>
-                <input
-                  type="text"
-                  id="assetcode"
-                  name="assetcode"
-                  placeholder="Enter your asset code"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                />
-              </div>
-              {/* Row 4 */}
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="hardwaretype"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Hardware Type
-                </label>
-                <input
-                  type="text"
-                  id="hardwaretype"
-                  name="hardwaretype"
-                  placeholder="Enter your hardware type"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                />
-              </div>
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="status"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Status
-                </label>
-                <select
-                  id="status"
-                  name="status"
-                  defaultValue=""
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                >
-                  <option value="" disabled>
-                    Status
-                  </option>
-                  <option value="">Inventory</option>
-                  <option value="">Assigned</option>
-                </select>
-              </div>
-              <div className="w-[80%] md:mt-4">
-                <label
-                  htmlFor="contact-code"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Asset_Type
-                </label>
-                <select
-                  id="contact-code"
-                  name="contact-code"
-                  defaultValue=""
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                >
-                  <option value="" disabled>
-                    Asset_Type
-                  </option>
-                  <option value="code1">Working</option>
-                  <option value="code2">Not Working</option>
-                </select>
-              </div>
-              {/* Row 5 */}
 
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="awbnumber"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  AWB Number
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Serial Number
                 </label>
                 <input
                   type="text"
-                  id="awbnumber"
-                  name="awbnumber"
-                  placeholder="Enter your awb number"
+                  name="serialNumber"
+                  value={formData.serialNumber}
+                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                 />
               </div>
-              <SelectorAMSOWNER></SelectorAMSOWNER>
-              <div className="w-full md:mt-4">
-                <label
-                  htmlFor="usercode"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  User Code
+
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Status*
                 </label>
                 <select
-                  id="usercode"
-                  name="usercode"
-                  defaultValue=""
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  required
                 >
-                  <option value="" disabled>
-                    Code
-                  </option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                  <option value="UNDER_REPAIR">Under Repair</option>
+                </select>
+              </div>
+
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  rows={2}
+                />
+              </div>
+
+              {/* Location Information */}
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Branch*
+                </label>
+                <select
+                  name="branchId"
+                  value={formData.branchId}
+                  onChange={handleBranchChange}
+                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  required
+                >
+                  <option value="">Select Branch</option>
+                  {branches.map(branch => (
+                    <option key={branch.id} value={branch.id}>
+                      {branch.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Department*
+                </label>
+                <select
+                  name="departmentId"
+                  value={formData.departmentId}
+                  onChange={handleDepartmentChange}
+                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  required
+                  disabled={!formData.branchId}
+                >
+                  <option value="">Select Department</option>
+                  {departments.map(dept => (
+                    <option key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Assigned To
+                </label>
+                <select
+                  name="assignedToUserId"
+                  value={formData.assignedToUserId}
+                  onChange={handleChange}
+                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  disabled={!formData.departmentId}
+                >
+                  <option value="">Select User</option>
+                  {users.map(user => (
+                    <option key={user.id} value={user.id}>
+                      {user.name} ({user.email})
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>
+
             <hr className="mt-4"></hr>
             <div className="flex justify-end gap-4 md:mt-4 mt-4 mb-2 mr-5">
               <button
+                type="button"
                 onClick={handleClose}
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
+                disabled={loading}
               >
                 Close
               </button>
-              <button className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg">
-                Save
+              <button 
+                type="submit"
+                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg"
+                disabled={loading}
+              >
+                {loading ? 'Updating...' : 'Update'}
               </button>
             </div>
           </form>

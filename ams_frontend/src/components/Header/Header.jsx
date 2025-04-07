@@ -5,18 +5,20 @@ import navImage from "../../assets/navImage.jpg";
 import { TfiArrowCircleUp } from "react-icons/tfi";
 import { BiLogOut } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
-
-import { useDispatch, useSelector } from "react-redux";
-import { logoutUser, selectCurrentUser } from "../../Features/auth/authSlice";
+import { useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../../Features/auth/authSlice";
 import { persistor } from "../../Store/store";
-
+import { selectCurrentUser } from "../../Features/auth/authSlice";
 const Header = () => {
   const { isSidebarOpen, setIsSidebarOpen } = useContext(SliderContext);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { departments } = useSelector((state) => state.departmentData);
   const navigate = useNavigate();
 
   const dispatch = useDispatch();
   const currentUser = useSelector(selectCurrentUser);
+  console.log("cur", currentUser);
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -45,12 +47,10 @@ const Header = () => {
       </div>
 
       <div className="md:mr-10 sm:mr-8 flex justify-center items-center gap-3">
-      <p className="pr-5 ">
-          <ul>
-            <li className="font-bold text-lg">{currentUser?.userName}</li>
-            <li className="text-sm">{currentUser?.userRole}</li>
-          </ul>
-        </p>
+        <ul>
+          <li className="font-bold text-lg">{currentUser?.userName}</li>
+          <li className="text-sm">{currentUser?.userRole}</li>
+        </ul>
 
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}

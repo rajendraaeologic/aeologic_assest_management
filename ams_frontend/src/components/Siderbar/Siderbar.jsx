@@ -69,9 +69,9 @@ const Sidebar = () => {
             { name: "Branch", icon: <FaCodeBranch />, path: "/branch" },
             { name: "Department", icon: <FaBriefcase />, path: "/department" },
             { name: "Asset", icon: <GiAudioCassette />, path: "/asset" },
-            { name: "Assign Tag", icon: <FaTags />, path: "/assigntag" },
+            { name: "Assign Tag (Coming Soon)", icon: <FaTags />, path: "/assigntag" },
             {
-              name: "Out For Delivery",
+              name: "Out For Delivery (Coming Soon)",
               icon: <FaTruck />,
               path: "/outfordelivery",
             },
@@ -131,11 +131,11 @@ const Sidebar = () => {
                 </span>
 
                 {/* Reports Name */}
-                {isSidebarOpen && <span className="ml-3">Reports</span>}
+                {isSidebarOpen && <span className="ml-3">Reports (Coming Soon) </span>}
 
                 {!isSidebarOpen && (
                   <span className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-3 py-1 bg-gray-800 text-white rounded-md text-sm min-w-[120px] shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible group-hover:translate-x-2 transition-all duration-300 z-50 pointer-events-none">
-                    Reports
+                    Reports 
                   </span>
                 )}
               </div>

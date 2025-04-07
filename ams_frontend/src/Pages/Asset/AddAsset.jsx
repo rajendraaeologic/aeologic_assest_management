@@ -17,15 +17,15 @@ const AddAsset = ({ onClose, onSuccess }) => {
   const [users, setUsers] = useState([]);
 
   const [formData, setFormData] = useState({
-    assetName: "",  // Changed from 'name'
+    assetName: "",
     uniqueId: "",
     description: "",
     brand: "",
     model: "",
-    serialNumber: "",  // Changed from 'serialNumber'
+    serialNumber: "",
     status: "ACTIVE",
     locationId: "",
-    assignedToUserId: "",  // Changed from 'assignedUser'
+    assignedToUserId: "",
     branchId: "",
     departmentId: "",
   });
@@ -34,8 +34,9 @@ const AddAsset = ({ onClose, onSuccess }) => {
   useEffect(() => {
     const fetchBranches = async () => {
       try {
-        const response = await API.get("/branch");
-        setBranches(response.data);
+        const response = await API.get("/branch/getAllBranches");
+        
+        setBranches(response.data.data);
       } catch (error) {
         console.error("Failed to fetch branches:", error);
       }
@@ -51,43 +52,41 @@ const AddAsset = ({ onClose, onSuccess }) => {
     };
   }, []);
 
-  // Fetch departments when branch is selected
+  // Update departments when branch is selected (using data from branch response)
   useEffect(() => {
-    const fetchDepartments = async () => {
-      if (formData.branchId) {
-        try {
-          const response = await API.get(`/department?branchId=${formData.branchId}`);
-          setDepartments(response.data);
-          // Reset department and user when branch changes
-          setFormData(prev => ({
-            ...prev,
-            departmentId: "",
-            assignedToUserId: ""
-          }));
-          setUsers([]);
-        } catch (error) {
-          console.error("Failed to fetch departments:", error);
-        }
-      } else {
-        setDepartments([]);
+    if (formData.branchId) {
+      const selectedBranch = branches.find(
+        (branch) => branch.id === formData.branchId
+      );
+
+      if (selectedBranch && selectedBranch.departments) {
+        setDepartments(selectedBranch.departments);
+
+        setFormData((prev) => ({
+          ...prev,
+          departmentId: "",
+          assignedToUserId: "",
+        }));
         setUsers([]);
       }
-    };
-
-    fetchDepartments();
-  }, [formData.branchId]);
+    } else {
+      setDepartments([]);
+      setUsers([]);
+    }
+  }, [formData.branchId, branches]);
 
   // Fetch users when department is selected
   useEffect(() => {
     const fetchUsers = async () => {
       if (formData.departmentId) {
         try {
-          const response = await API.get(`/user?departmentId=${formData.departmentId}&userRole=USER`);
+          const response = await API.get(
+            `/user?departmentId=${formData.departmentId}&userRole=USER`
+          );
           setUsers(response.data);
-          // Reset user when department changes
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
-            assignedToUserId: ""
+            assignedToUserId: "",
           }));
         } catch (error) {
           console.error("Failed to fetch users:", error);
@@ -115,9 +114,9 @@ const AddAsset = ({ onClose, onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -125,7 +124,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
     event.preventDefault();
     try {
       await dispatch(createAsset(formData)).unwrap();
-      onSuccess(); // Refresh the asset list
+      onSuccess();
       handleClose();
     } catch (error) {
       console.error("Failed to create asset:", error);
@@ -139,14 +138,12 @@ const AddAsset = ({ onClose, onSuccess }) => {
       }`}
       onClick={handleOutsideClick}
     >
-      {/* Modal */}
       <div
         ref={modalRef}
         className={`mt-[20px] w-[820px] min-h-96 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
-        {/* Title and Close Button */}
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
           <h2 className="text-[17px] font-semibold text-white">Add Asset</h2>
           <button onClick={handleClose} className="text-white rounded-md">
@@ -154,7 +151,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
           </button>
         </div>
 
-        {/* Form Fields */}
         <div className="p-5 px-10">
           <form onSubmit={handleSubmit}>
             {error && (
@@ -163,7 +159,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Basic Information */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Asset Name*
@@ -171,7 +166,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                 <input
                   ref={firstInputRef}
                   type="text"
-                  name="assetName"  // Changed from 'name'
+                  name="assetName"
                   value={formData.assetName}
                   onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
@@ -225,7 +220,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  name="serialNumber"  // Changed from 'serialno'
+                  name="serialNumber"
                   value={formData.serialNumber}
                   onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
@@ -263,7 +258,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
                 />
               </div>
 
-              {/* Location Information */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   Branch*
@@ -276,9 +270,9 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   required
                 >
                   <option value="">Select Branch</option>
-                  {branches.map(branch => (
+                  {branches.map((branch) => (
                     <option key={branch.id} value={branch.id}>
-                      {branch.branchName}  {/* Changed from 'name' to 'branchName' */}
+                      {branch.branchName}
                     </option>
                   ))}
                 </select>
@@ -297,9 +291,9 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   disabled={!formData.branchId}
                 >
                   <option value="">Select Department</option>
-                  {departments.map(dept => (
+                  {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>
-                      {dept.departmentName}  {/* Changed from 'name' to 'departmentName' */}
+                      {dept.departmentName}
                     </option>
                   ))}
                 </select>
@@ -310,16 +304,16 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   Assigned To
                 </label>
                 <select
-                  name="assignedToUserId"  // Changed from 'assignedUser'
+                  name="assignedToUserId"
                   value={formData.assignedToUserId}
                   onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                   disabled={!formData.departmentId}
                 >
                   <option value="">Select User</option>
-                  {users.map(user => (
+                  {users.map((user) => (
                     <option key={user.id} value={user.id}>
-                      {user.userName} ({user.email})  {/* Changed from 'name' to 'userName' */}
+                      {user.userName} ({user.email})
                     </option>
                   ))}
                 </select>
@@ -336,12 +330,12 @@ const AddAsset = ({ onClose, onSuccess }) => {
               >
                 Close
               </button>
-              <button 
+              <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg"
                 disabled={loading}
               >
-                {loading ? 'Saving...' : 'Save'}
+                {loading ? "Saving..." : "Save"}
               </button>
             </div>
           </form>

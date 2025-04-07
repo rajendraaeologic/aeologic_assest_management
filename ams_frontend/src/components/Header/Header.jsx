@@ -6,8 +6,8 @@ import { TfiArrowCircleUp } from "react-icons/tfi";
 import { BiLogOut } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 
-import { useDispatch } from "react-redux";
-import { logoutUser } from "../../Features/auth/authSlice";
+import { useDispatch, useSelector } from "react-redux";
+import { logoutUser, selectCurrentUser } from "../../Features/auth/authSlice";
 import { persistor } from "../../Store/store";
 
 const Header = () => {
@@ -16,7 +16,7 @@ const Header = () => {
   const navigate = useNavigate();
 
   const dispatch = useDispatch();
-
+  const currentUser = useSelector(selectCurrentUser);
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -45,11 +45,12 @@ const Header = () => {
       </div>
 
       <div className="md:mr-10 sm:mr-8 flex justify-center items-center gap-3">
-        <img
-          src={navImage}
-          className="w-[40px] h-[40px] rounded-full"
-          alt="User"
-        />
+      <p className="pr-5 ">
+          <ul>
+            <li className="font-bold text-lg">{currentUser?.name}</li>
+            <li className="text-sm">{currentUser?.userRole}</li>
+          </ul>
+        </p>
 
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}

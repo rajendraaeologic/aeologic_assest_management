@@ -45,7 +45,7 @@ const Organization = () => {
     departmentName: "",
     userName: "",
     assetName: "",
-    assetStatus: "",
+    status: "",
   });
 
   const handleSearchChange = (e) => {
@@ -57,12 +57,62 @@ const Organization = () => {
   };
 
   const filteredOrganizations = organizations?.filter((org) => {
-    return Object.entries(searchOrganization).every(([key, searchValue]) => {
-      if (typeof searchValue === "object") return true;
-      return (org[key] || "")
-        .toLowerCase()
-        .includes((searchValue || "").toLowerCase());
-    });
+    return (
+      (searchOrganization.organizationName === "" ||
+        (org.organizationName || "")
+          .toLowerCase()
+          .includes(searchOrganization.organizationName.toLowerCase())) &&
+      (searchOrganization.branchName === "" ||
+        org.branches?.some((branch) =>
+          branch.branchName
+            .toLowerCase()
+            .includes(searchOrganization.branchName.toLowerCase())
+        ) ||
+        false) &&
+      (searchOrganization.branchLocation === "" ||
+        org.branches?.some((branch) =>
+          branch.branchLocation
+            .toLowerCase()
+            .includes(searchOrganization.branchLocation.toLowerCase())
+        ) ||
+        false) &&
+      (searchOrganization.departmentName === "" ||
+        org.branches?.some((branch) =>
+          branch.departments?.some((dept) =>
+            dept.departmentName
+              .toLowerCase()
+              .includes(searchOrganization.departmentName.toLowerCase())
+          )
+        ) ||
+        false) &&
+      (searchOrganization.userName === "" ||
+        org.branches?.some((branch) =>
+          branch.users?.some((user) =>
+            user.userName
+              .toLowerCase()
+              .includes(searchOrganization.userName.toLowerCase())
+          )
+        ) ||
+        false) &&
+      (searchOrganization.assetName === "" ||
+        org.branches?.some((branch) =>
+          branch.assets?.some((asset) =>
+            asset.assetName
+              .toLowerCase()
+              .includes(searchOrganization.assetName.toLowerCase())
+          )
+        ) ||
+        false) &&
+      (searchOrganization.status === "" ||
+        org.branches?.some((branch) =>
+          branch.assets?.some((asset) =>
+            asset.status
+              .toLowerCase()
+              .includes(searchOrganization.status.toLowerCase())
+          )
+        ) ||
+        false)
+    );
   });
 
   const startIndex = currentPage * rowsPerPage;
@@ -186,7 +236,7 @@ const Organization = () => {
                     Department name
                   </th>
                   <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    user name
+                    User name
                   </th>
                   <th className="px-4 py-4 border border-gray-300 w-[240px]">
                     Asset Name
@@ -270,7 +320,7 @@ const Organization = () => {
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      name="usersName"
+                      name="userName"
                       id="userName"
                       placeholder="user name"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
@@ -292,11 +342,11 @@ const Organization = () => {
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                       type="text"
-                      id="assetStatus"
-                      name="assetStatus"
+                      id="status"
+                      name="status"
                       placeholder="asset status"
                       className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.assetStatus}
+                      value={searchOrganization.status}
                       onChange={handleSearchChange}
                     />
                   </td>
@@ -357,8 +407,7 @@ const Organization = () => {
                       {org.branches
                         ?.flatMap(
                           (branch) =>
-                            branch.assets?.map((asset) => asset.assetStatus) ||
-                            []
+                            branch.assets?.map((asset) => asset.status) || []
                         )
                         .join(", ") || "N/A"}
                     </td>

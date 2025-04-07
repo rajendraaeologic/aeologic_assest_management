@@ -407,8 +407,7 @@ const Organization = () => {
                       {org.branches
                         ?.flatMap(
                           (branch) =>
-                            branch.assets?.map((asset) => asset.assetStatus) ||
-                            []
+                            branch.assets?.map((asset) => asset.status) || []
                         )
                         .join(", ") || "N/A"}
                     </td>

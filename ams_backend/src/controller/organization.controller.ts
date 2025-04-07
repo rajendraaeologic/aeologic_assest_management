@@ -29,7 +29,7 @@ const getAllOrganizations = catchAsync(async (req, res) => {
   applyDateFilter(filter);
 
   if (filter.organizationName) {
-    filter.organizationName = {
+    filter.name = {
       contains: filter.organizationName,
       mode: "insensitive",
     };

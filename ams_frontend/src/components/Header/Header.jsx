@@ -1,7 +1,7 @@
 import React, { useContext, useState } from "react";
 import SliderContext from "../ContexApi";
 import { FaBars } from "react-icons/fa";
-import navImage from "../../assets/navImage.jpg";
+// import navImage from "../../assets/navImage.jpg";
 import { TfiArrowCircleUp } from "react-icons/tfi";
 import { BiLogOut } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";

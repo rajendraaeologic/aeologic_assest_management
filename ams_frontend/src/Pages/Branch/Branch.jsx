@@ -148,7 +148,7 @@ const Branch = () => {
         className={`mx-auto min-h-screen ${
           isSidebarOpen
             ? "lg:w-[78%] md:ml-[260px] md:w-[65%]"
-            : "lg:w-[90%] md:ml-[100px]"
+            : "lg:w-[90%] md:w-[50%] md:ml-[100px]"
         }`}
       >
         <div className="pt-24">
@@ -208,31 +208,94 @@ const Branch = () => {
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     Branch Name
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     Branch Location
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     Organization Name
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     Department Name
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     User Name
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     Asset Name
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[100px]">
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     Asset Status
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[100px]">
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "100px",
+                      minWidth: "100px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     Action
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[100px]">
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "100px",
+                      minWidth: "100px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     <div className="flex justify-center items-center">
                       <div className="">
                         <label className="flex items-center">
@@ -258,78 +321,140 @@ const Branch = () => {
               {/* Search Row */}
               <tbody>
                 <tr className="bg-gray-100">
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
                       name="branchName"
                       placeholder="Branch Name"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.branchName}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
                       name="branchLocation"
                       placeholder="Branch Location"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.branchLocation}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
                       name="organizationName"
                       placeholder="Organization Name"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.organizationName}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
                       name="departmentName"
                       placeholder="Department Name"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.departmentName}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
                       name="userName"
                       placeholder="User Name"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.userName}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
                       name="assetName"
                       placeholder="Asset Name"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.assetName}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      wordWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
                       name="status"
                       placeholder="Asset Status"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.status}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]"></td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]"></td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                  ></td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                  ></td>
                 </tr>
               </tbody>
 
@@ -342,34 +467,86 @@ const Branch = () => {
                       index % 2 === 0 ? "bg-gray-50" : "bg-white"
                     } hover:bg-gray-200 divide-y divide-gray-300`}
                   >
-                    <td className="px-4 py-2 border border-gray-300">
+                    <td
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: "180px",
+                        minWidth: "120px",
+                        wordWrap: "break-word",
+                      }}
+                    >
                       {branch.branchName}
                     </td>
-                    <td className="px-4 py-2 border border-gray-300">
+                    <td
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: "180px",
+                        minWidth: "120px",
+                        wordWrap: "break-word",
+                      }}
+                    >
                       {branch.branchLocation}
                     </td>
-                    <td className="px-4 py-2 border border-gray-300">
+                    <td
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: "180px",
+                        minWidth: "120px",
+                        wordWrap: "break-word",
+                      }}
+                    >
                       {branch.company?.organizationName || "N/A"}
                     </td>
-                    <td className="px-4 py-2 border border-gray-300">
+                    <td
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: "180px",
+                        minWidth: "120px",
+                        wordWrap: "break-word",
+                      }}
+                    >
                       {branch.departments
                         ?.map((dept) => dept.departmentName)
                         .join(", ") || "N/A"}
                     </td>
-                    <td className="px-4 py-2 border border-gray-300">
+                    <td
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: "180px",
+                        minWidth: "120px",
+                        wordWrap: "break-word",
+                      }}
+                    >
                       {branch.users?.map((user) => user.userName).join(", ") ||
                         "N/A"}
                     </td>
-                    <td className="px-4 py-2 border border-gray-300">
+                    <td
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: "180px",
+                        minWidth: "120px",
+                        wordWrap: "break-word",
+                      }}
+                    >
                       {branch.assets
                         ?.map((asset) => asset.assetName)
                         .join(", ") || "N/A"}
                     </td>
-                    <td className="px-4 py-2 border border-gray-300">
+                    <td
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: "180px",
+                        minWidth: "120px",
+                        wordWrap: "break-word",
+                      }}
+                    >
                       {branch.assets?.map((asset) => asset.status).join(", ") ||
                         "N/A"}
                     </td>
-                    <td className="px-4 py-2 border border-gray-300">
+                    <td
+                      className="px-2 py-2 border border-gray-300"
+                      style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                    >
                       <button
                         onClick={() => {
                           setIsUpdateBranch(true);
@@ -380,7 +557,10 @@ const Branch = () => {
                         <FontAwesomeIcon icon={faPen} />
                       </button>
                     </td>
-                    <td className="px-4 py-2 border border-gray-300">
+                    <td
+                      className="px-2 py-2 border border-gray-300"
+                      style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                    >
                       <input
                         type="checkbox"
                         checked={selectedBranches?.includes(branch.id) ?? false}

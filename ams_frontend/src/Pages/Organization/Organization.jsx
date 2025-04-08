@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
+import ChipsList from "../../components/UI/ChipsList";
 import {
   setCurrentPage,
   setRowsPerPage,
@@ -367,15 +368,16 @@ const Organization = () => {
                     <td className="px-4 py-2 border border-gray-300">
                       {org.organizationName}
                     </td>
+
                     <td className="px-4 py-2 border border-gray-300">
-                      {org.branches
-                        ?.map((branch) => branch.branchName)
-                        .join(", ") || "N/A"}
+                      <ChipsList items={org.branches} labelKey="branchName" />
                     </td>
+
                     <td className="px-4 py-2 border border-gray-300">
-                      {org.branches
-                        ?.map((branch) => branch.branchLocation)
-                        .join(", ") || "N/A"}
+                      <ChipsList
+                        items={org.branches}
+                        labelKey="branchLocation"
+                      />
                     </td>
                     <td className="px-4 py-2 border border-gray-300">
                       {org.branches

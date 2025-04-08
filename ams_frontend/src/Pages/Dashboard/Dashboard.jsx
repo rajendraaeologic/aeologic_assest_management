@@ -12,25 +12,38 @@ import {
 } from "recharts";
 import SliderContext from "../../components/ContexApi";
 import { useSelector, useDispatch } from "react-redux";
-
+import { getAllOrganizations } from "../../Features/slices/organizationSlice";
+import { getAllBranches } from "../../Features/slices/branchSlice";
 import { getAllDepartments } from "../../Features/slices/departmentSlice";
 const Dashboard = () => {
   const { isSidebarOpen } = useContext(SliderContext);
   const [chartData, setChartData] = useState([]);
   const dispatch = useDispatch();
+
+  const { organizations } = useSelector((state) => state.organizationData);
+  const { branches } = useSelector((state) => state.branchData);
   const { departments } = useSelector((state) => state.departmentData);
 
   useEffect(() => {
     dispatch(getAllDepartments());
-  }, [dispatch, departments.length]);
+    dispatch(getAllOrganizations());
+    dispatch(getAllBranches());
+  }, [dispatch, organizations.length, branches.length, departments.length]);
 
   useEffect(() => {
     const fetchData = () => {
       const data = [
         { name: "Users", value: 4, color: "#3B82F6" },
+        {
+          name: "Organizations",
+          value: organizations.length,
+          color: "#210F37",
+        },
+        { name: "Branches", value: branches.length, color: "#fc0380" },
         { name: "Departments", value: departments.length, color: "#10B981" },
         { name: "Assets", value: 2, color: "#FBBF24" },
         { name: "Assign Tags", value: 4, color: "#EF4444" },
+
         { name: "Out For Delivery", value: 4, color: "#14B8A6" },
       ];
       setChartData(data);

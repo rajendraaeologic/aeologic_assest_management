@@ -18,7 +18,7 @@ const Header = () => {
 
   const dispatch = useDispatch();
   const currentUser = useSelector(selectCurrentUser);
-  console.log("cur", currentUser);
+
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };

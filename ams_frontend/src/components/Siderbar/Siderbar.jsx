@@ -30,7 +30,7 @@ const Sidebar = () => {
       className={`${
         isSidebarOpen
           ? "md:w-[240px] w-[200px]"
-          : "lg:w-[80px] md:w-[80px] w-0 "
+          : "md:w-[80px] sm:w-[80px] w-0 "
       } h-full bg-[#1a2942] text-white fixed top-0 left-0 transition-all duration-300 z-50`}
     >
       {/* Logo Section */}
@@ -49,7 +49,7 @@ const Sidebar = () => {
       <div
         className={`${
           isSidebarOpen
-            ? "mt-4 h-[calc(100vh-100px)] px-2 overflow-y-auto overflow-x-hidden lg:overflow-y-hidden"
+            ? "mt-4 h-[calc(100vh-100px)] px-2 overflow-y-auto overflow-x-hidden md:overflow-y-auto"
             : "mt-4 h-[calc(100vh-100px)] px-2"
         }`}
       >
@@ -97,7 +97,7 @@ const Sidebar = () => {
                 {/* Icon */}
                 <span
                   className={`w-6 h-6 flex justify-center items-center text-lg ${
-                    isSidebarOpen ? "block" : "hidden md:flex"
+                    isSidebarOpen ? "block" : "hidden sm:flex"
                   }`}
                 >
                   {item.icon}

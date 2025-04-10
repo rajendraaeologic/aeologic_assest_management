@@ -108,8 +108,8 @@ const UserRegistration = () => {
       <div
         className={`mx-auto min-h-screen ${
           isSidebarOpen
-            ? "lg:w-[78%] md:ml-[260px] md:w-[65%]  "
-            : "lg:w-[90%] md:ml-[100px] "
+            ? "pl-0 md:pl-[250px] lg:pl-[250px]"
+            : "pl-0 md:pl-[90px] lg:pl-[90px]"
         }`}
       >
         <div className="pt-24">
@@ -148,7 +148,7 @@ const UserRegistration = () => {
                 onChange={(e) =>
                   dispatch(setRowsPerPage(parseInt(e.target.value)))
                 }
-                className="outline-none px-6"
+                className="outline-none px-1"
               >
                 {options.map((option, index) => (
                   <option key={index} value={option}>

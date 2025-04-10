@@ -2,28 +2,30 @@ import React, { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { useForm } from "react-hook-form";
+import "react-toastify/dist/ReactToastify.css";
 import {
   createDepartment,
   getAllDepartments,
 } from "../../Features/slices/departmentSlice";
 import { getAllBranches } from "../../Features/slices/branchSlice";
+import { getAllOrganizations } from "../../Features/slices/organizationSlice";
 
 const AddDepartment = ({ onClose }) => {
   const dispatch = useDispatch();
   const firstInputRef = useRef(null);
-  const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
+  const [isVisible, setIsVisible] = useState(false);
+  const [selectedOrgId, setSelectedOrgId] = useState("");
 
-  const { branches, loading: branchLoading } = useSelector(
-    (state) => state.branchData
-  );
+  const { branches } = useSelector((state) => state.branchData);
+  const { organizations } = useSelector((state) => state.organizationData);
 
   const {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
+    setValue,
   } = useForm({
     defaultValues: {
       departmentName: "",
@@ -33,6 +35,7 @@ const AddDepartment = ({ onClose }) => {
 
   useEffect(() => {
     dispatch(getAllBranches());
+    dispatch(getAllOrganizations());
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
@@ -63,12 +66,10 @@ const AddDepartment = ({ onClose }) => {
         })
       );
       dispatch(getAllDepartments());
-
       toast.success("Department added successfully!", {
         position: "top-right",
         autoClose: 1000,
       });
-
       handleClose();
     } catch (error) {
       toast.error("Failed to add department", {
@@ -77,6 +78,10 @@ const AddDepartment = ({ onClose }) => {
       });
     }
   };
+
+  const filteredBranches = branches?.filter(
+    (branch) => branch.company?.id === selectedOrgId
+  );
 
   return (
     <div
@@ -87,7 +92,7 @@ const AddDepartment = ({ onClose }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[500px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[400px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
@@ -102,7 +107,7 @@ const AddDepartment = ({ onClose }) => {
 
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid sm:grid-cols-1 lg:grid-cols-1 gap-4">
+            <div className="grid sm:grid-cols-1 gap-4">
               <div className="w-full">
                 <label
                   htmlFor="departmentName"
@@ -117,7 +122,6 @@ const AddDepartment = ({ onClose }) => {
                   })}
                   type="text"
                   id="departmentName"
-                  name="departmentName"
                   placeholder="Department name"
                   className={`mt-1 p-2 w-full border ${
                     errors.departmentName ? "border-red-500" : "border-gray-300"
@@ -131,31 +135,49 @@ const AddDepartment = ({ onClose }) => {
               </div>
 
               <div className="w-full">
+                <label className="block text-sm font-medium text-gray-700">
+                  Select Organization*
+                </label>
+                <select
+                  value={selectedOrgId}
+                  onChange={(e) => {
+                    setSelectedOrgId(e.target.value);
+                    setValue("branchId", "");
+                  }}
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md outline-none"
+                >
+                  <option value="">Select Organization</option>
+                  {organizations?.map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.organizationName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="w-full">
                 <label
                   htmlFor="branchId"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Branch*
+                  Select Branch*
                 </label>
                 <select
                   {...register("branchId", {
-                    required: "Branch selection is required",
+                    required: "Branch is required",
                   })}
                   id="branchId"
-                  name="branchId"
                   className={`mt-1 p-2 w-full border ${
                     errors.branchId ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
-                  disabled={branchLoading}
                 >
-                  <option value="">
-                    {branchLoading ? "Loading branches..." : "Select Branch"}
-                  </option>
-                  {branches?.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.branchName}
-                    </option>
-                  ))}
+                  <option value="">Select Branch</option>
+                  {selectedOrgId &&
+                    filteredBranches?.map((branch) => (
+                      <option key={branch.id} value={branch.id}>
+                        {branch.branchName}
+                      </option>
+                    ))}
                 </select>
                 {errors.branchId && (
                   <p className="text-red-500 text-sm mt-1">
@@ -166,7 +188,7 @@ const AddDepartment = ({ onClose }) => {
             </div>
 
             <hr className="mt-4" />
-            <div className="flex justify-end gap-4 md:mt-6 mt-4 mb-2 mr-5">
+            <div className="flex justify-end gap-4 mt-6 mb-2 mr-5">
               <button
                 type="button"
                 onClick={handleClose}

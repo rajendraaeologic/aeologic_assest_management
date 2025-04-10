@@ -19,6 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
 import { getAllBranches } from "../../Features/slices/branchSlice";
 import { deleteBranch } from "../../Features/slices/branchSlice";
+import ChipsList from "../../components/UI/ChipsList";
 
 const Branch = () => {
   const dispatch = useDispatch();
@@ -35,6 +36,11 @@ const Branch = () => {
 
   const [isAddBranch, setIsAddBranch] = useState(false);
   const [isUpdateBranch, setIsUpdateBranch] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [branchToDelete, setBranchToDelete] = useState(null);
+  const [showSelectFirstPopup, setShowSelectFirstPopup] = useState(false);
+  const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
 
   const options = ["5", "10", "25", "50", "100"];
   const totalPages = Math.ceil(branches.length / rowsPerPage);
@@ -48,6 +54,22 @@ const Branch = () => {
     assetName: "",
     status: "",
   });
+
+  useEffect(() => {
+    if (
+      showDeleteConfirmation ||
+      showSelectFirstPopup ||
+      showDeleteSuccessPopup
+    ) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showDeleteConfirmation, showSelectFirstPopup, showDeleteSuccessPopup]);
 
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
@@ -119,7 +141,11 @@ const Branch = () => {
   };
 
   const handleDeleteSelectedBranches = () => {
-    dispatch(deleteBranch(selectedBranches));
+    if (selectedBranches.length === 0) {
+      setShowSelectFirstPopup(true);
+      return;
+    }
+    setShowDeleteConfirmation(true);
   };
 
   const handleSelectAllBranches = (e) => {
@@ -138,6 +164,38 @@ const Branch = () => {
     dispatch(setSelectedBranch(branch));
   };
 
+  const handleDeleteClick = (branch) => {
+    setBranchToDelete(branch.id);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDelete = () => {
+    if (branchToDelete) {
+      dispatch(deleteBranch([branchToDelete]));
+      setDeleteMessage("Branch deleted successfully!");
+    } else if (selectedBranches.length > 0) {
+      dispatch(deleteBranch(selectedBranches));
+      setDeleteMessage(
+        `${selectedBranches.length} branches deleted successfully!`
+      );
+    }
+    setShowDeleteConfirmation(false);
+    setBranchToDelete(null);
+    setShowDeleteSuccessPopup(true);
+    setTimeout(() => {
+      setShowDeleteSuccessPopup(false);
+    }, 2000);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirmation(false);
+    setBranchToDelete(null);
+  };
+
+  const closeSelectFirstPopup = () => {
+    setShowSelectFirstPopup(false);
+  };
+
   return (
     <div
       className={`w-full min-h-screen bg-slate-100 px-2 ${
@@ -147,8 +205,8 @@ const Branch = () => {
       <div
         className={`mx-auto min-h-screen ${
           isSidebarOpen
-            ? "lg:w-[78%] md:ml-[260px] md:w-[65%]"
-            : "lg:w-[90%] md:w-[50%] md:ml-[100px]"
+            ? "pl-0 md:pl-[250px] lg:pl-[250px]"
+            : "pl-0 md:pl-[90px] lg:pl-[90px]"
         }`}
       >
         <div className="pt-24">
@@ -189,7 +247,7 @@ const Branch = () => {
                 onChange={(e) =>
                   dispatch(setRowsPerPage(parseInt(e.target.value)))
                 }
-                className="outline-none px-6"
+                className="outline-none px-1"
               >
                 {options.map((option, index) => (
                   <option key={index} value={option}>
@@ -203,7 +261,7 @@ const Branch = () => {
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
             <table
-              className="table-auto min-w-max text-left border-collapse"
+              className="table-auto min-w-full text-left border-collapse"
               style={{ tableLayout: "fixed" }}
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
@@ -213,7 +271,7 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
                     }}
                   >
                     Branch Name
@@ -223,7 +281,7 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
                     }}
                   >
                     Branch Location
@@ -233,7 +291,7 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
                     }}
                   >
                     Organization Name
@@ -243,17 +301,18 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
                     }}
                   >
                     Department Name
                   </th>
-                  <th
+                  {/* <th
                     className="px-2 py-4 border border-gray-300"
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                     overflowWrap: "break-word",
+
                     }}
                   >
                     User Name
@@ -263,7 +322,8 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                     overflowWrap: "break-word",
+
                     }}
                   >
                     Asset Name
@@ -273,17 +333,18 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                     overflowWrap: "break-word",
+
                     }}
                   >
                     Asset Status
-                  </th>
+                  </th> */}
                   <th
                     className="px-2 py-4 border border-gray-300"
                     style={{
                       maxWidth: "100px",
                       minWidth: "100px",
-                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
                     }}
                   >
                     Action
@@ -293,27 +354,10 @@ const Branch = () => {
                     style={{
                       maxWidth: "100px",
                       minWidth: "100px",
-                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
                     }}
                   >
-                    <div className="flex justify-center items-center">
-                      <div className="">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedBranches.length === branches.length &&
-                              branches.length > 0
-                            }
-                            onChange={handleSelectAllBranches}
-                            className="mr-2"
-                          />
-                        </label>
-                      </div>
-                      <button onClick={handleDeleteSelectedBranches}>
-                        <MdDelete className="h-6 w-6" />
-                      </button>
-                    </div>
+                    Delete All
                   </th>
                 </tr>
               </thead>
@@ -326,7 +370,7 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
                     }}
                   >
                     <input
@@ -344,7 +388,7 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
                     }}
                   >
                     <input
@@ -362,7 +406,7 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
                     }}
                   >
                     <input
@@ -380,7 +424,7 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
                     }}
                   >
                     <input
@@ -393,12 +437,13 @@ const Branch = () => {
                       style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td
+                  {/* <td
                     className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                     overflowWrap: "break-word",
+
                     }}
                   >
                     <input
@@ -416,7 +461,8 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                     overflowWrap: "break-word",
+
                     }}
                   >
                     <input
@@ -434,7 +480,8 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                      wordWrap: "break-word",
+                     overflowWrap: "break-word",
+
                     }}
                   >
                     <input
@@ -446,15 +493,34 @@ const Branch = () => {
                       onChange={handleSearchChange}
                       style={{ maxWidth: "100%" }}
                     />
+                  </td> */}
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                  ></td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      <div className="">
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedBranches.length === branches.length &&
+                              branches.length > 0
+                            }
+                            onChange={handleSelectAllBranches}
+                            className="mr-2"
+                          />
+                        </label>
+                      </div>
+                      <button onClick={handleDeleteSelectedBranches}>
+                        <MdDelete className="h-6 w-6  text-[red]" />
+                      </button>
+                    </div>
                   </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  ></td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  ></td>
                 </tr>
               </tbody>
 
@@ -472,7 +538,9 @@ const Branch = () => {
                       style={{
                         maxWidth: "180px",
                         minWidth: "120px",
-                        wordWrap: "break-word",
+                        overflowWrap: "break-word",
+
+                        verticalAlign: "top",
                       }}
                     >
                       {branch.branchName}
@@ -482,7 +550,9 @@ const Branch = () => {
                       style={{
                         maxWidth: "180px",
                         minWidth: "120px",
-                        wordWrap: "break-word",
+                        overflowWrap: "break-word",
+
+                        verticalAlign: "top",
                       }}
                     >
                       {branch.branchLocation}
@@ -492,7 +562,9 @@ const Branch = () => {
                       style={{
                         maxWidth: "180px",
                         minWidth: "120px",
-                        wordWrap: "break-word",
+                        overflowWrap: "break-word",
+
+                        verticalAlign: "top",
                       }}
                     >
                       {branch.company?.organizationName || "N/A"}
@@ -502,19 +574,25 @@ const Branch = () => {
                       style={{
                         maxWidth: "180px",
                         minWidth: "120px",
-                        wordWrap: "break-word",
+                        overflowWrap: "break-word",
+
+                        verticalAlign: "top",
                       }}
                     >
-                      {branch.departments
-                        ?.map((dept) => dept.departmentName)
-                        .join(", ") || "N/A"}
+                      <ChipsList
+                        items={branch.departments || []}
+                        labelKey="departmentName"
+                        emptyText="N/A"
+                      />
                     </td>
-                    <td
+                    {/* <td
                       className="px-2 py-2 border border-gray-300"
                       style={{
                         maxWidth: "180px",
                         minWidth: "120px",
-                        wordWrap: "break-word",
+                       overflowWrap: "break-word",
+
+                        verticalAlign: "top",
                       }}
                     >
                       {branch.users?.map((user) => user.userName).join(", ") ||
@@ -525,7 +603,9 @@ const Branch = () => {
                       style={{
                         maxWidth: "180px",
                         minWidth: "120px",
-                        wordWrap: "break-word",
+                       overflowWrap: "break-word",
+
+                        verticalAlign: "top",
                       }}
                     >
                       {branch.assets
@@ -537,28 +617,38 @@ const Branch = () => {
                       style={{
                         maxWidth: "180px",
                         minWidth: "120px",
-                        wordWrap: "break-word",
+                       overflowWrap: "break-word",
+
+                        verticalAlign: "top",
                       }}
                     >
                       {branch.assets?.map((asset) => asset.status).join(", ") ||
                         "N/A"}
-                    </td>
+                    </td> */}
                     <td
                       className="px-2 py-2 border border-gray-300"
                       style={{ maxWidth: "100px", wordWrap: "break-word" }}
                     >
-                      <button
-                        onClick={() => {
-                          setIsUpdateBranch(true);
-                          handlerUpdateData(branch);
-                        }}
-                        className="px-3 py-2 rounded-sm bg-[#3BC0C3]"
-                      >
-                        <FontAwesomeIcon icon={faPen} />
-                      </button>
+                      <div className="flex ">
+                        <button
+                          onClick={() => {
+                            setIsUpdateBranch(true);
+                            handlerUpdateData(branch);
+                          }}
+                          className="px-3 py-2 rounded-sm text-black"
+                        >
+                          <FontAwesomeIcon icon={faPen} />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClick(branch)}
+                          className="px-3 py-2 rounded-sm  text-[red]"
+                        >
+                          <MdDelete className="h-6 w-6" />
+                        </button>
+                      </div>
                     </td>
                     <td
-                      className="px-2 py-2 border border-gray-300"
+                      className="px-2 py-2 border text-center border-gray-300"
                       style={{ maxWidth: "100px", wordWrap: "break-word" }}
                     >
                       <input
@@ -616,9 +706,65 @@ const Branch = () => {
         </div>
       </div>
 
+      {/* Modals */}
       {isAddBranch && <AddBranch onClose={() => setIsAddBranch(false)} />}
       {isUpdateBranch && (
         <UpdateBranch onClose={() => setIsUpdateBranch(false)} />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">
+              {branchToDelete
+                ? "Are you sure you want to delete this branch?"
+                : `Are you sure you want to delete ${selectedBranches.length} selected branches?`}
+            </h3>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 bg-gray-300 rounded-md"
+              >
+                No
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-500 text-white rounded-md"
+              >
+                Yes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Select First Popup */}
+      {showSelectFirstPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">
+              Please select branches first before deleting
+            </h3>
+            <div className="flex justify-end">
+              <button
+                onClick={closeSelectFirstPopup}
+                className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Success Popup */}
+      {showDeleteSuccessPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">{deleteMessage}</h3>
+          </div>
+        </div>
       )}
     </div>
   );

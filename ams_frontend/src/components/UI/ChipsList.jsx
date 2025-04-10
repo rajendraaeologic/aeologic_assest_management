@@ -24,8 +24,8 @@ const ChipsList = ({ items = [], labelKey = "label", emptyText = "N/A" }) => {
               color: "#003333",
               fontWeight: 500,
               fontSize: "0.9rem",
-              borderRadius: "4px", // 🔷 Rectangle style
-              height: "28px", // optional: uniform height
+              borderRadius: "4px",
+              height: "28px",
             }}
           />
         );

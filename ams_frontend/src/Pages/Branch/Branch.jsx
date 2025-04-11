@@ -20,6 +20,7 @@ import { MdDelete } from "react-icons/md";
 import { getAllBranches } from "../../Features/slices/branchSlice";
 import { deleteBranch } from "../../Features/slices/branchSlice";
 import ChipsList from "../../components/UI/ChipsList";
+import branchStrings from "../../locales/branchStrings";
 
 const Branch = () => {
   const dispatch = useDispatch();
@@ -50,9 +51,9 @@ const Branch = () => {
     branchLocation: "",
     organizationName: "",
     departmentName: "",
-    userName: "",
-    assetName: "",
-    status: "",
+    // userName: "",
+    // assetName: "",
+    // status: "",
   });
 
   useEffect(() => {
@@ -99,26 +100,26 @@ const Branch = () => {
             .toLowerCase()
             .includes(searchBranch.departmentName.toLowerCase())
         ) ||
-        false) &&
-      (searchBranch.userName === "" ||
-        branch.users?.some((user) =>
-          user.userName
-            .toLowerCase()
-            .includes(searchBranch.userName.toLowerCase())
-        ) ||
-        false) &&
-      (searchBranch.assetName === "" ||
-        branch.assets?.some((asset) =>
-          asset.assetName
-            .toLowerCase()
-            .includes(searchBranch.assetName.toLowerCase())
-        ) ||
-        false) &&
-      (searchBranch.status === "" ||
-        branch.assets?.some((asset) =>
-          asset.status.toLowerCase().includes(searchBranch.status.toLowerCase())
-        ) ||
         false)
+      // &(searchBranch.userName === "" ||
+      //   branch.users?.some((user) =>
+      //     user.userName
+      //       .toLowerCase()
+      //       .includes(searchBranch.userName.toLowerCase())
+      //   ) ||
+      //   false) &&
+      // (searchBranch.assetName === "" ||
+      //   branch.assets?.some((asset) =>
+      //     asset.assetName
+      //       .toLowerCase()
+      //       .includes(searchBranch.assetName.toLowerCase())
+      //   ) ||
+      //   false) &&
+      // (searchBranch.status === "" ||
+      //   branch.assets?.some((asset) =>
+      //     asset.status.toLowerCase().includes(searchBranch.status.toLowerCase())
+      //   ) ||
+      //   false)
     );
   });
 
@@ -172,11 +173,14 @@ const Branch = () => {
   const confirmDelete = () => {
     if (branchToDelete) {
       dispatch(deleteBranch([branchToDelete]));
-      setDeleteMessage("Branch deleted successfully!");
+      setDeleteMessage(branchStrings.branch.modals.deleteSuccess.single);
     } else if (selectedBranches.length > 0) {
       dispatch(deleteBranch(selectedBranches));
       setDeleteMessage(
-        `${selectedBranches.length} branches deleted successfully!`
+        branchStrings.branch.modals.deleteSuccess.multiple.replace(
+          "{count}",
+          selectedBranches.length
+        )
       );
     }
     setShowDeleteConfirmation(false);
@@ -212,7 +216,7 @@ const Branch = () => {
         <div className="pt-24">
           <div className="flex justify-between mx-5 mt-2">
             <h3 className="text-xl font-semibold text-[#6c757D]">
-              Branch List
+              {branchStrings.branch.title}
             </h3>
             <div className="flex gap-3 md:mr-8">
               <button className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg">
@@ -222,25 +226,27 @@ const Branch = () => {
                 onClick={() => setIsAddBranch(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
               >
-                Add Branch
+                {branchStrings.branch.buttons.addBranch}
               </button>
             </div>
           </div>
 
           <div className="mx-5 flex gap-2 mb-4">
             <button onClick={handleNavigate} className="text-[#6c757D]">
-              Dashboard
+              {branchStrings.branch.breadcrumb.dashboard}
             </button>
             <span>
               <MdKeyboardArrowLeft className="h-6 w-6" />
             </span>
-            <p className="text-[#6c757D]">Branch</p>
+            <p className="text-[#6c757D]">
+              {branchStrings.branch.breadcrumb.branch}
+            </p>
           </div>
         </div>
 
         <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
           <div className="flex items-center gap-2 pt-8 ml-3">
-            <p>Show</p>
+            <p>{branchStrings.branch.table.showEntries}</p>
             <div className="border-2 flex justify-evenly">
               <select
                 value={rowsPerPage}
@@ -256,7 +262,7 @@ const Branch = () => {
                 ))}
               </select>
             </div>
-            <p>Entries</p>
+            <p>{branchStrings.branch.table.entries}</p>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
@@ -274,7 +280,7 @@ const Branch = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Branch Name
+                    {branchStrings.branch.table.headers.branchName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -284,7 +290,7 @@ const Branch = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Branch Location
+                    {branchStrings.branch.table.headers.branchLocation}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -294,7 +300,7 @@ const Branch = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Organization Name
+                    {branchStrings.branch.table.headers.organizationName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -304,40 +310,37 @@ const Branch = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Department Name
+                    {branchStrings.branch.table.headers.departmentName}
                   </th>
                   {/* <th
                     className="px-2 py-4 border border-gray-300"
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
-                    User Name
+                    {branchStrings.branch.table.headers.userName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
-                    Asset Name
+                    {branchStrings.branch.table.headers.assetName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
-                    Asset Status
+                    {branchStrings.branch.table.headers.assetStatus}
                   </th> */}
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -347,7 +350,7 @@ const Branch = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Action
+                    {branchStrings.branch.table.headers.action}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -357,7 +360,7 @@ const Branch = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Delete All
+                    {branchStrings.branch.table.headers.deleteAll}
                   </th>
                 </tr>
               </thead>
@@ -376,7 +379,9 @@ const Branch = () => {
                     <input
                       type="text"
                       name="branchName"
-                      placeholder="Branch Name"
+                      placeholder={
+                        branchStrings.branch.table.searchPlaceholders.branchName
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.branchName}
                       onChange={handleSearchChange}
@@ -394,7 +399,10 @@ const Branch = () => {
                     <input
                       type="text"
                       name="branchLocation"
-                      placeholder="Branch Location"
+                      placeholder={
+                        branchStrings.branch.table.searchPlaceholders
+                          .branchLocation
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.branchLocation}
                       onChange={handleSearchChange}
@@ -412,7 +420,10 @@ const Branch = () => {
                     <input
                       type="text"
                       name="organizationName"
-                      placeholder="Organization Name"
+                      placeholder={
+                        branchStrings.branch.table.searchPlaceholders
+                          .organizationName
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.organizationName}
                       onChange={handleSearchChange}
@@ -430,7 +441,10 @@ const Branch = () => {
                     <input
                       type="text"
                       name="departmentName"
-                      placeholder="Department Name"
+                      placeholder={
+                        branchStrings.branch.table.searchPlaceholders
+                          .departmentName
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.departmentName}
                       onChange={handleSearchChange}
@@ -442,14 +456,15 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
                     <input
                       type="text"
                       name="userName"
-                      placeholder="User Name"
+                      placeholder={
+                        branchStrings.branch.table.searchPlaceholders.userName
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.userName}
                       onChange={handleSearchChange}
@@ -461,14 +476,15 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
                     <input
                       type="text"
                       name="assetName"
-                      placeholder="Asset Name"
+                      placeholder={
+                        branchStrings.branch.table.searchPlaceholders.assetName
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.assetName}
                       onChange={handleSearchChange}
@@ -480,14 +496,15 @@ const Branch = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
                     <input
                       type="text"
                       name="status"
-                      placeholder="Asset Status"
+                      placeholder={
+                        branchStrings.branch.table.searchPlaceholders.status
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchBranch.status}
                       onChange={handleSearchChange}
@@ -526,139 +543,150 @@ const Branch = () => {
 
               {/* Table Body */}
               <tbody>
-                {currentRows.map((branch, index) => (
-                  <tr
-                    key={branch.id || index}
-                    className={`${
-                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-200 divide-y divide-gray-300`}
-                  >
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
+                {currentRows.length > 0 ? (
+                  currentRows.map((branch, index) => (
+                    <tr
+                      key={branch.id || index}
+                      className={`${
+                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      {branch.branchName}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {branch.branchLocation}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {branch.company?.organizationName || "N/A"}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      <ChipsList
-                        items={branch.departments || []}
-                        labelKey="departmentName"
-                        emptyText="N/A"
-                      />
-                    </td>
-                    {/* <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                       overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {branch.users?.map((user) => user.userName).join(", ") ||
-                        "N/A"}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                       overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {branch.assets
-                        ?.map((asset) => asset.assetName)
-                        .join(", ") || "N/A"}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                       overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {branch.assets?.map((asset) => asset.status).join(", ") ||
-                        "N/A"}
-                    </td> */}
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                    >
-                      <div className="flex ">
-                        <button
-                          onClick={() => {
-                            setIsUpdateBranch(true);
-                            handlerUpdateData(branch);
-                          }}
-                          className="px-3 py-2 rounded-sm text-black"
-                        >
-                          <FontAwesomeIcon icon={faPen} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(branch)}
-                          className="px-3 py-2 rounded-sm  text-[red]"
-                        >
-                          <MdDelete className="h-6 w-6" />
-                        </button>
-                      </div>
-                    </td>
-                    <td
-                      className="px-2 py-2 border text-center border-gray-300"
-                      style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedBranches?.includes(branch.id) ?? false}
-                        onChange={() => handleToggleBranchSelection(branch.id)}
-                      />
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {branch.branchName}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {branch.branchLocation}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {branch.company?.organizationName ||
+                          branchStrings.branch.chipsList.emptyText}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        <ChipsList
+                          items={branch.departments || []}
+                          labelKey="departmentName"
+                          emptyText={branchStrings.branch.chipsList.emptyText}
+                        />
+                      </td>
+                      {/* <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {branch.users
+                          ?.map((user) => user.userName)
+                          .join(", ") ||
+                          branchStrings.branch.chipsList.emptyText}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {branch.assets
+                          ?.map((asset) => asset.assetName)
+                          .join(", ") ||
+                          branchStrings.branch.chipsList.emptyText}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {branch.assets
+                          ?.map((asset) => asset.status)
+                          .join(", ") ||
+                          branchStrings.branch.chipsList.emptyText}
+                      </td> */}
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                      >
+                        <div className="flex ">
+                          <button
+                            onClick={() => {
+                              setIsUpdateBranch(true);
+                              handlerUpdateData(branch);
+                            }}
+                            className="px-3 py-2 rounded-sm text-black"
+                          >
+                            <FontAwesomeIcon icon={faPen} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(branch)}
+                            className="px-3 py-2 rounded-sm  text-[red]"
+                          >
+                            <MdDelete className="h-6 w-6" />
+                          </button>
+                        </div>
+                      </td>
+                      <td
+                        className="px-2 py-2 border text-center border-gray-300"
+                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedBranches?.includes(branch.id) ?? false
+                          }
+                          onChange={() =>
+                            handleToggleBranchSelection(branch.id)
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="9" className="text-center py-4">
+                      {branchStrings.branch.table.noData}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -671,7 +699,7 @@ const Branch = () => {
                 disabled={currentPage === 0}
                 className="text-black"
               >
-                Previous
+                {branchStrings.branch.buttons.previous}
               </button>
               <span className="px-2 space-x-1">
                 <span
@@ -699,7 +727,7 @@ const Branch = () => {
                 disabled={currentPage + 1 === totalPages}
                 className="text-black"
               >
-                Next
+                {branchStrings.branch.buttons.next}
               </button>
             </div>
           </div>
@@ -718,21 +746,24 @@ const Branch = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold mb-4">
               {branchToDelete
-                ? "Are you sure you want to delete this branch?"
-                : `Are you sure you want to delete ${selectedBranches.length} selected branches?`}
+                ? branchStrings.branch.modals.deleteConfirmation.single
+                : branchStrings.branch.modals.deleteConfirmation.multiple.replace(
+                    "{count}",
+                    selectedBranches.length
+                  )}
             </h3>
             <div className="flex justify-end gap-4">
               <button
                 onClick={cancelDelete}
                 className="px-4 py-2 bg-gray-300 rounded-md"
               >
-                No
+                {branchStrings.branch.buttons.no}
               </button>
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-500 text-white rounded-md"
               >
-                Yes
+                {branchStrings.branch.buttons.yes}
               </button>
             </div>
           </div>
@@ -744,14 +775,14 @@ const Branch = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold mb-4">
-              Please select branches first before deleting
+              {branchStrings.branch.modals.selectFirst}
             </h3>
             <div className="flex justify-end">
               <button
                 onClick={closeSelectFirstPopup}
                 className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
               >
-                OK
+                {branchStrings.branch.buttons.ok}
               </button>
             </div>
           </div>

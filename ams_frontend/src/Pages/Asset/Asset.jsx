@@ -19,11 +19,13 @@ import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
 import { getAllAssets } from "../../Features/slices/assetSlice";
 import { deleteAsset } from "../../Features/slices/assetSlice";
+import assetStrings from "../../locales/assetStrings";
 
 const Asset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isSidebarOpen } = useContext(SliderContext);
+  const strings = assetStrings.asset;
 
   const { assets, selectedAssets, currentPage, rowsPerPage } = useSelector(
     (state) => state.assetUserData
@@ -162,10 +164,15 @@ const Asset = () => {
   const confirmDelete = () => {
     if (assetToDelete) {
       dispatch(deleteAsset([assetToDelete]));
-      setDeleteMessage("Asset deleted successfully!");
+      setDeleteMessage(strings.modals.deleteSuccess.single);
     } else if (selectedAssets.length > 0) {
       dispatch(deleteAsset(selectedAssets));
-      setDeleteMessage(`${selectedAssets.length} assets deleted successfully!`);
+      setDeleteMessage(
+        strings.modals.deleteSuccess.multiple.replace(
+          "{count}",
+          selectedAssets.length
+        )
+      );
     }
     setShowDeleteConfirmation(false);
     setAssetToDelete(null);
@@ -199,7 +206,9 @@ const Asset = () => {
       >
         <div className="pt-24">
           <div className="flex justify-between mx-5 mt-2">
-            <h3 className="text-xl font-semibold text-[#6c757D]">Asset List</h3>
+            <h3 className="text-xl font-semibold text-[#6c757D]">
+              {strings.title}
+            </h3>
             <div className="flex gap-3 md:mr-8">
               <button className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg">
                 <CiSaveUp2 className="h-6 w-6" />
@@ -208,25 +217,25 @@ const Asset = () => {
                 onClick={() => setIsAddAsset(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
               >
-                Add Asset
+                {strings.buttons.addAsset}
               </button>
             </div>
           </div>
 
           <div className="mx-5 flex gap-2 mb-4">
             <button onClick={handleNavigate} className="text-[#6c757D]">
-              Dashboard
+              {strings.breadcrumb.dashboard}
             </button>
             <span>
               <MdKeyboardArrowLeft className="h-6 w-6" />
             </span>
-            <p className="text-[#6c757D]">Asset</p>
+            <p className="text-[#6c757D]">{strings.breadcrumb.asset}</p>
           </div>
         </div>
 
         <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
           <div className="flex items-center gap-2 pt-8 ml-3">
-            <p>Show</p>
+            <p>{strings.table.showEntries}</p>
             <div className="border-2 flex justify-evenly">
               <select
                 value={rowsPerPage}
@@ -242,7 +251,7 @@ const Asset = () => {
                 ))}
               </select>
             </div>
-            <p>Entries</p>
+            <p>{strings.table.entries}</p>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
@@ -260,7 +269,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Asset Name
+                    {strings.table.headers.assetName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -270,7 +279,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Unique ID
+                    {strings.table.headers.uniqueId}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -280,7 +289,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Brand
+                    {strings.table.headers.brand}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -290,7 +299,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Model
+                    {strings.table.headers.model}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -300,7 +309,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Serial Number
+                    {strings.table.headers.serialNumber}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -310,7 +319,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Status
+                    {strings.table.headers.status}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -320,7 +329,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Assigned To
+                    {strings.table.headers.assignedUser}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -330,7 +339,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Location
+                    {strings.table.headers.assetLocation}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -340,7 +349,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Branch
+                    {strings.table.headers.branch}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -350,7 +359,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Department
+                    {strings.table.headers.department}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -360,7 +369,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Action
+                    {strings.table.headers.action}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -370,7 +379,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Delete All
+                    {strings.table.headers.deleteAll}
                   </th>
                 </tr>
               </thead>
@@ -389,7 +398,7 @@ const Asset = () => {
                     <input
                       type="text"
                       name="assetName"
-                      placeholder="Asset Name"
+                      placeholder={strings.table.searchPlaceholders.assetName}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchAsset.assetName}
                       onChange={handleSearchChange}
@@ -407,7 +416,7 @@ const Asset = () => {
                     <input
                       type="text"
                       name="uniqueId"
-                      placeholder="Unique ID"
+                      placeholder={strings.table.searchPlaceholders.uniqueId}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchAsset.uniqueId}
                       onChange={handleSearchChange}
@@ -425,7 +434,7 @@ const Asset = () => {
                     <input
                       type="text"
                       name="brand"
-                      placeholder="Brand"
+                      placeholder={strings.table.searchPlaceholders.brand}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchAsset.brand}
                       onChange={handleSearchChange}
@@ -443,7 +452,7 @@ const Asset = () => {
                     <input
                       type="text"
                       name="model"
-                      placeholder="Model"
+                      placeholder={strings.table.searchPlaceholders.model}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchAsset.model}
                       onChange={handleSearchChange}
@@ -461,7 +470,9 @@ const Asset = () => {
                     <input
                       type="text"
                       name="serialNumber"
-                      placeholder="Serial Number"
+                      placeholder={
+                        strings.table.searchPlaceholders.serialNumber
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchAsset.serialNumber}
                       onChange={handleSearchChange}
@@ -479,7 +490,7 @@ const Asset = () => {
                     <input
                       type="text"
                       name="status"
-                      placeholder="Status"
+                      placeholder={strings.table.searchPlaceholders.status}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchAsset.status}
                       onChange={handleSearchChange}
@@ -497,7 +508,9 @@ const Asset = () => {
                     <input
                       type="text"
                       name="assignedUser"
-                      placeholder="Assigned To"
+                      placeholder={
+                        strings.table.searchPlaceholders.assignedUser
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchAsset.assignedUser}
                       onChange={handleSearchChange}
@@ -515,7 +528,9 @@ const Asset = () => {
                     <input
                       type="text"
                       name="assetLocation"
-                      placeholder="Location"
+                      placeholder={
+                        strings.table.searchPlaceholders.assetLocation
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchAsset.assetLocation}
                       onChange={handleSearchChange}
@@ -533,7 +548,7 @@ const Asset = () => {
                     <input
                       type="text"
                       name="branch"
-                      placeholder="Branch"
+                      placeholder={strings.table.searchPlaceholders.branch}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchAsset.branch}
                       onChange={handleSearchChange}
@@ -551,7 +566,7 @@ const Asset = () => {
                     <input
                       type="text"
                       name="department"
-                      placeholder="Department"
+                      placeholder={strings.table.searchPlaceholders.department}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchAsset.department}
                       onChange={handleSearchChange}
@@ -590,144 +605,158 @@ const Asset = () => {
 
               {/* Table Body */}
               <tbody>
-                {currentRows.map((asset, index) => (
-                  <tr
-                    key={asset.id}
-                    className={`${
-                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-200 divide-y divide-gray-300`}
-                  >
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-                      }}
+                {currentRows.length > 0 ? (
+                  currentRows.map((asset, index) => (
+                    <tr
+                      key={asset.id}
+                      className={`${
+                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      {asset.assetName}
-                    </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.assetName}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.uniqueId}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.brand}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.model}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.serialNumber}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.status}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.assignedUser?.userName ||
+                          strings.table.unassigned}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.assetLocation?.locationName ||
+                          strings.table.notAvailable}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.branch?.branchName || strings.table.notAvailable}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.department?.departmentName ||
+                          strings.table.notAvailable}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                      >
+                        <div className="flex ">
+                          <button
+                            onClick={() => handleEditAsset(asset)}
+                            className="px-3 py-2 rounded-sm "
+                          >
+                            <FontAwesomeIcon icon={faPen} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(asset)}
+                            className="px-3 py-2 rounded-sm text-[red]"
+                          >
+                            <MdDelete className="h-6 w-6" />
+                          </button>
+                        </div>
+                      </td>
+                      <td
+                        className="px-2 py-2 border text-center border-gray-300"
+                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedAssets?.includes(asset.id) ?? false}
+                          onChange={() => handleToggleAssetSelection(asset.id)}
+                        />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
                     <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-                      }}
+                      colSpan="12"
+                      className="px-2 py-4 text-center border border-gray-300"
                     >
-                      {asset.uniqueId}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {asset.brand}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {asset.model}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {asset.serialNumber}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {asset.status}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {asset.assignedUser?.userName || "Unassigned"}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {asset.assetLocation?.locationName || "-"}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {asset.branch?.branchName || "-"}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {asset.department?.departmentName || "-"}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                    >
-                      <div className="flex ">
-                        <button
-                          onClick={() => handleEditAsset(asset)}
-                          className="px-3 py-2 rounded-sm "
-                        >
-                          <FontAwesomeIcon icon={faPen} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(asset)}
-                          className="px-3 py-2 rounded-sm text-[red]"
-                        >
-                          <MdDelete className="h-6 w-6" />
-                        </button>
-                      </div>
-                    </td>
-                    <td
-                      className="px-2 py-2 border text-center border-gray-300"
-                      style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedAssets?.includes(asset.id) ?? false}
-                        onChange={() => handleToggleAssetSelection(asset.id)}
-                      />
+                      {strings.table.noData}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -740,7 +769,7 @@ const Asset = () => {
                 disabled={currentPage === 0}
                 className="text-black"
               >
-                Previous
+                {strings.buttons.previous}
               </button>
               <span className="px-2 space-x-1">
                 <span
@@ -767,7 +796,7 @@ const Asset = () => {
                 disabled={currentPage + 1 === totalPages}
                 className="text-black"
               >
-                Next
+                {strings.buttons.next}
               </button>
             </div>
           </div>
@@ -793,21 +822,24 @@ const Asset = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold mb-4">
               {assetToDelete
-                ? "Are you sure you want to delete this asset?"
-                : `Are you sure you want to delete ${selectedAssets.length} selected assets?`}
+                ? strings.modals.deleteConfirmation.single
+                : strings.modals.deleteConfirmation.multiple.replace(
+                    "{count}",
+                    selectedAssets.length
+                  )}
             </h3>
             <div className="flex justify-end gap-4">
               <button
                 onClick={cancelDelete}
                 className="px-4 py-2 bg-gray-300 rounded-md"
               >
-                No
+                {strings.buttons.no}
               </button>
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-500 text-white rounded-md"
               >
-                Yes
+                {strings.buttons.yes}
               </button>
             </div>
           </div>
@@ -819,14 +851,14 @@ const Asset = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold mb-4">
-              Please select assets first before deleting
+              {strings.modals.selectFirst}
             </h3>
             <div className="flex justify-end">
               <button
                 onClick={closeSelectFirstPopup}
                 className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
               >
-                OK
+                {strings.buttons.ok}
               </button>
             </div>
           </div>

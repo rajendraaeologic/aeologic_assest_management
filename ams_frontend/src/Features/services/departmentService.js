@@ -8,26 +8,20 @@ export const createDepartmentService = async (data) => {
   return response.data;
 };
 
-export const getAllDepartmentsService = async (queryParams = {}) => {
-  const response = await API.get("/department/getAllDepartments", {
-    params: queryParams,
-  });
+export const getAllDepartmentsService = async () => {
+  const response = await API.get("/department/getAllDepartments");
   return response.data;
 };
 
 export const updateDepartmentService = async (data) => {
-  try {
-    const updatePayload = {
-      departmentName: data.departmentName,
-    };
-    const response = await API.put(
-      `/department/${data.departmentId}`,
-      updatePayload
-    );
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || "Error updating Department";
-  }
+  const updatePayload = {
+    departmentName: data.departmentName,
+  };
+  const response = await API.put(
+    `/department/${data.departmentId}`,
+    updatePayload
+  );
+  return response.data;
 };
 
 export const deleteDepartmentService = async (ids) => {
@@ -52,7 +46,7 @@ export const deleteDepartmentService = async (ids) => {
   } catch (error) {
     console.error("Delete Error:", error.response?.data);
     const errorMsg =
-      error.response?.data?.message || "Error deleting Department(s)";
+      error.response?.data?.message || "Error deleting department(s)";
     throw new Error(errorMsg);
   }
 };

@@ -4,27 +4,19 @@ export const createBranchService = async (data) => {
   const response = await API.post("/branch/createBranch", data);
   return response.data;
 };
+
 export const getAllBranchesService = async () => {
   const response = await API.get("/branch/getAllBranches");
   return response.data;
 };
 
 export const updateBranchService = async (data) => {
-  try {
-    const updatePayload = {
-      branchName: data.branchName,
-      branchLocation: data.branchLocation,
-    };
-
-    const response = await API.put(`/branch/${data.id}`, updatePayload);
-    return response.data;
-  } catch (error) {
-    console.error(
-      "Update Branch Error:",
-      error.response?.data || error.message
-    );
-    throw error.response?.data || error.message;
-  }
+  const updatePayload = {
+    branchName: data.branchName,
+    branchLocation: data.branchLocation,
+  };
+  const response = await API.put(`/branch/${data.id}`, updatePayload);
+  return response.data;
 };
 
 export const deleteBranchService = async (ids) => {
@@ -41,7 +33,6 @@ export const deleteBranchService = async (ids) => {
       const response = await API.post("/branch/bulk-delete", {
         branchIds: idsArray,
       });
-
       return {
         ...response.data,
         success: true,
@@ -50,7 +41,7 @@ export const deleteBranchService = async (ids) => {
   } catch (error) {
     console.error("Delete Error:", error.response?.data);
     const errorMsg =
-      error.response?.data?.message || "Error deleting branchs(s)";
+      error.response?.data?.message || "Error deleting branch(s)";
     throw new Error(errorMsg);
   }
 };

@@ -1,9 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
-import { updateAsset, setSelectedAsset } from "../../Features/slices/assetSlice";
+import {
+  updateAsset,
+  setSelectedAsset,
+} from "../../Features/slices/assetSlice";
 import { toast } from "react-toastify";
 import API from "../../App/api/axiosInstance";
+import assetStrings from "../../locales/assetStrings";
+import { useForm } from "react-hook-form";
 
 const UpdateAsset = ({ onClose, onSuccess }) => {
   const dispatch = useDispatch();
@@ -13,34 +18,45 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
   const modalRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
-  // State for dynamic dropdowns
   const [branches, setBranches] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    uniqueId: "",
-    description: "",
-    brand: "",
-    model: "",
-    serialNumber: "",
-    status: "ACTIVE",
-    categoryId: "",
-    locationId: "",
-    assignedToUserId: "",
-    branchId: "",
-    departmentId: "",
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    watch,
+    setValue,
+    trigger,
+  } = useForm({
+    defaultValues: {
+      name: "",
+      uniqueId: "",
+      description: "",
+      brand: "",
+      model: "",
+      serialNumber: "",
+      status: "ACTIVE",
+      categoryId: "",
+      locationId: "",
+      assignedToUserId: "",
+      branchId: "",
+      departmentId: "",
+    },
   });
 
-  // Fetch branches on component mount
+  const watchBranchId = watch("branchId");
+  const watchDepartmentId = watch("departmentId");
+
   useEffect(() => {
     const fetchBranches = async () => {
       try {
         const response = await API.get("/branch");
         setBranches(response.data);
       } catch (error) {
-        console.error("Failed to fetch branches:", error);
+        console.error(assetStrings.addAsset.errorMessages.fetchBranches, error);
       }
     };
 
@@ -54,10 +70,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
     };
   }, []);
 
-  // Populate form when selectedAsset changes
   useEffect(() => {
     if (selectedAsset) {
-      setFormData({
+      reset({
         name: selectedAsset.name || "",
         uniqueId: selectedAsset.uniqueId || "",
         description: selectedAsset.description || "",
@@ -72,19 +87,16 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
         departmentId: selectedAsset.departmentId || "",
       });
 
-      // Fetch departments for the selected branch
       if (selectedAsset.branchId) {
         fetchDepartments(selectedAsset.branchId);
       }
 
-      // Fetch users for the selected department
       if (selectedAsset.departmentId) {
         fetchUsers(selectedAsset.departmentId);
       }
     }
-  }, [selectedAsset]);
+  }, [selectedAsset, reset]);
 
-  // Fetch departments when branch is selected
   const fetchDepartments = async (branchId) => {
     try {
       const response = await API.get(`/department?branchId=${branchId}`);
@@ -94,43 +106,36 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
     }
   };
 
-  // Fetch users when department is selected
   const fetchUsers = async (departmentId) => {
     try {
-      const response = await API.get(`/user?departmentId=${departmentId}&userRole=USER`);
+      const response = await API.get(
+        `/user?departmentId=${departmentId}&userRole=USER`
+      );
       setUsers(response.data);
     } catch (error) {
-      console.error("Failed to fetch users:", error);
+      console.error(assetStrings.addAsset.errorMessages.fetchUsers, error);
     }
   };
 
-  const handleBranchChange = (e) => {
-    const branchId = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      branchId,
-      departmentId: "",
-      assignedToUserId: ""
-    }));
-    setDepartments([]);
-    setUsers([]);
-    if (branchId) {
-      fetchDepartments(branchId);
+  useEffect(() => {
+    if (watchBranchId) {
+      fetchDepartments(watchBranchId);
+    } else {
+      setDepartments([]);
+      setUsers([]);
+      setValue("departmentId", "");
+      setValue("assignedToUserId", "");
     }
-  };
+  }, [watchBranchId, setValue]);
 
-  const handleDepartmentChange = (e) => {
-    const departmentId = e.target.value;
-    setFormData(prev => ({
-      ...prev,
-      departmentId,
-      assignedToUserId: ""
-    }));
-    setUsers([]);
-    if (departmentId) {
-      fetchUsers(departmentId);
+  useEffect(() => {
+    if (watchDepartmentId) {
+      fetchUsers(watchDepartmentId);
+    } else {
+      setUsers([]);
+      setValue("assignedToUserId", "");
     }
-  };
+  }, [watchDepartmentId, setValue]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -145,29 +150,20 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const onSubmit = async (data) => {
     setLoading(true);
     try {
       const updateData = {
         id: selectedAsset.id,
-        ...formData
+        ...data,
       };
 
       await dispatch(updateAsset(updateData)).unwrap();
-      toast.success("Asset updated successfully!");
-      onSuccess(); // Refresh the asset list
+      toast.success(assetStrings.updateAsset.toast.success);
+      onSuccess();
       handleClose();
     } catch (error) {
-      toast.error(error.message || "Failed to update asset");
+      toast.error(error.message || assetStrings.updateAsset.toast.error);
     } finally {
       setLoading(false);
     }
@@ -180,179 +176,209 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
       }`}
       onClick={handleOutsideClick}
     >
-      {/* Modal */}
       <div
         ref={modalRef}
         className={`mt-[20px] w-[820px] min-h-96 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
-        {/* Title and Close Button */}
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
-          <h2 className="text-[17px] font-semibold text-white">Edit Asset</h2>
+          <h2 className="text-[17px] font-semibold text-white">
+            {assetStrings.updateAsset.title}
+          </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
           </button>
         </div>
 
-        {/* Form Fields */}
         <div className="p-5 px-10">
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Basic Information */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Name*
+                  {assetStrings.updateAsset.formLabels.name}
                 </label>
                 <input
-                  ref={firstInputRef}
+                  ref={(e) => {
+                    firstInputRef.current = e;
+                    register("name", { required: "Name is required" }).ref(e);
+                  }}
                   type="text"
                   name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  required
+                  className={`mt-1 p-2 w-full border ${
+                    errors.name ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
                 />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.name.message}
+                  </p>
+                )}
               </div>
 
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Unique ID*
+                  {assetStrings.updateAsset.formLabels.uniqueId}
                 </label>
                 <input
                   type="text"
-                  name="uniqueId"
-                  value={formData.uniqueId}
-                  onChange={handleChange}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  required
+                  {...register("uniqueId", {
+                    required: "Unique ID is required",
+                  })}
+                  className={`mt-1 p-2 w-full border ${
+                    errors.uniqueId ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
                 />
+                {errors.uniqueId && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.uniqueId.message}
+                  </p>
+                )}
               </div>
 
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Brand
+                  {assetStrings.updateAsset.formLabels.brand}
                 </label>
                 <input
                   type="text"
-                  name="brand"
-                  value={formData.brand}
-                  onChange={handleChange}
+                  {...register("brand")}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                 />
               </div>
 
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Model
+                  {assetStrings.updateAsset.formLabels.model}
                 </label>
                 <input
                   type="text"
-                  name="model"
-                  value={formData.model}
-                  onChange={handleChange}
+                  {...register("model")}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                 />
               </div>
 
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Serial Number
+                  {assetStrings.updateAsset.formLabels.serialNumber}
                 </label>
                 <input
                   type="text"
-                  name="serialNumber"
-                  value={formData.serialNumber}
-                  onChange={handleChange}
+                  {...register("serialNumber")}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                 />
               </div>
 
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Status*
+                  {assetStrings.updateAsset.formLabels.status}
                 </label>
                 <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  required
+                  {...register("status", { required: "Status is required" })}
+                  className={`mt-1 p-2 w-full border ${
+                    errors.status ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
                 >
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                  <option value="UNDER_REPAIR">Under Repair</option>
+                  <option value="ACTIVE">
+                    {assetStrings.updateAsset.statusOptions.ACTIVE}
+                  </option>
+                  <option value="INACTIVE">
+                    {assetStrings.updateAsset.statusOptions.INACTIVE}
+                  </option>
+                  <option value="UNDER_REPAIR">
+                    {assetStrings.updateAsset.statusOptions.UNDER_REPAIR}
+                  </option>
                 </select>
+                {errors.status && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.status.message}
+                  </p>
+                )}
               </div>
 
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Description
+                  {assetStrings.updateAsset.formLabels.description}
                 </label>
                 <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
+                  {...register("description")}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                   rows={2}
                 />
               </div>
 
-              {/* Location Information */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Branch*
+                  {assetStrings.updateAsset.formLabels.branch}
                 </label>
                 <select
-                  name="branchId"
-                  value={formData.branchId}
-                  onChange={handleBranchChange}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  required
+                  {...register("branchId", { required: "Branch is required" })}
+                  className={`mt-1 p-2 w-full border ${
+                    errors.branchId ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
                 >
-                  <option value="">Select Branch</option>
-                  {branches.map(branch => (
+                  <option value="">
+                    {assetStrings.updateAsset.placeholders.selectBranch}
+                  </option>
+                  {branches.map((branch) => (
                     <option key={branch.id} value={branch.id}>
                       {branch.name}
                     </option>
                   ))}
                 </select>
+                {errors.branchId && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.branchId.message}
+                  </p>
+                )}
               </div>
 
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Department*
+                  {assetStrings.updateAsset.formLabels.department}
                 </label>
                 <select
-                  name="departmentId"
-                  value={formData.departmentId}
-                  onChange={handleDepartmentChange}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  required
-                  disabled={!formData.branchId}
+                  {...register("departmentId", {
+                    required: "Department is required",
+                    validate: (value) =>
+                      !watchBranchId ||
+                      value !== "" ||
+                      "Please select a department",
+                  })}
+                  className={`mt-1 p-2 w-full border ${
+                    errors.departmentId ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
+                  disabled={!watchBranchId}
                 >
-                  <option value="">Select Department</option>
-                  {departments.map(dept => (
+                  <option value="">
+                    {assetStrings.updateAsset.placeholders.selectDepartment}
+                  </option>
+                  {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>
                       {dept.name}
                     </option>
                   ))}
                 </select>
+                {errors.departmentId && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.departmentId.message}
+                  </p>
+                )}
               </div>
 
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Assigned To
+                  {assetStrings.updateAsset.formLabels.assignedTo}
                 </label>
                 <select
-                  name="assignedToUserId"
-                  value={formData.assignedToUserId}
-                  onChange={handleChange}
+                  {...register("assignedToUserId")}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  disabled={!formData.departmentId}
+                  disabled={!watchDepartmentId}
                 >
-                  <option value="">Select User</option>
-                  {users.map(user => (
+                  <option value="">
+                    {assetStrings.updateAsset.placeholders.selectUser}
+                  </option>
+                  {users.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.name} ({user.email})
                     </option>
@@ -369,14 +395,16 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={loading}
               >
-                Close
+                {assetStrings.updateAsset.buttons.close}
               </button>
-              <button 
+              <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg"
                 disabled={loading}
               >
-                {loading ? 'Updating...' : 'Update'}
+                {loading
+                  ? assetStrings.updateAsset.buttons.updating
+                  : assetStrings.updateAsset.buttons.update}
               </button>
             </div>
           </form>

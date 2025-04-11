@@ -11,15 +11,11 @@ export const getAllOrganizationsService = async () => {
 };
 
 export const updateOrganizationService = async (data) => {
-  try {
-    const updatePayload = {
-      organizationName: data.organizationName,
-    };
-    const response = await API.put(`/organization/${data.id}`, updatePayload);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || "Error updating organization";
-  }
+  const updatePayload = {
+    organizationName: data.organizationName,
+  };
+  const response = await API.put(`/organization/${data.id}`, updatePayload);
+  return response.data;
 };
 
 export const deleteOrganizationService = async (ids) => {
@@ -36,7 +32,6 @@ export const deleteOrganizationService = async (ids) => {
       const response = await API.post("/organization/bulk-delete", {
         organizationIds: idsArray,
       });
-
       return {
         ...response.data,
         success: true,

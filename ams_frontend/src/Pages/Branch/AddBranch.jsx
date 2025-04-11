@@ -9,6 +9,7 @@ import {
   getAllBranches,
 } from "../../Features/slices/branchSlice";
 import { getAllOrganizations } from "../../Features/slices/organizationSlice";
+import branchStrings from "../../locales/branchStrings";
 
 const AddBranch = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -60,14 +61,14 @@ const AddBranch = ({ onClose }) => {
       await dispatch(createBranch(data));
       dispatch(getAllBranches());
 
-      toast.success("Branch added successfully!", {
+      toast.success(branchStrings.addBranch.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
 
       handleClose();
     } catch (error) {
-      toast.error("Failed to add branch", {
+      toast.error(branchStrings.addBranch.toast.error, {
         position: "top-right",
         autoClose: 1000,
       });
@@ -88,7 +89,9 @@ const AddBranch = ({ onClose }) => {
         }`}
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
-          <h2 className="text-[17px] font-semibold text-white">Add Branch</h2>
+          <h2 className="text-[17px] font-semibold text-white">
+            {branchStrings.addBranch.title}
+          </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
           </button>
@@ -102,17 +105,18 @@ const AddBranch = ({ onClose }) => {
                   htmlFor="branchName"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Branch Name*
+                  {branchStrings.addBranch.formLabels.branchName}
                 </label>
                 <input
                   ref={firstInputRef}
                   {...register("branchName", {
-                    required: "Branch name is required",
+                    required:
+                      branchStrings.addBranch.validation.branchNameRequired,
                   })}
                   type="text"
                   id="branchName"
                   name="branchName"
-                  placeholder="Branch name"
+                  placeholder={branchStrings.addBranch.placeholders.branchName}
                   className={`mt-1 p-2 w-full border ${
                     errors.branchName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
@@ -129,16 +133,19 @@ const AddBranch = ({ onClose }) => {
                   htmlFor="branchLocation"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Location*
+                  {branchStrings.addBranch.formLabels.branchLocation}
                 </label>
                 <input
                   {...register("branchLocation", {
-                    required: "Branch location is required",
+                    required:
+                      branchStrings.addBranch.validation.branchLocationRequired,
                   })}
                   type="text"
                   id="branchLocation"
                   name="branchLocation"
-                  placeholder="Branch location"
+                  placeholder={
+                    branchStrings.addBranch.placeholders.branchLocation
+                  }
                   className={`mt-1 p-2 w-full border ${
                     errors.branchLocation ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
@@ -155,11 +162,12 @@ const AddBranch = ({ onClose }) => {
                   htmlFor="companyId"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Organization*
+                  {branchStrings.addBranch.formLabels.companyId}
                 </label>
                 <select
                   {...register("companyId", {
-                    required: "Organization selection is required",
+                    required:
+                      branchStrings.addBranch.validation.organizationRequired,
                   })}
                   id="companyId"
                   name="companyId"
@@ -170,8 +178,8 @@ const AddBranch = ({ onClose }) => {
                 >
                   <option value="">
                     {orgLoading
-                      ? "Loading organizations..."
-                      : "Select Organization"}
+                      ? branchStrings.addBranch.select.loading
+                      : branchStrings.addBranch.select.defaultOption}
                   </option>
                   {organizations?.map((org) => (
                     <option key={org.id} value={org.id}>
@@ -195,14 +203,16 @@ const AddBranch = ({ onClose }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={isSubmitting}
               >
-                Close
+                {branchStrings.addBranch.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Saving..." : "Save"}
+                {isSubmitting
+                  ? branchStrings.addBranch.buttons.saving
+                  : branchStrings.addBranch.buttons.save}
               </button>
             </div>
           </form>

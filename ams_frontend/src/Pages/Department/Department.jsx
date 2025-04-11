@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
+import departmentStrings from "../../locales/departmentStrings";
 
 import {
   setCurrentPage,
@@ -48,9 +49,9 @@ const UserDepartment = () => {
     departmentName: "",
     branchName: "",
     branchLocation: "",
-    userName: "",
-    assetName: "",
-    status: "",
+    // userName: "",
+    // assetName: "",
+    // status: "",
   });
 
   useEffect(() => {
@@ -90,28 +91,28 @@ const UserDepartment = () => {
       (searchDepartment.branchLocation === "" ||
         (department.branch?.branchLocation || "")
           .toLowerCase()
-          .includes(searchDepartment.branchLocation.toLowerCase())) &&
-      (searchDepartment.userName === "" ||
-        department.users?.some((user) =>
-          user.userName
-            .toLowerCase()
-            .includes(searchDepartment.userName.toLowerCase())
-        ) ||
-        false) &&
-      (searchDepartment.assetName === "" ||
-        department.assets?.some((asset) =>
-          asset.assetName
-            .toLowerCase()
-            .includes(searchDepartment.assetName.toLowerCase())
-        ) ||
-        false) &&
-      (searchDepartment.status === "" ||
-        department.assets?.some((asset) =>
-          asset.status
-            .toLowerCase()
-            .includes(searchDepartment.status.toLowerCase())
-        ) ||
-        false)
+          .includes(searchDepartment.branchLocation.toLowerCase()))
+      // &(searchDepartment.userName === "" ||
+      //   department.users?.some((user) =>
+      //     user.userName
+      //       .toLowerCase()
+      //       .includes(searchDepartment.userName.toLowerCase())
+      //   ) ||
+      //   false) &&
+      // (searchDepartment.assetName === "" ||
+      //   department.assets?.some((asset) =>
+      //     asset.assetName
+      //       .toLowerCase()
+      //       .includes(searchDepartment.assetName.toLowerCase())
+      //   ) ||
+      //   false) &&
+      // (searchDepartment.status === "" ||
+      //   department.assets?.some((asset) =>
+      //     asset.status
+      //       .toLowerCase()
+      //       .includes(searchDepartment.status.toLowerCase())
+      //   ) ||
+      //   false)
     );
   });
 
@@ -165,11 +166,16 @@ const UserDepartment = () => {
   const confirmDelete = () => {
     if (departmentToDelete) {
       dispatch(deleteDepartment([departmentToDelete]));
-      setDeleteMessage("Department deleted successfully!");
+      setDeleteMessage(
+        departmentStrings.department.modals.deleteSuccess.single
+      );
     } else if (selectedDepartments.length > 0) {
       dispatch(deleteDepartment(selectedDepartments));
       setDeleteMessage(
-        `${selectedDepartments.length} departments deleted successfully!`
+        departmentStrings.department.modals.deleteSuccess.multiple.replace(
+          "{count}",
+          selectedDepartments.length
+        )
       );
     }
     setShowDeleteConfirmation(false);
@@ -205,7 +211,7 @@ const UserDepartment = () => {
         <div className="pt-24">
           <div className="flex justify-between mx-5 mt-2">
             <h3 className="text-xl font-semibold text-[#6c757D]">
-              Department List
+              {departmentStrings.department.title}
             </h3>
             <div className="flex gap-3 md:mr-8">
               <button className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg">
@@ -215,25 +221,27 @@ const UserDepartment = () => {
                 onClick={() => setIsAddDepartment(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
               >
-                Add Department
+                {departmentStrings.department.buttons.addDepartment}
               </button>
             </div>
           </div>
 
           <div className="mx-5 flex gap-2 mb-4">
             <button onClick={handleNavigate} className="text-[#6c757D]">
-              Dashboard
+              {departmentStrings.department.breadcrumb.dashboard}
             </button>
             <span>
               <MdKeyboardArrowLeft className="h-6 w-6" />
             </span>
-            <p className="text-[#6c757D]">Department</p>
+            <p className="text-[#6c757D]">
+              {departmentStrings.department.breadcrumb.department}
+            </p>
           </div>
         </div>
 
         <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
           <div className="flex items-center gap-2 pt-8 ml-3">
-            <p>Show</p>
+            <p>{departmentStrings.department.table.showEntries}</p>
             <div className="border-2 flex justify-evenly">
               <select
                 value={rowsPerPage}
@@ -249,7 +257,7 @@ const UserDepartment = () => {
                 ))}
               </select>
             </div>
-            <p>Entries</p>
+            <p>{departmentStrings.department.table.entries}</p>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
@@ -267,7 +275,7 @@ const UserDepartment = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Department Name
+                    {departmentStrings.department.table.headers.departmentName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -277,7 +285,7 @@ const UserDepartment = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Branch Name
+                    {departmentStrings.department.table.headers.branchName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -287,40 +295,37 @@ const UserDepartment = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Branch Location
+                    {departmentStrings.department.table.headers.branchLocation}
                   </th>
                   {/* <th
                     className="px-2 py-4 border border-gray-300"
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
-                    User Name
+                    {departmentStrings.department.table.headers.userName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
-                    Asset Name
+                    {departmentStrings.department.table.headers.assetName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
-                    Asset Status
+                    {departmentStrings.department.table.headers.assetStatus}
                   </th> */}
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -330,7 +335,7 @@ const UserDepartment = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Action
+                    {departmentStrings.department.table.headers.action}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -340,7 +345,7 @@ const UserDepartment = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Delete All
+                    {departmentStrings.department.table.headers.deleteAll}
                   </th>
                 </tr>
               </thead>
@@ -359,7 +364,10 @@ const UserDepartment = () => {
                     <input
                       type="text"
                       name="departmentName"
-                      placeholder="Department Name"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .departmentName
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchDepartment.departmentName}
                       onChange={handleSearchChange}
@@ -377,7 +385,10 @@ const UserDepartment = () => {
                     <input
                       type="text"
                       name="branchName"
-                      placeholder="Branch Name"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .branchName
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchDepartment.branchName}
                       onChange={handleSearchChange}
@@ -395,7 +406,10 @@ const UserDepartment = () => {
                     <input
                       type="text"
                       name="branchLocation"
-                      placeholder="Branch Location"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .branchLocation
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchDepartment.branchLocation}
                       onChange={handleSearchChange}
@@ -407,14 +421,16 @@ const UserDepartment = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
                     <input
                       type="text"
                       name="userName"
-                      placeholder="User Name"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .userName
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchDepartment.userName}
                       onChange={handleSearchChange}
@@ -426,14 +442,16 @@ const UserDepartment = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
                     <input
                       type="text"
                       name="assetName"
-                      placeholder="Asset Name"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .assetName
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchDepartment.assetName}
                       onChange={handleSearchChange}
@@ -445,14 +463,16 @@ const UserDepartment = () => {
                     style={{
                       maxWidth: "180px",
                       minWidth: "120px",
-                     overflowWrap: "break-word",
-
+                      overflowWrap: "break-word",
                     }}
                   >
                     <input
                       type="text"
                       name="status"
-                      placeholder="Asset Status"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .status
+                      }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchDepartment.status}
                       onChange={handleSearchChange}
@@ -491,127 +511,140 @@ const UserDepartment = () => {
 
               {/* Table Body */}
               <tbody>
-                {currentRows.map((department, index) => (
-                  <tr
-                    key={department.id || index}
-                    className={`${
-                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-200 divide-y divide-gray-300`}
-                  >
+                {currentRows.length > 0 ? (
+                  currentRows.map((department, index) => (
+                    <tr
+                      key={department.id || index}
+                      className={`${
+                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-200 divide-y divide-gray-300`}
+                    >
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {department.departmentName}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {department.branch?.branchName ||
+                          departmentStrings.department.chipsList.emptyText}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {department.branch?.branchLocation ||
+                          departmentStrings.department.chipsList.emptyText}
+                      </td>
+                      {/* <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {department.users
+                          ?.map((user) => user.userName)
+                          .join(", ") ||
+                          departmentStrings.department.chipsList.emptyText}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {department.assets
+                          ?.map((asset) => asset.assetName)
+                          .join(", ") ||
+                          departmentStrings.department.chipsList.emptyText}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {department.assets
+                          ?.map((asset) => asset.status)
+                          .join(", ") ||
+                          departmentStrings.department.chipsList.emptyText}
+                      </td> */}
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                      >
+                        <div className="flex ">
+                          <button
+                            onClick={() => {
+                              setIsUpdateDepartment(true);
+                              handlerUpdateData(department);
+                            }}
+                            className="px-3 py-2 rounded-sm "
+                          >
+                            <FontAwesomeIcon icon={faPen} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(department)}
+                            className="px-3 py-2 rounded-sm   text-[red]"
+                          >
+                            <MdDelete className="h-6 w-6" />
+                          </button>
+                        </div>
+                      </td>
+                      <td
+                        className="px-2 py-2 text-center border border-gray-300"
+                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedDepartments?.includes(department.id) ??
+                            false
+                          }
+                          onChange={() =>
+                            handleToggleDepartmentSelection(department.id)
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
                     <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
+                      colSpan="8"
+                      className="px-2 py-4 text-center border border-gray-300"
                     >
-                      {department.departmentName}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {department.branch?.branchName || "N/A"}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {department.branch?.branchLocation || "N/A"}
-                    </td>
-                    {/* <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                       overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {department.users?.map((user) => user.userName).join(", ") ||
-                        "N/A"}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                       overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {department.assets
-                        ?.map((asset) => asset.assetName)
-                        .join(", ") || "N/A"}
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                       overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      {department.assets?.map((asset) => asset.status).join(", ") ||
-                        "N/A"}
-                    </td> */}
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                    >
-                      <div className="flex ">
-                        <button
-                          onClick={() => {
-                            setIsUpdateDepartment(true);
-                            handlerUpdateData(department);
-                          }}
-                          className="px-3 py-2 rounded-sm "
-                        >
-                          <FontAwesomeIcon icon={faPen} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(department)}
-                          className="px-3 py-2 rounded-sm   text-[red]"
-                        >
-                          <MdDelete className="h-6 w-6" />
-                        </button>
-                      </div>
-                    </td>
-                    <td
-                      className="px-2 py-2 text-center border border-gray-300"
-                      style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={
-                          selectedDepartments?.includes(department.id) ?? false
-                        }
-                        onChange={() =>
-                          handleToggleDepartmentSelection(department.id)
-                        }
-                      />
+                      {departmentStrings.department.table.noData}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -624,7 +657,7 @@ const UserDepartment = () => {
                 disabled={currentPage === 0}
                 className="text-black"
               >
-                Previous
+                {departmentStrings.department.buttons.previous}
               </button>
               <span className="px-2 space-x-1">
                 <span
@@ -652,7 +685,7 @@ const UserDepartment = () => {
                 disabled={currentPage + 1 === totalPages}
                 className="text-black"
               >
-                Next
+                {departmentStrings.department.buttons.next}
               </button>
             </div>
           </div>
@@ -673,21 +706,24 @@ const UserDepartment = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold mb-4">
               {departmentToDelete
-                ? "Are you sure you want to delete this department?"
-                : `Are you sure you want to delete ${selectedDepartments.length} selected departments?`}
+                ? departmentStrings.department.modals.deleteConfirmation.single
+                : departmentStrings.department.modals.deleteConfirmation.multiple.replace(
+                    "{count}",
+                    selectedDepartments.length
+                  )}
             </h3>
             <div className="flex justify-end gap-4">
               <button
                 onClick={cancelDelete}
                 className="px-4 py-2 bg-gray-300 rounded-md"
               >
-                No
+                {departmentStrings.department.buttons.no}
               </button>
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-500 text-white rounded-md"
               >
-                Yes
+                {departmentStrings.department.buttons.yes}
               </button>
             </div>
           </div>
@@ -699,14 +735,14 @@ const UserDepartment = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold mb-4">
-              Please select departments first before deleting
+              {departmentStrings.department.modals.selectFirst}
             </h3>
             <div className="flex justify-end">
               <button
                 onClick={closeSelectFirstPopup}
                 className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
               >
-                OK
+                {departmentStrings.department.buttons.ok}
               </button>
             </div>
           </div>

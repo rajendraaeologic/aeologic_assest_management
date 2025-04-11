@@ -1,4 +1,3 @@
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import {
   createAssetService,
@@ -12,7 +11,8 @@ export const createAsset = createAsyncThunk(
   "asset/create",
   async (data, { rejectWithValue }) => {
     try {
-      return await createAssetService(data);
+      const response = await createAssetService(data);
+      return response;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Something went wrong");
     }
@@ -25,12 +25,7 @@ export const getAllAssets = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await getAllAssetsService();
-
-      if (!response.data || response.data.length === 0) {
-        return rejectWithValue(response.message);
-      }
-
-      return response.data;
+      return response.data || [];
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch assets"
@@ -45,11 +40,6 @@ export const updateAsset = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const response = await updateAssetService(data);
-
-      if (!response) {
-        return rejectWithValue("Failed to update asset.");
-      }
-
       return response;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Error updating asset");
@@ -64,11 +54,12 @@ export const deleteAsset = createAsyncThunk(
     try {
       const ids = Array.isArray(assetIds) ? assetIds : [assetIds];
       const response = await deleteAssetService(ids);
-      return { deletedAssetIds: ids };
+      return {
+        deletedAssetIds: ids,
+        ...response,
+      };
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || "Failed to delete asset(s)"
-      );
+      return rejectWithValue(error.message || "Failed to delete asset(s)");
     }
   }
 );
@@ -121,7 +112,7 @@ const assetSlice = createSlice({
       })
       .addCase(createAsset.fulfilled, (state, action) => {
         state.loading = false;
-        state.assets.push(action.payload);
+        state.assets.unshift(action.payload);
       })
       .addCase(createAsset.rejected, (state, action) => {
         state.loading = false;
@@ -141,6 +132,7 @@ const assetSlice = createSlice({
       })
       .addCase(updateAsset.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(updateAsset.fulfilled, (state, action) => {
         state.loading = false;

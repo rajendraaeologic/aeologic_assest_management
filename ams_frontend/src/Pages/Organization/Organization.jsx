@@ -20,11 +20,16 @@ import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
 import { getAllOrganizations } from "../../Features/slices/organizationSlice";
 import { deleteOrganization } from "../../Features/slices/organizationSlice";
+import organizationStrings from "../../locales/organizationStrings";
 
 const Organization = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isSidebarOpen } = useContext(SliderContext);
+
+  // Get localized organizationStrings
+  const { title, breadcrumb, buttons, table, modals, chipsList } =
+    organizationStrings.organization;
 
   const { organizations, selectedOrganizations, currentPage, rowsPerPage } =
     useSelector((state) => state.organizationData);
@@ -49,9 +54,6 @@ const Organization = () => {
     branchName: "",
     branchLocation: "",
     departmentName: "",
-    // userName: "",
-    // assetName: "",
-    // status: "",
   });
 
   useEffect(() => {
@@ -107,33 +109,6 @@ const Organization = () => {
           )
         ) ||
         false)
-      // (searchOrganization.userName === "" ||
-      //   org.branches?.some((branch) =>
-      //     branch.users?.some((user) =>
-      //       user.userName
-      //         .toLowerCase()
-      //         .includes(searchOrganization.userName.toLowerCase())
-      //     )
-      //   ) ||
-      //   false) &&
-      // (searchOrganization.assetName === "" ||
-      //   org.branches?.some((branch) =>
-      //     branch.assets?.some((asset) =>
-      //       asset.assetName
-      //         .toLowerCase()
-      //         .includes(searchOrganization.assetName.toLowerCase())
-      //     )
-      //   ) ||
-      //   false) &&
-      // (searchOrganization.status === "" ||
-      //   org.branches?.some((branch) =>
-      //     branch.assets?.some((asset) =>
-      //       asset.status
-      //         .toLowerCase()
-      //         .includes(searchOrganization.status.toLowerCase())
-      //     )
-      //   ) ||
-      //   false)
     );
   });
 
@@ -187,11 +162,14 @@ const Organization = () => {
   const confirmDelete = () => {
     if (organizationToDelete) {
       dispatch(deleteOrganization([organizationToDelete]));
-      setDeleteMessage("Organization deleted successfully!");
+      setDeleteMessage(modals.deleteSuccess.single);
     } else if (selectedOrganizations.length > 0) {
       dispatch(deleteOrganization(selectedOrganizations));
       setDeleteMessage(
-        `${selectedOrganizations.length} organizations deleted successfully!`
+        modals.deleteSuccess.multiple.replace(
+          "{count}",
+          selectedOrganizations.length
+        )
       );
     }
     setShowDeleteConfirmation(false);
@@ -222,14 +200,11 @@ const Organization = () => {
           isSidebarOpen
             ? "pl-0 md:pl-[250px] lg:pl-[250px]"
             : "pl-0 md:pl-[90px] lg:pl-[90px]"
-        }
         }`}
       >
         <div className="pt-24">
           <div className="flex justify-between mx-5 mt-2">
-            <h3 className="text-xl font-semibold text-[#6c757D]">
-              Organization List
-            </h3>
+            <h3 className="text-xl font-semibold text-[#6c757D]">{title}</h3>
             <div className="flex gap-3 md:mr-8">
               <button className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg">
                 <CiSaveUp2 className="h-6 w-6" />
@@ -238,25 +213,25 @@ const Organization = () => {
                 onClick={() => setIsAddOrganization(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
               >
-                Add Organization
+                {buttons.addOrganization}
               </button>
             </div>
           </div>
 
           <div className="mx-5 flex gap-2 mb-4">
             <button onClick={handleNavigate} className="text-[#6c757D] ">
-              Dashboard
+              {breadcrumb.dashboard}
             </button>
             <span>
               <MdKeyboardArrowLeft className="h-6 w-6" />
             </span>
-            <p className="text-[#6c757D]">Organization</p>
+            <p className="text-[#6c757D]">{breadcrumb.organization}</p>
           </div>
         </div>
 
         <div className=" min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
           <div className="flex Users-center gap-2 pt-8 ml-3">
-            <p>Show</p>
+            <p>{table.showEntries}</p>
             <div className="border-2 flex justify-evenly">
               <select
                 value={rowsPerPage}
@@ -272,7 +247,7 @@ const Organization = () => {
                 ))}
               </select>
             </div>
-            <p>Entries</p>
+            <p>{table.entries}</p>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
@@ -290,7 +265,7 @@ const Organization = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Organization Name
+                    {table.headers.orgName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -300,7 +275,7 @@ const Organization = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Branch Name
+                    {table.headers.branchName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -310,7 +285,7 @@ const Organization = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Branch Location
+                    {table.headers.branchLocation}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -320,7 +295,7 @@ const Organization = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Department name
+                    {table.headers.departmentName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -330,7 +305,7 @@ const Organization = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Action
+                    {table.headers.action}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -340,7 +315,7 @@ const Organization = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    Delete All
+                    {table.headers.deleteAll}
                   </th>
                 </tr>
               </thead>
@@ -359,7 +334,7 @@ const Organization = () => {
                     <input
                       type="text"
                       name="organizationName"
-                      placeholder="Organization Name"
+                      placeholder={table.searchPlaceholders.orgName}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchOrganization.organizationName}
                       onChange={handleSearchChange}
@@ -377,7 +352,7 @@ const Organization = () => {
                     <input
                       type="text"
                       name="branchName"
-                      placeholder="Branch Name"
+                      placeholder={table.searchPlaceholders.branchName}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchOrganization.branchName}
                       onChange={handleSearchChange}
@@ -395,7 +370,7 @@ const Organization = () => {
                     <input
                       type="text"
                       name="branchLocation"
-                      placeholder="Branch Location"
+                      placeholder={table.searchPlaceholders.branchLocation}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchOrganization.branchLocation}
                       onChange={handleSearchChange}
@@ -413,7 +388,7 @@ const Organization = () => {
                     <input
                       type="text"
                       name="departmentName"
-                      placeholder="Department Name"
+                      placeholder={table.searchPlaceholders.departmentName}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchOrganization.departmentName}
                       onChange={handleSearchChange}
@@ -452,110 +427,122 @@ const Organization = () => {
 
               {/* Table Body */}
               <tbody>
-                {currentRows.map((org, index) => (
-                  <tr
-                    key={org.id || index}
-                    className={`${
-                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-200 divide-y divide-gray-300`}
-                  >
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
+                {currentRows.length > 0 ? (
+                  currentRows.map((org, index) => (
+                    <tr
+                      key={org.id || index}
+                      className={`${
+                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      {org.organizationName}
-                    </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {org.organizationName}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        <ChipsList
+                          items={org.branches}
+                          labelKey="branchName"
+                          emptyText={chipsList.emptyText}
+                        />
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        <ChipsList
+                          items={org.branches}
+                          labelKey="branchLocation"
+                          emptyText={chipsList.emptyText}
+                        />
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        <ChipsList
+                          items={
+                            org.branches?.flatMap(
+                              (branch) => branch.departments || []
+                            ) || []
+                          }
+                          labelKey="departmentName"
+                          emptyText={chipsList.emptyText}
+                        />
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                      >
+                        <div className="flex ">
+                          <button
+                            onClick={() => {
+                              setIsUpdateOrganization(true);
+                              handlerUpdateData(org);
+                            }}
+                            className="px-3 py-2 rounded-sm "
+                          >
+                            <FontAwesomeIcon icon={faPen} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(org)}
+                            className="px-3 py-2 rounded-sm   text-[red]"
+                          >
+                            <MdDelete className="h-6 w-6" />
+                          </button>
+                        </div>
+                      </td>
+                      <td
+                        className="px-2 py-2 border text-center border-gray-300"
+                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedOrganizations?.includes(org.id) ?? false
+                          }
+                          onChange={() =>
+                            handleToggleOrganizationSelection(org.id)
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
                     <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
+                      colSpan="6"
+                      className="px-4 py-4 text-center text-black"
                     >
-                      <ChipsList items={org.branches} labelKey="branchName" />
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      <ChipsList
-                        items={org.branches}
-                        labelKey="branchLocation"
-                      />
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-
-                        verticalAlign: "top",
-                      }}
-                    >
-                      <ChipsList
-                        items={
-                          org.branches?.flatMap(
-                            (branch) => branch.departments || []
-                          ) || []
-                        }
-                        labelKey="departmentName"
-                        emptyText="N/A"
-                      />
-                    </td>
-                    <td
-                      className="px-2 py-2 border border-gray-300"
-                      style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                    >
-                      <div className="flex ">
-                        <button
-                          onClick={() => {
-                            setIsUpdateOrganization(true);
-                            handlerUpdateData(org);
-                          }}
-                          className="px-3 py-2 rounded-sm "
-                        >
-                          <FontAwesomeIcon icon={faPen} />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClick(org)}
-                          className="px-3 py-2 rounded-sm   text-[red]"
-                        >
-                          <MdDelete className="h-6 w-6" />
-                        </button>
-                      </div>
-                    </td>
-                    <td
-                      className="px-2 py-2 border text-center border-gray-300"
-                      style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={
-                          selectedOrganizations?.includes(org.id) ?? false
-                        }
-                        onChange={() =>
-                          handleToggleOrganizationSelection(org.id)
-                        }
-                      />
+                      {table.noData}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
@@ -568,7 +555,7 @@ const Organization = () => {
                 disabled={currentPage === 0}
                 className="text-black"
               >
-                Previous
+                {buttons.previous}
               </button>
               <span className="px-2 space-x-1 ">
                 <span
@@ -596,7 +583,7 @@ const Organization = () => {
                 disabled={currentPage + 1 === totalPages}
                 className="text-black"
               >
-                Next
+                {buttons.next}
               </button>
             </div>
           </div>
@@ -616,21 +603,24 @@ const Organization = () => {
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold mb-4">
               {organizationToDelete
-                ? "Are you sure you want to delete this organization?"
-                : `Are you sure you want to delete ${selectedOrganizations.length} selected organizations?`}
+                ? modals.deleteConfirmation.single
+                : modals.deleteConfirmation.multiple.replace(
+                    "{count}",
+                    selectedOrganizations.length
+                  )}
             </h3>
             <div className="flex justify-end gap-4">
               <button
                 onClick={cancelDelete}
                 className="px-4 py-2 bg-gray-300 rounded-md"
               >
-                No
+                {buttons.no}
               </button>
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-500 text-white rounded-md"
               >
-                Yes
+                {buttons.yes}
               </button>
             </div>
           </div>
@@ -641,15 +631,13 @@ const Organization = () => {
       {showSelectFirstPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              Please select organizations first before deleting
-            </h3>
+            <h3 className="text-lg font-semibold mb-4">{modals.selectFirst}</h3>
             <div className="flex justify-end">
               <button
                 onClick={closeSelectFirstPopup}
                 className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
               >
-                OK
+                {buttons.ok}
               </button>
             </div>
           </div>

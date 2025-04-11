@@ -8,6 +8,7 @@ import {
   updateOrganization,
   getAllOrganizations,
 } from "../../Features/slices/organizationSlice";
+import organizationStrings from "../../locales/organizationStrings";
 
 const UpdateOrganization = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -66,14 +67,14 @@ const UpdateOrganization = ({ onClose }) => {
       await dispatch(updateOrganization(organizationData));
       dispatch(getAllOrganizations());
 
-      toast.success("Organization updated successfully!", {
+      toast.success(organizationStrings.updateOrganization.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
 
       handleClose();
     } catch (error) {
-      toast.error("Failed to update organization", {
+      toast.error(organizationStrings.updateOrganization.toast.error, {
         position: "top-right",
         autoClose: 1000,
       });
@@ -95,7 +96,7 @@ const UpdateOrganization = ({ onClose }) => {
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
           <h2 className="text-[17px] font-semibold text-white">
-            Update Organization
+            {organizationStrings.updateOrganization.title}
           </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
@@ -106,14 +107,23 @@ const UpdateOrganization = ({ onClose }) => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="w-full">
               <label className="block text-sm font-medium text-gray-700">
-                Organization Name*
+                {
+                  organizationStrings.updateOrganization.formLabels
+                    .organizationName
+                }
               </label>
               <input
                 ref={firstInputRef}
                 {...register("organizationName", {
-                  required: "Organization name is required",
+                  required:
+                    organizationStrings.updateOrganization.validation
+                      .organizationNameRequired,
                 })}
                 type="text"
+                placeholder={
+                  organizationStrings.updateOrganization.placeholders
+                    .organizationName
+                }
                 className={`mt-1 p-2 w-full border ${
                   errors.organizationName ? "border-red-500" : "border-gray-300"
                 } outline-none rounded-md`}
@@ -133,14 +143,16 @@ const UpdateOrganization = ({ onClose }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={isSubmitting}
               >
-                Close
+                {organizationStrings.updateOrganization.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Updating..." : "Update"}
+                {isSubmitting
+                  ? organizationStrings.updateOrganization.buttons.updating
+                  : organizationStrings.updateOrganization.buttons.update}
               </button>
             </div>
           </form>

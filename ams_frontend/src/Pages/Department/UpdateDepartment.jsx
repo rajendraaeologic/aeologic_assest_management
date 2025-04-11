@@ -9,6 +9,7 @@ import {
   getAllDepartments,
 } from "../../Features/slices/departmentSlice";
 import { getAllBranches } from "../../Features/slices/branchSlice";
+import departmentStrings from "../../locales/departmentStrings";
 
 const UpdateDepartment = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -16,9 +17,6 @@ const UpdateDepartment = ({ onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
 
-  const { branches, loading: branchLoading } = useSelector(
-    (state) => state.branchData
-  );
   const selectedDepartment = useSelector(
     (state) => state.departmentData.selectedDepartment
   );
@@ -77,14 +75,14 @@ const UpdateDepartment = ({ onClose }) => {
       await dispatch(updateDepartment(departmentData));
       dispatch(getAllDepartments());
 
-      toast.success("Department updated successfully!", {
+      toast.success(departmentStrings.updateDepartment.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
 
       handleClose();
     } catch (error) {
-      toast.error("Failed to update department", {
+      toast.error(departmentStrings.updateDepartment.toast.error, {
         position: "top-right",
         autoClose: 1000,
       });
@@ -106,7 +104,7 @@ const UpdateDepartment = ({ onClose }) => {
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
           <h2 className="text-[17px] font-semibold text-white">
-            Update Department
+            {departmentStrings.updateDepartment.title}
           </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
@@ -118,12 +116,14 @@ const UpdateDepartment = ({ onClose }) => {
             <div className="grid sm:grid-cols-1 lg:grid-cols-1 gap-4">
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Department Name*
+                  {departmentStrings.updateDepartment.formLabels.departmentName}
                 </label>
                 <input
                   ref={firstInputRef}
                   {...register("departmentName", {
-                    required: "Department name is required",
+                    required:
+                      departmentStrings.updateDepartment.validation
+                        .departmentNameRequired,
                   })}
                   type="text"
                   className={`mt-1 p-2 w-full border ${
@@ -146,14 +146,16 @@ const UpdateDepartment = ({ onClose }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={isSubmitting}
               >
-                Close
+                {departmentStrings.updateDepartment.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Updating..." : "Update"}
+                {isSubmitting
+                  ? departmentStrings.updateDepartment.buttons.updating
+                  : departmentStrings.updateDepartment.buttons.update}
               </button>
             </div>
           </form>

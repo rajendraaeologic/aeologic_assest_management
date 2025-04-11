@@ -15,6 +15,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { getAllOrganizations } from "../../Features/slices/organizationSlice";
 import { getAllBranches } from "../../Features/slices/branchSlice";
 import { getAllDepartments } from "../../Features/slices/departmentSlice";
+import dashboardStrings from "../../locales/DashboardStrings";
 
 const Dashboard = () => {
   const { isSidebarOpen } = useContext(SliderContext);
@@ -34,17 +35,41 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = () => {
       const data = [
-        { name: "Users", value: 400, color: "#3B82F6" },
         {
-          name: "Organizations",
+          name: dashboardStrings.dashboard.stats.users,
+          value: 400,
+          color: "#3B82F6",
+        },
+        {
+          name: dashboardStrings.dashboard.stats.organizations,
           value: organizations.length,
           color: "#210F37",
         },
-        { name: "Branches", value: branches.length, color: "#fc0380" },
-        { name: "Departments", value: departments.length, color: "#10B981" },
-        { name: "Assets", value: 2, color: "#FBBF24" },
-        { name: "Assign Tags", value: 4, color: "#EF4444" },
-        { name: "Out For Delivery", value: 4, color: "#14B8A6" },
+        {
+          name: dashboardStrings.dashboard.stats.branches,
+          value: branches.length,
+          color: "#fc0380",
+        },
+        {
+          name: dashboardStrings.dashboard.stats.departments,
+          value: departments.length,
+          color: "#10B981",
+        },
+        {
+          name: dashboardStrings.dashboard.stats.assets,
+          value: 2,
+          color: "#FBBF24",
+        },
+        {
+          name: dashboardStrings.dashboard.stats.assignTags,
+          value: 4,
+          color: "#EF4444",
+        },
+        {
+          name: dashboardStrings.dashboard.stats.outForDelivery,
+          value: 4,
+          color: "#14B8A6",
+        },
       ];
       setChartData(data);
     };
@@ -66,10 +91,12 @@ const Dashboard = () => {
             : "pl-0 md:pl-[90px] lg:pl-[90px]"
         }`}
       >
+        <h1 className="text-3xl font-bold mb-6">
+          {dashboardStrings.dashboard.title}
+        </h1>
+
         <div
-          className={`grid grid-cols-1   md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-6xl ${
-            isSidebarOpen ? "pt-20" : "pt-20"
-          }`}
+          className={`grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-6xl pt-4`}
         >
           {chartData.map((item) => (
             <div
@@ -85,7 +112,7 @@ const Dashboard = () => {
 
         <div className="bg-gray-800 p-6 mt-6 rounded-xl shadow-2xl w-full">
           <h3 className="text-2xl font-semibold text-white mb-4">
-            🔹 Asset Overview
+            {dashboardStrings.dashboard.assetOverview}
           </h3>
           <div className={isSidebarOpen ? "h-[150px]" : "h-[200px]"}>
             <ResponsiveContainer width="100%" height="100%">
@@ -98,9 +125,11 @@ const Dashboard = () => {
                 <YAxis tick={{ fill: "#fff" }} />
                 <Tooltip
                   contentStyle={{
-                    backgroundColor: "rgba(0,0,0,0.8)",
-                    borderRadius: "10px",
-                    border: "1px solid rgba(255,255,255,0.2)",
+                    backgroundColor:
+                      dashboardStrings.dashboard.chart.tooltip.backgroundColor,
+                    borderRadius:
+                      dashboardStrings.dashboard.chart.tooltip.borderRadius,
+                    border: dashboardStrings.dashboard.chart.tooltip.border,
                     color: "#fff",
                   }}
                   labelStyle={{ color: "#fff" }}

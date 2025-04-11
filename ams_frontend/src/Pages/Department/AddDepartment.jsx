@@ -10,6 +10,7 @@ import {
 } from "../../Features/slices/departmentSlice";
 import { getAllBranches } from "../../Features/slices/branchSlice";
 import { getAllOrganizations } from "../../Features/slices/organizationSlice";
+import departmentStrings from "../../locales/departmentStrings";
 
 const AddDepartment = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -66,13 +67,13 @@ const AddDepartment = ({ onClose }) => {
         })
       );
       dispatch(getAllDepartments());
-      toast.success("Department added successfully!", {
+      toast.success(departmentStrings.addDepartment.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
       handleClose();
     } catch (error) {
-      toast.error("Failed to add department", {
+      toast.error(departmentStrings.addDepartment.toast.error, {
         position: "top-right",
         autoClose: 1000,
       });
@@ -98,7 +99,7 @@ const AddDepartment = ({ onClose }) => {
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
           <h2 className="text-[17px] font-semibold text-white">
-            Add Department
+            {departmentStrings.addDepartment.title}
           </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
@@ -113,16 +114,20 @@ const AddDepartment = ({ onClose }) => {
                   htmlFor="departmentName"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Department Name*
+                  {departmentStrings.addDepartment.formLabels.departmentName}
                 </label>
                 <input
                   ref={firstInputRef}
                   {...register("departmentName", {
-                    required: "Department name is required",
+                    required:
+                      departmentStrings.addDepartment.validation
+                        .departmentNameRequired,
                   })}
                   type="text"
                   id="departmentName"
-                  placeholder="Department name"
+                  placeholder={
+                    departmentStrings.addDepartment.placeholders.departmentName
+                  }
                   className={`mt-1 p-2 w-full border ${
                     errors.departmentName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
@@ -136,7 +141,10 @@ const AddDepartment = ({ onClose }) => {
 
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Select Organization*
+                  {
+                    departmentStrings.addDepartment.formLabels
+                      .selectOrganization
+                  }
                 </label>
                 <select
                   value={selectedOrgId}
@@ -160,11 +168,12 @@ const AddDepartment = ({ onClose }) => {
                   htmlFor="branchId"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Select Branch*
+                  {departmentStrings.addDepartment.formLabels.selectBranch}
                 </label>
                 <select
                   {...register("branchId", {
-                    required: "Branch is required",
+                    required:
+                      departmentStrings.addDepartment.validation.branchRequired,
                   })}
                   id="branchId"
                   className={`mt-1 p-2 w-full border ${
@@ -195,14 +204,16 @@ const AddDepartment = ({ onClose }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={isSubmitting}
               >
-                Close
+                {departmentStrings.addDepartment.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Saving..." : "Save"}
+                {isSubmitting
+                  ? departmentStrings.addDepartment.buttons.saving
+                  : departmentStrings.addDepartment.buttons.save}
               </button>
             </div>
           </form>

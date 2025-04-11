@@ -6,30 +6,26 @@ import {
   deleteDepartmentService,
 } from "../services/departmentService";
 
-// Create Organization
+// Create Department
 export const createDepartment = createAsyncThunk(
   "department/create",
   async (data, { rejectWithValue }) => {
     try {
-      return await createDepartmentService(data);
+      const response = await createDepartmentService(data);
+      return response;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Something went wrong");
     }
   }
 );
 
-// Get All Organizations
+// Get All Departments
 export const getAllDepartments = createAsyncThunk(
   "department/getAll",
   async (_, { rejectWithValue }) => {
     try {
       const response = await getAllDepartmentsService();
-
-      if (!response.data || response.data.length === 0) {
-        return rejectWithValue(response.message);
-      }
-
-      return response.data;
+      return response.data || [];
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch departments"
@@ -38,17 +34,12 @@ export const getAllDepartments = createAsyncThunk(
   }
 );
 
-// Update Organization
+// Update Department
 export const updateDepartment = createAsyncThunk(
   "department/update",
   async (data, { rejectWithValue }) => {
     try {
       const response = await updateDepartmentService(data);
-
-      if (!response) {
-        return rejectWithValue("Failed to update department.");
-      }
-
       return response;
     } catch (error) {
       return rejectWithValue(
@@ -58,7 +49,7 @@ export const updateDepartment = createAsyncThunk(
   }
 );
 
-// Delete Organization (single or bulk)
+// Delete Department (single or bulk)
 export const deleteDepartment = createAsyncThunk(
   "department/delete",
   async (departmentIds, { rejectWithValue }) => {
@@ -67,11 +58,12 @@ export const deleteDepartment = createAsyncThunk(
         ? departmentIds
         : [departmentIds];
       const response = await deleteDepartmentService(ids);
-      return { deletedDepartmentIds: ids };
+      return {
+        deletedDepartmentIds: ids,
+        ...response,
+      };
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || "Failed to delete department(s)"
-      );
+      return rejectWithValue(error.message || "Failed to delete department(s)");
     }
   }
 );
@@ -101,7 +93,7 @@ const departmentSlice = createSlice({
       const id = action.payload;
       if (state.selectedDepartments.includes(id)) {
         state.selectedDepartments = state.selectedDepartments.filter(
-          (depId) => depId !== id
+          (departmentId) => departmentId !== id
         );
       } else {
         state.selectedDepartments.push(id);
@@ -109,7 +101,9 @@ const departmentSlice = createSlice({
     },
     selectAllDepartments: (state) => {
       if (state.departments && state.departments.length > 0) {
-        state.selectedDepartments = state.departments.map((dep) => dep.id);
+        state.selectedDepartments = state.departments.map(
+          (department) => department.id
+        );
       }
     },
     deselectAllDepartments: (state) => {
@@ -124,7 +118,7 @@ const departmentSlice = createSlice({
       })
       .addCase(createDepartment.fulfilled, (state, action) => {
         state.loading = false;
-        state.departments.push(action.payload);
+        state.departments.unshift(action.payload);
       })
       .addCase(createDepartment.rejected, (state, action) => {
         state.loading = false;
@@ -144,11 +138,12 @@ const departmentSlice = createSlice({
       })
       .addCase(updateDepartment.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(updateDepartment.fulfilled, (state, action) => {
         state.loading = false;
-        state.departments = state.departments.map((dep) =>
-          dep.id === action.payload.id ? action.payload : dep
+        state.departments = state.departments.map((department) =>
+          department.id === action.payload.id ? action.payload : department
         );
       })
       .addCase(updateDepartment.rejected, (state, action) => {
@@ -162,7 +157,7 @@ const departmentSlice = createSlice({
       .addCase(deleteDepartment.fulfilled, (state, action) => {
         const { deletedDepartmentIds } = action.payload;
         state.departments = state.departments.filter(
-          (dep) => !deletedDepartmentIds.includes(dep.id)
+          (department) => !deletedDepartmentIds.includes(department.id)
         );
         state.selectedDepartments = state.selectedDepartments.filter(
           (id) => !deletedDepartmentIds.includes(id)

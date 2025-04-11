@@ -8,6 +8,7 @@ import {
   updateBranch,
   getAllBranches,
 } from "../../Features/slices/branchSlice";
+import branchStrings from "../../locales/branchStrings";
 
 const UpdateBranch = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -68,13 +69,13 @@ const UpdateBranch = ({ onClose }) => {
       await dispatch(updateBranch(branchData));
       dispatch(getAllBranches());
 
-      toast.success("Branch updated successfully!", {
+      toast.success(branchStrings.updateBranch.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
       handleClose();
     } catch (error) {
-      toast.error(error.message || "Failed to update branch", {
+      toast.error(error.message || branchStrings.updateBranch.toast.error, {
         position: "top-right",
         autoClose: 1000,
       });
@@ -96,7 +97,7 @@ const UpdateBranch = ({ onClose }) => {
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
           <h2 className="text-[17px] font-semibold text-white">
-            Update Branch
+            {branchStrings.updateBranch.title}
           </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
@@ -108,12 +109,13 @@ const UpdateBranch = ({ onClose }) => {
             <div className="grid grid-cols-1 gap-4">
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Branch Name*
+                  {branchStrings.updateBranch.formLabels.branchName}
                 </label>
                 <input
                   ref={firstInputRef}
                   {...register("branchName", {
-                    required: "Branch name is required",
+                    required:
+                      branchStrings.updateBranch.validation.branchNameRequired,
                   })}
                   type="text"
                   className={`mt-1 p-2 w-full border ${
@@ -129,11 +131,13 @@ const UpdateBranch = ({ onClose }) => {
 
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Location*
+                  {branchStrings.updateBranch.formLabels.branchLocation}
                 </label>
                 <input
                   {...register("branchLocation", {
-                    required: "Branch location is required",
+                    required:
+                      branchStrings.updateBranch.validation
+                        .branchLocationRequired,
                   })}
                   type="text"
                   className={`mt-1 p-2 w-full border ${
@@ -156,14 +160,16 @@ const UpdateBranch = ({ onClose }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={isSubmitting}
               >
-                Close
+                {branchStrings.updateBranch.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Updating..." : "Update"}
+                {isSubmitting
+                  ? branchStrings.updateBranch.buttons.updating
+                  : branchStrings.updateBranch.buttons.update}
               </button>
             </div>
           </form>

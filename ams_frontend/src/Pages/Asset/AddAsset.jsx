@@ -3,6 +3,8 @@ import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import { createAsset } from "../../Features/slices/assetSlice";
 import API from "../../App/api/axiosInstance";
+import assetStrings from "../../locales/assetStrings";
+import { useForm } from "react-hook-form";
 
 const AddAsset = ({ onClose, onSuccess }) => {
   const firstInputRef = useRef(null);
@@ -11,34 +13,44 @@ const AddAsset = ({ onClose, onSuccess }) => {
   const dispatch = useDispatch();
   const { loading, error } = useSelector((state) => state.assetUserData);
 
-  // State for dynamic dropdowns
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+    setValue,
+    reset,
+  } = useForm({
+    defaultValues: {
+      assetName: "",
+      uniqueId: "",
+      description: "",
+      brand: "",
+      model: "",
+      serialNumber: "",
+      status: "ACTIVE",
+      locationId: "",
+      assignedToUserId: "",
+      branchId: "",
+      departmentId: "",
+    },
+  });
+
+  const branchId = watch("branchId");
+  const departmentId = watch("departmentId");
+
   const [branches, setBranches] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
-
-  const [formData, setFormData] = useState({
-    assetName: "",
-    uniqueId: "",
-    description: "",
-    brand: "",
-    model: "",
-    serialNumber: "",
-    status: "ACTIVE",
-    locationId: "",
-    assignedToUserId: "",
-    branchId: "",
-    departmentId: "",
-  });
 
   // Fetch branches on component mount
   useEffect(() => {
     const fetchBranches = async () => {
       try {
         const response = await API.get("/branch/getAllBranches");
-        
         setBranches(response.data.data);
       } catch (error) {
-        console.error("Failed to fetch branches:", error);
+        console.error(assetStrings.addAsset.errorMessages.fetchBranches, error);
       }
     };
 
@@ -52,44 +64,35 @@ const AddAsset = ({ onClose, onSuccess }) => {
     };
   }, []);
 
-  // Update departments when branch is selected (using data from branch response)
+  // Update departments when branch is selected
   useEffect(() => {
-    if (formData.branchId) {
-      const selectedBranch = branches.find(
-        (branch) => branch.id === formData.branchId
-      );
+    if (branchId) {
+      const selectedBranch = branches.find((branch) => branch.id === branchId);
 
       if (selectedBranch && selectedBranch.departments) {
         setDepartments(selectedBranch.departments);
-
-        setFormData((prev) => ({
-          ...prev,
-          departmentId: "",
-          assignedToUserId: "",
-        }));
+        setValue("departmentId", "");
+        setValue("assignedToUserId", "");
         setUsers([]);
       }
     } else {
       setDepartments([]);
       setUsers([]);
     }
-  }, [formData.branchId, branches]);
+  }, [branchId, branches, setValue]);
 
   // Fetch users when department is selected
   useEffect(() => {
     const fetchUsers = async () => {
-      if (formData.departmentId) {
+      if (departmentId) {
         try {
           const response = await API.get(
-            `/user?departmentId=${formData.departmentId}&userRole=USER`
+            `/user?departmentId=${departmentId}&userRole=USER`
           );
           setUsers(response.data);
-          setFormData((prev) => ({
-            ...prev,
-            assignedToUserId: "",
-          }));
+          setValue("assignedToUserId", "");
         } catch (error) {
-          console.error("Failed to fetch users:", error);
+          console.error(assetStrings.addAsset.errorMessages.fetchUsers, error);
         }
       } else {
         setUsers([]);
@@ -97,12 +100,13 @@ const AddAsset = ({ onClose, onSuccess }) => {
     };
 
     fetchUsers();
-  }, [formData.departmentId]);
+  }, [departmentId, setValue]);
 
   const handleClose = () => {
     setIsVisible(false);
     setTimeout(() => {
       onClose();
+      reset();
     }, 300);
   };
 
@@ -112,22 +116,13 @@ const AddAsset = ({ onClose, onSuccess }) => {
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const onSubmit = async (data) => {
     try {
-      await dispatch(createAsset(formData)).unwrap();
+      await dispatch(createAsset(data)).unwrap();
       onSuccess();
       handleClose();
     } catch (error) {
-      console.error("Failed to create asset:", error);
+      console.error(assetStrings.addAsset.toast.error, error);
     }
   };
 
@@ -145,172 +140,216 @@ const AddAsset = ({ onClose, onSuccess }) => {
         }`}
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
-          <h2 className="text-[17px] font-semibold text-white">Add Asset</h2>
+          <h2 className="text-[17px] font-semibold text-white">
+            {assetStrings.addAsset.title}
+          </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
           </button>
         </div>
 
         <div className="p-5 px-10">
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit(onSubmit)}>
             {error && (
               <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
                 {error}
               </div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Asset Name */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Asset Name*
+                  {assetStrings.addAsset.formLabels.assetName}
                 </label>
                 <input
                   ref={firstInputRef}
                   type="text"
-                  name="assetName"
-                  value={formData.assetName}
-                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  required
+                  placeholder={assetStrings.addAsset.placeholders.assetName}
+                  {...register("assetName", {
+                    required:
+                      assetStrings.addAsset.validation.assetNameRequired,
+                  })}
                 />
+                {errors.assetName && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.assetName.message}
+                  </p>
+                )}
               </div>
 
+              {/* Unique ID */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Unique ID*
+                  {assetStrings.addAsset.formLabels.uniqueId}
                 </label>
                 <input
                   type="text"
-                  name="uniqueId"
-                  value={formData.uniqueId}
-                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  required
+                  placeholder={assetStrings.addAsset.placeholders.uniqueId}
+                  {...register("uniqueId", {
+                    required: assetStrings.addAsset.validation.uniqueIdRequired,
+                  })}
                 />
+                {errors.uniqueId && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.uniqueId.message}
+                  </p>
+                )}
               </div>
 
+              {/* Brand */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Brand
+                  {assetStrings.addAsset.formLabels.brand}
                 </label>
                 <input
                   type="text"
-                  name="brand"
-                  value={formData.brand}
-                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  placeholder={assetStrings.addAsset.placeholders.brand}
+                  {...register("brand")}
                 />
               </div>
 
+              {/* Model */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Model
+                  {assetStrings.addAsset.formLabels.model}
                 </label>
                 <input
                   type="text"
-                  name="model"
-                  value={formData.model}
-                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  placeholder={assetStrings.addAsset.placeholders.model}
+                  {...register("model")}
                 />
               </div>
 
+              {/* Serial Number */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Serial Number
+                  {assetStrings.addAsset.formLabels.serialNumber}
                 </label>
                 <input
                   type="text"
-                  name="serialNumber"
-                  value={formData.serialNumber}
-                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  placeholder={assetStrings.addAsset.placeholders.serialNumber}
+                  {...register("serialNumber")}
                 />
               </div>
 
+              {/* Status */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Status*
+                  {assetStrings.addAsset.formLabels.status}
                 </label>
                 <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  required
+                  {...register("status", {
+                    required: assetStrings.addAsset.validation.statusRequired,
+                  })}
                 >
-                  <option value="ACTIVE">Active</option>
-                  <option value="IN_USE">In Use</option>
-                  <option value="UNDER_MAINTENANCE">Under Maintenance</option>
-                  <option value="RETIRED">Retired</option>
+                  <option value="ACTIVE">
+                    {assetStrings.addAsset.statusOptions.ACTIVE}
+                  </option>
+                  <option value="IN_USE">
+                    {assetStrings.addAsset.statusOptions.IN_USE}
+                  </option>
+                  <option value="UNDER_MAINTENANCE">
+                    {assetStrings.addAsset.statusOptions.UNDER_MAINTENANCE}
+                  </option>
+                  <option value="RETIRED">
+                    {assetStrings.addAsset.statusOptions.RETIRED}
+                  </option>
                 </select>
+                {errors.status && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.status.message}
+                  </p>
+                )}
               </div>
 
+              {/* Description */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Description
+                  {assetStrings.addAsset.formLabels.description}
                 </label>
                 <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                   rows={2}
+                  placeholder={assetStrings.addAsset.placeholders.description}
+                  {...register("description")}
                 />
               </div>
 
+              {/* Branch */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Branch*
+                  {assetStrings.addAsset.formLabels.branchId}
                 </label>
                 <select
-                  name="branchId"
-                  value={formData.branchId}
-                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  required
+                  {...register("branchId", {
+                    required: assetStrings.addAsset.validation.branchRequired,
+                  })}
                 >
-                  <option value="">Select Branch</option>
+                  <option value="">
+                    {assetStrings.addAsset.select.defaultBranch}
+                  </option>
                   {branches.map((branch) => (
                     <option key={branch.id} value={branch.id}>
                       {branch.branchName}
                     </option>
                   ))}
                 </select>
+                {errors.branchId && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.branchId.message}
+                  </p>
+                )}
               </div>
 
+              {/* Department */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Department*
+                  {assetStrings.addAsset.formLabels.departmentId}
                 </label>
                 <select
-                  name="departmentId"
-                  value={formData.departmentId}
-                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  required
-                  disabled={!formData.branchId}
+                  disabled={!branchId}
+                  {...register("departmentId", {
+                    required:
+                      assetStrings.addAsset.validation.departmentRequired,
+                  })}
                 >
-                  <option value="">Select Department</option>
+                  <option value="">
+                    {assetStrings.addAsset.select.defaultDepartment}
+                  </option>
                   {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>
                       {dept.departmentName}
                     </option>
                   ))}
                 </select>
+                {errors.departmentId && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.departmentId.message}
+                  </p>
+                )}
               </div>
 
+              {/* Assigned To */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
-                  Assigned To
+                  {assetStrings.addAsset.formLabels.assignedToUserId}
                 </label>
                 <select
-                  name="assignedToUserId"
-                  value={formData.assignedToUserId}
-                  onChange={handleChange}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  disabled={!formData.departmentId}
+                  disabled={!departmentId}
+                  {...register("assignedToUserId")}
                 >
-                  <option value="">Select User</option>
+                  <option value="">
+                    {assetStrings.addAsset.select.defaultUser}
+                  </option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
                       {user.userName} ({user.email})
@@ -328,14 +367,16 @@ const AddAsset = ({ onClose, onSuccess }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={loading}
               >
-                Close
+                {assetStrings.addAsset.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg"
                 disabled={loading}
               >
-                {loading ? "Saving..." : "Save"}
+                {loading
+                  ? assetStrings.addAsset.buttons.saving
+                  : assetStrings.addAsset.buttons.save}
               </button>
             </div>
           </form>

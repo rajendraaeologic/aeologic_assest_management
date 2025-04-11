@@ -8,6 +8,7 @@ import {
   createOrganization,
   getAllOrganizations,
 } from "../../Features/slices/organizationSlice";
+import organizationStrings from "../../locales/organizationStrings";
 
 const AddOrganization = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -52,14 +53,14 @@ const AddOrganization = ({ onClose }) => {
       await dispatch(createOrganization(data));
       dispatch(getAllOrganizations());
 
-      toast.success("Organization added successfully!", {
+      toast.success(organizationStrings.addOrganization.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
 
       handleClose();
     } catch (error) {
-      toast.error("Failed to add organization", {
+      toast.error(organizationStrings.addOrganization.toast.error, {
         position: "top-right",
         autoClose: 1000,
       });
@@ -81,7 +82,7 @@ const AddOrganization = ({ onClose }) => {
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
           <h2 className="text-[17px] font-semibold text-white">
-            Add Organization
+            {organizationStrings.addOrganization.title}
           </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
@@ -95,16 +96,24 @@ const AddOrganization = ({ onClose }) => {
                 htmlFor="organizationName"
                 className="block text-sm font-medium text-gray-700"
               >
-                Organization Name*
+                {
+                  organizationStrings.addOrganization.formLabels
+                    .organizationName
+                }
               </label>
               <input
                 ref={firstInputRef}
                 {...register("organizationName", {
-                  required: "Organization name is required",
+                  required:
+                    organizationStrings.addOrganization.validation
+                      .organizationNameRequired,
                 })}
                 type="text"
                 id="organizationName"
-                placeholder="Enter organization name"
+                placeholder={
+                  organizationStrings.addOrganization.placeholders
+                    .organizationName
+                }
                 className={`mt-1 p-2 w-full border ${
                   errors.organizationName ? "border-red-500" : "border-gray-300"
                 } outline-none rounded-md`}
@@ -124,14 +133,16 @@ const AddOrganization = ({ onClose }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={isSubmitting}
               >
-                Close
+                {organizationStrings.addOrganization.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Saving..." : "Save"}
+                {isSubmitting
+                  ? organizationStrings.addOrganization.buttons.saving
+                  : organizationStrings.addOrganization.buttons.save}
               </button>
             </div>
           </form>

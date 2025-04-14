@@ -19,7 +19,10 @@ const createDepartment = async (
   }
 
   const existingDepartment = await db.department.findFirst({
-    where: { departmentName: department.departmentName, branchId: department.branchId },
+    where: {
+      departmentName: department.departmentName,
+      branchId: department.branchId,
+    },
   });
 
   if (existingDepartment) {
@@ -182,6 +185,15 @@ const deleteDepartmentsByIds = async (
   return departments;
 };
 
+const getDepartmentsByBranchId = async (branchId: string): Promise<any[]> => {
+  return await db.department.findMany({
+    where: {
+      branchId: branchId,
+    },
+    select: DepartmentKeys,
+  });
+};
+
 export default {
   createDepartment,
   queryDepartments,
@@ -189,4 +201,5 @@ export default {
   updateDepartmentById,
   deleteDepartmentById,
   deleteDepartmentsByIds,
+  getDepartmentsByBranchId,
 };

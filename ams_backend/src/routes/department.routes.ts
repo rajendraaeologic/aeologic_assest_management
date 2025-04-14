@@ -46,4 +46,10 @@ router
     departmentController.deleteDepartments
   );
 
+router.get(
+  "/:branchId/departments",
+  validate(departmentValidation.getDepartmentsByBranchIdValidation),
+  departmentController.getDepartmentsByBranchId
+);
+
 export default router;

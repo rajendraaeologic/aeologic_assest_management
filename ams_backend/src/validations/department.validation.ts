@@ -70,6 +70,14 @@ const bulkDeleteDepartmentsValidation = {
       }),
   }),
 };
+
+const getDepartmentsByBranchIdValidation = {
+  params: Joi.object().keys({
+    branchId: Joi.required()
+      .custom(isValidMongoDBObjectId)
+      .messages(isValidMongoDBObjectIdCustomMessages),
+  }),
+};
 export default {
   createDepartmentValidation,
   getAllDepartmentsValidation,
@@ -77,4 +85,5 @@ export default {
   updateDepartmentValidation,
   deleteDepartmentValidation,
   bulkDeleteDepartmentsValidation,
+  getDepartmentsByBranchIdValidation,
 };

@@ -1,25 +1,24 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
-import { useDispatch, useSelector } from "react-redux";
+import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
-import {
-  createDepartment,
-  getAllDepartments,
-} from "../../Features/slices/departmentSlice";
-import { getAllBranches } from "../../Features/slices/branchSlice";
+import { useSelector } from "react-redux";
+import { createDepartment } from "../../Features/slices/departmentSlice";
 import { getAllOrganizations } from "../../Features/slices/organizationSlice";
 import departmentStrings from "../../locales/departmentStrings";
+import API from "../../App/api/axiosInstance";
 
 const AddDepartment = ({ onClose }) => {
   const dispatch = useDispatch();
   const firstInputRef = useRef(null);
   const modalRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [selectedOrgId, setSelectedOrgId] = useState("");
+  const [organizationId, setorganizationId] = useState("");
+  const [branches, setBranches] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(false);
 
-  const { branches } = useSelector((state) => state.branchData);
   const { organizations } = useSelector((state) => state.organizationData);
 
   const {
@@ -35,7 +34,6 @@ const AddDepartment = ({ onClose }) => {
   });
 
   useEffect(() => {
-    dispatch(getAllBranches());
     dispatch(getAllOrganizations());
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
@@ -44,6 +42,25 @@ const AddDepartment = ({ onClose }) => {
       document.body.style.overflow = "auto";
     };
   }, [dispatch]);
+
+  useEffect(() => {
+    if (organizationId) {
+      const fetchBranches = async () => {
+        try {
+          setLoadingBranches(true);
+          const response = await API.get(`/branch/${organizationId}/branches`);
+
+          setBranches(response.data.data);
+        } catch (error) {
+          console.error("Error fetching branches:", error);
+        } finally {
+          setLoadingBranches(false);
+        }
+      };
+
+      fetchBranches();
+    }
+  }, [organizationId]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -66,7 +83,6 @@ const AddDepartment = ({ onClose }) => {
           branchId: data.branchId,
         })
       );
-      dispatch(getAllDepartments());
       toast.success(departmentStrings.addDepartment.toast.success, {
         position: "top-right",
         autoClose: 1000,
@@ -79,10 +95,6 @@ const AddDepartment = ({ onClose }) => {
       });
     }
   };
-
-  const filteredBranches = branches?.filter(
-    (branch) => branch.company?.id === selectedOrgId
-  );
 
   return (
     <div
@@ -147,9 +159,9 @@ const AddDepartment = ({ onClose }) => {
                   }
                 </label>
                 <select
-                  value={selectedOrgId}
+                  value={organizationId}
                   onChange={(e) => {
-                    setSelectedOrgId(e.target.value);
+                    setorganizationId(e.target.value);
                     setValue("branchId", "");
                   }}
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md outline-none"
@@ -181,12 +193,15 @@ const AddDepartment = ({ onClose }) => {
                   } outline-none rounded-md`}
                 >
                   <option value="">Select Branch</option>
-                  {selectedOrgId &&
-                    filteredBranches?.map((branch) => (
+                  {loadingBranches ? (
+                    <option value="">Loading branches...</option>
+                  ) : (
+                    branches?.map((branch) => (
                       <option key={branch.id} value={branch.id}>
                         {branch.branchName}
                       </option>
-                    ))}
+                    ))
+                  )}
                 </select>
                 {errors.branchId && (
                   <p className="text-red-500 text-sm mt-1">

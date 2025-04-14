@@ -74,7 +74,7 @@ const Dashboard = () => {
       setChartData(data);
     };
     fetchData();
-  }, [departments]);
+  }, [organizations, branches, departments]);
 
   return (
     <div

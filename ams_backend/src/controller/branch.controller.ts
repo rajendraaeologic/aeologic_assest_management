@@ -95,7 +95,7 @@ const updateBranch = catchAsync(async (req, res) => {
   }
 });
 
-export const deleteBranch = catchAsync(async (req, res) => {
+const deleteBranch = catchAsync(async (req, res) => {
   try {
     await branchService.deleteBranchById(req.params.branchId);
     res.status(httpStatus.NO_CONTENT);
@@ -105,7 +105,7 @@ export const deleteBranch = catchAsync(async (req, res) => {
   }
 });
 
-export const deleteBranches = catchAsync(async (req, res) => {
+const deleteBranches = catchAsync(async (req, res) => {
   try {
     await branchService.deleteBranchesByIds(req.body.branchIds);
     res.status(httpStatus.NO_CONTENT);
@@ -115,6 +115,29 @@ export const deleteBranches = catchAsync(async (req, res) => {
   }
 });
 
+const getBranchesByOrganizationId = catchAsync(async (req, res) => {
+  const { organizationId } = req.params;
+
+  const branches = await branchService.getBranchesByOrganizationId(
+    organizationId
+  );
+
+  if (!branches || branches.length === 0) {
+    res.status(200).json({
+      status: "404",
+      message: "No branches found for this organization",
+      data: [],
+    });
+    return;
+  }
+
+  res.status(200).json({
+    status: "200",
+    message: "Branches fetched successfully",
+    data: branches,
+  });
+});
+
 export default {
   createBranch,
   getAllBranches,
@@ -122,4 +145,5 @@ export default {
   updateBranch,
   deleteBranch,
   deleteBranches,
+  getBranchesByOrganizationId,
 };

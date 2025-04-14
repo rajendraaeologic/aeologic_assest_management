@@ -45,4 +45,10 @@ router
     branchController.deleteBranches
   );
 
+router.get(
+  "/:organizationId/branches",
+  validate(branchValidation.getBranchesByOrganizationIdValidation),
+  branchController.getBranchesByOrganizationId
+);
+
 export default router;

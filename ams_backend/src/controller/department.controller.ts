@@ -120,6 +120,29 @@ const deleteDepartments = catchAsync(async (req, res) => {
   }
 });
 
+const getDepartmentsByBranchId = catchAsync(async (req, res) => {
+  const { branchId } = req.params;
+
+  const departments = await departmentService.getDepartmentsByBranchId(
+    branchId
+  );
+
+  if (!departments || departments.length === 0) {
+    res.status(200).json({
+      status: "404",
+      message: "No departments found for this branch",
+      data: [],
+    });
+    return;
+  }
+
+  res.status(200).json({
+    status: "200",
+    message: "Branches fetched successfully",
+    data: departments,
+  });
+});
+
 export default {
   createDepartment,
   getAllDepartments,
@@ -127,4 +150,5 @@ export default {
   updateDepartment,
   deleteDepartment,
   deleteDepartments,
+  getDepartmentsByBranchId,
 };

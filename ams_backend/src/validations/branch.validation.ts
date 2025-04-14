@@ -87,6 +87,14 @@ const deleteBranchesValidation = {
   }),
 };
 
+const getBranchesByOrganizationIdValidation = {
+  params: Joi.object().keys({
+    organizationId: Joi.required()
+      .custom(isValidMongoDBObjectId)
+      .messages(isValidMongoDBObjectIdCustomMessages),
+  }),
+};
+
 export default {
   createBranchValidation,
   getAllBranchesValidation,
@@ -94,4 +102,5 @@ export default {
   updateBranchValidation,
   deleteBranchValidation,
   deleteBranchesValidation,
+  getBranchesByOrganizationIdValidation,
 };

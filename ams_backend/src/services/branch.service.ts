@@ -143,6 +143,19 @@ const deleteBranchesByIds = async (
   });
 };
 
+//getBranchesByOrganizationId
+
+const getBranchesByOrganizationId = async (
+  organizationId: string
+): Promise<any[]> => {
+  return await db.branch.findMany({
+    where: {
+      companyId: organizationId,
+    },
+    select: BranchKeys,
+  });
+};
+
 export default {
   createBranch,
   queryBranches,
@@ -150,4 +163,5 @@ export default {
   updateBranchById,
   deleteBranchById,
   deleteBranchesByIds,
+  getBranchesByOrganizationId,
 };

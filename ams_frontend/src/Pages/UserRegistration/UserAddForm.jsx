@@ -7,9 +7,8 @@ import {
 } from "../../Features/services/userService.js";
 import { toast } from "react-toastify";
 import departmentStrings from "../../locales/departmentStrings.js";
-import { getAllBranches } from "../../Features/slices/branchSlice.js";
 import { getAllOrganizations } from "../../Features/slices/organizationSlice.js";
-import { getAllDepartments } from "../../Features/slices/departmentSlice.js";
+import API from "../../App/api/axiosInstance.js";
 
 const UserAddForm = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -19,8 +18,11 @@ const UserAddForm = ({ onClose }) => {
   const [selectedOrgId, setSelectedOrgId] = useState("");
   const [selectedBranchId, setSelectedBranchId] = useState("");
   const { organizations } = useSelector((state) => state.organizationData);
-  const { branches } = useSelector((state) => state.branchData);
-  const { departments } = useSelector((state) => state.departmentData);
+  const [branches, setBranches] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(false);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+
 
   const [usersFormData, setUsersFormData,] = useState({
     userName: "",
@@ -36,9 +38,7 @@ const UserAddForm = ({ onClose }) => {
   });
 
   useEffect(() => {
-    dispatch(getAllBranches());
     dispatch(getAllOrganizations());
-    dispatch(getAllDepartments());
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
@@ -46,6 +46,47 @@ const UserAddForm = ({ onClose }) => {
       document.body.style.overflow = "auto";
     };
   }, []);
+
+  useEffect(() => {
+    if (selectedOrgId) {
+      const fetchBranches = async () => {
+        try {
+          setLoadingBranches(true);
+          const response = await API.get(`/branch/${selectedOrgId}/branches`);
+          setBranches(response.data.data);
+          setUsersFormData(prev => ({ ...prev, branchId: "", departmentCode: "" }));
+        } catch (error) {
+          console.error("Error fetching branches:", error);
+        } finally {
+          setLoadingBranches(false);
+        }
+      };
+      fetchBranches();
+    } else {
+      setBranches([]);
+    }
+  }, [selectedOrgId]);
+
+  useEffect(() => {
+    if (selectedBranchId) {
+      const fetchDepartments = async () => {
+        try {
+          setLoadingDepartments(true);
+          const response = await API.get(`/department/${selectedBranchId}/departments`);
+          setDepartments(response.data.data);
+          setUsersFormData(prev => ({ ...prev, departmentCode: "" }));
+        } catch (error) {
+          console.error("Error fetching departments:", error);
+        } finally {
+          setLoadingDepartments(false);
+        }
+      };
+      fetchDepartments();
+    } else {
+      setDepartments([]);
+    }
+  }, [selectedBranchId]);
+
 
   const handleClose = () => {
     setIsVisible(false);
@@ -103,15 +144,6 @@ const UserAddForm = ({ onClose }) => {
       });
     }
   };
-
-  const filteredBranches = branches?.filter(
-      (branch) => branch.company?.id === selectedOrgId
-  );
-
-  // ✅ Fixed department filter logic
-  const filteredDepartments = departments?.filter(
-      (dept) => dept.branch?.id === selectedBranchId
-  );
 
   return (
       <div
@@ -220,15 +252,7 @@ const UserAddForm = ({ onClose }) => {
                   </label>
                   <select
                       value={selectedOrgId}
-                      onChange={(e) => {
-                        setSelectedOrgId(e.target.value);
-                        setSelectedBranchId("");
-                        setUsersFormData((prevData) => ({
-                          ...prevData,
-                          branchId: "",
-                          departmentCode: "",
-                        }));
-                      }}
+                      onChange={(e) => setSelectedOrgId(e.target.value)}
                       className="mt-1 p-2 w-full border border-gray-300 rounded-md outline-none"
                   >
                     <option value="">Select Organization</option>
@@ -248,16 +272,20 @@ const UserAddForm = ({ onClose }) => {
                       name="branchId"
                       value={usersFormData.branchId}
                       onChange={changeHandler}
-                      className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                      required
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md outline-none"
                   >
                     <option value="">Select Branch</option>
-                    {filteredBranches?.map((branch) => (
-                        <option key={branch.id} value={branch.id}>
-                          {branch.branchName}
-                        </option>
-                    ))}
+                    {loadingBranches ? (
+                        <option>Loading...</option>
+                    ) : (
+                        branches?.map((branch) => (
+                            <option key={branch.id} value={branch.id}>
+                              {branch.branchName}
+                            </option>
+                        ))
+                    )}
                   </select>
+
                 </div>
 
                 <div className="w-full">
@@ -268,16 +296,20 @@ const UserAddForm = ({ onClose }) => {
                       name="departmentCode"
                       value={usersFormData.departmentCode}
                       onChange={changeHandler}
-                      className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                      required
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md outline-none"
                   >
                     <option value="">Select Department</option>
-                    {filteredDepartments?.map((dept) => (
-                        <option key={dept.id} value={dept.id}>
-                          {dept.departmentName}
-                        </option>
-                    ))}
+                    {loadingDepartments ? (
+                        <option>Loading...</option>
+                    ) : (
+                        departments?.map((dept) => (
+                            <option key={dept.id} value={dept.id}>
+                              {dept.departmentName}
+                            </option>
+                        ))
+                    )}
                   </select>
+
                 </div>
 
                 <div className="w-full">

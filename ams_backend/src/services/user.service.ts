@@ -6,7 +6,7 @@ import {
 import httpStatus from 'http-status';
 import db from '@/lib/db';
 import ApiError from '@/lib/ApiError';
-import {UserKeys} from "@/utils/selects.utils";
+import {BranchKeys, DepartmentKeys, UserKeys} from "@/utils/selects.utils";
 
 const createUser = async (user: User): Promise<Omit<User, 'password'> | null> => {
   if (!user) { return null }
@@ -150,6 +150,29 @@ const checkUserExists = async (userId: string) => {
   return user !== null;
 };
 
+//getBranchesByOrganizationId
+const getBranchesByOrganizationId = async (
+    organizationId: string
+): Promise<any[]> => {
+  return await db.branch.findMany({
+    where: {
+      companyId: organizationId,
+    },
+    select: BranchKeys,
+  });
+};
+
+// getDepartmentsByBranchId
+const getDepartmentsByBranchId = async (branchId: string): Promise<any[]> => {
+  return await db.department.findMany({
+    where: {
+      branchId: branchId,
+    },
+    select: DepartmentKeys,
+  });
+};
+
+
 export default {
   createUser,
   registerUser,
@@ -162,4 +185,6 @@ export default {
   getUserWithPasswordByEmail,
   updateUserById,
   deleteUserById,
+  getBranchesByOrganizationId,
+  getDepartmentsByBranchId
 };

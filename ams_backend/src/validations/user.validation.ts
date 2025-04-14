@@ -60,7 +60,6 @@ const createUserValidation = {
                 .required()
                 .valid(UserStatus.ACTIVE, UserStatus.IN_ACTIVE),
 
-            // Add these if needed:
             code: Joi.string().optional(),
             department: Joi.string().optional(),
             departmentCode: Joi.string().optional(),
@@ -101,11 +100,29 @@ const deleteUserValidation = {
     }),
 };
 
+const getBranchesByOrganizationIdValidation = {
+    params: Joi.object().keys({
+        organizationId: Joi.required()
+            .custom(isValidMongoDBObjectId)
+            .messages(isValidMongoDBObjectIdCustomMessages),
+    }),
+};
+
+const getDepartmentsByBranchIdValidation = {
+    params: Joi.object().keys({
+        branchId: Joi.required()
+            .custom(isValidMongoDBObjectId)
+            .messages(isValidMongoDBObjectIdCustomMessages),
+    }),
+};
+
 export default {
     createUserValidation,
     getAllUserValidation,
     getUserValidation,
     updateUserValidation,
     deleteUserValidation,
+    getBranchesByOrganizationIdValidation,
+    getDepartmentsByBranchIdValidation,
 };
 

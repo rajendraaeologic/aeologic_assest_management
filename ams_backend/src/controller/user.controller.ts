@@ -14,58 +14,102 @@ const createUser = catchAsync(async (req, res) => {
             phone: req.body.phone,
             email: req.body.email,
             password: await encryptPassword(req.body.password),
-            status: req.body.status,
-            userRole: req.body.userRole,
-        } as User);
+            status: req.body.status || 'ACTIVE',
+            userRole: req.body.role,
+            // code: req.body.code,
+            // department: req.body.department,
+            // departmentCode: req.body.departmentCode
+        } as unknown as User);
 
-        res.status(httpStatus.CREATED).send({user, message: "User Created Successfully."});
+        res
+            .status(httpStatus.CREATED)
+            .send({user, message: 'User Created Successfully.',});
     } catch (error) {
-        throw new ApiError(httpStatus.NOT_FOUND, error.message);
+        throw new ApiError(httpStatus.BAD_REQUEST, error.message);
     }
 });
 
-const getUsers = catchAsync(async (req, res) => {
+// Get All Users
+const getAllUsers = catchAsync(async (req, res) => {
     const filter = pick(req.query, [
-        'name','phone', 'userRole','status','isEmailVerified',
-        'email', 'from_date', 'to_date'
+        'userName',
+        'phone',
+        'userRole',
+        'status',
+        'isEmailVerified',
+        'email',
+        'from_date',
+        'to_date',
     ]);
+    const options = pick(req.query, ['sortBy', 'sortType', 'limit', 'page']);
 
     applyDateFilter(filter);
 
-    const options = pick(req.query, ['sortBy','sortType', 'limit', 'page']);
-
-    if (filter.name){
-        filter.name =  {
-            contains: filter.name,
+    if (filter.userName) {
+        filter.userName = {
+            contains: filter.userName,
             mode: 'insensitive',
-        }
+        };
     }
 
-    console.log(options)
     const result = await userService.queryUsers(filter, options);
-    res.send(result);
-});
 
-const getUser = catchAsync(async (req, res) => {
-    const user = await userService.getUserById(req.params.userId);
-    if (!user) {
-        throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+    if (!result || result.length === 0) {
+        res.status(200).json({
+            status: '404',
+            message: 'No Users found',
+            data: [],
+        });
+        return;
     }
-    res.send(user);
+
+    res.status(200).json({
+        success: true,
+        message: 'Users fetched successfully',
+        data: result,
+    });
 });
 
+// Get User By ID
+const getUserById = catchAsync(async (req, res) => {
+    const user = await userService.getUserById(req.params.userId);
+
+    if (!user) {
+        res.status(200).json({
+            status: '404',
+            message: 'No User found',
+            data: [],
+        });
+        return;
+    }
+
+    res.status(200).json({
+        success: true,
+        message: 'User fetched successfully',
+        data: user,
+    });
+});
+
+// Update User
 const updateUser = catchAsync(async (req, res) => {
-    try{
-        const user = await userService.updateUserById(req.params.userId, req.body);
-        res.send(user);
+    try {
+        const user = await userService.updateUserById(
+            req.params.userId,
+            req.body
+        );
+        res.status(200).json({
+            success: true,
+            message: 'User updated successfully',
+            data: user,
+        });
     } catch (error) {
         throw new ApiError(httpStatus.NOT_FOUND, error.message);
     }
 });
 
-
+// Delete User
 const deleteUser = catchAsync(async (req, res) => {
-    try{
+    try {
         await userService.deleteUserById(req.params.userId);
         res.status(httpStatus.NO_CONTENT).send({message: "User deleted successfully"});
     } catch (error) {
@@ -75,8 +119,8 @@ const deleteUser = catchAsync(async (req, res) => {
 
 export default {
     createUser,
-    getUsers,
-    getUser,
+    getAllUsers,
+    getUserById,
     updateUser,
     deleteUser,
 };

@@ -70,6 +70,7 @@ const branchSlice = createSlice({
     branches: [],
     loading: false,
     error: null,
+
     selectedBranch: null,
     selectedBranches: [],
     currentPage: 0,

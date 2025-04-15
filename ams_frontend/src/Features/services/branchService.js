@@ -45,4 +45,3 @@ export const deleteBranchService = async (ids) => {
     throw new Error(errorMsg);
   }
 };
-

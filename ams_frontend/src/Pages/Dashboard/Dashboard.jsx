@@ -11,70 +11,69 @@ import {
   Cell,
 } from "recharts";
 import SliderContext from "../../components/ContexApi";
-import { useSelector, useDispatch } from "react-redux";
-import { getAllOrganizations } from "../../Features/slices/organizationSlice";
-import { getAllBranches } from "../../Features/slices/branchSlice";
-import { getAllDepartments } from "../../Features/slices/departmentSlice";
 import dashboardStrings from "../../locales/DashboardStrings";
+import API from "../../App/api/axiosInstance";
 
 const Dashboard = () => {
   const { isSidebarOpen } = useContext(SliderContext);
   const [chartData, setChartData] = useState([]);
-  const dispatch = useDispatch();
-
-  const { organizations } = useSelector((state) => state.organizationData);
-  const { branches } = useSelector((state) => state.branchData);
-  const { departments } = useSelector((state) => state.departmentData);
 
   useEffect(() => {
-    dispatch(getAllDepartments());
-    dispatch(getAllOrganizations());
-    dispatch(getAllBranches());
-  }, [dispatch, organizations.length, branches.length, departments.length]);
+    const fetchDashboardCounts = async () => {
+      try {
+        const res = await API.get("/dashboard/counts");
 
-  useEffect(() => {
-    const fetchData = () => {
-      const data = [
-        {
-          name: dashboardStrings.dashboard.stats.users,
-          value: 400,
-          color: "#3B82F6",
-        },
-        {
-          name: dashboardStrings.dashboard.stats.organizations,
-          value: organizations.length,
-          color: "#210F37",
-        },
-        {
-          name: dashboardStrings.dashboard.stats.branches,
-          value: branches.length,
-          color: "#fc0380",
-        },
-        {
-          name: dashboardStrings.dashboard.stats.departments,
-          value: departments.length,
-          color: "#10B981",
-        },
-        {
-          name: dashboardStrings.dashboard.stats.assets,
-          value: 2,
-          color: "#FBBF24",
-        },
-        {
-          name: dashboardStrings.dashboard.stats.assignTags,
-          value: 4,
-          color: "#EF4444",
-        },
-        {
-          name: dashboardStrings.dashboard.stats.outForDelivery,
-          value: 4,
-          color: "#14B8A6",
-        },
-      ];
-      setChartData(data);
+        if (res.status === 200 && res.data?.data) {
+          const { organizations, branches, departments } = res.data.data;
+
+          const data = [
+            {
+              name: dashboardStrings.dashboard.stats.users,
+              value: 400,
+              color: "#3B82F6",
+            },
+            {
+              name: dashboardStrings.dashboard.stats.organizations,
+              value: organizations,
+              color: "#210F37",
+            },
+            {
+              name: dashboardStrings.dashboard.stats.branches,
+              value: branches,
+              color: "#fc0380",
+            },
+            {
+              name: dashboardStrings.dashboard.stats.departments,
+              value: departments,
+              color: "#10B981",
+            },
+            {
+              name: dashboardStrings.dashboard.stats.assets,
+              value: 2,
+              color: "#FBBF24",
+            },
+            {
+              name: dashboardStrings.dashboard.stats.assignTags,
+              value: 4,
+              color: "#EF4444",
+            },
+            {
+              name: dashboardStrings.dashboard.stats.outForDelivery,
+              value: 4,
+              color: "#14B8A6",
+            },
+          ];
+          setChartData(data);
+        } else {
+          console.error("Failed to load dashboard counts");
+        }
+      } catch (error) {
+        console.error("Dashboard API Error:", error);
+      }
     };
-    fetchData();
-  }, [organizations, branches, departments]);
+
+    fetchDashboardCounts();
+  }, []);
 
   return (
     <div

@@ -4,6 +4,7 @@ import {
   getAllBranchesService,
   updateBranchService,
   deleteBranchService,
+  getTotalBranchCountService,
 } from "../services/branchService";
 
 // Create Branch
@@ -64,12 +65,25 @@ export const deleteBranch = createAsyncThunk(
   }
 );
 
+export const getTotalBranchCount = createAsyncThunk(
+  "branch/getTotalCount",
+  async (_, { rejectWithValue }) => {
+    try {
+      const count = await getTotalBranchCountService();
+      return count;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Failed to fetch count");
+    }
+  }
+);
+
 const branchSlice = createSlice({
   name: "branch",
   initialState: {
     branches: [],
     loading: false,
     error: null,
+
     selectedBranch: null,
     selectedBranches: [],
     currentPage: 0,

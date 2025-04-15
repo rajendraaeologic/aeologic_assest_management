@@ -4,3 +4,4 @@ export { default as userController } from "./user.controller";
 export { default as userNotificationController } from "./user-notification.controller";
 export { default as branchController } from "./branch.controller";
 export { default as assetController } from "./asset.controller";
+export { default as dashboardController } from "./dashboard.controller";

@@ -9,3 +9,4 @@ export { default as organizationService } from "./organization.service";
 export { default as departmentService } from "./department.service";
 export { default as branchService } from "./branch.service";
 export { default as assetService } from "./asset.service";
+export { default as dashboardService } from "./dashboard.service";

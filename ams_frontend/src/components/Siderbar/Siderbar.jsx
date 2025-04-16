@@ -68,7 +68,7 @@ const Sidebar = () => {
             },
             { name: "Branch", icon: <FaCodeBranch />, path: "/branch" },
             { name: "Department", icon: <FaBriefcase />, path: "/department" },
-            { name: "Asset", icon: <GiAudioCassette />, path: "/asset" },
+            { name: "Add Asset", icon: <GiAudioCassette />, path: "/asset" },
             {
               name: "Assign Tag (Coming Soon)",
               icon: <FaTags />,

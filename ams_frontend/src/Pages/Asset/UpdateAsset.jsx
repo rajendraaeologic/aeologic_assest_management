@@ -154,8 +154,8 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
     setLoading(true);
     try {
       const updateData = {
-        id: selectedAsset.id,
-        ...data,
+        params: { id: selectedAsset.id },
+        body: { ...data },
       };
 
       await dispatch(updateAsset(updateData)).unwrap();

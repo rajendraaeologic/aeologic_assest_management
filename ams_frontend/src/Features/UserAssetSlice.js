@@ -3,7 +3,6 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialState = {
   assetUsersData: [],
   selectedUsers: [],
-
   currentPage: 0,
   rowsPerPage: 5,
 };

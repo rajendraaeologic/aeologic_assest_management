@@ -22,14 +22,13 @@ const Dashboard = () => {
     const fetchDashboardCounts = async () => {
       try {
         const res = await API.get("/dashboard/counts");
-
         if (res.status === 200 && res.data?.data) {
-          const { organizations, branches, departments } = res.data.data;
+          const { users, organizations, branches, departments } = res.data.data;
 
           const data = [
             {
               name: dashboardStrings.dashboard.stats.users,
-              value: 400,
+              value: users,
               color: "#3B82F6",
             },
             {

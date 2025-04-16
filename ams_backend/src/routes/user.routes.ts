@@ -1,15 +1,15 @@
-import express from 'express';
-import auth from '@/middleware/auth.middleware';
-import validate from '@/middleware/validation.middleware';
-import { userValidation} from '@/validations';
-import { userController} from '@/controller';
+import express from "express";
+import auth from "@/middleware/auth.middleware";
+import validate from "@/middleware/validation.middleware";
+import { userValidation } from "@/validations";
+import { userController } from "@/controller";
 
 const router = express.Router();
 
 router
-    .route('/')
-    .post(auth(), validate(userValidation.createUsers), userController.createUser)
-    .get(auth(), validate(userValidation.getUsers), userController.getUsers);
+  .route("/")
+  .post(validate(userValidation.createUsers), userController.createUser)
+  .get(validate(userValidation.getUsers), userController.getUsers);
 
 /*router
     .route('/notification')
@@ -21,9 +21,15 @@ router
     .get(auth('getPayments'), validate(userValidation.getPayments), userController.getPayments)*/
 
 router
-    .route('/:userId')
-    .get(auth(), validate(userValidation.getUser), userController.getUser)
-    .patch(auth(), validate(userValidation.updateUser), userController.updateUser)
-    .delete(auth(), validate(userValidation.deleteUser), userController.deleteUser);
+  .route("/:userId")
+  .get(auth(), validate(userValidation.getUser), userController.getUser)
+  .put(validate(userValidation.updateUser), userController.updateUser)
+  .delete(validate(userValidation.deleteUser), userController.deleteUser);
+router
+  .route("/bulk-delete")
+  .post(
+    validate(userValidation.deleteUsersValidation),
+    userController.deleteUsers
+  );
 
 export default router;

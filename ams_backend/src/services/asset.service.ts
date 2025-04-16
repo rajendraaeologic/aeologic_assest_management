@@ -6,17 +6,48 @@ import { AssetKeys } from "@/utils/selects.utils";
 
 // createAsset
 const createAsset = async (
-  asset: Pick<Asset, "assetName" | "uniqueId" | "locationId">
+  asset: Pick<
+    Asset,
+    | "assetName"
+    | "uniqueId"
+    | "brand"
+    | "model"
+    | "serialNumber"
+    | "status"
+    | "description"
+    | "branchId"
+    | "departmentId"
+    | "locationId"
+  >
 ): Promise<Omit<Asset, "id"> | null> => {
   if (!asset) {
     return null;
   }
 
-  // Check if asset with the same uniqueId already exists
+  const branchExists = await db.branch.findUnique({
+    where: { id: asset.branchId },
+  });
+  if (!branchExists) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Branch ID");
+  }
+
+  const departmentExists = await db.department.findUnique({
+    where: { id: asset.departmentId },
+  });
+  if (!departmentExists) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Department ID");
+  }
+
+  const locationExists = await db.location.findUnique({
+    where: { id: asset.locationId },
+  });
+  if (!locationExists) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Location ID");
+  }
+
   const existingAsset = await db.asset.findFirst({
     where: { uniqueId: asset.uniqueId },
   });
-
   if (existingAsset) {
     throw new ApiError(
       httpStatus.CONFLICT,
@@ -25,7 +56,18 @@ const createAsset = async (
   }
 
   return await db.asset.create({
-    data: asset,
+    data: {
+      assetName: asset.assetName,
+      uniqueId: asset.uniqueId,
+      brand: asset.brand,
+      model: asset.model,
+      serialNumber: asset.serialNumber,
+      status: asset.status,
+      description: asset.description,
+      branchId: asset.branchId,
+      departmentId: asset.departmentId,
+      locationId: asset.locationId,
+    },
   });
 };
 

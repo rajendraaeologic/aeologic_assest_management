@@ -4,15 +4,28 @@ import catchAsync from "@/lib/catchAsync";
 import pick from "@/lib/pick";
 import { applyDateFilter } from "@/utils/filters.utils";
 import { PrismaClient } from "@prisma/client";
-import { AssetKeys, AssetAssignmentKeys, AssetHistoryKeys } from "../utils/selects.utils";
+import {
+  AssetKeys,
+  AssetAssignmentKeys,
+  AssetHistoryKeys,
+} from "../utils/selects.utils";
+import { assetService } from "@/services";
 
 const prisma = new PrismaClient();
 
 const createAsset = catchAsync(async (req, res) => {
   try {
-    const asset = await prisma.asset.create({
-      data: req.body,
-      select: AssetKeys
+    const asset = await assetService.createAsset({
+      assetName: req.body.assetName,
+      uniqueId: req.body.uniqueId,
+      brand: req.body.brand,
+      model: req.body.model,
+      serialNumber: req.body.serialNumber,
+      status: req.body.status,
+      description: req.body.description,
+      branchId: req.body.branchId,
+      departmentId: req.body.departmentId,
+      locationId: req.body.locationId,
     });
 
     res.status(httpStatus.CREATED).json({
@@ -21,26 +34,33 @@ const createAsset = catchAsync(async (req, res) => {
       data: asset,
     });
   } catch (error) {
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, "Error creating asset");
+    throw new ApiError(httpStatus.BAD_REQUEST, error.message);
   }
 });
 
 const getAllAssets = catchAsync(async (req, res) => {
   const filter = pick(req.query, [
-    "assetName", "status", "locationId", "assignedToUserId", 
-    "branchId", "departmentId", "from_date", "to_date"
+    "assetName",
+    "status",
+    "locationId",
+    "assignedToUserId",
+    "branchId",
+    "departmentId",
+    "from_date",
+    "to_date",
   ]);
   const options = pick(req.query, ["sortBy", "sortType", "limit", "page"]);
 
   applyDateFilter(filter);
-  const result = await prisma.asset.findMany({ 
+  const result = await prisma.asset.findMany({
     where: filter,
-    select: AssetKeys
+    select: AssetKeys,
   });
 
   res.status(200).json({
     success: true,
-    message: result.length > 0 ? "Assets fetched successfully" : "No Assets found",
+    message:
+      result.length > 0 ? "Assets fetched successfully" : "No Assets found",
     data: result,
   });
 });
@@ -48,9 +68,9 @@ const getAllAssets = catchAsync(async (req, res) => {
 const getAssetById = catchAsync(async (req, res) => {
   const asset = await prisma.asset.findUnique({
     where: { id: req.params.assetId },
-    select: AssetKeys
+    select: AssetKeys,
   });
-  
+
   if (!asset) {
     throw new ApiError(httpStatus.NOT_FOUND, "Asset not found");
   }
@@ -66,9 +86,9 @@ const updateAsset = catchAsync(async (req, res) => {
   const asset = await prisma.asset.update({
     where: { id: req.params.assetId },
     data: req.body,
-    select: AssetKeys
+    select: AssetKeys,
   });
-  
+
   res.status(200).json({
     success: true,
     message: "Asset updated successfully",
@@ -80,7 +100,7 @@ const deleteAsset = catchAsync(async (req, res) => {
   await prisma.asset.delete({
     where: { id: req.params.assetId },
   });
-  
+
   res.status(httpStatus.NO_CONTENT).json({
     success: true,
     message: "Asset deleted successfully",
@@ -91,7 +111,7 @@ const bulkDeleteAssets = catchAsync(async (req, res) => {
   await prisma.asset.deleteMany({
     where: { id: { in: req.body.assetIds } },
   });
-  
+
   res.status(httpStatus.NO_CONTENT).json({
     success: true,
     message: "Assets deleted successfully",
@@ -105,7 +125,7 @@ const assignAsset = catchAsync(async (req, res) => {
       assetId: req.params.assetId,
       userId: req.body.assignedToUserId,
     },
-    select: AssetAssignmentKeys
+    select: AssetAssignmentKeys,
   });
 
   // Update asset's assigned user
@@ -124,17 +144,18 @@ const assignAsset = catchAsync(async (req, res) => {
 const getAssetAssignments = catchAsync(async (req, res) => {
   const filter = pick(req.query, ["from_date", "to_date"]);
   applyDateFilter(filter);
-  
+
   const assignments = await prisma.assetAssignment.findMany({
     where: { assetId: req.params.assetId, ...filter },
-    select: AssetAssignmentKeys
+    select: AssetAssignmentKeys,
   });
 
   res.status(200).json({
     success: true,
-    message: assignments.length > 0 
-      ? "Asset assignments fetched successfully" 
-      : "No assignments found",
+    message:
+      assignments.length > 0
+        ? "Asset assignments fetched successfully"
+        : "No assignments found",
     data: assignments,
   });
 });
@@ -142,17 +163,18 @@ const getAssetAssignments = catchAsync(async (req, res) => {
 const getAssetHistory = catchAsync(async (req, res) => {
   const filter = pick(req.query, ["action", "userId", "from_date", "to_date"]);
   applyDateFilter(filter);
-  
+
   const history = await prisma.assetHistory.findMany({
     where: { assetId: req.params.assetId, ...filter },
-    select: AssetHistoryKeys
+    select: AssetHistoryKeys,
   });
 
   res.status(200).json({
     success: true,
-    message: history.length > 0 
-      ? "Asset history fetched successfully" 
-      : "No history found",
+    message:
+      history.length > 0
+        ? "Asset history fetched successfully"
+        : "No history found",
     data: history,
   });
 });

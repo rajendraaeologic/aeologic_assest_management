@@ -10,6 +10,8 @@ import {
 const getUsers = {
   query: Joi.object().keys({
     userName: Joi.string().optional(),
+    email: Joi.string().optional().email().trim(),
+    phone: Joi.string().optional().trim(),
     userId: Joi.string()
       .optional()
       .custom(isValidMongoDBObjectId)
@@ -20,12 +22,16 @@ const getUsers = {
     userRole: Joi.string()
       .optional()
       .valid(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER),
+    branchName: Joi.string().optional().trim(),
+    departmentName: Joi.string().optional().trim(),
     from_date: Joi.string().optional().isoDate(),
     to_date: Joi.string().optional().isoDate(),
-    sortBy: Joi.string(),
+    sortBy: Joi.string()
+      .valid("userName", "email", "status", "userRole", "createdAt")
+      .optional(),
     sortType: Joi.string().valid("asc", "desc").default("desc"),
-    limit: Joi.number().integer(),
-    page: Joi.number().integer(),
+    limit: Joi.number().integer().min(1).optional(),
+    page: Joi.number().integer().min(1).optional(),
   }),
 };
 
@@ -42,12 +48,11 @@ const createUsers = {
     .keys({
       userName: Joi.string().required(),
       phone: Joi.string().required().min(7),
+      email: Joi.string().email().required(),
       password: Joi.string()
         .required()
         .custom(password)
         .messages(passwordCustomMessages),
-      email: Joi.string().email().required(),
-      countryId: Joi.string().optional(),
       userRole: Joi.string()
         .required()
         .valid(
@@ -59,6 +64,9 @@ const createUsers = {
       status: Joi.string()
         .required()
         .valid(UserStatus.ACTIVE, UserStatus.IN_ACTIVE),
+
+      branchId: Joi.string().length(24).hex().optional(),
+      departmentId: Joi.string().length(24).hex().optional(),
     })
     .min(1),
 };
@@ -71,15 +79,15 @@ const updateUser = {
   }),
   body: Joi.object()
     .keys({
-      name: Joi.string().optional(),
+      userName: Joi.string().optional(),
       phone: Joi.string().required().min(7),
       email: Joi.string().email().optional(),
       userRole: Joi.string()
         .optional()
         .valid(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER),
-      countryId: Joi.optional()
-        .custom(isValidMongoDBObjectId)
-        .messages(isValidMongoDBObjectIdCustomMessages),
+      // countryId: Joi.optional()
+      //   .custom(isValidMongoDBObjectId)
+      //   .messages(isValidMongoDBObjectIdCustomMessages),
     })
     .min(1),
 };
@@ -92,10 +100,30 @@ const deleteUser = {
   }),
 };
 
+const deleteUsersValidation = {
+  body: Joi.object().keys({
+    userIds: Joi.array()
+      .items(
+        Joi.required()
+          .custom(isValidMongoDBObjectId)
+          .messages(isValidMongoDBObjectIdCustomMessages)
+      )
+      .min(1)
+      .required()
+      .unique()
+      .messages({
+        "array.min": "At least one user ID is required",
+        "any.required": "User IDs are required",
+        "array.unique": "User IDs must be unique",
+      }),
+  }),
+};
+
 export default {
   createUsers,
   getUsers,
   getUser,
   updateUser,
   deleteUser,
+  deleteUsersValidation,
 };

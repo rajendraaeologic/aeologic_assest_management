@@ -11,10 +11,10 @@ export const getAllOrganizationsService = async () => {
 };
 
 export const updateOrganizationService = async (data) => {
-  const updatePayload = {
-    organizationName: data.organizationName,
-  };
-  const response = await API.put(`/organization/${data.id}`, updatePayload);
+  const response = await API.put(
+    `/organization/${data.params.organizationId}`,
+    data.body
+  );
   return response.data;
 };
 

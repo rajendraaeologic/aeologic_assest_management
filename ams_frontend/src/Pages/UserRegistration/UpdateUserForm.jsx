@@ -1,50 +1,46 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { useSelector, useDispatch } from "react-redux";
-import { getAllUser, updateUser } from "../../Features/userRegistrationSlice";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { useForm } from "react-hook-form";
+import { getAllUsers, updateUser } from "../../Features/slices/userSlice";
+import userStrings from "../../locales/userStrings";
 
 const UpdateUserForm = ({ onClose }) => {
-  const selectedUser = useSelector(
-    (state) => state.userRegisterData.selectedUser
-  );
-
-  // Log when selectedUser changes
-  useEffect(() => {
-    console.log(selectedUser);
-  }, [selectedUser]);
-
   const dispatch = useDispatch();
-
-  // Initial state for form data
-  const [updateData, setUpdateData] = useState({
-    username: "",
-    code: "",
-    department: "",
-    departmentcode: "",
-    contact: "",
-    emailid: "",
-  });
-
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
+
+  const selectedUser = useSelector((state) => state.usersData.selectedUser);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm();
 
   useEffect(() => {
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
-
     return () => {
       document.body.style.overflow = "auto";
     };
   }, []);
 
-  // Update form fields when selectedUser changes
   useEffect(() => {
     if (selectedUser) {
-      setUpdateData(selectedUser);
+      reset({
+        userName: selectedUser.userName || "",
+        phone: selectedUser.phone || "",
+        email: selectedUser.email || "",
+        userRole: selectedUser.userRole || "",
+      });
     }
-  }, [selectedUser]);
+  }, [selectedUser, reset]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -59,37 +55,51 @@ const UpdateUserForm = ({ onClose }) => {
     }
   };
 
-  const updateUserHandler = (e) => {
-    const { name, value } = e.target;
-    setUpdateData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
+  const onSubmit = async (data) => {
+    try {
+      const userData = {
+        params: { userId: selectedUser.id },
+        body: {
+          userName: data.userName,
+          phone: data.phone,
+          email: data.email,
+          userRole: data.userRole,
+        },
+      };
 
-  // Corrected handleUpdate method
-  const handleUpdate = async (e) => {
-    e.preventDefault(); // Fixed typo
-    await dispatch(updateUser(updateData));
-    dispatch(getAllUser());
+      await dispatch(updateUser(userData)).unwrap();
+      dispatch(getAllUsers());
+
+      toast.success(userStrings.updateUser.toast.success, {
+        position: "top-right",
+        autoClose: 1000,
+      });
+
+      handleClose();
+    } catch (error) {
+      toast.error(userStrings.updateUser.toast.error, {
+        position: "top-right",
+        autoClose: 1000,
+      });
+    }
   };
 
   return (
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center overflow-y-scroll md:overflow-y-hidden px-1 md:px-0 items-start transition-opacity duration-300 ${
+      className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
       onClick={handleOutsideClick}
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[500px] min-h-96 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[400px] min-h-60 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
           <h2 className="text-[17px] font-semibold text-white">
-            Edit User Details
+            {userStrings.updateUser.title}
           </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
@@ -97,137 +107,125 @@ const UpdateUserForm = ({ onClose }) => {
         </div>
 
         <div className="p-4">
-          <form onSubmit={handleUpdate}>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="w-full">
-                <label
-                  htmlFor="username"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  User Name
+          <form onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-4">
+              {/* User Name */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {userStrings.updateUser.formLabels.userName}
                 </label>
                 <input
                   ref={firstInputRef}
+                  {...register("userName", {
+                    required:
+                      userStrings.updateUser.validation.userNameRequired,
+                  })}
                   type="text"
-                  id="username"
-                  name="username"
-                  value={updateData.username || ""}
-                  placeholder="Name"
-                  onChange={updateUserHandler}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.userName ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
                 />
-              </div>
-              <div className="w-full">
-                <label
-                  htmlFor="code"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Code
-                </label>
-                <input
-                  type="text"
-                  id="code"
-                  name="code"
-                  value={updateData.code || ""}
-                  onChange={updateUserHandler}
-                  placeholder="Code"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                />
-              </div>
-              <div className="w-full">
-                <label
-                  htmlFor="department"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Department Name
-                </label>
-                <select
-                  id="department"
-                  name="department"
-                  onChange={updateUserHandler}
-                  value={updateData.department || ""}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                >
-                  <option value="" disabled>
-                    Department
-                  </option>
-                  <option value="Accounts">Accounts</option>
-                  <option value="Bio">Bio</option>
-                  <option value="HR Department">HR Department</option>
-                </select>
+                {errors.userName && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.userName.message}
+                  </p>
+                )}
               </div>
 
-              <div className="w-full md:mt-6">
-                <label
-                  htmlFor="departmentcode"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Code
+              {/* Phone Number */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {userStrings.updateUser.formLabels.phone}
+                </label>
+                <input
+                  {...register("phone", {
+                    required: userStrings.updateUser.validation.phoneRequired,
+                    minLength: {
+                      value: 7,
+                      message: userStrings.updateUser.validation.phoneMinLength,
+                    },
+                  })}
+                  type="tel"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.phone ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.phone.message}
+                  </p>
+                )}
+              </div>
+
+              {/* Email Address */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {userStrings.updateUser.formLabels.email}
+                </label>
+                <input
+                  {...register("email", {
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: userStrings.updateUser.validation.emailInvalid,
+                    },
+                  })}
+                  type="email"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.email ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
+
+              {/* User Role */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  {userStrings.updateUser.formLabels.userRole}
                 </label>
                 <select
-                  id="departmentcode"
-                  name="departmentcode"
-                  onChange={updateUserHandler}
-                  value={updateData.departmentcode || ""}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  {...register("userRole", {
+                    required:
+                      userStrings.updateUser.validation.userRoleRequired,
+                  })}
+                  className={`mt-1 p-2 w-full border ${
+                    errors.userRole ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
                 >
-                  <option value="" disabled>
-                    Code
-                  </option>
-                  <option value="1">1</option>
+                  <option value="">{userStrings.updateUser.selectRole}</option>
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="MANAGER">MANAGER</option>
+                  <option value="USER">USER</option>
                 </select>
-              </div>
-              <div className="w-full md:mt-6">
-                <label
-                  htmlFor="contact"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Contact Number
-                </label>
-                <input
-                  type="tel"
-                  id="contact"
-                  name="contact"
-                  value={updateData.contact || ""}
-                  onChange={updateUserHandler}
-                  placeholder="Mobile"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                />
-              </div>
-              <div className="w-full md:mt-6">
-                <label
-                  htmlFor="emailid"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Email Id
-                </label>
-                <input
-                  type="email"
-                  id="emailid"
-                  name="emailid"
-                  value={updateData.emailid || ""}
-                  onChange={updateUserHandler}
-                  placeholder="Email"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                />
+                {errors.userRole && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.userRole.message}
+                  </p>
+                )}
               </div>
             </div>
 
-            <hr className="md:mt-10 mt-5" />
-
-            <div className="flex justify-end gap-4 md:mt-6 mt-4 md:mb-5 mb-2 mr-5">
+            <hr className="mt-4" />
+            <div className="flex justify-end gap-4 mt-4 mb-2">
               <button
+                type="button"
                 onClick={handleClose}
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
+                disabled={isSubmitting}
               >
-                Close
+                {userStrings.updateUser.buttons.close}
               </button>
               <button
                 type="submit"
-                onClick={handleClose}
-                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg"
+                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
+                disabled={isSubmitting}
               >
-                Save
+                {isSubmitting
+                  ? userStrings.updateUser.buttons.updating
+                  : userStrings.updateUser.buttons.update}
               </button>
             </div>
           </form>

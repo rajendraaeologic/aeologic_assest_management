@@ -12,6 +12,7 @@ import OutForDeliveryReducer from "../Features/OutForDeiverySlice";
 import OrganizationReducer from "../Features/slices/organizationSlice";
 import BranchReducer from "../Features/slices/branchSlice";
 import UserReducer from "../Features/slices/userSlice";
+import AssignAssetReducer from "../Features/slices/assignAssetSlice";
 import { injectStore } from "../App/api/axiosInstance";
 
 const persistConfig = {
@@ -33,6 +34,7 @@ export const store = configureStore({
     outForDeliverUser: OutForDeliveryReducer,
     organizationData: OrganizationReducer,
     branchData: BranchReducer,
+    assignAssetData: AssignAssetReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

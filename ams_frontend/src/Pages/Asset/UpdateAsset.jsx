@@ -39,9 +39,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
       model: "",
       serialNumber: "",
       status: "ACTIVE",
-      categoryId: "",
-      locationId: "",
-      assignedToUserId: "",
+      // categoryId: "",
+      // locationId: "",
+
       branchId: "",
       departmentId: "",
     },
@@ -80,9 +80,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
         model: selectedAsset.model || "",
         serialNumber: selectedAsset.serialNumber || "",
         status: selectedAsset.status || "ACTIVE",
-        categoryId: selectedAsset.categoryId || "",
-        locationId: selectedAsset.locationId || "",
-        assignedToUserId: selectedAsset.assignedToUserId || "",
+        // categoryId: selectedAsset.categoryId || "",
+        // locationId: selectedAsset.locationId || "",
+
         branchId: selectedAsset.branchId || "",
         departmentId: selectedAsset.departmentId || "",
       });
@@ -364,26 +364,6 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                     {errors.departmentId.message}
                   </p>
                 )}
-              </div>
-
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assetStrings.updateAsset.formLabels.assignedTo}
-                </label>
-                <select
-                  {...register("assignedToUserId")}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  disabled={!watchDepartmentId}
-                >
-                  <option value="">
-                    {assetStrings.updateAsset.placeholders.selectUser}
-                  </option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.name} ({user.email})
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
 

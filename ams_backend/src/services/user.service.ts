@@ -1,27 +1,163 @@
-import { User, Prisma, UserRole } from "@prisma/client";
+import { User, Prisma, UserRole, UserStatus } from "@prisma/client";
 import httpStatus from "http-status";
 import db from "@/lib/db";
 import ApiError from "@/lib/ApiError";
 import { UserKeys } from "@/utils/selects.utils";
-
+import { sendEmail } from "@/utils/sendEmail";
+import { generateUserWelcomeEmail } from "@/utils/emailTemplate";
+import { encryptPassword } from "@/lib/encryption";
+import { userValidation } from "@/validations";
 const createUser = async (
-  user: User
+  user: User & { plainPassword?: string }
 ): Promise<Omit<User, "password"> | null> => {
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
+
   if (await getUserByEmail(user.email)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
   }
+
   if (await getUserByPhone(user.phone)) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
   }
 
-  return db.user.create({
-    data: user,
+  const { branchId, departmentId, plainPassword, ...rest } = user;
+
+  const createdUser = await db.user.create({
+    data: {
+      ...rest,
+      branch: {
+        connect: { id: branchId },
+      },
+      department: {
+        connect: { id: departmentId },
+      },
+    },
   });
+
+  if (plainPassword) {
+    const emailContent = generateUserWelcomeEmail(
+      user.userName,
+      user.email,
+      plainPassword
+    );
+
+    await sendEmail(user.email, "Welcome to Our Platform", emailContent);
+  }
+
+  return createdUser;
 };
 
+interface ExcelUserPayload {
+  userName: string;
+  email: string;
+  phone: string;
+  password: string;
+  plainPassword: string;
+  userRole: UserRole;
+  status: UserStatus;
+  branchId: string;
+  departmentId: string;
+}
+
+interface FailedUser {
+  row: ExcelUserPayload;
+  error: string;
+}
+
+export const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
+  const failedUsers: FailedUser[] = [];
+  const emails = new Set<string>();
+  const phones = new Set<string>();
+
+  // Step 1: Pre-validation (collect errors but don't stop processing)
+  for (const row of sheetData) {
+    try {
+      const { plainPassword, ...userDataWithRelations } = row;
+      userValidation.validateExcelUser(userDataWithRelations);
+
+      const { email, phone } = userDataWithRelations;
+      if (emails.has(email))
+        throw new Error(`Duplicate email in Excel: ${email}`);
+      if (phones.has(phone))
+        throw new Error(`Duplicate phone in Excel: ${phone}`);
+
+      emails.add(email);
+      phones.add(phone);
+    } catch (error) {
+      failedUsers.push({ row, error: error.message });
+    }
+  }
+
+  // Step 2: Process valid rows in batches with individual error handling
+  const BATCH_SIZE = 100;
+  const createdUsers: any[] = [];
+  const batchFailedUsers: FailedUser[] = [];
+
+  for (let i = 0; i < sheetData.length; i += BATCH_SIZE) {
+    const batch = sheetData.slice(i, i + BATCH_SIZE);
+
+    // Process each row individually in the batch
+    const batchPromises = batch.map(async (row) => {
+      // Skip rows that failed pre-validation
+      if (failedUsers.some((f) => f.row === row)) return null;
+
+      try {
+        const { plainPassword, ...userDataWithRelations } = row;
+        const { branchId, departmentId, ...userData } = userDataWithRelations;
+
+        // Check existing users within individual transaction
+        const user = await db.$transaction(async (tx) => {
+          const [existingEmail, existingPhone] = await Promise.all([
+            tx.user.findFirst({ where: { email: userData.email } }),
+            tx.user.findUnique({ where: { phone: userData.phone } }),
+          ]);
+
+          if (existingEmail) throw new Error(`Email exists: ${userData.email}`);
+          if (existingPhone) throw new Error(`Phone exists: ${userData.phone}`);
+
+          return tx.user.create({
+            data: {
+              ...userData,
+              password: await encryptPassword(userData.password),
+              branch: { connect: { id: branchId } },
+              department: { connect: { id: departmentId } },
+            },
+          });
+        });
+
+        return { user, plainPassword };
+      } catch (error) {
+        batchFailedUsers.push({ row, error: error.message });
+        return null;
+      }
+    });
+
+    const batchResults = await Promise.all(batchPromises);
+    const successfulUsers = batchResults.filter((result) => result !== null);
+    createdUsers.push(...successfulUsers);
+  }
+
+  // Step 3: Send emails (unchanged)
+  await Promise.allSettled(
+    createdUsers.map(async ({ user, plainPassword }) => {
+      try {
+        const emailContent = generateUserWelcomeEmail(
+          user.userName,
+          user.email,
+          plainPassword
+        );
+        await sendEmail(user.email, "Welcome to Platform", emailContent);
+      } catch (emailError) {
+        console.error(`Email failed for ${user.email}: ${emailError.message}`);
+      }
+    })
+  );
+
+  return {
+    createdUsers: createdUsers.map((u) => u.user),
+    failedUsers: [...failedUsers, ...batchFailedUsers],
+  };
+};
 const registerUser = async (
   user: User,
   selectKeys: Prisma.UserSelect = UserKeys
@@ -166,29 +302,39 @@ const deleteUserById = async (
 const deleteUsersByIds = async (
   userIds: string[]
 ): Promise<Omit<User, "password">[]> => {
-  const users = await Promise.all(
-    userIds.map((id) => db.user.findUnique({ where: { id } }))
+  return await db.$transaction(
+    async (tx) => {
+      const users = await Promise.all(
+        userIds.map((id) =>
+          tx.user.findUnique({
+            where: { id },
+            select: {
+              id: true,
+              userName: true,
+              email: true,
+            },
+          })
+        )
+      );
+
+      const notFoundIds = userIds.filter((_, index) => !users[index]);
+      if (notFoundIds.length > 0) {
+        throw new ApiError(
+          httpStatus.NOT_FOUND,
+          `Users not found: ${notFoundIds.join(", ")}`
+        );
+      }
+
+      await tx.user.deleteMany({
+        where: { id: { in: userIds } },
+      });
+
+      return users as Omit<User, "password">[];
+    },
+    {
+      timeout: 10000,
+    }
   );
-
-  const notFoundIds = userIds.filter((_, index) => !users[index]);
-  if (notFoundIds.length > 0) {
-    throw new ApiError(
-      httpStatus.NOT_FOUND,
-      `Users not found: ${notFoundIds.join(", ")}`
-    );
-  }
-
-  const deletedUsers = await db.$transaction(async (tx) => {
-    const deleted = await Promise.all(
-      userIds.map((id) => tx.user.delete({ where: { id } }))
-    );
-    return deleted.map((user) => {
-      const { password, ...rest } = user;
-      return rest;
-    });
-  });
-
-  return deletedUsers;
 };
 
 // const getUsersByDepartmentId = async (departmentId: string): Promise<any[]> => {
@@ -220,4 +366,5 @@ export default {
   updateUserById,
   deleteUserById,
   deleteUsersByIds,
+  createUsersFromExcel,
 };

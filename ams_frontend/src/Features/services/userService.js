@@ -40,3 +40,17 @@ export const deleteUserService = async (ids) => {
     throw new Error(errorMsg);
   }
 };
+
+export const uploadExcelService = async (file) => {
+  console.log("file", file);
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await API.post("/users/upload-excel", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  return response.data;
+};

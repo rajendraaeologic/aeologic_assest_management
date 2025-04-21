@@ -53,8 +53,6 @@ const Asset = () => {
     model: "",
     serialNumber: "",
     status: "",
-    assignedUser: "",
-    assetLocation: "",
     branch: "",
     department: "",
   });
@@ -85,16 +83,6 @@ const Asset = () => {
 
   const filteredAssets = assets?.filter((asset) => {
     return Object.entries(searchAsset).every(([key, searchValue]) => {
-      if (key === "assignedUser" && asset.assignedUser) {
-        return asset.assignedUser.userName
-          ?.toLowerCase()
-          .includes(searchValue.toLowerCase());
-      }
-      if (key === "assetLocation" && asset.assetLocation) {
-        return asset.assetLocation.locationName
-          .toLowerCase()
-          .includes(searchValue.toLowerCase());
-      }
       if (key === "branch" && asset.branch) {
         return asset.branch.branchName
           .toLowerCase()
@@ -321,26 +309,7 @@ const Asset = () => {
                   >
                     {strings.table.headers.status}
                   </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.assignedUser}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.assetLocation}
-                  </th>
+
                   <th
                     className="px-2 py-4 border border-gray-300"
                     style={{
@@ -497,46 +466,7 @@ const Asset = () => {
                       style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="assignedUser"
-                      placeholder={
-                        strings.table.searchPlaceholders.assignedUser
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.assignedUser}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="assetLocation"
-                      placeholder={
-                        strings.table.searchPlaceholders.assetLocation
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.assetLocation}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
+
                   <td
                     className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
                     style={{
@@ -673,28 +603,7 @@ const Asset = () => {
                       >
                         {asset.status}
                       </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.assignedUser?.userName ||
-                          strings.table.unassigned}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.assetLocation?.locationName ||
-                          strings.table.notAvailable}
-                      </td>
+
                       <td
                         className="px-2 py-2 border border-gray-300"
                         style={{

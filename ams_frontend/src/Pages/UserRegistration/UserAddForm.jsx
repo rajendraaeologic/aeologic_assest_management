@@ -106,6 +106,7 @@ const AddUserForm = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       await dispatch(createUser(data)).unwrap();
+      dispatch(getAllUsers());
       toast.success(userStrings.addUser.toast.success, {
         position: "top-right",
         autoClose: 2000,

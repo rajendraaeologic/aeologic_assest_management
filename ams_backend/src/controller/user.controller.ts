@@ -6,26 +6,101 @@ import { userService } from "@/services";
 import { User } from "@prisma/client";
 import { encryptPassword } from "@/lib/encryption";
 import { applyDateFilter } from "@/utils/filters.utils";
+import xlsx from "xlsx";
+import { userValidation } from "@/validations";
 
 const createUser = catchAsync(async (req, res) => {
   try {
+    const plainPassword = req.body.password;
+
     const user = await userService.createUser({
       userName: req.body.userName,
       phone: req.body.phone,
       email: req.body.email,
-      password: await encryptPassword(req.body.password),
+      password: await encryptPassword(plainPassword),
       status: req.body.status,
       userRole: req.body.userRole,
       branchId: req.body.branchId,
       departmentId: req.body.departmentId,
-    } as User);
 
-    res
-      .status(httpStatus.CREATED)
-      .send({ user, message: "User Created Successfully." });
+      plainPassword,
+    } as User & { plainPassword: string });
+
+    res.status(httpStatus.CREATED).send({
+      user,
+      message: "User Created Successfully.",
+    });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
+});
+
+//getUsers
+const uploadUsersFromExcel = catchAsync(async (req, res) => {
+  const { error } = userValidation.uploadUsers.file.validate(req.file);
+  if (error) {
+    throw new ApiError(httpStatus.BAD_REQUEST, error.details[0].message);
+  }
+
+  const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+  const sheetName = workbook.SheetNames[0];
+  const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+  if (!sheetData || sheetData.length === 0) {
+    res.status(httpStatus.BAD_REQUEST).json({
+      status: httpStatus.BAD_REQUEST,
+      message: "Excel sheet is empty",
+    });
+    return;
+  }
+
+  const sheetDataWithPassword = sheetData.map((row: any) => ({
+    ...row,
+    plainPassword: row.password,
+  }));
+
+  const { createdUsers, failedUsers } = await userService.createUsersFromExcel(
+    sheetDataWithPassword
+  );
+
+  const duplicateErrors = failedUsers.filter(
+    (user) =>
+      user.error.includes("Email exists") || user.error.includes("Phone exists")
+  );
+
+  if (duplicateErrors.length > 0) {
+    const hasEmailDuplicate = duplicateErrors.some((user) =>
+      user.error.includes("Email exists")
+    );
+    const hasPhoneDuplicate = duplicateErrors.some((user) =>
+      user.error.includes("Phone exists")
+    );
+
+    let errorMessage = "Duplicate ";
+    if (hasEmailDuplicate && hasPhoneDuplicate) {
+      errorMessage += "email and phone number found";
+    } else if (hasEmailDuplicate) {
+      errorMessage += "email found";
+    } else if (hasPhoneDuplicate) {
+      errorMessage += "phone number found";
+    }
+
+    res.status(httpStatus.CONFLICT).json({
+      status: httpStatus.CONFLICT,
+      message: errorMessage,
+      failedUsers: duplicateErrors,
+    });
+    return;
+  }
+
+  res.status(httpStatus.CREATED).json({
+    status: httpStatus.CREATED,
+    message: "Users processed from Excel file",
+    successCount: createdUsers.length,
+    failedCount: failedUsers.length,
+    createdUsers,
+    failedUsers,
+  });
 });
 
 const getUsers = catchAsync(async (req, res) => {
@@ -102,4 +177,5 @@ export default {
   updateUser,
   deleteUser,
   deleteUsers,
+  uploadUsersFromExcel,
 };

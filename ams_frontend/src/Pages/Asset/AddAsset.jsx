@@ -33,8 +33,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
       model: "",
       serialNumber: "",
       status: "ACTIVE",
-      locationId: "",
-      assignedToUserId: "",
+      // locationId: "",
       branchId: "",
       departmentId: "",
     },
@@ -141,7 +140,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[820px] min-h-96 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[620px] min-h-96 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
@@ -343,27 +342,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.departmentId.message}
                   </p>
                 )}
-              </div>
-
-              {/* Assigned To */}
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assetStrings.addAsset.formLabels.assignedToUserId}
-                </label>
-                <select
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  disabled={!departmentId}
-                  {...register("assignedToUserId")}
-                >
-                  <option value="">
-                    {assetStrings.addAsset.select.defaultUser}
-                  </option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.userName} ({user.email})
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
 

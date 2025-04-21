@@ -4,6 +4,7 @@ import {
   getAllUsersService,
   updateUserService,
   deleteUserService,
+  uploadExcelService,
 } from "../services/userService";
 
 // Create User
@@ -65,6 +66,20 @@ export const deleteUser = createAsyncThunk(
   }
 );
 
+export const uploadExcel = createAsyncThunk(
+  "user/uploadExcel",
+  async (file, { rejectWithValue }) => {
+    try {
+      const response = await uploadExcelService(file);
+
+      console.log(response);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Error uploading file");
+    }
+  }
+);
+
 const userSlice = createSlice({
   name: "user",
   initialState: {
@@ -119,6 +134,23 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(uploadExcel.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(uploadExcel.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+
+        if (Array.isArray(action.payload.createdUsers)) {
+          state.users = [...state.users, ...action.payload.createdUsers];
+        }
+      })
+      .addCase(uploadExcel.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Excel upload failed.";
+      })
+
       .addCase(getAllUsers.pending, (state) => {
         state.loading = true;
         state.error = null;

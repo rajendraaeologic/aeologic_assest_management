@@ -119,6 +119,43 @@ const deleteUsersValidation = {
   }),
 };
 
+//upload users
+
+export const uploadUsers = {
+  file: Joi.object({
+    originalname: Joi.string().required(),
+    mimetype: Joi.string()
+      .valid(
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-excel"
+      )
+      .required(),
+    buffer: Joi.binary().required(),
+    size: Joi.number()
+      .max(5 * 1024 * 1024)
+      .required(),
+  }).unknown(true),
+};
+
+const excelUserSchema = Joi.object({
+  userName: Joi.string().min(2).required(),
+  email: Joi.string().email().required(),
+  phone: Joi.string()
+    .pattern(/^[0-9]{10,15}$/)
+    .required(),
+  password: Joi.string().min(6).required(),
+  userRole: Joi.string().valid("ADMIN", "STUDENT", "MANAGER").required(),
+  status: Joi.string().valid("ACTIVE", "INACTIVE").required(),
+  branchId: Joi.string().required(),
+  departmentId: Joi.string().required(),
+});
+
+const validateExcelUser = (user: any) => {
+  const { error } = excelUserSchema.validate(user);
+  if (error) {
+    throw new Error(error.details[0].message);
+  }
+};
 export default {
   createUsers,
   getUsers,
@@ -126,4 +163,7 @@ export default {
   updateUser,
   deleteUser,
   deleteUsersValidation,
+  uploadUsers,
+  excelUserSchema,
+  validateExcelUser,
 };

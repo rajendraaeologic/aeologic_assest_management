@@ -42,6 +42,15 @@ const userStrings = {
       emptyText: "N/A",
     },
     modals: {
+      processingExcel: "Processing Excel File",
+      doNotCloseWindow:
+        "Please wait while we process your file. Do not close or refresh the window.",
+      status: "Status",
+      duplicateEntries: "The following users have duplicate entries:",
+      rowEntry: "Row {row}: {error}",
+      successCount: "Successfully created: {count} users",
+      internalError:
+        "An internal server error occurred. Please try again later.",
       deleteConfirmation: {
         single: "Are you sure you want to delete this user?",
         multiple: "Are you sure you want to delete {count} selected users?",

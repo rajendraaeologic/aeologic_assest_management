@@ -1,60 +1,56 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
+// import ChipsList from "../../components/UI/ChipsList";
 import {
   setCurrentPage,
   setRowsPerPage,
-  toggleSelectUser,
-  selectAllUsers,
-  deselectAllUsers,
-  setSelectedUser,
-} from "../../Features/slices/userSlice";
-import { MdKeyboardArrowLeft } from "react-icons/md";
+  toggleSelectAssignAsset,
+  selectAllAssignAssets,
+  deselectAllAssignAssets,
+  setSelectedAssignAsset,
+} from "../../Features/slices/assignAssetSlice";
 import { CiSaveUp2 } from "react-icons/ci";
-import UserAddForm from "./UserAddForm";
-import UpdateUserForm from "./UpdateUserForm";
+import { MdKeyboardArrowLeft } from "react-icons/md";
+import AddAssignAsset from "./AddAssignAsset";
+import UpdateAssignAsset from "./UpdateAssignAsset";
 import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
-import { getAllUsers, uploadExcel } from "../../Features/slices/userSlice";
-import { deleteUser } from "../../Features/slices/userSlice";
-import userStrings from "../../locales/userStrings";
+import { getAllAssignAssets } from "../../Features/slices/assignAssetSlice";
+import { deleteAssignAsset } from "../../Features/slices/assignAssetSlice";
+import assignAssetStrings from "../../locales/assignAssetStrings";
 
-const UserRegistration = () => {
+const AssignAsset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const fileInputRef = useRef();
   const { isSidebarOpen } = useContext(SliderContext);
 
-  const { users, selectedUsers, currentPage, rowsPerPage } = useSelector(
-    (state) => state.usersData
-  );
+  const { title, breadcrumb, buttons, table, modals, chipsList } =
+    assignAssetStrings.assignAsset;
+
+  const { assignAssets, selectedAssignAssets, currentPage, rowsPerPage } =
+    useSelector((state) => state.assignAssetData);
 
   useEffect(() => {
-    dispatch(getAllUsers());
-  }, [dispatch, users.length]);
+    dispatch(getAllAssignAssets());
+  }, [dispatch, assignAssets.length]);
 
-  const [isAddUserFormOpen, setIsAddUserFormOpen] = useState(false);
-  const [isUpdateUserFormOpen, setIsUpdateUserFormOpen] = useState(false);
+  const [isAddAssignAsset, setIsAddAssignAsset] = useState(false);
+  const [isUpdateAssignAsset, setIsUpdateAssignAsset] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
+  const [assignAssetToDelete, setAssignAssetToDelete] = useState(null);
   const [showSelectFirstPopup, setShowSelectFirstPopup] = useState(false);
   const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [uploadSuccess, setUploadSuccess] = useState(null);
-  const [uploadError, setUploadError] = useState(null);
-  const [progress, setProgress] = useState(0);
-  const options = ["5", "10", "25", "50", "100"];
-  const totalPages = Math.ceil(users.length / rowsPerPage);
 
-  const [searchFilters, setSearchFilters] = useState({
+  const options = ["5", "10", "25", "50", "100"];
+  const totalPages = Math.ceil(assignAssets.length / rowsPerPage);
+
+  const [searchAssignAsset, setSearchAssignAsset] = useState({
     userName: "",
-    phone: "",
-    email: "",
-    status: "",
-    userRole: "",
+    assetName: "",
     branchName: "",
     departmentName: "",
   });
@@ -77,31 +73,38 @@ const UserRegistration = () => {
 
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
-    setSearchFilters((prev) => ({
+    setSearchAssignAsset((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const filteredUsers = users?.filter((user) => {
-    const lowerCase = (str) => (str || "").toLowerCase();
+  const filteredAssignAssets = assignAssets?.filter((asset) => {
     return (
-      lowerCase(user.userName).includes(lowerCase(searchFilters.userName)) &&
-      lowerCase(user.phone).includes(lowerCase(searchFilters.phone)) &&
-      lowerCase(user.email).includes(lowerCase(searchFilters.email)) &&
-      lowerCase(user.status).includes(lowerCase(searchFilters.status)) &&
-      lowerCase(user.userRole).includes(lowerCase(searchFilters.userRole)) &&
-      lowerCase(user.branch?.branchName).includes(
-        lowerCase(searchFilters.branchName)
-      ) &&
-      lowerCase(user.department?.departmentName).includes(
-        lowerCase(searchFilters.departmentName)
-      )
+      (searchAssignAsset.userName === "" ||
+        (asset.userName || "")
+          .toLowerCase()
+          .includes(searchAssignAsset.userName.toLowerCase())) &&
+      (searchAssignAsset.assetName === "" ||
+        (asset.assetName || "")
+          .toLowerCase()
+          .includes(searchAssignAsset.assetName.toLowerCase())) &&
+      (searchAssignAsset.branchName === "" ||
+        (asset.branchName || "")
+          .toLowerCase()
+          .includes(searchAssignAsset.branchName.toLowerCase())) &&
+      (searchAssignAsset.departmentName === "" ||
+        (asset.departmentName || "")
+          .toLowerCase()
+          .includes(searchAssignAsset.departmentName.toLowerCase()))
     );
   });
 
   const startIndex = currentPage * rowsPerPage;
-  const currentRows = filteredUsers.slice(startIndex, startIndex + rowsPerPage);
+  const currentRows = filteredAssignAssets.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
 
   const handleNavigate = () => {
     navigate("/dashboard");
@@ -115,50 +118,50 @@ const UserRegistration = () => {
     if (currentPage < totalPages - 1) dispatch(setCurrentPage(currentPage + 1));
   };
 
-  const handleDeleteSelectedUsers = () => {
-    if (selectedUsers.length === 0) {
+  const handleDeleteSelectedAssignAssets = () => {
+    if (selectedAssignAssets.length === 0) {
       setShowSelectFirstPopup(true);
       return;
     }
     setShowDeleteConfirmation(true);
   };
 
-  const handleSelectAllUsers = (e) => {
+  const handleSelectAllAssignAssets = (e) => {
     if (e.target.checked) {
-      dispatch(selectAllUsers());
+      dispatch(selectAllAssignAssets());
     } else {
-      dispatch(deselectAllUsers());
+      dispatch(deselectAllAssignAssets());
     }
   };
 
-  const handleToggleUserSelection = (id) => {
-    dispatch(toggleSelectUser(id));
+  const handleToggleAssignAssetSelection = (id) => {
+    dispatch(toggleSelectAssignAsset(id));
   };
 
-  const handlerUpdateData = (user) => {
-    dispatch(setSelectedUser(user));
+  const handlerUpdateData = (asset) => {
+    dispatch(setSelectedAssignAsset(asset));
   };
 
-  const handleDeleteClick = (user) => {
-    setUserToDelete(user.id);
+  const handleDeleteClick = (asset) => {
+    setAssignAssetToDelete(asset.id);
     setShowDeleteConfirmation(true);
   };
 
   const confirmDelete = () => {
-    if (userToDelete) {
-      dispatch(deleteUser([userToDelete]));
-      setDeleteMessage(userStrings.user.modals.deleteSuccess.single);
-    } else if (selectedUsers.length > 0) {
-      dispatch(deleteUser(selectedUsers));
+    if (assignAssetToDelete) {
+      dispatch(deleteAssignAsset([assignAssetToDelete]));
+      setDeleteMessage(modals.deleteSuccess.single);
+    } else if (selectedAssignAssets.length > 0) {
+      dispatch(deleteAssignAsset(selectedAssignAssets));
       setDeleteMessage(
-        userStrings.user.modals.deleteSuccess.multiple.replace(
+        modals.deleteSuccess.multiple.replace(
           "{count}",
-          selectedUsers.length
+          selectedAssignAssets.length
         )
       );
     }
     setShowDeleteConfirmation(false);
-    setUserToDelete(null);
+    setAssignAssetToDelete(null);
     setShowDeleteSuccessPopup(true);
     setTimeout(() => {
       setShowDeleteSuccessPopup(false);
@@ -167,62 +170,13 @@ const UserRegistration = () => {
 
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);
-    setUserToDelete(null);
+    setAssignAssetToDelete(null);
   };
 
   const closeSelectFirstPopup = () => {
     setShowSelectFirstPopup(false);
   };
 
-  const handleButtonClick = () => {
-    fileInputRef.current.click();
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setIsProcessing(true);
-      setProgress(0);
-      setUploadError(null);
-      setUploadSuccess(null);
-
-      e.target.value = null;
-
-      const interval = setInterval(() => {
-        setProgress((prev) => Math.min(prev + 1, 100));
-      }, 50);
-
-      dispatch(uploadExcel(file))
-        .unwrap()
-        .then((res) => {
-          setUploadSuccess(res);
-          return dispatch(getAllUsers()).unwrap();
-        })
-        .catch((error) => {
-          setUploadError(error);
-        })
-        .finally(() => {
-          clearInterval(interval);
-          setProgress(100);
-          setTimeout(() => {
-            setIsProcessing(false);
-          }, 500);
-        });
-    }
-  };
-  useEffect(() => {
-    if (uploadSuccess) {
-      const timer = setTimeout(() => setUploadSuccess(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [uploadSuccess]);
-
-  useEffect(() => {
-    if (uploadError) {
-      const timer = setTimeout(() => setUploadError(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [uploadError]);
   return (
     <div
       className={`w-full min-h-screen bg-slate-100 px-2 ${
@@ -238,49 +192,34 @@ const UserRegistration = () => {
       >
         <div className="pt-24">
           <div className="flex justify-between mx-5 mt-2">
-            <h3 className="text-xl font-semibold text-[#6c757D]">
-              {userStrings.user.title}
-            </h3>
+            <h3 className="text-xl font-semibold text-[#6c757D]">{title}</h3>
             <div className="flex gap-3 md:mr-8">
-              <input
-                type="file"
-                accept=".xlsx, .xls"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                style={{ display: "none" }}
-              />
-
-              <button
-                className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
-                onClick={handleButtonClick}
-              >
+              <button className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg">
                 <CiSaveUp2 className="h-6 w-6" />
               </button>
               <button
-                onClick={() => setIsAddUserFormOpen(true)}
+                onClick={() => setIsAddAssignAsset(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
               >
-                {userStrings.user.buttons.addUser}
+                {buttons.addAssignAsset}
               </button>
             </div>
           </div>
 
           <div className="mx-5 flex gap-2 mb-4">
-            <button onClick={handleNavigate} className="text-[#6c757D]">
-              {userStrings.user.breadcrumb.dashboard}
+            <button onClick={handleNavigate} className="text-[#6c757D] ">
+              {breadcrumb.dashboard}
             </button>
             <span>
               <MdKeyboardArrowLeft className="h-6 w-6" />
             </span>
-            <p className="text-[#6c757D]">
-              {userStrings.user.breadcrumb.registration}
-            </p>
+            <p className="text-[#6c757D]">{breadcrumb.assignAsset}</p>
           </div>
         </div>
 
-        <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex items-center gap-2 pt-8 ml-3">
-            <p>{userStrings.user.table.showEntries}</p>
+        <div className=" min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
+          <div className="flex Users-center gap-2 pt-8 ml-3">
+            <p>{table.showEntries}</p>
             <div className="border-2 flex justify-evenly">
               <select
                 value={rowsPerPage}
@@ -296,12 +235,12 @@ const UserRegistration = () => {
                 ))}
               </select>
             </div>
-            <p>{userStrings.user.table.entries}</p>
+            <p>{table.entries}</p>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
             <table
-              className="table-auto min-w-max text-left border-collapse"
+              className="table-auto min-w-full text-left border-collapse"
               style={{ tableLayout: "fixed" }}
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
@@ -314,7 +253,7 @@ const UserRegistration = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {userStrings.user.table.headers.userName}
+                    {table.headers.userName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -324,7 +263,7 @@ const UserRegistration = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {userStrings.user.table.headers.phone}
+                    {table.headers.assetName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -334,7 +273,7 @@ const UserRegistration = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {userStrings.user.table.headers.email}
+                    {table.headers.branchName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -344,37 +283,7 @@ const UserRegistration = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {userStrings.user.table.headers.status}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.userRole}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.branchName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.departmentName}
+                    {table.headers.departmentName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -384,7 +293,7 @@ const UserRegistration = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {userStrings.user.table.headers.action}
+                    {table.headers.action}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -394,11 +303,12 @@ const UserRegistration = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {userStrings.user.table.headers.deleteAll}
+                    {table.headers.deleteAll}
                   </th>
                 </tr>
               </thead>
 
+              {/* Search Row */}
               <tbody>
                 <tr className="bg-gray-100">
                   <td
@@ -412,12 +322,11 @@ const UserRegistration = () => {
                     <input
                       type="text"
                       name="userName"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.userName
-                      }
+                      placeholder={table.searchPlaceholders.userName}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.userName}
+                      value={searchAssignAsset.userName}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
                   <td
@@ -430,70 +339,12 @@ const UserRegistration = () => {
                   >
                     <input
                       type="text"
-                      name="phone"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.phone
-                      }
+                      name="assetName"
+                      placeholder={table.searchPlaceholders.assetName}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.phone}
+                      value={searchAssignAsset.assetName}
                       onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="email"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.email
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.email}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="status"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.status
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.status}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="userRole"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.userRole
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.userRole}
-                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
                   <td
@@ -507,12 +358,11 @@ const UserRegistration = () => {
                     <input
                       type="text"
                       name="branchName"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.branchName
-                      }
+                      placeholder={table.searchPlaceholders.branchName}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.branchName}
+                      value={searchAssignAsset.branchName}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
                   <td
@@ -526,12 +376,11 @@ const UserRegistration = () => {
                     <input
                       type="text"
                       name="departmentName"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.departmentName
-                      }
+                      placeholder={table.searchPlaceholders.departmentName}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.departmentName}
+                      value={searchAssignAsset.departmentName}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
                   <td
@@ -548,27 +397,28 @@ const UserRegistration = () => {
                           <input
                             type="checkbox"
                             checked={
-                              selectedUsers.length === users.length &&
-                              users.length > 0
+                              selectedAssignAssets.length ===
+                                assignAssets.length && assignAssets.length > 0
                             }
-                            onChange={handleSelectAllUsers}
+                            onChange={handleSelectAllAssignAssets}
                             className="mr-2"
                           />
                         </label>
                       </div>
-                      <button onClick={handleDeleteSelectedUsers}>
-                        <MdDelete className="h-6 w-6 text-[red]" />
+                      <button onClick={handleDeleteSelectedAssignAssets}>
+                        <MdDelete className="h-6 w-6  text-[red]" />
                       </button>
                     </div>
                   </td>
                 </tr>
               </tbody>
 
+              {/* Table Body */}
               <tbody>
                 {currentRows.length > 0 ? (
-                  currentRows.map((user, index) => (
+                  currentRows.map((asset, index) => (
                     <tr
-                      key={user.id || index}
+                      key={asset.id || index}
                       className={`${
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}
@@ -582,7 +432,7 @@ const UserRegistration = () => {
                           verticalAlign: "top",
                         }}
                       >
-                        {user.userName}
+                        {asset.userName}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -593,7 +443,7 @@ const UserRegistration = () => {
                           verticalAlign: "top",
                         }}
                       >
-                        {user.phone}
+                        {asset.assetName}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -604,7 +454,7 @@ const UserRegistration = () => {
                           verticalAlign: "top",
                         }}
                       >
-                        {user.email}
+                        {asset.branchName}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -615,42 +465,7 @@ const UserRegistration = () => {
                           verticalAlign: "top",
                         }}
                       >
-                        {user.status}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {user.userRole}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {user.branch?.branchName ||
-                          userStrings.user.chipsList.emptyText}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {user.department?.departmentName ||
-                          userStrings.user.chipsList.emptyText}
+                        {asset.departmentName}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -659,15 +474,15 @@ const UserRegistration = () => {
                         <div className="flex ">
                           <button
                             onClick={() => {
-                              setIsUpdateUserFormOpen(true);
-                              handlerUpdateData(user);
+                              setIsUpdateAssignAsset(true);
+                              handlerUpdateData(asset);
                             }}
                             className="px-3 py-2 rounded-sm "
                           >
                             <FontAwesomeIcon icon={faPen} />
                           </button>
                           <button
-                            onClick={() => handleDeleteClick(user)}
+                            onClick={() => handleDeleteClick(asset)}
                             className="px-3 py-2 rounded-sm   text-[red]"
                           >
                             <MdDelete className="h-6 w-6" />
@@ -675,13 +490,17 @@ const UserRegistration = () => {
                         </div>
                       </td>
                       <td
-                        className="px-2 py-2 text-center border border-gray-300"
+                        className="px-2 py-2 border text-center border-gray-300"
                         style={{ maxWidth: "100px", wordWrap: "break-word" }}
                       >
                         <input
                           type="checkbox"
-                          checked={selectedUsers.includes(user.id)}
-                          onChange={() => handleToggleUserSelection(user.id)}
+                          checked={
+                            selectedAssignAssets?.includes(asset.id) ?? false
+                          }
+                          onChange={() =>
+                            handleToggleAssignAssetSelection(asset.id)
+                          }
                         />
                       </td>
                     </tr>
@@ -689,10 +508,10 @@ const UserRegistration = () => {
                 ) : (
                   <tr>
                     <td
-                      colSpan="9"
-                      className="px-2 py-4 text-center border border-gray-300"
+                      colSpan="6"
+                      className="px-4 py-4 text-center text-black"
                     >
-                      {userStrings.user.table.noData}
+                      {table.noData}
                     </td>
                   </tr>
                 )}
@@ -700,6 +519,7 @@ const UserRegistration = () => {
             </table>
           </div>
 
+          {/* Pagination Controls */}
           <div className="flex justify-end mr-4">
             <div className="px-2 py-2 border-2">
               <button
@@ -707,9 +527,9 @@ const UserRegistration = () => {
                 disabled={currentPage === 0}
                 className="text-black"
               >
-                {userStrings.user.buttons.previous}
+                {buttons.previous}
               </button>
-              <span className="px-2 space-x-1">
+              <span className="px-2 space-x-1 ">
                 <span
                   className={`${
                     currentPage === 0
@@ -719,6 +539,7 @@ const UserRegistration = () => {
                 >
                   {currentPage + 1}
                 </span>
+
                 <span
                   className={`${
                     currentPage + 1 === totalPages
@@ -734,72 +555,30 @@ const UserRegistration = () => {
                 disabled={currentPage + 1 === totalPages}
                 className="text-black"
               >
-                {userStrings.user.buttons.next}
+                {buttons.next}
               </button>
             </div>
           </div>
         </div>
       </div>
-      {isAddUserFormOpen && (
-        <UserAddForm onClose={() => setIsAddUserFormOpen(false)} />
+      {/* Modals */}
+      {isAddAssignAsset && (
+        <AddAssignAsset onClose={() => setIsAddAssignAsset(false)} />
       )}
-      {isUpdateUserFormOpen && (
-        <UpdateUserForm onClose={() => setIsUpdateUserFormOpen(false)} />
+      {isUpdateAssignAsset && (
+        <UpdateAssignAsset onClose={() => setIsUpdateAssignAsset(false)} />
       )}
-      {/* Processing Modal */}
-      {isProcessing && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-2">
-              {userStrings.user.modals.processingExcel}
-            </h3>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div
-                className="bg-[#3bc0c3] h-2.5 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-            <p className="text-gray-600 mt-2 text-sm">
-              {progress}% {userStrings.user.modals.doNotCloseWindow}
-            </p>
-          </div>
-        </div>
-      )}
-      // Updated Success/Error Modals (remove close buttons)
-      {uploadSuccess && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
-            <h3 className="text-lg font-semibold mb-2 text-green-600">
-              {uploadSuccess.message}
-            </h3>
-            <p className="mb-2">
-              {userStrings.user.modals.successCount.replace(
-                "{count}",
-                uploadSuccess.successCount
-              )}
-            </p>
-          </div>
-        </div>
-      )}
-      {uploadError && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl">
-            <h3 className="text-lg font-semibold mb-4 text-red-600">
-              {uploadError.message} ({userStrings.user.modals.status}:{" "}
-              {uploadError.status})
-            </h3>
-          </div>
-        </div>
-      )}
+
+      {/* Delete Confirmation Modal */}
       {showDeleteConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold mb-4">
-              {userToDelete
-                ? userStrings.user.modals.deleteConfirmation.single
-                : userStrings.user.modals.deleteConfirmation.multiple.replace(
+              {assignAssetToDelete
+                ? modals.deleteConfirmation.single
+                : modals.deleteConfirmation.multiple.replace(
                     "{count}",
-                    selectedUsers.length
+                    selectedAssignAssets.length
                   )}
             </h3>
             <div className="flex justify-end gap-4">
@@ -807,35 +586,37 @@ const UserRegistration = () => {
                 onClick={cancelDelete}
                 className="px-4 py-2 bg-gray-300 rounded-md"
               >
-                {userStrings.user.buttons.no}
+                {buttons.no}
               </button>
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-500 text-white rounded-md"
               >
-                {userStrings.user.buttons.yes}
+                {buttons.yes}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Select First Popup */}
       {showSelectFirstPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {userStrings.user.modals.selectFirst}
-            </h3>
+            <h3 className="text-lg font-semibold mb-4">{modals.selectFirst}</h3>
             <div className="flex justify-end">
               <button
                 onClick={closeSelectFirstPopup}
                 className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
               >
-                {userStrings.user.buttons.ok}
+                {buttons.ok}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* Delete Success Popup */}
       {showDeleteSuccessPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -847,4 +628,4 @@ const UserRegistration = () => {
   );
 };
 
-export default UserRegistration;
+export default AssignAsset;

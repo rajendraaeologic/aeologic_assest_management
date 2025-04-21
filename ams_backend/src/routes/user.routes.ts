@@ -3,6 +3,7 @@ import auth from "@/middleware/auth.middleware";
 import validate from "@/middleware/validation.middleware";
 import { userValidation } from "@/validations";
 import { userController } from "@/controller";
+import { upload } from "@/middleware/upload";
 
 const router = express.Router();
 
@@ -10,6 +11,12 @@ router
   .route("/")
   .post(validate(userValidation.createUsers), userController.createUser)
   .get(validate(userValidation.getUsers), userController.getUsers);
+router.post(
+  "/upload-excel",
+  upload.single("file"),
+  validate(userValidation.uploadUsers),
+  userController.uploadUsersFromExcel
+);
 
 /*router
     .route('/notification')

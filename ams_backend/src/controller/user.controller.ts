@@ -6,6 +6,11 @@ import { userService} from '@/services';
 import {User} from "@prisma/client";
 import {encryptPassword} from "@/lib/encryption";
 import {applyDateFilter} from "@/utils/filters.utils";
+import fs from 'fs';
+import csv from 'csv-parser';
+import ExcelJS from 'exceljs';
+
+
 
 const createUser = catchAsync(async (req, res) => {
     try{
@@ -134,7 +139,7 @@ const getBranchesByOrganizationId = catchAsync(async (req, res) => {
     res.status(200).json({
         status: '200',
         message: 'Branches fetched successfully',
-        data: branches,
+        data: branches
     });
 });
 const getDepartmentsByBranchId = catchAsync(async (req, res) => {
@@ -158,7 +163,49 @@ const getDepartmentsByBranchId = catchAsync(async (req, res) => {
     });
 });
 
+export const bulkUploadCsv = catchAsync(async (req, res) => {
+    const results: Array<{
+        userName: string;
+        phone: string;
+        ISDCode: string;
+        email: string;
+        password: string;
+        status: string;
+        userRole: string;
+    }> = [];
 
+    fs.createReadStream(req.file.path)
+        .pipe(csv())
+        .on("data", (row) => {
+            results.push({
+                userName: row.userName?.trim() || "",
+                phone: row.phone?.toString().trim(),
+                ISDCode: row.ISDCode?.toString().trim() || "91",
+                email: row.email?.trim() || "",
+                password: row.password?.trim(),
+                status: row.status?.trim().toUpperCase() || "ACTIVE",
+                userRole: row.userRole?.trim().toUpperCase() || "USER",
+            });
+        })
+        .on("end", async () => {
+            try {
+                for (const user of results) {
+                    user.password = await encryptPassword(user.password);
+                }
+
+                await userService.createUsersBulk(results);
+
+                res
+                    .status(httpStatus.CREATED)
+                    .send({ message: "Users created successfully in bulk." });
+            } catch (error) {
+                res.status(httpStatus.BAD_REQUEST).send({
+                    message: "Error while creating users.",
+                    error: error.message,
+                });
+            }
+        });
+});
 
 export default {
     createUser,
@@ -168,4 +215,5 @@ export default {
     deleteUser,
     getBranchesByOrganizationId,
     getDepartmentsByBranchId,
+    bulkUploadCsv,
 };

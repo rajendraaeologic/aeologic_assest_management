@@ -7,6 +7,30 @@ import httpStatus from 'http-status';
 import db from '@/lib/db';
 import ApiError from '@/lib/ApiError';
 import {BranchKeys, DepartmentKeys, UserKeys} from "@/utils/selects.utils";
+import { UserStatus } from "@prisma/client";
+
+
+
+
+const createUsersBulk = async (users: any[]) => {
+  try {
+    const validUsers = users.map((user) => ({
+      userName: user.userName || "",
+      phone: user.phone,
+      ISDCode: user.ISDCode || "91",
+      email: user.email || "",
+      password: user.password,
+      status: user.status,
+      userRole: user.userRole,
+    }));
+
+    await db.user.createMany({
+      data: validUsers,
+    });
+  } catch (error) {
+    throw new Error("Failed to create users in bulk: " + error.message);
+  }
+};
 
 const createUser = async (user: User): Promise<Omit<User, 'password'> | null> => {
   if (!user) { return null }
@@ -186,5 +210,6 @@ export default {
   updateUserById,
   deleteUserById,
   getBranchesByOrganizationId,
-  getDepartmentsByBranchId
+  getDepartmentsByBranchId,
+  createUsersBulk,
 };

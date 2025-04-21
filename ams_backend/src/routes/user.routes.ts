@@ -2,10 +2,13 @@ import express from 'express';
 import auth from '@/middleware/auth.middleware';
 import validate from '@/middleware/validation.middleware';
 import { userValidation} from '@/validations';
-import {branchController, userController} from '@/controller';
+import {branchController,userController} from '@/controller';
 import branchValidation from "@/validations/branch.validation";
 import departmentValidation from "@/validations/department.validation";
 import departmentController from "@/controller/department.controller";
+import { upload } from "@/middleware/upload.middleware";
+import { bulkUploadCsv } from "@/controller/user.controller"
+
 
 const router = express.Router();
 
@@ -73,5 +76,19 @@ router.get(
     validate(userValidation.getDepartmentsByBranchIdValidation),
     userController.getDepartmentsByBranchId
 );
+
+// router.post('/bulk-upload-csv', upload.single('file'), userController.bulkUploadCsv);
+// // router.post('/bulk-upload-excel', upload.single('file'), userController.bulkUploadExcel);
+// router.post('/bulk-upload', upload.single('file'), (req, res) => {
+//     // handle your request here
+//     res.send('File uploaded successfully');
+// });
+// router.post('/bulk-upload', upload, (req, res) => {
+//     res.send('File uploaded successfully');
+// });
+
+
+router.post('/bulk-upload', upload, userController.bulkUploadCsv);
+
 
 export default router;

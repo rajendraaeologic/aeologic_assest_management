@@ -8,10 +8,40 @@ import { encryptPassword } from "@/lib/encryption";
 import { applyDateFilter } from "@/utils/filters.utils";
 import xlsx from "xlsx";
 import { userValidation } from "@/validations";
+import { generateRandomPassword } from "@/utils/passwordGenerator";
 
+import * as fs from "fs";
+
+// const createUser = catchAsync(async (req, res) => {
+//   try {
+//     const plainPassword = req.body.password;
+
+//     const user = await userService.createUser({
+//       userName: req.body.userName,
+//       phone: req.body.phone,
+//       email: req.body.email,
+//       password: await encryptPassword(plainPassword),
+//       status: req.body.status,
+//       userRole: req.body.userRole,
+//       branchId: req.body.branchId,
+//       departmentId: req.body.departmentId,
+
+//       plainPassword,
+//     } as User & { plainPassword: string });
+
+//     res.status(httpStatus.CREATED).send({
+//       user,
+//       message: "User Created Successfully.",
+//     });
+//   } catch (error) {
+//     throw new ApiError(httpStatus.NOT_FOUND, error.message);
+//   }
+// });
+
+//getUsers
 const createUser = catchAsync(async (req, res) => {
   try {
-    const plainPassword = req.body.password;
+    const plainPassword = req.body.password || generateRandomPassword();
 
     const user = await userService.createUser({
       userName: req.body.userName,
@@ -22,7 +52,6 @@ const createUser = catchAsync(async (req, res) => {
       userRole: req.body.userRole,
       branchId: req.body.branchId,
       departmentId: req.body.departmentId,
-
       plainPassword,
     } as User & { plainPassword: string });
 
@@ -34,8 +63,6 @@ const createUser = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
 });
-
-//getUsers
 const uploadUsersFromExcel = catchAsync(async (req, res) => {
   const { error } = userValidation.uploadUsers.file.validate(req.file);
   if (error) {
@@ -101,6 +128,23 @@ const uploadUsersFromExcel = catchAsync(async (req, res) => {
     createdUsers,
     failedUsers,
   });
+});
+//downloadUserExcelTemplate
+const downloadUserExcelTemplate = catchAsync(async (req, res) => {
+  try {
+    const filePath = await userService.getUserExcelTemplateDowndload();
+
+    if (!fs.existsSync(filePath)) {
+      res.status(404).json({ message: "Template file not found." });
+    }
+
+    const fileName = "UserTemplate.csv";
+    res.download(filePath, fileName);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Failed to download template", error: error.message });
+  }
 });
 
 const getUsers = catchAsync(async (req, res) => {
@@ -178,4 +222,5 @@ export default {
   deleteUser,
   deleteUsers,
   uploadUsersFromExcel,
+  downloadUserExcelTemplate,
 };

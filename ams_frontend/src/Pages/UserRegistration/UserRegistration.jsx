@@ -20,6 +20,7 @@ import { MdDelete } from "react-icons/md";
 import { getAllUsers, uploadExcel } from "../../Features/slices/userSlice";
 import { deleteUser } from "../../Features/slices/userSlice";
 import userStrings from "../../locales/userStrings";
+import DownloadTemplateButton from "./DownloadTemplateButton";
 
 const UserRegistration = () => {
   const dispatch = useDispatch();
@@ -45,7 +46,7 @@ const UserRegistration = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(null);
   const [uploadError, setUploadError] = useState(null);
-  const [progress, setProgress] = useState(0);
+
   const options = ["5", "10", "25", "50", "100"];
   const totalPages = Math.ceil(users.length / rowsPerPage);
 
@@ -182,47 +183,30 @@ const UserRegistration = () => {
     const file = e.target.files[0];
     if (file) {
       setIsProcessing(true);
-      setProgress(0);
       setUploadError(null);
       setUploadSuccess(null);
-
       e.target.value = null;
-
-      const interval = setInterval(() => {
-        setProgress((prev) => Math.min(prev + 1, 100));
-      }, 50);
 
       dispatch(uploadExcel(file))
         .unwrap()
         .then((res) => {
+          setIsProcessing(false);
           setUploadSuccess(res);
+
           return dispatch(getAllUsers()).unwrap();
         })
         .catch((error) => {
+          setIsProcessing(false);
           setUploadError(error);
-        })
-        .finally(() => {
-          clearInterval(interval);
-          setProgress(100);
-          setTimeout(() => {
-            setIsProcessing(false);
-          }, 500);
         });
     }
   };
-  useEffect(() => {
-    if (uploadSuccess) {
-      const timer = setTimeout(() => setUploadSuccess(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [uploadSuccess]);
 
-  useEffect(() => {
-    if (uploadError) {
-      const timer = setTimeout(() => setUploadError(null), 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [uploadError]);
+  const handleClosePopup = () => {
+    setUploadSuccess(null);
+    setUploadError(null);
+  };
+
   return (
     <div
       className={`w-full min-h-screen bg-slate-100 px-2 ${
@@ -249,13 +233,17 @@ const UserRegistration = () => {
                 onChange={handleFileChange}
                 style={{ display: "none" }}
               />
+              <div className="flex gap-2">
+                <DownloadTemplateButton />
+                <button
+                  className="px-4 py-2 bg-[#3BC0C3] flex justify-between gap-1 text-white rounded-lg"
+                  onClick={handleButtonClick}
+                >
+                  <CiSaveUp2 className="h-6 w-6"></CiSaveUp2>
+                  {userStrings.user.buttons.blukUsersCreate}
+                </button>
+              </div>
 
-              <button
-                className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
-                onClick={handleButtonClick}
-              >
-                <CiSaveUp2 className="h-6 w-6" />
-              </button>
               <button
                 onClick={() => setIsAddUserFormOpen(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
@@ -746,51 +734,62 @@ const UserRegistration = () => {
       {isUpdateUserFormOpen && (
         <UpdateUserForm onClose={() => setIsUpdateUserFormOpen(false)} />
       )}
-      {/* Processing Modal */}
-      {isProcessing && (
+
+      {(isProcessing || uploadSuccess || uploadError) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-2">
-              {userStrings.user.modals.processingExcel}
-            </h3>
-            <div className="w-full bg-gray-200 rounded-full h-2.5">
-              <div
-                className="bg-[#3bc0c3] h-2.5 rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              ></div>
-            </div>
-            <p className="text-gray-600 mt-2 text-sm">
-              {progress}% {userStrings.user.modals.doNotCloseWindow}
-            </p>
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4 text-center">
+            {/* Loader */}
+            {isProcessing && (
+              <>
+                <div className="flex justify-center items-center mb-3">
+                  <div className="w-8 h-8 border-4 border-[#3bc0c3] border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <p className="text-gray-600 text-sm">
+                  {userStrings.user.modals.doNotCloseWindow}
+                </p>
+              </>
+            )}
+
+            {/* Success */}
+            {!isProcessing && uploadSuccess && (
+              <>
+                <h3 className="text-lg font-semibold mb-2 text-green-600">
+                  {uploadSuccess.message}
+                </h3>
+                <p className="mb-4">
+                  {userStrings.user.modals.successCount.replace(
+                    "{count}",
+                    uploadSuccess.successCount
+                  )}
+                </p>
+                <button
+                  onClick={handleClosePopup}
+                  className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                >
+                  close
+                </button>
+              </>
+            )}
+
+            {/* Error */}
+            {!isProcessing && uploadError && (
+              <>
+                <h3 className="text-lg font-semibold mb-4 text-red-600">
+                  {uploadError.message} ({userStrings.user.modals.status}:{" "}
+                  {uploadError.status})
+                </h3>
+                <button
+                  onClick={handleClosePopup}
+                  className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                >
+                  Close
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
-      // Updated Success/Error Modals (remove close buttons)
-      {uploadSuccess && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md">
-            <h3 className="text-lg font-semibold mb-2 text-green-600">
-              {uploadSuccess.message}
-            </h3>
-            <p className="mb-2">
-              {userStrings.user.modals.successCount.replace(
-                "{count}",
-                uploadSuccess.successCount
-              )}
-            </p>
-          </div>
-        </div>
-      )}
-      {uploadError && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-2xl">
-            <h3 className="text-lg font-semibold mb-4 text-red-600">
-              {uploadError.message} ({userStrings.user.modals.status}:{" "}
-              {uploadError.status})
-            </h3>
-          </div>
-        </div>
-      )}
+
       {showDeleteConfirmation && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">

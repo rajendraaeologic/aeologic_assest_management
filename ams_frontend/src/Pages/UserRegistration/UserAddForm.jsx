@@ -32,7 +32,7 @@ const AddUserForm = ({ onClose }) => {
       userName: "",
       phone: "",
       email: "",
-      password: "",
+
       userRole: "",
       branchId: "",
       departmentId: "",
@@ -234,32 +234,6 @@ const AddUserForm = ({ onClose }) => {
                 {errors.email && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.email.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Password */}
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  {userStrings.addUser.formLabels.password}
-                </label>
-                <input
-                  {...register("password", {
-                    required: userStrings.addUser.validation.passwordRequired,
-                    minLength: {
-                      value: 8,
-                      message: userStrings.addUser.validation.passwordMinLength,
-                    },
-                  })}
-                  type="password"
-                  placeholder={userStrings.addUser.placeholders.password}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.password ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                />
-                {errors.password && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.password.message}
                   </p>
                 )}
               </div>

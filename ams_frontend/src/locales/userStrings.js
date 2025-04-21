@@ -6,7 +6,8 @@ const userStrings = {
       registration: "User Registration",
     },
     buttons: {
-      addUser: "Add User",
+      blukUsersCreate: "CreateBlukUsers",
+      addUser: "Create User",
       previous: "Previous",
       next: "Next",
       no: "No",

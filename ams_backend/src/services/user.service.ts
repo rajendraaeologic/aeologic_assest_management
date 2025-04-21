@@ -7,6 +7,9 @@ import { sendEmail } from "@/utils/sendEmail";
 import { generateUserWelcomeEmail } from "@/utils/emailTemplate";
 import { encryptPassword } from "@/lib/encryption";
 import { userValidation } from "@/validations";
+import { generateRandomPassword } from "@/utils/passwordGenerator";
+import path from "path";
+
 const createUser = async (
   user: User & { plainPassword?: string }
 ): Promise<Omit<User, "password"> | null> => {
@@ -64,15 +67,108 @@ interface FailedUser {
   error: string;
 }
 
-export const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
+// export const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
+//   const failedUsers: FailedUser[] = [];
+//   const emails = new Set<string>();
+//   const phones = new Set<string>();
+
+//   // Step 1: Pre-validation (collect errors but don't stop processing)
+//   for (const row of sheetData) {
+//     try {
+//       const { plainPassword, ...userDataWithRelations } = row;
+//       userValidation.validateExcelUser(userDataWithRelations);
+
+//       const { email, phone } = userDataWithRelations;
+//       if (emails.has(email))
+//         throw new Error(`Duplicate email in Excel: ${email}`);
+//       if (phones.has(phone))
+//         throw new Error(`Duplicate phone in Excel: ${phone}`);
+
+//       emails.add(email);
+//       phones.add(phone);
+//     } catch (error) {
+//       failedUsers.push({ row, error: error.message });
+//     }
+//   }
+
+//   // Step 2: Process valid rows in batches with individual error handling
+//   const BATCH_SIZE = 100;
+//   const createdUsers: any[] = [];
+//   const batchFailedUsers: FailedUser[] = [];
+
+//   for (let i = 0; i < sheetData.length; i += BATCH_SIZE) {
+//     const batch = sheetData.slice(i, i + BATCH_SIZE);
+
+//     // Process each row individually in the batch
+//     const batchPromises = batch.map(async (row) => {
+//       // Skip rows that failed pre-validation
+//       if (failedUsers.some((f) => f.row === row)) return null;
+
+//       try {
+//         const { plainPassword, ...userDataWithRelations } = row;
+//         const { branchId, departmentId, ...userData } = userDataWithRelations;
+
+//         // Check existing users within individual transaction
+//         const user = await db.$transaction(async (tx) => {
+//           const [existingEmail, existingPhone] = await Promise.all([
+//             tx.user.findFirst({ where: { email: userData.email } }),
+//             tx.user.findUnique({ where: { phone: userData.phone } }),
+//           ]);
+
+//           if (existingEmail) throw new Error(`Email exists: ${userData.email}`);
+//           if (existingPhone) throw new Error(`Phone exists: ${userData.phone}`);
+
+//           return tx.user.create({
+//             data: {
+//               ...userData,
+//               password: await encryptPassword(userData.password),
+//               branch: { connect: { id: branchId } },
+//               department: { connect: { id: departmentId } },
+//             },
+//           });
+//         });
+
+//         return { user, plainPassword };
+//       } catch (error) {
+//         batchFailedUsers.push({ row, error: error.message });
+//         return null;
+//       }
+//     });
+
+//     const batchResults = await Promise.all(batchPromises);
+//     const successfulUsers = batchResults.filter((result) => result !== null);
+//     createdUsers.push(...successfulUsers);
+//   }
+
+//   // Step 3: Send emails (unchanged)
+//   await Promise.allSettled(
+//     createdUsers.map(async ({ user, plainPassword }) => {
+//       try {
+//         const emailContent = generateUserWelcomeEmail(
+//           user.userName,
+//           user.email,
+//           plainPassword
+//         );
+//         await sendEmail(user.email, "Welcome to Platform", emailContent);
+//       } catch (emailError) {
+//         console.error(`Email failed for ${user.email}: ${emailError.message}`);
+//       }
+//     })
+//   );
+
+//   return {
+//     createdUsers: createdUsers.map((u) => u.user),
+//     failedUsers: [...failedUsers, ...batchFailedUsers],
+//   };
+// };
+const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
   const failedUsers: FailedUser[] = [];
   const emails = new Set<string>();
   const phones = new Set<string>();
 
-  // Step 1: Pre-validation (collect errors but don't stop processing)
   for (const row of sheetData) {
     try {
-      const { plainPassword, ...userDataWithRelations } = row;
+      const { plainPassword, password, ...userDataWithRelations } = row;
       userValidation.validateExcelUser(userDataWithRelations);
 
       const { email, phone } = userDataWithRelations;
@@ -88,7 +184,6 @@ export const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
     }
   }
 
-  // Step 2: Process valid rows in batches with individual error handling
   const BATCH_SIZE = 100;
   const createdUsers: any[] = [];
   const batchFailedUsers: FailedUser[] = [];
@@ -96,16 +191,14 @@ export const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
   for (let i = 0; i < sheetData.length; i += BATCH_SIZE) {
     const batch = sheetData.slice(i, i + BATCH_SIZE);
 
-    // Process each row individually in the batch
     const batchPromises = batch.map(async (row) => {
-      // Skip rows that failed pre-validation
       if (failedUsers.some((f) => f.row === row)) return null;
 
       try {
-        const { plainPassword, ...userDataWithRelations } = row;
+        const generatedPassword = generateRandomPassword();
+        const { plainPassword, password, ...userDataWithRelations } = row;
         const { branchId, departmentId, ...userData } = userDataWithRelations;
 
-        // Check existing users within individual transaction
         const user = await db.$transaction(async (tx) => {
           const [existingEmail, existingPhone] = await Promise.all([
             tx.user.findFirst({ where: { email: userData.email } }),
@@ -118,14 +211,14 @@ export const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
           return tx.user.create({
             data: {
               ...userData,
-              password: await encryptPassword(userData.password),
+              password: await encryptPassword(generatedPassword),
               branch: { connect: { id: branchId } },
               department: { connect: { id: departmentId } },
             },
           });
         });
 
-        return { user, plainPassword };
+        return { user, plainPassword: generatedPassword };
       } catch (error) {
         batchFailedUsers.push({ row, error: error.message });
         return null;
@@ -137,7 +230,6 @@ export const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
     createdUsers.push(...successfulUsers);
   }
 
-  // Step 3: Send emails (unchanged)
   await Promise.allSettled(
     createdUsers.map(async ({ user, plainPassword }) => {
       try {
@@ -158,6 +250,13 @@ export const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
     failedUsers: [...failedUsers, ...batchFailedUsers],
   };
 };
+
+//getUserExcelTemplate
+const getUserExcelTemplateDowndload = async () => {
+  const filePath = path.join(__dirname, "../public/UserTemplate.csv");
+  return filePath;
+};
+//registerUser
 const registerUser = async (
   user: User,
   selectKeys: Prisma.UserSelect = UserKeys
@@ -367,4 +466,5 @@ export default {
   deleteUserById,
   deleteUsersByIds,
   createUsersFromExcel,
+  getUserExcelTemplateDowndload,
 };

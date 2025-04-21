@@ -7,9 +7,12 @@ import { upload } from "@/middleware/upload";
 
 const router = express.Router();
 
+router;
 router
+  .get("/download-excel-template", userController.downloadUserExcelTemplate)
   .route("/")
   .post(validate(userValidation.createUsers), userController.createUser)
+
   .get(validate(userValidation.getUsers), userController.getUsers);
 router.post(
   "/upload-excel",
@@ -29,7 +32,7 @@ router
 
 router
   .route("/:userId")
-  .get(auth(), validate(userValidation.getUser), userController.getUser)
+  .get(validate(userValidation.getUser), userController.getUser)
   .put(validate(userValidation.updateUser), userController.updateUser)
   .delete(validate(userValidation.deleteUser), userController.deleteUser);
 router

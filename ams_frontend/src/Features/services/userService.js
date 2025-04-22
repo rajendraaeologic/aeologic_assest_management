@@ -1,74 +1,56 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
-import API from "../../App/api/axiosInstance.js";
+import API from "../../App/api/axiosInstance";
 
-export const bulkUploadUsers = createAsyncThunk(
-    "userRegistration/bulkUploadUsers",
-    async (formData, { rejectWithValue }) => {
-        try {
-            const response = await API.post("/users/bulk-upload", formData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                },
-            });
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || "Error uploading users");
-        }
+export const createUserService = async (data) => {
+  const response = await API.post("/users/", data);
+  return response.data;
+};
+
+export const getAllUsersService = async () => {
+  const response = await API.get("/users/");
+  return response.data;
+};
+
+export const updateUserService = async (data) => {
+  const response = await API.put(`/users/${data.params.userId}`, data.body);
+  return response.data;
+};
+
+export const deleteUserService = async (ids) => {
+  try {
+    const idsArray = Array.isArray(ids) ? ids : [ids];
+
+    if (idsArray.length === 1) {
+      const response = await API.delete(`/users/${idsArray[0]}`);
+      return {
+        deletedUserIds: [idsArray[0]],
+        success: true,
+      };
+    } else {
+      const response = await API.post("/users/bulk-delete", {
+        userIds: idsArray,
+      });
+      return {
+        ...response.data,
+        success: true,
+      };
     }
-);
+  } catch (error) {
+    console.error("Delete Error:", error.response?.data);
+    const errorMsg = error.response?.data?.message || "Error deleting user(s)";
+    throw new Error(errorMsg);
+  }
+};
 
+export const uploadExcelService = async (file) => {
+  console.log("file", file);
+  const formData = new FormData();
+  formData.append("file", file);
 
+  const response = await API.post("/users/upload-excel", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 
-export const createRegistrationUser = createAsyncThunk(
-    "userRegistration/createRegistrationUser",
-    async (data, { rejectWithValue }) => {
-        try {
-            const response = await API.post("/users/createUser", data);
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || "Error creating user");
-        }
-    }
-);
-
-export const getAllUser = createAsyncThunk(
-    "userRegistration/getAllUser",
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await API.get("/users/getAllUsers");
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || "Error fetching users");
-        }
-    }
-);
-
-export const updateUser = createAsyncThunk(
-    "userRegistration/updateUser",
-    async (data, { rejectWithValue }) => {
-        try {
-            const response = await API.patch(`/users/${data._id}`, data);
-            return response.data;
-        } catch (error) {
-            return rejectWithValue(error.response?.data || "Error updating user");
-        }
-    }
-);
-
-export const deleteUsersFromDB = createAsyncThunk(
-    "userRegistration/deleteUsersFromDB",
-    async (userIds, { rejectWithValue }) => {
-        try {
-            const idsArray = Array.isArray(userIds) ? userIds : [userIds];
-            const response = await API.post("/delete-bulk", { userIds: idsArray });
-
-            return {
-                ...response.data,
-                deletedUserIds: idsArray,
-            };
-        } catch (error) {
-            return rejectWithValue(error.response?.data || "Failed to delete users");
-        }
-    }
-);
-
+  return response.data;
+};

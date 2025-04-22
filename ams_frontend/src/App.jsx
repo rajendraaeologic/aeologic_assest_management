@@ -22,6 +22,7 @@ import ReportDepartment from "./Pages/Reports/ReportDepartmentre";
 import TrackDeviceReport from "./Pages/Reports/Track Device Report";
 import Organization from "./Pages/Organization/Organization";
 import Branch from "./Pages/Branch/Branch";
+import AssignAsset from "./Pages/AssignAsset/AssignAsset";
 import Login from "./Pages/LoginUser/LoginUser";
 import { Navigate } from "react-router-dom";
 
@@ -42,8 +43,10 @@ const router = createBrowserRouter([
           { path: "organization", element: <Organization /> },
           { path: "branch", element: <Branch /> },
           { path: "department", element: <Department /> },
-          { path: "assigntag", element: <AssignTag /> },
           { path: "asset", element: <Asset /> },
+          { path: "assignAsset", element: <AssignAsset /> },
+          { path: "assigntag", element: <AssignTag /> },
+
           { path: "outfordelivery", element: <OutForDelivery /> },
           { path: "datewishreport", element: <DateWishReport /> },
           { path: "daterangereport", element: <DateRangeReport /> },

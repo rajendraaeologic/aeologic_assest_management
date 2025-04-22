@@ -3,58 +3,56 @@ import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
+// import ChipsList from "../../components/UI/ChipsList";
 import {
   setCurrentPage,
   setRowsPerPage,
-  toggleSelectAsset,
-  selectAllAssets,
-  deselectAllAssets,
-  setSelectedAsset,
-} from "../../Features/slices/assetSlice";
+  toggleSelectAssignAsset,
+  selectAllAssignAssets,
+  deselectAllAssignAssets,
+  setSelectedAssignAsset,
+} from "../../Features/slices/assignAssetSlice";
 import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
-import AddAsset from "./AddAsset";
-import UpdateAsset from "./UpdateAsset";
+import AddAssignAsset from "./AddAssignAsset";
+import UpdateAssignAsset from "./UpdateAssignAsset";
 import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
-import { getAllAssets } from "../../Features/slices/assetSlice";
-import { deleteAsset } from "../../Features/slices/assetSlice";
-import assetStrings from "../../locales/assetStrings";
+import { getAllAssignAssets } from "../../Features/slices/assignAssetSlice";
+import { deleteAssignAsset } from "../../Features/slices/assignAssetSlice";
+import assignAssetStrings from "../../locales/assignAssetStrings";
 
-const Asset = () => {
+const AssignAsset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isSidebarOpen } = useContext(SliderContext);
-  const strings = assetStrings.asset;
 
-  const { assets, selectedAssets, currentPage, rowsPerPage } = useSelector(
-    (state) => state.assetUserData
-  );
+  const { title, breadcrumb, buttons, table, modals, chipsList } =
+    assignAssetStrings.assignAsset;
+
+  const { assignAssets, selectedAssignAssets, currentPage, rowsPerPage } =
+    useSelector((state) => state.assignAssetData);
 
   useEffect(() => {
-    dispatch(getAllAssets());
-  }, [dispatch]);
+    dispatch(getAllAssignAssets());
+  }, [dispatch, assignAssets.length]);
 
-  const [isAddAsset, setIsAddAsset] = useState(false);
-  const [isUpdateAsset, setIsUpdateAsset] = useState(false);
+  const [isAddAssignAsset, setIsAddAssignAsset] = useState(false);
+  const [isUpdateAssignAsset, setIsUpdateAssignAsset] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
-  const [assetToDelete, setAssetToDelete] = useState(null);
+  const [assignAssetToDelete, setAssignAssetToDelete] = useState(null);
   const [showSelectFirstPopup, setShowSelectFirstPopup] = useState(false);
   const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
 
   const options = ["5", "10", "25", "50", "100"];
-  const totalPages = Math.ceil(assets.length / rowsPerPage);
+  const totalPages = Math.ceil(assignAssets.length / rowsPerPage);
 
-  const [searchAsset, setSearchAsset] = useState({
+  const [searchAssignAsset, setSearchAssignAsset] = useState({
+    userName: "",
     assetName: "",
-    uniqueId: "",
-    brand: "",
-    model: "",
-    serialNumber: "",
-    status: "",
-    branch: "",
-    department: "",
+    branchName: "",
+    departmentName: "",
   });
 
   useEffect(() => {
@@ -75,34 +73,35 @@ const Asset = () => {
 
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
-    setSearchAsset((prev) => ({
+    setSearchAssignAsset((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
-  const filteredAssets = assets?.filter((asset) => {
-    return Object.entries(searchAsset).every(([key, searchValue]) => {
-      if (key === "branch" && asset.branch) {
-        return asset.branch.branchName
+  const filteredAssignAssets = assignAssets?.filter((asset) => {
+    return (
+      (searchAssignAsset.userName === "" ||
+        (asset.userName || "")
           .toLowerCase()
-          .includes(searchValue.toLowerCase());
-      }
-      if (key === "department" && asset.department) {
-        return asset.department.departmentName
+          .includes(searchAssignAsset.userName.toLowerCase())) &&
+      (searchAssignAsset.assetName === "" ||
+        (asset.assetName || "")
           .toLowerCase()
-          .includes(searchValue.toLowerCase());
-      }
-
-      return (asset[key] || "")
-        .toString()
-        .toLowerCase()
-        .includes(searchValue.toLowerCase());
-    });
+          .includes(searchAssignAsset.assetName.toLowerCase())) &&
+      (searchAssignAsset.branchName === "" ||
+        (asset.branchName || "")
+          .toLowerCase()
+          .includes(searchAssignAsset.branchName.toLowerCase())) &&
+      (searchAssignAsset.departmentName === "" ||
+        (asset.departmentName || "")
+          .toLowerCase()
+          .includes(searchAssignAsset.departmentName.toLowerCase()))
+    );
   });
 
   const startIndex = currentPage * rowsPerPage;
-  const currentRows = filteredAssets.slice(
+  const currentRows = filteredAssignAssets.slice(
     startIndex,
     startIndex + rowsPerPage
   );
@@ -119,51 +118,50 @@ const Asset = () => {
     if (currentPage < totalPages - 1) dispatch(setCurrentPage(currentPage + 1));
   };
 
-  const handleDeleteSelectedAssets = () => {
-    if (selectedAssets.length === 0) {
+  const handleDeleteSelectedAssignAssets = () => {
+    if (selectedAssignAssets.length === 0) {
       setShowSelectFirstPopup(true);
       return;
     }
     setShowDeleteConfirmation(true);
   };
 
-  const handleSelectAllAssets = (e) => {
+  const handleSelectAllAssignAssets = (e) => {
     if (e.target.checked) {
-      dispatch(selectAllAssets());
+      dispatch(selectAllAssignAssets());
     } else {
-      dispatch(deselectAllAssets());
+      dispatch(deselectAllAssignAssets());
     }
   };
 
-  const handleToggleAssetSelection = (id) => {
-    dispatch(toggleSelectAsset(id));
+  const handleToggleAssignAssetSelection = (id) => {
+    dispatch(toggleSelectAssignAsset(id));
   };
 
-  const handleEditAsset = (asset) => {
-    dispatch(setSelectedAsset(asset));
-    setIsUpdateAsset(true);
+  const handlerUpdateData = (asset) => {
+    dispatch(setSelectedAssignAsset(asset));
   };
 
   const handleDeleteClick = (asset) => {
-    setAssetToDelete(asset.id);
+    setAssignAssetToDelete(asset.id);
     setShowDeleteConfirmation(true);
   };
 
   const confirmDelete = () => {
-    if (assetToDelete) {
-      dispatch(deleteAsset([assetToDelete]));
-      setDeleteMessage(strings.modals.deleteSuccess.single);
-    } else if (selectedAssets.length > 0) {
-      dispatch(deleteAsset(selectedAssets));
+    if (assignAssetToDelete) {
+      dispatch(deleteAssignAsset([assignAssetToDelete]));
+      setDeleteMessage(modals.deleteSuccess.single);
+    } else if (selectedAssignAssets.length > 0) {
+      dispatch(deleteAssignAsset(selectedAssignAssets));
       setDeleteMessage(
-        strings.modals.deleteSuccess.multiple.replace(
+        modals.deleteSuccess.multiple.replace(
           "{count}",
-          selectedAssets.length
+          selectedAssignAssets.length
         )
       );
     }
     setShowDeleteConfirmation(false);
-    setAssetToDelete(null);
+    setAssignAssetToDelete(null);
     setShowDeleteSuccessPopup(true);
     setTimeout(() => {
       setShowDeleteSuccessPopup(false);
@@ -172,7 +170,7 @@ const Asset = () => {
 
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);
-    setAssetToDelete(null);
+    setAssignAssetToDelete(null);
   };
 
   const closeSelectFirstPopup = () => {
@@ -194,36 +192,34 @@ const Asset = () => {
       >
         <div className="pt-24">
           <div className="flex justify-between mx-5 mt-2">
-            <h3 className="text-xl font-semibold text-[#6c757D]">
-              {strings.title}
-            </h3>
+            <h3 className="text-xl font-semibold text-[#6c757D]">{title}</h3>
             <div className="flex gap-3 md:mr-8">
               <button className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg">
                 <CiSaveUp2 className="h-6 w-6" />
               </button>
               <button
-                onClick={() => setIsAddAsset(true)}
+                onClick={() => setIsAddAssignAsset(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
               >
-                {strings.buttons.addAsset}
+                {buttons.addAssignAsset}
               </button>
             </div>
           </div>
 
           <div className="mx-5 flex gap-2 mb-4">
-            <button onClick={handleNavigate} className="text-[#6c757D]">
-              {strings.breadcrumb.dashboard}
+            <button onClick={handleNavigate} className="text-[#6c757D] ">
+              {breadcrumb.dashboard}
             </button>
             <span>
               <MdKeyboardArrowLeft className="h-6 w-6" />
             </span>
-            <p className="text-[#6c757D]">{strings.breadcrumb.asset}</p>
+            <p className="text-[#6c757D]">{breadcrumb.assignAsset}</p>
           </div>
         </div>
 
-        <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex items-center gap-2 pt-8 ml-3">
-            <p>{strings.table.showEntries}</p>
+        <div className=" min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
+          <div className="flex Users-center gap-2 pt-8 ml-3">
+            <p>{table.showEntries}</p>
             <div className="border-2 flex justify-evenly">
               <select
                 value={rowsPerPage}
@@ -239,12 +235,12 @@ const Asset = () => {
                 ))}
               </select>
             </div>
-            <p>{strings.table.entries}</p>
+            <p>{table.entries}</p>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
             <table
-              className="table-auto min-w-max text-left border-collapse"
+              className="table-auto min-w-full text-left border-collapse"
               style={{ tableLayout: "fixed" }}
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
@@ -257,7 +253,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {strings.table.headers.assetName}
+                    {table.headers.userName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -267,7 +263,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {strings.table.headers.uniqueId}
+                    {table.headers.assetName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -277,7 +273,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {strings.table.headers.brand}
+                    {table.headers.branchName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -287,48 +283,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {strings.table.headers.model}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.serialNumber}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.status}
-                  </th>
-
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.branch}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.department}
+                    {table.headers.departmentName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -338,7 +293,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {strings.table.headers.action}
+                    {table.headers.action}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -348,7 +303,7 @@ const Asset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {strings.table.headers.deleteAll}
+                    {table.headers.deleteAll}
                   </th>
                 </tr>
               </thead>
@@ -366,10 +321,28 @@ const Asset = () => {
                   >
                     <input
                       type="text"
+                      name="userName"
+                      placeholder={table.searchPlaceholders.userName}
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAssignAsset.userName}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
                       name="assetName"
-                      placeholder={strings.table.searchPlaceholders.assetName}
+                      placeholder={table.searchPlaceholders.assetName}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.assetName}
+                      value={searchAssignAsset.assetName}
                       onChange={handleSearchChange}
                       style={{ maxWidth: "100%" }}
                     />
@@ -384,10 +357,10 @@ const Asset = () => {
                   >
                     <input
                       type="text"
-                      name="uniqueId"
-                      placeholder={strings.table.searchPlaceholders.uniqueId}
+                      name="branchName"
+                      placeholder={table.searchPlaceholders.branchName}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.uniqueId}
+                      value={searchAssignAsset.branchName}
                       onChange={handleSearchChange}
                       style={{ maxWidth: "100%" }}
                     />
@@ -402,103 +375,10 @@ const Asset = () => {
                   >
                     <input
                       type="text"
-                      name="brand"
-                      placeholder={strings.table.searchPlaceholders.brand}
+                      name="departmentName"
+                      placeholder={table.searchPlaceholders.departmentName}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.brand}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="model"
-                      placeholder={strings.table.searchPlaceholders.model}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.model}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="serialNumber"
-                      placeholder={
-                        strings.table.searchPlaceholders.serialNumber
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.serialNumber}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="status"
-                      placeholder={strings.table.searchPlaceholders.status}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.status}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="branch"
-                      placeholder={strings.table.searchPlaceholders.branch}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.branch}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="department"
-                      placeholder={strings.table.searchPlaceholders.department}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.department}
+                      value={searchAssignAsset.departmentName}
                       onChange={handleSearchChange}
                       style={{ maxWidth: "100%" }}
                     />
@@ -517,16 +397,16 @@ const Asset = () => {
                           <input
                             type="checkbox"
                             checked={
-                              selectedAssets.length === assets.length &&
-                              assets.length > 0
+                              selectedAssignAssets.length ===
+                                assignAssets.length && assignAssets.length > 0
                             }
-                            onChange={handleSelectAllAssets}
+                            onChange={handleSelectAllAssignAssets}
                             className="mr-2"
                           />
                         </label>
                       </div>
-                      <button onClick={handleDeleteSelectedAssets}>
-                        <MdDelete className="h-6 w-6 text-[red]" />
+                      <button onClick={handleDeleteSelectedAssignAssets}>
+                        <MdDelete className="h-6 w-6  text-[red]" />
                       </button>
                     </div>
                   </td>
@@ -538,7 +418,7 @@ const Asset = () => {
                 {currentRows.length > 0 ? (
                   currentRows.map((asset, index) => (
                     <tr
-                      key={asset.id}
+                      key={asset.id || index}
                       className={`${
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}
@@ -549,6 +429,18 @@ const Asset = () => {
                           maxWidth: "180px",
                           minWidth: "120px",
                           overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
+                        {asset.userName}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
                         }}
                       >
                         {asset.assetName}
@@ -559,9 +451,10 @@ const Asset = () => {
                           maxWidth: "180px",
                           minWidth: "120px",
                           overflowWrap: "break-word",
+                          verticalAlign: "top",
                         }}
                       >
-                        {asset.uniqueId}
+                        {asset.branchName}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -569,61 +462,10 @@ const Asset = () => {
                           maxWidth: "180px",
                           minWidth: "120px",
                           overflowWrap: "break-word",
+                          verticalAlign: "top",
                         }}
                       >
-                        {asset.brand}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.model}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.serialNumber}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.status}
-                      </td>
-
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.branch?.branchName || strings.table.notAvailable}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.department?.departmentName ||
-                          strings.table.notAvailable}
+                        {asset.departmentName}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -631,14 +473,17 @@ const Asset = () => {
                       >
                         <div className="flex ">
                           <button
-                            onClick={() => handleEditAsset(asset)}
+                            onClick={() => {
+                              setIsUpdateAssignAsset(true);
+                              handlerUpdateData(asset);
+                            }}
                             className="px-3 py-2 rounded-sm "
                           >
                             <FontAwesomeIcon icon={faPen} />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(asset)}
-                            className="px-3 py-2 rounded-sm text-[red]"
+                            className="px-3 py-2 rounded-sm   text-[red]"
                           >
                             <MdDelete className="h-6 w-6" />
                           </button>
@@ -650,8 +495,12 @@ const Asset = () => {
                       >
                         <input
                           type="checkbox"
-                          checked={selectedAssets?.includes(asset.id) ?? false}
-                          onChange={() => handleToggleAssetSelection(asset.id)}
+                          checked={
+                            selectedAssignAssets?.includes(asset.id) ?? false
+                          }
+                          onChange={() =>
+                            handleToggleAssignAssetSelection(asset.id)
+                          }
                         />
                       </td>
                     </tr>
@@ -659,10 +508,10 @@ const Asset = () => {
                 ) : (
                   <tr>
                     <td
-                      colSpan="12"
-                      className="px-2 py-4 text-center border border-gray-300"
+                      colSpan="6"
+                      className="px-4 py-4 text-center text-black"
                     >
-                      {strings.table.noData}
+                      {table.noData}
                     </td>
                   </tr>
                 )}
@@ -678,9 +527,9 @@ const Asset = () => {
                 disabled={currentPage === 0}
                 className="text-black"
               >
-                {strings.buttons.previous}
+                {buttons.previous}
               </button>
-              <span className="px-2 space-x-1">
+              <span className="px-2 space-x-1 ">
                 <span
                   className={`${
                     currentPage === 0
@@ -690,6 +539,7 @@ const Asset = () => {
                 >
                   {currentPage + 1}
                 </span>
+
                 <span
                   className={`${
                     currentPage + 1 === totalPages
@@ -705,24 +555,18 @@ const Asset = () => {
                 disabled={currentPage + 1 === totalPages}
                 className="text-black"
               >
-                {strings.buttons.next}
+                {buttons.next}
               </button>
             </div>
           </div>
         </div>
       </div>
       {/* Modals */}
-      {isAddAsset && (
-        <AddAsset
-          onClose={() => setIsAddAsset(false)}
-          onSuccess={() => dispatch(getAllAssets())}
-        />
+      {isAddAssignAsset && (
+        <AddAssignAsset onClose={() => setIsAddAssignAsset(false)} />
       )}
-      {isUpdateAsset && (
-        <UpdateAsset
-          onClose={() => setIsUpdateAsset(false)}
-          onSuccess={() => dispatch(getAllAssets())}
-        />
+      {isUpdateAssignAsset && (
+        <UpdateAssignAsset onClose={() => setIsUpdateAssignAsset(false)} />
       )}
 
       {/* Delete Confirmation Modal */}
@@ -730,11 +574,11 @@ const Asset = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
             <h3 className="text-lg font-semibold mb-4">
-              {assetToDelete
-                ? strings.modals.deleteConfirmation.single
-                : strings.modals.deleteConfirmation.multiple.replace(
+              {assignAssetToDelete
+                ? modals.deleteConfirmation.single
+                : modals.deleteConfirmation.multiple.replace(
                     "{count}",
-                    selectedAssets.length
+                    selectedAssignAssets.length
                   )}
             </h3>
             <div className="flex justify-end gap-4">
@@ -742,13 +586,13 @@ const Asset = () => {
                 onClick={cancelDelete}
                 className="px-4 py-2 bg-gray-300 rounded-md"
               >
-                {strings.buttons.no}
+                {buttons.no}
               </button>
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-500 text-white rounded-md"
               >
-                {strings.buttons.yes}
+                {buttons.yes}
               </button>
             </div>
           </div>
@@ -759,15 +603,13 @@ const Asset = () => {
       {showSelectFirstPopup && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {strings.modals.selectFirst}
-            </h3>
+            <h3 className="text-lg font-semibold mb-4">{modals.selectFirst}</h3>
             <div className="flex justify-end">
               <button
                 onClick={closeSelectFirstPopup}
                 className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
               >
-                {strings.buttons.ok}
+                {buttons.ok}
               </button>
             </div>
           </div>
@@ -786,4 +628,4 @@ const Asset = () => {
   );
 };
 
-export default Asset;
+export default AssignAsset;

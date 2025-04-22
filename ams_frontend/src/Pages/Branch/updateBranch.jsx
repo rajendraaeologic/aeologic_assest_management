@@ -61,9 +61,11 @@ const UpdateBranch = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       const branchData = {
-        id: selectedBranch.id,
-        branchName: data.branchName,
-        branchLocation: data.branchLocation,
+        params: { branchId: selectedBranch.id },
+        body: {
+          branchName: data.branchName,
+          branchLocation: data.branchLocation,
+        },
       };
 
       await dispatch(updateBranch(branchData));

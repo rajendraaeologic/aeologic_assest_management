@@ -60,8 +60,10 @@ const UpdateOrganization = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       const organizationData = {
-        id: selectedOrganization.id,
-        organizationName: data.organizationName,
+        params: { organizationId: selectedOrganization.id },
+        body: {
+          organizationName: data.organizationName,
+        },
       };
 
       await dispatch(updateOrganization(organizationData));

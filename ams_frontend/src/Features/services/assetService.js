@@ -11,23 +11,7 @@ export const getAllAssetsService = async () => {
 };
 
 export const updateAssetService = async (data) => {
-  const updatePayload = {
-    assetName: data.assetName,
-    serialNumber: data.serialNumber,
-    departmentId: data.departmentId,
-    brand: data.brand,
-    description: data.description,
-    model: data.model,
-    uniqueId: data.uniqueId,
-    status: data.status,
-    assignedToUserId: data.assignedToUserId,
-    locationId: data.locationId,
-    purchaseDate: data.purchaseDate,
-    cost: data.cost,
-    warrantyEndDate: data.warrantyEndDate,
-    branchId: data.branchId,
-  };
-  const response = await API.put(`/asset/${data.id}`, updatePayload);
+  const response = await API.put(`/asset/${data.params.id}`, data.body);
   return response.data;
 };
 

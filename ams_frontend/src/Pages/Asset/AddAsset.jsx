@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import { createAsset } from "../../Features/slices/assetSlice";
+import { getAllBranches } from "../../Features/slices/branchSlice";
 import API from "../../App/api/axiosInstance";
 import assetStrings from "../../locales/assetStrings";
 import { useForm } from "react-hook-form";
@@ -11,7 +12,10 @@ const AddAsset = ({ onClose, onSuccess }) => {
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
   const dispatch = useDispatch();
+
+  // Redux state selectors
   const { loading, error } = useSelector((state) => state.assetUserData);
+  const { branches } = useSelector((state) => state.branchData);
 
   const {
     register,
@@ -29,8 +33,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
       model: "",
       serialNumber: "",
       status: "ACTIVE",
-      locationId: "",
-      assignedToUserId: "",
+      // locationId: "",
       branchId: "",
       departmentId: "",
     },
@@ -39,22 +42,13 @@ const AddAsset = ({ onClose, onSuccess }) => {
   const branchId = watch("branchId");
   const departmentId = watch("departmentId");
 
-  const [branches, setBranches] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [users, setUsers] = useState([]);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
 
-  // Fetch branches on component mount
+  // Fetch branches on component mount using Redux
   useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        const response = await API.get("/branch/getAllBranches");
-        setBranches(response.data.data);
-      } catch (error) {
-        console.error(assetStrings.addAsset.errorMessages.fetchBranches, error);
-      }
-    };
-
-    fetchBranches();
+    dispatch(getAllBranches());
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
@@ -62,26 +56,37 @@ const AddAsset = ({ onClose, onSuccess }) => {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [dispatch]);
 
-  // Update departments when branch is selected
+  // Fetch departments when branch changes
   useEffect(() => {
-    if (branchId) {
-      const selectedBranch = branches.find((branch) => branch.id === branchId);
-
-      if (selectedBranch && selectedBranch.departments) {
-        setDepartments(selectedBranch.departments);
+    const fetchDepartments = async () => {
+      if (!branchId) {
+        setDepartments([]);
         setValue("departmentId", "");
         setValue("assignedToUserId", "");
         setUsers([]);
+        return;
       }
-    } else {
-      setDepartments([]);
-      setUsers([]);
-    }
-  }, [branchId, branches, setValue]);
 
-  // Fetch users when department is selected
+      try {
+        setLoadingDepartments(true);
+        const response = await API.get(`/department/${branchId}/departments`);
+        setDepartments(response.data.data);
+      } catch (error) {
+        console.error(
+          assetStrings.addAsset.errorMessages.fetchDepartments,
+          error
+        );
+      } finally {
+        setLoadingDepartments(false);
+      }
+    };
+
+    fetchDepartments();
+  }, [branchId, setValue]);
+
+  // Fetch users when department changes
   useEffect(() => {
     const fetchUsers = async () => {
       if (departmentId) {
@@ -135,7 +140,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[820px] min-h-96 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[620px] min-h-96 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
@@ -295,7 +300,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   <option value="">
                     {assetStrings.addAsset.select.defaultBranch}
                   </option>
-                  {branches.map((branch) => (
+                  {branches?.map((branch) => (
                     <option key={branch.id} value={branch.id}>
                       {branch.branchName}
                     </option>
@@ -315,14 +320,16 @@ const AddAsset = ({ onClose, onSuccess }) => {
                 </label>
                 <select
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  disabled={!branchId}
+                  disabled={!branchId || loadingDepartments}
                   {...register("departmentId", {
                     required:
                       assetStrings.addAsset.validation.departmentRequired,
                   })}
                 >
                   <option value="">
-                    {assetStrings.addAsset.select.defaultDepartment}
+                    {loadingDepartments
+                      ? assetStrings.addAsset.select.loadingDepartments
+                      : assetStrings.addAsset.select.defaultDepartment}
                   </option>
                   {departments.map((dept) => (
                     <option key={dept.id} value={dept.id}>
@@ -335,27 +342,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.departmentId.message}
                   </p>
                 )}
-              </div>
-
-              {/* Assigned To */}
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assetStrings.addAsset.formLabels.assignedToUserId}
-                </label>
-                <select
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  disabled={!departmentId}
-                  {...register("assignedToUserId")}
-                >
-                  <option value="">
-                    {assetStrings.addAsset.select.defaultUser}
-                  </option>
-                  {users.map((user) => (
-                    <option key={user.id} value={user.id}>
-                      {user.userName} ({user.email})
-                    </option>
-                  ))}
-                </select>
               </div>
             </div>
 

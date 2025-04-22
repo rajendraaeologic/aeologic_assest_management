@@ -14,12 +14,9 @@ export const getAllDepartmentsService = async () => {
 };
 
 export const updateDepartmentService = async (data) => {
-  const updatePayload = {
-    departmentName: data.departmentName,
-  };
   const response = await API.put(
-    `/department/${data.departmentId}`,
-    updatePayload
+    `/department/${data.params.departmentId}`,
+    data.body
   );
   return response.data;
 };

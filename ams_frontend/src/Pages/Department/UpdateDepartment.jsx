@@ -30,8 +30,6 @@ const UpdateDepartment = ({ onClose }) => {
     formState: { errors, isSubmitting },
   } = useForm();
 
-  const branchId = watch("branchId");
-
   useEffect(() => {
     dispatch(getAllBranches());
     firstInputRef.current?.focus();
@@ -46,7 +44,6 @@ const UpdateDepartment = ({ onClose }) => {
     if (selectedDepartment) {
       reset({
         departmentName: selectedDepartment.departmentName,
-        branchId: selectedDepartment.branchId,
       });
     }
   }, [selectedDepartment, reset]);
@@ -67,9 +64,10 @@ const UpdateDepartment = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       const departmentData = {
-        departmentId: selectedDepartment.id,
-        departmentName: data.departmentName,
-        branchId: data.branchId,
+        params: { departmentId: selectedDepartment.id },
+        body: {
+          departmentName: data.departmentName,
+        },
       };
 
       await dispatch(updateDepartment(departmentData));

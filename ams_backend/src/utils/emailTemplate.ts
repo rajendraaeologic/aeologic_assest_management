@@ -22,3 +22,32 @@ export const generateUserWelcomeEmail = (
       </div>
     `;
 };
+
+export const generateUserEmailUpdateNotification = (
+  userName: string,
+  newEmail: string,
+  password: string
+): string => {
+  return `
+    <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; color: #333;">
+      <h2>Hello ${userName},</h2>
+
+      <p>We would like to inform you that your email address has been successfully updated.</p>
+
+      <h3>Your new email address:</h3>
+      <div style="background-color: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+        <p><strong>Email:</strong> ${newEmail}</p>
+      </div>
+
+      <h3>Your new login password:</h3>
+      <div style="background-color: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
+        <p><strong>Password:</strong> ${password}</p>
+      </div>
+
+      <p style="margin-top: 20px;"><strong>If you did not make this change, please contact us immediately.</strong></p>
+      <p>You can change your password anytime from your account settings.</p>
+
+      <p style="margin-top: 30px;">Thank you,<br/>The Team</p>
+    </div>
+  `;
+};

@@ -9,36 +9,8 @@ import { applyDateFilter } from "@/utils/filters.utils";
 import xlsx from "xlsx";
 import { userValidation } from "@/validations";
 import { generateRandomPassword } from "@/utils/passwordGenerator";
-
 import * as fs from "fs";
 
-// const createUser = catchAsync(async (req, res) => {
-//   try {
-//     const plainPassword = req.body.password;
-
-//     const user = await userService.createUser({
-//       userName: req.body.userName,
-//       phone: req.body.phone,
-//       email: req.body.email,
-//       password: await encryptPassword(plainPassword),
-//       status: req.body.status,
-//       userRole: req.body.userRole,
-//       branchId: req.body.branchId,
-//       departmentId: req.body.departmentId,
-
-//       plainPassword,
-//     } as User & { plainPassword: string });
-
-//     res.status(httpStatus.CREATED).send({
-//       user,
-//       message: "User Created Successfully.",
-//     });
-//   } catch (error) {
-//     throw new ApiError(httpStatus.NOT_FOUND, error.message);
-//   }
-// });
-
-//getUsers
 const createUser = catchAsync(async (req, res) => {
   try {
     const plainPassword = req.body.password || generateRandomPassword();

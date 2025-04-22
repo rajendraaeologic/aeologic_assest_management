@@ -7,7 +7,6 @@ import { upload } from "@/middleware/upload";
 
 const router = express.Router();
 
-router;
 router
   .get("/download-excel-template", userController.downloadUserExcelTemplate)
   .route("/")
@@ -19,6 +18,10 @@ router.post(
   upload.single("file"),
   validate(userValidation.uploadUsers),
   userController.uploadUsersFromExcel
+);
+router.get(
+  "/download-excel-template",
+  userController.downloadUserExcelTemplate
 );
 
 /*router

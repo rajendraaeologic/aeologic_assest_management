@@ -13,6 +13,7 @@ const userStrings = {
       no: "No",
       yes: "Yes",
       ok: "OK",
+      close: "Close",
     },
     table: {
       showEntries: "Show",
@@ -121,6 +122,7 @@ const userStrings = {
       phoneTaken: "Phone already exists",
     },
   },
+
   updateUser: {
     title: "Edit User",
     formLabels: {
@@ -128,15 +130,33 @@ const userStrings = {
       phone: "Phone Number",
       email: "Email Address",
       userRole: "User Role",
+      organization: "Organization",
+      branch: "Branch",
+      department: "Department",
+      status: "Status",
     },
     validation: {
       userNameRequired: "User name is required",
       phoneRequired: "Phone number is required",
-      phoneMinLength: "Phone number must be at least 7 digits",
+      phoneInvalid: "Phone number must be 10 digits",
+      emailRequired: "Email address is required",
       emailInvalid: "Invalid email address format",
       userRoleRequired: "User role is required",
+      branchRequired: "Branch selection is required",
+      departmentRequired: "Department selection is required",
+      statusRequired: "Please select a status",
     },
-    selectRole: "Select a role",
+    select: {
+      organizationDefault: "Select organization",
+      branchDefault: "Select branch",
+      departmentDefault: "Select department",
+      loadingBranches: "Loading branches...",
+      loadingDepartments: "Loading departments...",
+      roleDefault: "Select Role",
+      statusDefault: "Select status",
+      statusActive: "ACTIVE",
+      statusInactive: "INACTIVE",
+    },
     buttons: {
       close: "Close",
       updating: "Saving...",
@@ -145,6 +165,10 @@ const userStrings = {
     toast: {
       success: "User updated successfully!",
       error: "Failed to update user",
+      emailTaken: "Email already taken",
+      phoneTaken: "Phone already taken",
+      branchError: "Failed to fetch branches",
+      departmentError: "Failed to fetch departments",
     },
   },
 };

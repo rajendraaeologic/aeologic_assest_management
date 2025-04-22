@@ -766,7 +766,7 @@ const UserRegistration = () => {
                   onClick={handleClosePopup}
                   className="mt-2 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
                 >
-                  close
+                  {userStrings.user.buttons.close}
                 </button>
               </>
             )}
@@ -775,14 +775,13 @@ const UserRegistration = () => {
             {!isProcessing && uploadError && (
               <>
                 <h3 className="text-lg font-semibold mb-4 text-red-600">
-                  {uploadError.message} ({userStrings.user.modals.status}:{" "}
-                  {uploadError.status})
+                  {uploadError.message}
                 </h3>
                 <button
                   onClick={handleClosePopup}
                   className="mt-2 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
                 >
-                  Close
+                  {userStrings.user.buttons.close}
                 </button>
               </>
             )}

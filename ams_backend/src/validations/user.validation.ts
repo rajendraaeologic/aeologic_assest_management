@@ -88,7 +88,14 @@ const updateUser = {
       // countryId: Joi.optional()
       //   .custom(isValidMongoDBObjectId)
       //   .messages(isValidMongoDBObjectIdCustomMessages),
+      status: Joi.string()
+        .required()
+        .valid(UserStatus.ACTIVE, UserStatus.IN_ACTIVE),
+
+      branchId: Joi.string().length(24).hex().optional(),
+      departmentId: Joi.string().length(24).hex().optional(),
     })
+
     .min(1),
 };
 
@@ -126,8 +133,9 @@ export const uploadUsers = {
     originalname: Joi.string().required(),
     mimetype: Joi.string()
       .valid(
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "application/vnd.ms-excel"
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+        "application/vnd.ms-excel", // .xls
+        "text/csv"
       )
       .required(),
     buffer: Joi.binary().required(),

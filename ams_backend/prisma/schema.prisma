@@ -126,7 +126,7 @@ model User {
   AssetHistory     AssetHistory[]
   departmentId     String?            @db.ObjectId
   department       Department?        @relation(fields: [departmentId], references: [id])
-  rfidTag          String?            @unique
+  //rfidTag          String?            @unique
 }
 
 model Asset {

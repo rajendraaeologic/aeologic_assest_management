@@ -8,6 +8,7 @@ import { generateUserWelcomeEmail } from "@/utils/emailTemplate";
 import { encryptPassword } from "@/lib/encryption";
 import { userValidation } from "@/validations";
 import { generateRandomPassword } from "@/utils/passwordGenerator";
+import { generateUserEmailUpdateNotification } from "@/utils/emailTemplate";
 import path from "path";
 
 const createUser = async (
@@ -286,11 +287,37 @@ const updateUserById = async (
     throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
   }
 
-  return db.user.update({
+  const oldEmail = user.email;
+  let plainPassword = null;
+
+  // If email is updated, generate a new password
+  if (updateBody.email && oldEmail !== updateBody.email) {
+    plainPassword = generateRandomPassword();
+    updateBody.password = await encryptPassword(plainPassword);
+  }
+
+  const updatedUser = await db.user.update({
     where: { id: user.id },
     data: updateBody,
     select: selectKeys,
   });
+
+  // Send email if email changed
+  if (updateBody.email && oldEmail !== updateBody.email) {
+    const emailContent = generateUserEmailUpdateNotification(
+      updatedUser.userName,
+      updateBody.email as string,
+      plainPassword || "[unchanged]"
+    );
+
+    await sendEmail(
+      updateBody.email as string,
+      "Your Email Has Been Updated",
+      emailContent
+    );
+  }
+
+  return updatedUser;
 };
 
 const deleteUserById = async (

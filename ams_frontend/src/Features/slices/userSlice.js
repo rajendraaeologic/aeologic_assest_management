@@ -40,6 +40,7 @@ export const getAllUsers = createAsyncThunk(
 export const updateUser = createAsyncThunk(
   "user/update",
   async (data, { rejectWithValue }) => {
+    console.log("data", data);
     try {
       const response = await updateUserService(data);
       return response;

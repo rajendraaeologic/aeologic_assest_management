@@ -377,8 +377,8 @@ const AddUserForm = ({ onClose }) => {
                 )}
               </div>
             </div>
-
-            <div className="flex justify-end gap-4 mt-6">
+            <hr className="mt-4"></hr>
+            <div className="flex justify-end gap-4 mt-4">
               <button
                 type="button"
                 onClick={handleClose}

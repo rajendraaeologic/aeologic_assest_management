@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  bulkUploadUsers,
   createRegistrationUser,
   getAllUser,
 } from "../../Features/services/userService.js";
@@ -142,6 +143,36 @@ const UserAddForm = ({ onClose }) => {
         position: "top-right",
         autoClose: 1000,
       });
+    }
+  };
+
+  const [bulkFile, setBulkFile] = useState(null);
+
+  const handleBulkFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setBulkFile(e.target.files[0]);
+    }
+  };
+
+  const handleBulkUpload = async () => {
+    if (!bulkFile) {
+      toast.warning("Please select a file to upload.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", bulkFile);
+
+    try {
+      const response = await dispatch(bulkUploadUsers(formData));
+      if (response?.payload?.message) {
+        toast.success(response.payload.message);
+        dispatch(getAllUser());
+      } else {
+        toast.error("Bulk upload failed.");
+      }
+    } catch (err) {
+      toast.error("Error uploading users.");
     }
   };
 
@@ -349,6 +380,25 @@ const UserAddForm = ({ onClose }) => {
                 </button>
               </div>
             </form>
+            <div className="w-full col-span-3 flex flex-col gap-2 mt-4">
+              <label className="block text-sm font-medium text-gray-700">
+                Upload Users (CSV/Excel)
+              </label>
+              <input
+                  type="file"
+                  accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                  onChange={handleBulkFileChange}
+                  className="p-2 border border-gray-300 rounded-md"
+              />
+              <button
+                  type="button"
+                  onClick={handleBulkUpload}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md w-fit hover:bg-blue-700 transition"
+              >
+                Upload Bulk Users
+              </button>
+            </div>
+
           </div>
         </div>
       </div>

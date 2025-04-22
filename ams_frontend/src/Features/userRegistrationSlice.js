@@ -61,7 +61,7 @@ const userRegistration = createSlice({
         })
         .addCase(getAllUser.fulfilled, (state, action) => {
           state.loading = false;
-          state.users = Array.isArray(action.payload) ? action.payload : [];
+          state.users = Array.isArray(action.payload.data) ? action.payload.data : [];
         })
         .addCase(getAllUser.rejected, (state, action) => {
           state.loading = false;

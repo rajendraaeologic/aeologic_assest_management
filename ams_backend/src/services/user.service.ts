@@ -14,20 +14,26 @@ import { UserStatus } from "@prisma/client";
 
 const createUsersBulk = async (users: any[]) => {
   try {
-    const validUsers = users.map((user) => ({
-      userName: user.userName || "",
-      phone: user.phone,
-      ISDCode: user.ISDCode || "91",
-      email: user.email || "",
-      password: user.password,
-      status: user.status,
-      userRole: user.userRole,
-    }));
+    const validUsers = users.map((user) => {
+      let status = user.status?.toUpperCase();
+      if (status === "INACTIVE") status = "IN_ACTIVE";
+      else if (status !== "ACTIVE") status = "ACTIVE";
+
+      return {
+        userName: user.userName || "",
+        phone: user.phone,
+        ISDCode: user.ISDCode || "91",
+        email: user.email || "",
+        password: user.password || "",
+        status,
+        userRole: user.userRole,
+      };
+    });
 
     await db.user.createMany({
       data: validUsers,
     });
-  } catch (error) {
+  } catch (error: any) {
     throw new Error("Failed to create users in bulk: " + error.message);
   }
 };

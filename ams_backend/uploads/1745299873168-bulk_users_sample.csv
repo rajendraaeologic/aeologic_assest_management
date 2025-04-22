@@ -1,0 +1,11 @@
+userName,phone,ISDCode,email,password,status,userRole
+john_doe,9876543210,91,john@example.com,User@123,ACTIVE,ADMIN
+jane_smith,9123456780,91,jane@example.com,User@123,ACTIVE,USER
+alice_wong,9988776655,91,alice@example.com,User@123,ACTIVE,MANAGER
+bob_marley,9876501234,91,bob@example.com,User@123,IN_ACTIVE,USER
+charlie_brown,9001122334,91,charlie@example.com,User@123,ACTIVE,ADMIN
+daisy_ridley,9090909090,91,daisy@example.com,User@123,ACTIVE,USER
+ethan_hunt,9888777666,91,ethan@example.com,User@123,IN_ACTIVE,MANAGER
+fiona_apple,9876767676,91,fiona@example.com,User@123,ACTIVE,USER
+george_clark,9554433221,91,george@example.com,User@123,ACTIVE,ADMIN
+hannah_lee,9665544332,91,hannah@example.com,User@123,IN_ACTIVE,USER

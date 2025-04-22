@@ -42,12 +42,16 @@ const UserRegistration = () => {
   const totalPages = Math.ceil(users.length / rowsPerPage);
 
   const [searchUsers, setSearchUsers] = useState({
-    username: "",
+    userName: "",
+    phone: "",
+    email: "",
+    userRole: "",
     code: "",
     department: "",
-    departmentcode: "",
-    contact: "",
-    emailid: "",
+    departmentCode: "",
+    branchId: "",
+    password: "",
+    status: "ACTIVE",
   });
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
@@ -167,37 +171,23 @@ const UserRegistration = () => {
               >
                 <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Name
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Code
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Department
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Department Code
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Contact
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Email Id
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[100px]">
-                    Action
-                  </th>
+                  <th className="px-4 py-4 border border-gray-300 w-[240px]">Name</th>
+                  <th className="px-4 py-4 border border-gray-300 w-[240px]">Organization</th>
+                  <th className="px-4 py-4 border border-gray-300 w-[240px]">Branch</th>
+                  <th className="px-4 py-4 border border-gray-300 w-[240px]">Department</th>
+                  <th className="px-4 py-4 border border-gray-300 w-[240px]">Code</th>
+                  <th className="px-4 py-4 border border-gray-300 w-[240px]">Department</th>
+                  <th className="px-4 py-4 border border-gray-300 w-[240px]">Department Code</th>
+                  <th className="px-4 py-4 border border-gray-300 w-[240px]">Contact</th>
+                  <th className="px-4 py-4 border border-gray-300 w-[240px]">Email Id</th>
+                  <th className="px-4 py-4 border border-gray-300 w-[100px]">Action</th>
                   <th className="px-4 py-4 border border-gray-300 w-[100px]">
                     <div className="flex justify-center Users-center ">
                       <div className="">
                         <label className="flex Users-center">
                           <input
                               type="checkbox"
-                              checked={
-                                  selectedUsers.length === users.length &&
-                                  users.length > 0
-                              }
+                              checked={selectedUsers.length === users.length && users.length > 0}
                               onChange={handleSelectAllUsers}
                               className="mr-2"
                           />
@@ -217,14 +207,48 @@ const UserRegistration = () => {
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                         type="text"
-                        id="username"
-                        name="username"
+                        id="userName"
+                        name="userName"
                         placeholder="Name"
                         className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                        value={searchUsers.username}
+                        value={searchUsers.userName}
                         onChange={handleSearchChange}
                     />
                   </td>
+                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                    <input
+                        type="text"
+                        id="organizationName"
+                        name="organizationName"
+                        placeholder="Organization"
+                        className="w-80% px-2 py-1 border rounded-md focus:outline-none"
+                        value={searchUsers.organizationName || ""}
+                        onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                    <input
+                        type="text"
+                        id="branchName"
+                        name="branchName"
+                        placeholder="Branch"
+                        className="w-80% px-2 py-1 border rounded-md focus:outline-none"
+                        value={searchUsers.branchName || ""}
+                        onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                    <input
+                        type="text"
+                        id="departmentName"
+                        name="departmentName"
+                        placeholder="Department"
+                        className="w-80% px-2 py-1 border rounded-md focus:outline-none"
+                        value={searchUsers.departmentName || ""}
+                        onChange={handleSearchChange}
+                    />
+                  </td>
+
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                         type="text"
@@ -250,22 +274,22 @@ const UserRegistration = () => {
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                         type="text"
-                        id="departmentcode"
-                        name="departmentcode"
+                        id="departmentCode"
+                        name="departmentCode"
                         placeholder="Department Code"
                         className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                        value={searchUsers.departmentcode}
+                        value={searchUsers.departmentCode}
                         onChange={handleSearchChange}
                     />
                   </td>
                   <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
                     <input
                         type="tel"
-                        id="contact"
-                        name="contact"
+                        id="phone"
+                        name="phone"
                         placeholder="Contact"
                         className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                        value={searchUsers.contact}
+                        value={searchUsers.phone}
                         onChange={handleSearchChange}
                     />
                   </td>
@@ -276,7 +300,7 @@ const UserRegistration = () => {
                         id="email"
                         placeholder="Email Id"
                         className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                        value={searchUsers.emailid}
+                        value={searchUsers.email}
                         onChange={handleSearchChange}
                     />
                   </td>
@@ -294,24 +318,15 @@ const UserRegistration = () => {
                             index % 2 === 0 ? "bg-gray-50" : "bg-white"
                         } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      <td className="px-4 py-2 border border-gray-300">
-                        {user.username}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300">
-                        {user.code}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300">
-                        {user.department}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300">
-                        {user.departmentcode}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300">
-                        {user.contact}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300">
-                        {user.emailid}
-                      </td>
+                      <td className="px-4 py-4 border border-gray-300">{user.userName || "-"}</td>
+                      <td className="px-4 py-4 border border-gray-300">{user.organization?.organizationName }</td>
+                      <td className="px-4 py-4 border border-gray-300">{user.branch?.branchName }</td>
+                      <td className="px-4 py-4 border border-gray-300">{user.department?.departmentName }</td>
+                      <td className="px-4 py-4 border border-gray-300">{user.code }</td>
+                      <td className="px-4 py-4 border border-gray-300">{user.department }</td>
+                      <td className="px-4 py-4 border border-gray-300">{user.departmentCode }</td>
+                      <td className="px-4 py-4 border border-gray-300">{user.phone}</td>
+                      <td className="px-4 py-4 border border-gray-300">{user.email }</td>
                       <td className="px-4 py-2 border border-gray-300">
                         <button
                             onClick={() => {

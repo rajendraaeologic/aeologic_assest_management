@@ -1,0 +1,11 @@
+userName,name,code,departmentName,departmentCode,departmentId,organizationId,branchId,contactNumber,mobile,emailId,email
+jdoe01,John Doe,U001,IT,IT001,661f1536c3b3a87be3e71a01,661f1536c3b3a87be3e71999,661f1536c3b3a87be3e71000,1234567890,9876543210,john.doe@example.com,john.doe@example.com
+asmith02,Alice Smith,U002,HR,HR002,661f1536c3b3a87be3e71a02,661f1536c3b3a87be3e71999,661f1536c3b3a87be3e71001,2234567890,8876543210,alice.smith@example.com,alice.smith@example.com
+bwayne03,Bruce Wayne,U003,Security,SEC003,661f1536c3b3a87be3e71a03,661f1536c3b3a87be3e71999,661f1536c3b3a87be3e71002,3234567890,7876543210,bruce.wayne@example.com,bruce.wayne@example.com
+ckent04,Clark Kent,U004,Media,MED004,661f1536c3b3a87be3e71a04,661f1536c3b3a87be3e71999,661f1536c3b3a87be3e71003,4234567890,6876543210,clark.kent@example.com,clark.kent@example.com
+dprince05,Diana Prince,U005,Public Relations,PR005,661f1536c3b3a87be3e71a05,661f1536c3b3a87be3e71999,661f1536c3b3a87be3e71004,5234567890,5876543210,diana.prince@example.com,diana.prince@example.com
+p_parker06,Peter Parker,U006,Photography,PHOTO006,661f1536c3b3a87be3e71a06,661f1536c3b3a87be3e71999,661f1536c3b3a87be3e71005,6234567890,4876543210,peter.parker@example.com,peter.parker@example.com
+tstark07,Tony Stark,U007,Engineering,ENG007,661f1536c3b3a87be3e71a07,661f1536c3b3a87be3e71999,661f1536c3b3a87be3e71006,7234567890,3876543210,tony.stark@example.com,tony.stark@example.com
+srogers08,Steve Rogers,U008,Military,MIL008,661f1536c3b3a87be3e71a08,661f1536c3b3a87be3e71999,661f1536c3b3a87be3e71007,8234567890,2876543210,steve.rogers@example.com,steve.rogers@example.com
+nsummers09,Nathan Summers,U009,Research,RES009,661f1536c3b3a87be3e71a09,661f1536c3b3a87be3e71999,661f1536c3b3a87be3e71008,9234567890,1876543210,nathan.summers@example.com,nathan.summers@example.com
+jgrey10,Jean Grey,U010,Psychology,PSY010,661f1536c3b3a87be3e71a10,661f1536c3b3a87be3e71999,661f1536c3b3a87be3e71009,1034567890,0876543210,jean.grey@example.com,jean.grey@example.com

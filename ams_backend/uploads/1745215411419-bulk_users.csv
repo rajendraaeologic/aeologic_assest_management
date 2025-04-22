@@ -1,0 +1,6 @@
+userName,phone,email,password,status,userRole,departmentCode,departmentName
+JohnDoe,1234567890,john.doe@example.com,password123,ACTIVE,USER,D001,HR
+JaneDoe,0987654321,jane.doe@example.com,password123,ACTIVE,USER,D002,Sales
+AliceSmith,1122334455,alice.smith@example.com,password123,ACTIVE,ADMIN,D003,IT
+BobJohnson,2233445566,bob.johnson@example.com,password123,INACTIVE,USER,D004,Finance
+CharlieBrown,3344556677,charlie.brown@example.com,password123,ACTIVE,USER,D005,Marketing

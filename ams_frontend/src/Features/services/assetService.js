@@ -11,7 +11,9 @@ export const getAllAssetsService = async () => {
 };
 
 export const updateAssetService = async (data) => {
-  const response = await API.put(`/asset/${data.params.id}`, data.body);
+  const response = await API.put(
+      `/asset/${data.params.assetId}`,
+      data.body);
   return response.data;
 };
 

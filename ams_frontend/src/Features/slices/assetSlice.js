@@ -42,7 +42,8 @@ export const updateAsset = createAsyncThunk(
       const response = await updateAssetService(data);
       return response;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "Error updating asset");
+      return rejectWithValue(
+          error.response?.data || "Error updating asset");
     }
   }
 );

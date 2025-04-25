@@ -218,7 +218,9 @@ import { GiAudioCassette } from "react-icons/gi";
 import { MdPersonAdd } from "react-icons/md";
 import { NavLink } from "react-router-dom";
 import SliderContext from "../ContexApi";
-import ReactTooltip from "react-tooltip";
+// import ReactTooltip from "react-tooltip";
+import { Tooltip } from 'react-tooltip';
+
 
 const Sidebar = () => {
   const { isSidebarOpen } = useContext(SliderContext);
@@ -313,7 +315,7 @@ const Sidebar = () => {
               </NavLink>
 
               {!isSidebarOpen && (
-                <ReactTooltip
+                <Tooltip
                   id={`tooltip-${index}`}
                   place="right"
                   effect="solid"

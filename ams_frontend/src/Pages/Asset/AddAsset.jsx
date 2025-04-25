@@ -33,7 +33,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
       model: "",
       serialNumber: "",
       status: "ACTIVE",
-      // locationId: "",
       branchId: "",
       departmentId: "",
     },
@@ -87,25 +86,25 @@ const AddAsset = ({ onClose, onSuccess }) => {
   }, [branchId, setValue]);
 
   // Fetch users when department changes
-  useEffect(() => {
-    const fetchUsers = async () => {
-      if (departmentId) {
-        try {
-          const response = await API.get(
-            `/user?departmentId=${departmentId}&userRole=USER`
-          );
-          setUsers(response.data);
-          setValue("assignedToUserId", "");
-        } catch (error) {
-          console.error(assetStrings.addAsset.errorMessages.fetchUsers, error);
-        }
-      } else {
-        setUsers([]);
-      }
-    };
-
-    fetchUsers();
-  }, [departmentId, setValue]);
+  // useEffect(() => {
+  //   const fetchUsers = async () => {
+  //     if (departmentId) {
+  //       try {
+  //         const response = await API.get(
+  //           `/user?departmentId=${departmentId}&userRole=USER`
+  //         );
+  //         setUsers(response.data);
+  //         setValue("assignedToUserId", "");
+  //       } catch (error) {
+  //         console.error(assetStrings.addAsset.errorMessages.fetchUsers, error);
+  //       }
+  //     } else {
+  //       setUsers([]);
+  //     }
+  //   };
+  //
+  //   fetchUsers();
+  // }, [departmentId, setValue]);
 
   const handleClose = () => {
     setIsVisible(false);

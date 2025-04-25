@@ -142,11 +142,11 @@ model Asset {
   cost             Float?
   warrantyEndDate  DateTime?
   status           AssetStatus       @default(ACTIVE)
-  locationId       String            @db.ObjectId
+  // locationId       String            @db.ObjectId
   assignedToUserId String?           @db.ObjectId
   assignedUser     User?             @relation(fields: [assignedToUserId], references: [id])
   //category       Category          @relation(fields: [categoryId], references: [id])
-  assetLocation    Location          @relation(fields: [locationId], references: [id])
+  // assetLocation    Location          @relation(fields: [locationId], references: [id])
   assetHistory     AssetHistory[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -170,7 +170,7 @@ model Location {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   locationName String
   address      String?
-  assets       Asset[]
+  // assets       Asset[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

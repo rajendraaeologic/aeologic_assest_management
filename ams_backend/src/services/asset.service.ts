@@ -17,30 +17,42 @@ const createAsset = async (
         | "description"
         | "branchId"
         | "departmentId"
+        | "companyId"
     >
 ): Promise<Omit<Asset, "id"> | null> => {
-  if (!asset) return null;
+  if (!asset.companyId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Company ID is required");
+  }
+  if (!asset.branchId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Branch ID is required");
+  }
+  if (!asset.departmentId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Department ID is required");
+  }
 
-  const [branchExists, departmentExists, assetExists] = await Promise.all([
+  const [companyExists, branchExists, departmentExists, assetExists] = await Promise.all([
+    db.organization.findUnique({ where: { id: asset.companyId } }),
     db.branch.findUnique({ where: { id: asset.branchId } }),
     db.department.findUnique({ where: { id: asset.departmentId } }),
     db.asset.findFirst({ where: { uniqueId: asset.uniqueId } }),
   ]);
 
+  if (!companyExists) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Company ID");
+  }
   if (!branchExists) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Branch ID");
   }
-
   if (!departmentExists) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Department ID");
   }
-
   if (assetExists) {
     throw new ApiError(
         httpStatus.CONFLICT,
         `Asset with unique ID "${asset.uniqueId}" already exists`
     );
   }
+
   return db.asset.create({
     data: {
       assetName: asset.assetName,
@@ -50,6 +62,9 @@ const createAsset = async (
       serialNumber: asset.serialNumber,
       status: asset.status,
       description: asset.description,
+      company: {
+        connect: { id: asset.companyId },
+      },
       branch: {
         connect: { id: asset.branchId },
       },
@@ -59,6 +74,7 @@ const createAsset = async (
     },
   });
 };
+
   //
   // const branchExists = await db.branch.findUnique({
   //   where: { id: asset.branchId },

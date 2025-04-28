@@ -42,6 +42,8 @@ const createAssetValidation = {
         .optional()
         .custom(isValidMongoDBObjectId)
         .messages(isValidMongoDBObjectIdCustomMessages),
+        companyId: Joi.string().length(24).hex().required(),
+
     })
     .min(1),
 };
@@ -81,6 +83,7 @@ const getAllAssetsValidation = {
       .optional()
       .custom(isValidMongoDBObjectId)
       .messages(isValidMongoDBObjectIdCustomMessages),
+      organizationName: Joi.string().optional(),
 
     from_date: Joi.date().iso().optional(),
 
@@ -169,6 +172,8 @@ const updateAssetValidation = {
         .optional()
         .custom(isValidMongoDBObjectId)
         .messages(isValidMongoDBObjectIdCustomMessages),
+        companyId: Joi.string().length(24).hex().required(),
+
     })
     .min(1),
 };

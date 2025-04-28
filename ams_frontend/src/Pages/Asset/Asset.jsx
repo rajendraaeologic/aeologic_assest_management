@@ -538,7 +538,7 @@ const Asset = () => {
                 {currentRows.length > 0 ? (
                   currentRows.map((asset, index) => (
                     <tr
-                      key={asset.id}
+                      key={asset.id|| index}
                       className={`${
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}

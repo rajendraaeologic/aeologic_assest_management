@@ -25,6 +25,7 @@ const createAsset = catchAsync(async (req, res) => {
       description: req.body.description,
       branchId: req.body.branchId,
       departmentId: req.body.departmentId,
+      companyId: req.body.companyId,
     });
 
     res.status(httpStatus.CREATED).json({

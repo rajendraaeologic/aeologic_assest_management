@@ -291,60 +291,6 @@ const deleteOrganizationsByIds = async (
   return organizations;
 };
 
-//searchOrganizations
-const searchOrganizations = async (
-  searchTerm: string,
-  options: {
-    limit?: number;
-    page?: number;
-    sortBy?: string;
-    sortType?: "asc" | "desc";
-  }
-): Promise<{ data: any[]; total: number }> => {
-  const page = options.page ?? 1;
-  const limit = options.limit ?? 10;
-  const skip = (page - 1) * limit;
-
-  const sortBy = options.sortBy || "createdAt";
-  const sortType = options.sortType ?? "desc";
-
-  const where = {
-    OR: [
-      {
-        organizationName: {
-          contains: searchTerm,
-          mode: "insensitive" as const,
-        },
-      },
-    ],
-  };
-
-  const [data, total] = await Promise.all([
-    db.organization.findMany({
-      where,
-      select: {
-        id: true,
-        organizationName: true,
-        createdAt: true,
-      },
-      skip,
-      take: limit,
-      orderBy: {
-        [sortBy]: sortType,
-      },
-    }),
-    db.organization.count({ where }),
-  ]);
-
-  return {
-    data: data.map((org) => ({
-      id: org.id,
-      organizationName: org.organizationName,
-    })),
-    total,
-  };
-};
-
 export default {
   createOrganization,
   queryOrganizations,
@@ -352,5 +298,4 @@ export default {
   updateOrganizationById,
   deleteOrganizationById,
   deleteOrganizationsByIds,
-  searchOrganizations,
 };

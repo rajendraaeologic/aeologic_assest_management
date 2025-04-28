@@ -240,56 +240,6 @@ const bulkDeleteOrganizations = catchAsync(async (req, res) => {
   }
 });
 
-//searchOrganizations
-const searchOrganizations = catchAsync(async (req, res) => {
-  const { searchTerm } = req.query;
-  const rawOptions = pick(req.query, ["sortBy", "sortType", "limit", "page"]);
-
-  const options: {
-    limit: number;
-    page: number;
-    sortBy?: string;
-    sortType?: "asc" | "desc";
-  } = {
-    limit: 10,
-    page: 1,
-  };
-
-  if (rawOptions.limit) {
-    options.limit = parseInt(rawOptions.limit as string, 10);
-  }
-  if (rawOptions.page) {
-    options.page = parseInt(rawOptions.page as string, 10);
-  }
-
-  if (rawOptions.sortBy) options.sortBy = rawOptions.sortBy as string;
-  if (rawOptions.sortType)
-    options.sortType = rawOptions.sortType as "asc" | "desc";
-
-  if (!searchTerm) {
-    res.status(400).json({
-      success: false,
-      message: "Search term is required",
-    });
-    return;
-  }
-
-  const result = await organizationService.searchOrganizations(
-    searchTerm as string,
-    options
-  );
-
-  res.status(200).json({
-    success: true,
-    message: "Search results fetched successfully",
-    data: result.data,
-    totalData: result.total,
-    page: options.page,
-    limit: options.limit,
-    totalPages: Math.ceil(result.total / options.limit),
-  });
-});
-
 export default {
   createOrganization,
   getAllOrganizations,
@@ -297,5 +247,4 @@ export default {
   updateOrganization,
   deleteOrganization,
   bulkDeleteOrganizations,
-  searchOrganizations,
 };

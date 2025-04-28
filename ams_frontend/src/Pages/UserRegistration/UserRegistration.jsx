@@ -3,6 +3,9 @@ import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import {
   setCurrentPage,
   setRowsPerPage,
@@ -58,6 +61,7 @@ const UserRegistration = () => {
     userRole: "",
     branchName: "",
     departmentName: "",
+    organizationName: "",
   });
 
   useEffect(() => {
@@ -196,6 +200,7 @@ const UserRegistration = () => {
           return dispatch(getAllUsers()).unwrap();
         })
         .catch((error) => {
+          console.log("error", error);
           setIsProcessing(false);
           setUploadError(error);
         });
@@ -352,6 +357,16 @@ const UserRegistration = () => {
                       overflowWrap: "break-word",
                     }}
                   >
+                    {userStrings.user.table.headers.organizationName}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
                     {userStrings.user.table.headers.branchName}
                   </th>
                   <th
@@ -496,6 +511,26 @@ const UserRegistration = () => {
                       type="text"
                       name="branchName"
                       placeholder={
+                        userStrings.user.table.searchPlaceholders
+                          .organizationName
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchFilters.organizationName}
+                      onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="branchName"
+                      placeholder={
                         userStrings.user.table.searchPlaceholders.branchName
                       }
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
@@ -625,6 +660,18 @@ const UserRegistration = () => {
                           verticalAlign: "top",
                         }}
                       >
+                        {user.company?.organizationName ||
+                          userStrings.user.chipsList.emptyText}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                          verticalAlign: "top",
+                        }}
+                      >
                         {user.branch?.branchName ||
                           userStrings.user.chipsList.emptyText}
                       </td>
@@ -689,38 +736,54 @@ const UserRegistration = () => {
           </div>
 
           <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2">
+            <div className="px-2 py-2 border-2 flex items-center gap-2">
               <button
                 onClick={handlePrev}
-                disabled={currentPage === 0}
-                className="text-black"
+                disabled={currentPage === 0 || totalPages === 0}
+                className={`${
+                  currentPage === 0 || totalPages === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-gray-100"
+                }`}
               >
                 {userStrings.user.buttons.previous}
               </button>
+
               <span className="px-2 space-x-1">
-                <span
-                  className={`${
-                    currentPage === 0
-                      ? "bg-[#3bc0c3] py-1 px-3"
-                      : "border-2 py-1 px-3"
-                  }`}
-                >
-                  {currentPage + 1}
-                </span>
-                <span
-                  className={`${
-                    currentPage + 1 === totalPages
-                      ? "py-1 px-3 bg-[#3bc0c3]"
-                      : "py-1 px-3"
-                  }`}
-                >
-                  {totalPages}
-                </span>
+                {totalPages > 0 ? (
+                  <>
+                    <span
+                      className={`py-1 px-3 ${
+                        currentPage + 1 < totalPages
+                          ? "bg-[#3bc0c3] text-white"
+                          : "border-2"
+                      }`}
+                    >
+                      {currentPage + 1}
+                    </span>
+                    <span
+                      className={`py-1 px-3 ${
+                        currentPage + 1 === totalPages
+                          ? "bg-[#3bc0c3] text-white"
+                          : "border-2"
+                      }`}
+                    >
+                      {totalPages}
+                    </span>
+                  </>
+                ) : (
+                  <span className="py-1 px-3">0 / 0</span>
+                )}
               </span>
+
               <button
                 onClick={handleNext}
-                disabled={currentPage + 1 === totalPages}
-                className="text-black"
+                disabled={currentPage + 1 >= totalPages || totalPages === 0}
+                className={`${
+                  currentPage + 1 >= totalPages
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-gray-100"
+                }`}
               >
                 {userStrings.user.buttons.next}
               </button>
@@ -772,10 +835,12 @@ const UserRegistration = () => {
             )}
 
             {/* Error */}
+
             {!isProcessing && uploadError && (
               <>
                 <h3 className="text-lg font-semibold mb-4 text-red-600">
-                  {uploadError.message}
+                  {uploadError.message &&
+                    uploadError.message.split(":")[0].trim()}
                 </h3>
                 <button
                   onClick={handleClosePopup}

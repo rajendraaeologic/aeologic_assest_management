@@ -71,11 +71,23 @@ const bulkDeleteDepartmentsValidation = {
   }),
 };
 
-const getDepartmentsByBranchIdValidation = {
+export const getDepartmentsByBranchIdValidation = {
   params: Joi.object().keys({
-    branchId: Joi.required()
+    branchId: Joi.string()
+      .required()
       .custom(isValidMongoDBObjectId)
       .messages(isValidMongoDBObjectIdCustomMessages),
+  }),
+
+  query: Joi.object().keys({
+    limit: Joi.number().integer().min(1).optional(),
+    page: Joi.number().integer().min(1).optional(),
+    sortBy: Joi.string().optional(),
+    sortType: Joi.string().valid("asc", "desc").optional(),
+    status: Joi.string().optional(),
+    createdAtFrom: Joi.date().iso().optional(),
+    createdAtTo: Joi.date().iso().optional(),
+    searchTerm: Joi.string().optional(),
   }),
 };
 export default {

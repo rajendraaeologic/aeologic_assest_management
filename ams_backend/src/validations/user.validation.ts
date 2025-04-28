@@ -22,6 +22,7 @@ const getUsers = {
     userRole: Joi.string()
       .optional()
       .valid(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER),
+    organizationName: Joi.string().optional(),
     branchName: Joi.string().optional().trim(),
     departmentName: Joi.string().optional().trim(),
     from_date: Joi.string().optional().isoDate(),
@@ -49,10 +50,7 @@ const createUsers = {
       userName: Joi.string().required(),
       phone: Joi.string().required().min(7),
       email: Joi.string().email().required(),
-      // password: Joi.string()
-      //   .required()
-      //   .custom(password)
-      //   .messages(passwordCustomMessages),
+
       userRole: Joi.string()
         .required()
         .valid(
@@ -64,7 +62,7 @@ const createUsers = {
       status: Joi.string()
         .required()
         .valid(UserStatus.ACTIVE, UserStatus.IN_ACTIVE),
-
+      companyId: Joi.string().length(24).hex().required(),
       branchId: Joi.string().length(24).hex().optional(),
       departmentId: Joi.string().length(24).hex().optional(),
     })
@@ -91,7 +89,7 @@ const updateUser = {
       status: Joi.string()
         .required()
         .valid(UserStatus.ACTIVE, UserStatus.IN_ACTIVE),
-
+      companyId: Joi.string().length(24).hex().optional(),
       branchId: Joi.string().length(24).hex().optional(),
       departmentId: Joi.string().length(24).hex().optional(),
     })
@@ -146,22 +144,54 @@ export const uploadUsers = {
 };
 
 const excelUserSchema = Joi.object({
-  userName: Joi.string().min(2).required(),
-  email: Joi.string().email().required(),
+  userName: Joi.string().min(2).required().messages({
+    "any.required": "Username is required",
+    "string.min": "Username must be at least 2 characters",
+  }),
+  email: Joi.string().email().required().messages({
+    "any.required": "Email is required",
+    "string.email": "Email must be a valid email address",
+  }),
   phone: Joi.string()
     .pattern(/^[0-9]{10,15}$/)
-    .required(),
-  // password: Joi.string().min(8).required(),
-  userRole: Joi.string().valid("ADMIN", "STUDENT", "MANAGER").required(),
-  status: Joi.string().valid("ACTIVE", "INACTIVE").required(),
-  branchId: Joi.string().required(),
-  departmentId: Joi.string().required(),
-});
+    .required()
+    .messages({
+      "any.required": "Phone number is required",
+      "string.pattern.base": "Phone number must be 10-15 digits",
+    }),
+  userRole: Joi.string()
+    .valid("ADMIN", "STUDENT", "MANAGER")
+    .required()
+    .messages({
+      "any.required": "User role is required",
+      "any.only": "Invalid user role",
+    }),
+  status: Joi.string().valid("ACTIVE", "INACTIVE").required().messages({
+    "any.required": "Status is required",
+    "any.only": "Invalid status",
+  }),
+  companyId: Joi.string().length(24).hex().required().messages({
+    "any.required": "Company ID is required",
+    "string.length": "Company ID must be 24 characters",
+    "string.hex": "Company ID must be a valid hexadecimal",
+  }),
+  branchId: Joi.string().length(24).hex().required().messages({
+    "any.required": "Branch ID is required",
+    "string.length": "Branch ID must be 24 characters",
+    "string.hex": "Branch ID must be a valid hexadecimal",
+  }),
+  departmentId: Joi.string().length(24).hex().required().messages({
+    "any.required": "Department ID is required",
+    "string.length": "Department ID must be 24 characters",
+    "string.hex": "Department ID must be a valid hexadecimal",
+  }),
+}).unknown(true);
 
-const validateExcelUser = (user: any) => {
-  const { error } = excelUserSchema.validate(user);
+export const validateExcelUser = (user: any) => {
+  const { error } = excelUserSchema.validate(user, { abortEarly: false });
   if (error) {
-    throw new Error(error.details[0].message);
+    const messages = error.details.map((detail) => detail.message).join("; ");
+    throw new Error(messages);
   }
 };
 export default {

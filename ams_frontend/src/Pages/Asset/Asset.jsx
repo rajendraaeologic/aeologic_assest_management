@@ -672,40 +672,56 @@ const Asset = () => {
 
           {/* Pagination Controls */}
           <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2">
+            <div className="px-2 py-2 border-2 flex items-center gap-2">
               <button
                 onClick={handlePrev}
-                disabled={currentPage === 0}
-                className="text-black"
+                disabled={currentPage === 0 || totalPages === 0}
+                className={`${
+                  currentPage === 0 || totalPages === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-gray-100"
+                }`}
               >
-                {strings.buttons.previous}
+                {assetStrings.asset.buttons.previous}
               </button>
+
               <span className="px-2 space-x-1">
-                <span
-                  className={`${
-                    currentPage === 0
-                      ? "bg-[#3bc0c3] py-1 px-3"
-                      : "border-2 py-1 px-3"
-                  }`}
-                >
-                  {currentPage + 1}
-                </span>
-                <span
-                  className={`${
-                    currentPage + 1 === totalPages
-                      ? "py-1 px-3 bg-[#3bc0c3]"
-                      : "py-1 px-3"
-                  }`}
-                >
-                  {totalPages}
-                </span>
+                {totalPages > 0 ? (
+                  <>
+                    <span
+                      className={`py-1 px-3 ${
+                        currentPage + 1 < totalPages
+                          ? "bg-[#3bc0c3] text-white"
+                          : "border-2"
+                      }`}
+                    >
+                      {currentPage + 1}
+                    </span>
+                    <span
+                      className={`py-1 px-3 ${
+                        currentPage + 1 === totalPages
+                          ? "bg-[#3bc0c3] text-white"
+                          : "border-2"
+                      }`}
+                    >
+                      {totalPages}
+                    </span>
+                  </>
+                ) : (
+                  <span className="py-1 px-3">0 / 0</span>
+                )}
               </span>
+
               <button
                 onClick={handleNext}
-                disabled={currentPage + 1 === totalPages}
-                className="text-black"
+                disabled={currentPage + 1 >= totalPages || totalPages === 0}
+                className={`${
+                  currentPage + 1 >= totalPages
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-gray-100"
+                }`}
               >
-                {strings.buttons.next}
+                {assetStrings.asset.buttons.next}
               </button>
             </div>
           </div>

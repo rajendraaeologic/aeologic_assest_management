@@ -24,8 +24,11 @@ const createUser = async (
     throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
   }
 
-  const { branchId, departmentId, plainPassword, ...rest } = user;
-
+  const { companyId, branchId, departmentId, plainPassword, ...rest } = user;
+  console.log("snsns", user);
+  if (!companyId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Company ID is required");
+  }
   const createdUser = await db.user.create({
     data: {
       ...rest,
@@ -34,6 +37,9 @@ const createUser = async (
       },
       department: {
         connect: { id: departmentId },
+      },
+      company: {
+        connect: { id: companyId },
       },
     },
   });
@@ -51,6 +57,7 @@ const createUser = async (
   return createdUser;
 };
 
+// Interfaces
 interface ExcelUserPayload {
   userName: string;
   email: string;
@@ -61,6 +68,7 @@ interface ExcelUserPayload {
   status: UserStatus;
   branchId: string;
   departmentId: string;
+  companyId: string;
 }
 
 interface FailedUser {
@@ -68,17 +76,40 @@ interface FailedUser {
   error: string;
 }
 
-const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
+interface CreateUsersResult {
+  createdUsers: User[];
+  failedUsers: FailedUser[];
+}
+
+const createUsersFromExcel = async (
+  sheetData: ExcelUserPayload[]
+): Promise<CreateUsersResult> => {
   const failedUsers: FailedUser[] = [];
   const emails = new Set<string>();
   const phones = new Set<string>();
 
   for (const row of sheetData) {
     try {
+      const missingFields = [];
+      if (!row.userName) missingFields.push("userName");
+      if (!row.email) missingFields.push("email");
+      if (!row.phone) missingFields.push("phone");
+      if (!row.userRole) missingFields.push("userRole");
+      if (!row.status) missingFields.push("status");
+      if (!row.branchId) missingFields.push("branchId");
+      if (!row.departmentId) missingFields.push("departmentId");
+      if (!row.companyId) missingFields.push("companyId");
+
+      if (missingFields.length > 0) {
+        throw new Error(`Missing fields: ${missingFields.join(", ")}`);
+      }
+
       const { plainPassword, password, ...userDataWithRelations } = row;
       userValidation.validateExcelUser(userDataWithRelations);
 
-      const { email, phone } = userDataWithRelations;
+      const { email, phone, branchId, companyId, departmentId } =
+        userDataWithRelations;
+
       if (emails.has(email))
         throw new Error(`Duplicate email in Excel: ${email}`);
       if (phones.has(phone))
@@ -86,25 +117,46 @@ const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
 
       emails.add(email);
       phones.add(phone);
+
+      const [branchExists, companyExists, departmentExists] = await Promise.all(
+        [
+          db.branch.findUnique({ where: { id: branchId } }),
+          db.organization.findUnique({ where: { id: companyId } }),
+          db.department.findUnique({ where: { id: departmentId } }),
+        ]
+      );
+
+      if (!branchExists)
+        throw new Error(`Branch ID does not exist: ${branchId}`);
+      if (!companyExists)
+        throw new Error(`Company ID does not exist: ${companyId}`);
+      if (!departmentExists)
+        throw new Error(`Department ID does not exist: ${departmentId}`);
     } catch (error) {
       failedUsers.push({ row, error: error.message });
     }
   }
 
+  if (failedUsers.length > 0) {
+    return {
+      createdUsers: [],
+      failedUsers,
+    };
+  }
+
   const BATCH_SIZE = 100;
-  const createdUsers: any[] = [];
+  const createdUsers: { user: User; plainPassword: string }[] = [];
   const batchFailedUsers: FailedUser[] = [];
 
   for (let i = 0; i < sheetData.length; i += BATCH_SIZE) {
     const batch = sheetData.slice(i, i + BATCH_SIZE);
 
     const batchPromises = batch.map(async (row) => {
-      if (failedUsers.some((f) => f.row === row)) return null;
-
       try {
         const generatedPassword = generateRandomPassword();
         const { plainPassword, password, ...userDataWithRelations } = row;
-        const { branchId, departmentId, ...userData } = userDataWithRelations;
+        const { branchId, departmentId, companyId, ...userData } =
+          userDataWithRelations;
 
         const user = await db.$transaction(async (tx) => {
           const [existingEmail, existingPhone] = await Promise.all([
@@ -119,6 +171,7 @@ const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
             data: {
               ...userData,
               password: await encryptPassword(generatedPassword),
+              company: { connect: { id: companyId } },
               branch: { connect: { id: branchId } },
               department: { connect: { id: departmentId } },
             },
@@ -133,8 +186,11 @@ const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
     });
 
     const batchResults = await Promise.all(batchPromises);
-    const successfulUsers = batchResults.filter((result) => result !== null);
-    createdUsers.push(...successfulUsers);
+    createdUsers.push(
+      ...batchResults.filter(
+        (result): result is NonNullable<typeof result> => result !== null
+      )
+    );
   }
 
   await Promise.allSettled(
@@ -152,13 +208,21 @@ const createUsersFromExcel = async (sheetData: ExcelUserPayload[]) => {
     })
   );
 
+  const allFailedUsers = [...failedUsers, ...batchFailedUsers];
+
+  if (allFailedUsers.length > 0) {
+    return {
+      createdUsers: createdUsers.map((u) => u.user),
+      failedUsers: allFailedUsers,
+    };
+  }
+
   return {
     createdUsers: createdUsers.map((u) => u.user),
-    failedUsers: [...failedUsers, ...batchFailedUsers],
+    failedUsers: [],
   };
 };
 
-//getUserExcelTemplate
 const getUserExcelTemplateDowndload = async () => {
   const filePath = path.join(__dirname, "../public/UserTemplate.csv");
   return filePath;
@@ -194,7 +258,7 @@ const queryUsers = async (
   selectKeys: Prisma.UserSelect = UserKeys
 ): Promise<User[]> => {
   const page = options.page ?? 1;
-  const limit = options.limit ?? 10;
+  const limit = options.limit ?? 20;
   const skip = (page - 1) * limit || 0;
   const sortBy = options.sortBy;
   const sortType = options.sortType ?? "desc";

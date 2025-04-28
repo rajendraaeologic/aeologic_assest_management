@@ -120,26 +120,65 @@ const deleteDepartments = catchAsync(async (req, res) => {
   }
 });
 
-const getDepartmentsByBranchId = catchAsync(async (req, res) => {
+export const getDepartmentsByBranchId = catchAsync(async (req, res) => {
   const { branchId } = req.params;
 
-  const departments = await departmentService.getDepartmentsByBranchId(
-    branchId
+  const rawOptions = pick(req.query, [
+    "limit",
+    "page",
+    "sortBy",
+    "sortType",
+    "status",
+    "createdAtFrom",
+    "createdAtTo",
+    "searchTerm",
+  ]);
+
+  const options = {
+    limit: rawOptions.searchTerm
+      ? 5
+      : rawOptions.limit
+      ? parseInt(rawOptions.limit as string, 10)
+      : 10,
+    page: rawOptions.page ? parseInt(rawOptions.page as string, 10) : 1,
+    sortBy: rawOptions.sortBy as string,
+    sortType: rawOptions.sortType as "asc" | "desc",
+    status: rawOptions.status as string,
+    createdAtFrom: rawOptions.createdAtFrom
+      ? new Date(rawOptions.createdAtFrom as string)
+      : undefined,
+    createdAtTo: rawOptions.createdAtTo
+      ? new Date(rawOptions.createdAtTo as string)
+      : undefined,
+    searchTerm: rawOptions.searchTerm as string,
+  };
+
+  const result = await departmentService.getDepartmentsByBranchId(
+    branchId,
+    options
   );
 
-  if (!departments || departments.length === 0) {
+  if (!result || result.data.length === 0) {
     res.status(200).json({
       status: "404",
       message: "No departments found for this branch",
       data: [],
+      totalData: result.total,
+      page: options.page,
+      limit: options.limit,
+      totalPages: Math.ceil(result.total / options.limit),
     });
     return;
   }
 
   res.status(200).json({
-    status: "200",
-    message: "Branches fetched successfully",
-    data: departments,
+    success: true,
+    message: "Departments fetched successfully",
+    data: result.data,
+    totalData: result.total,
+    page: options.page,
+    limit: options.limit,
+    totalPages: Math.ceil(result.total / options.limit),
   });
 });
 

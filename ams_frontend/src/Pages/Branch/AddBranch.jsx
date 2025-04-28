@@ -1,29 +1,33 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { IoClose } from "react-icons/io5";
-import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useForm } from "react-hook-form";
+import axios from "axios";
+import branchStrings from "../../locales/branchStrings";
 import {
   createBranch,
   getAllBranches,
 } from "../../Features/slices/branchSlice";
-import { getAllOrganizations } from "../../Features/slices/organizationSlice";
-import branchStrings from "../../locales/branchStrings";
+import { useDispatch } from "react-redux";
 
 const AddBranch = ({ onClose }) => {
   const dispatch = useDispatch();
+  const modalRef = useRef(null);
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
-  const modalRef = useRef(null);
-
-  const { organizations, loading: orgLoading } = useSelector(
-    (state) => state.organizationData
-  );
+  const [organizations, setOrganizations] = useState([]);
+  const [orgLoading, setOrgLoading] = useState(false);
+  const [orgPage, setOrgPage] = useState(1);
+  const [hasMoreOrgs, setHasMoreOrgs] = useState(true);
+  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
+  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
@@ -33,15 +37,40 @@ const AddBranch = ({ onClose }) => {
     },
   });
 
+  const fetchOrganizations = async (page, search = "") => {
+    try {
+      setOrgLoading(true);
+      const response = await axios.get(
+        `http://localhost:3000/api/v1/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
+      );
+      const { data, totalPages } = response.data;
+
+      if (page === 1) {
+        setOrganizations(data);
+      } else {
+        setOrganizations((prev) => [...prev, ...data]);
+      }
+      setOrgPage(page);
+      setHasMoreOrgs(page < totalPages);
+    } catch (error) {
+      toast.error(branchStrings.addBranch.toast.error, {
+        position: "top-right",
+        autoClose: 1000,
+      });
+    } finally {
+      setOrgLoading(false);
+    }
+  };
+
   useEffect(() => {
-    dispatch(getAllOrganizations());
+    fetchOrganizations(1, "");
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [dispatch]);
+  }, []);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -56,16 +85,31 @@ const AddBranch = ({ onClose }) => {
     }
   };
 
+  const handleOrgScroll = (e) => {
+    const bottomReached =
+      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+
+    if (bottomReached && !orgLoading && hasMoreOrgs) {
+      fetchOrganizations(orgPage + 1, searchTerm);
+    }
+  };
+
   const onSubmit = async (data) => {
+    if (!data.companyId) {
+      toast.error("Please select a valid organization", {
+        position: "top-right",
+        autoClose: 1000,
+      });
+      return;
+    }
+
     try {
       await dispatch(createBranch(data));
       dispatch(getAllBranches());
-
       toast.success(branchStrings.addBranch.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
-
       handleClose();
     } catch (error) {
       toast.error(branchStrings.addBranch.toast.error, {
@@ -73,6 +117,32 @@ const AddBranch = ({ onClose }) => {
         autoClose: 1000,
       });
     }
+  };
+
+  const handleOrgClick = async () => {
+    const newState = !showOrgDropdown;
+    setShowOrgDropdown(newState);
+
+    if (!newState) {
+      setSearchTerm("");
+    } else {
+      if (searchTerm.trim() === "") {
+        await fetchOrganizations(1, "");
+      }
+    }
+  };
+
+  const handleOrgSelect = (org) => {
+    setSelectedOrg(org);
+    setValue("companyId", org.id);
+    setShowOrgDropdown(false);
+    setSearchTerm("");
+  };
+
+  const handleSearch = (e) => {
+    const search = e.target.value;
+    setSearchTerm(search);
+    fetchOrganizations(1, search);
   };
 
   return (
@@ -101,10 +171,7 @@ const AddBranch = ({ onClose }) => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="w-full">
-                <label
-                  htmlFor="branchName"
-                  className="block text-sm font-medium text-gray-700"
-                >
+                <label className="block text-sm font-medium text-gray-700">
                   {branchStrings.addBranch.formLabels.branchName}
                 </label>
                 <input
@@ -114,8 +181,6 @@ const AddBranch = ({ onClose }) => {
                       branchStrings.addBranch.validation.branchNameRequired,
                   })}
                   type="text"
-                  id="branchName"
-                  name="branchName"
                   placeholder={branchStrings.addBranch.placeholders.branchName}
                   className={`mt-1 p-2 w-full border ${
                     errors.branchName ? "border-red-500" : "border-gray-300"
@@ -129,10 +194,7 @@ const AddBranch = ({ onClose }) => {
               </div>
 
               <div className="w-full">
-                <label
-                  htmlFor="branchLocation"
-                  className="block text-sm font-medium text-gray-700"
-                >
+                <label className="block text-sm font-medium text-gray-700">
                   {branchStrings.addBranch.formLabels.branchLocation}
                 </label>
                 <input
@@ -141,8 +203,6 @@ const AddBranch = ({ onClose }) => {
                       branchStrings.addBranch.validation.branchLocationRequired,
                   })}
                   type="text"
-                  id="branchLocation"
-                  name="branchLocation"
                   placeholder={
                     branchStrings.addBranch.placeholders.branchLocation
                   }
@@ -157,36 +217,49 @@ const AddBranch = ({ onClose }) => {
                 )}
               </div>
 
-              <div className="w-full">
-                <label
-                  htmlFor="companyId"
-                  className="block text-sm font-medium text-gray-700"
-                >
+              <div className="w-full relative">
+                <label className="block text-sm font-medium text-gray-700">
                   {branchStrings.addBranch.formLabels.companyId}
                 </label>
-                <select
-                  {...register("companyId", {
-                    required:
-                      branchStrings.addBranch.validation.organizationRequired,
-                  })}
-                  id="companyId"
-                  name="companyId"
-                  className={`mt-1 p-2 w-full border ${
-                    errors.companyId ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                  disabled={orgLoading}
+                <div
+                  onClick={handleOrgClick}
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
                 >
-                  <option value="">
-                    {orgLoading
-                      ? branchStrings.addBranch.select.loading
-                      : branchStrings.addBranch.select.defaultOption}
-                  </option>
-                  {organizations?.map((org) => (
-                    <option key={org.id} value={org.id}>
-                      {org.organizationName}
-                    </option>
-                  ))}
-                </select>
+                  {selectedOrg
+                    ? selectedOrg.organizationName
+                    : branchStrings.addBranch.select.defaultOption}
+                </div>
+
+                {showOrgDropdown && (
+                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                    <input
+                      type="text"
+                      placeholder="Search organization..."
+                      value={searchTerm}
+                      onChange={handleSearch}
+                      className="p-2 w-full border-b outline-none"
+                    />
+                    <ul
+                      onScroll={handleOrgScroll}
+                      className="max-h-40 overflow-auto"
+                    >
+                      {organizations.map((org) => (
+                        <li
+                          key={org.id}
+                          onClick={() => handleOrgSelect(org)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {org.organizationName}
+                        </li>
+                      ))}
+                      {orgLoading && (
+                        <li className="px-4 py-2 text-sm text-gray-500">
+                          Loading...
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
                 {errors.companyId && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.companyId.message}

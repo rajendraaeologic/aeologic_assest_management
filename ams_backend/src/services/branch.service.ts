@@ -145,15 +145,102 @@ const deleteBranchesByIds = async (
 
 //getBranchesByOrganizationId
 
-const getBranchesByOrganizationId = async (
-  organizationId: string
-): Promise<any[]> => {
-  return await db.branch.findMany({
-    where: {
-      companyId: organizationId,
-    },
-    select: BranchKeys,
-  });
+export const getBranchesByOrganizationId = async (
+  organizationId: string,
+  options: {
+    limit?: number;
+    page?: number;
+    sortBy?: string;
+    sortType?: "asc" | "desc";
+    status?: string;
+    createdAtFrom?: Date;
+    createdAtTo?: Date;
+    searchTerm?: string;
+  }
+): Promise<{ data: any[]; total: number }> => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || "createdAt";
+  const sortType = options.sortType ?? "desc";
+
+  const filters: any = {
+    companyId: organizationId,
+  };
+
+  if (options.status) filters.status = options.status;
+
+  if (options.createdAtFrom || options.createdAtTo) {
+    filters.createdAt = {};
+    if (options.createdAtFrom) filters.createdAt.gte = options.createdAtFrom;
+    if (options.createdAtTo) filters.createdAt.lte = options.createdAtTo;
+  }
+
+  const searchConditions = options.searchTerm?.trim()
+    ? {
+        OR: [
+          {
+            branchName: {
+              contains: options.searchTerm,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            branchLocation: {
+              contains: options.searchTerm,
+              mode: "insensitive" as const,
+            },
+          },
+        ],
+      }
+    : {};
+
+  const where = {
+    ...filters,
+    ...searchConditions,
+  };
+
+  const finalLimit = options.searchTerm ? 5 : limit;
+
+  const [data, total] = await Promise.all([
+    db.branch.findMany({
+      where,
+      select: {
+        id: true,
+        branchName: true,
+        branchLocation: true,
+        createdAt: true,
+        departments: {
+          select: {
+            id: true,
+            departmentName: true,
+          },
+        },
+        users: {
+          select: {
+            id: true,
+            userName: true,
+            email: true,
+          },
+        },
+        assets: {
+          select: {
+            id: true,
+            assetName: true,
+            status: true,
+          },
+        },
+      },
+      skip,
+      take: finalLimit,
+      orderBy: {
+        [sortBy]: sortType,
+      },
+    }),
+    db.branch.count({ where }),
+  ]);
+
+  return { data, total };
 };
 
 export default {

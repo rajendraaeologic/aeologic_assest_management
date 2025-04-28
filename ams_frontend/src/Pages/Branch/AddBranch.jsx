@@ -3,7 +3,7 @@ import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useForm } from "react-hook-form";
-import axios from "axios";
+import API from "../../App/api/axiosInstance";
 import branchStrings from "../../locales/branchStrings";
 import {
   createBranch,
@@ -40,8 +40,8 @@ const AddBranch = ({ onClose }) => {
   const fetchOrganizations = async (page, search = "") => {
     try {
       setOrgLoading(true);
-      const response = await axios.get(
-        `http://localhost:3000/api/v1/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
+      const response = await API.get(
+        `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
       );
       const { data, totalPages } = response.data;
 

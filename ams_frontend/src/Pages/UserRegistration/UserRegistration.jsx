@@ -214,7 +214,7 @@ const UserRegistration = () => {
 
   return (
     <div
-      className={`w-full min-h-screen bg-slate-100 px-2 ${
+      className={`w-full h-screen bg-slate-100 px-2 ${
         isSidebarOpen ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"
       }`}
     >

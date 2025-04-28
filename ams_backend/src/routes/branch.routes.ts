@@ -12,6 +12,8 @@ router
     validate(branchValidation.createBranchValidation),
     branchController.createBranch
   );
+router;
+
 router
   .route("/getAllBranches")
   .get(

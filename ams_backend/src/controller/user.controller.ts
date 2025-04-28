@@ -24,6 +24,7 @@ const createUser = catchAsync(async (req, res) => {
       userRole: req.body.userRole,
       branchId: req.body.branchId,
       departmentId: req.body.departmentId,
+      companyId: req.body.companyId,
       plainPassword,
     } as User & { plainPassword: string });
 
@@ -35,6 +36,7 @@ const createUser = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
 });
+
 const uploadUsersFromExcel = catchAsync(async (req, res) => {
   const { error } = userValidation.uploadUsers.file.validate(req.file);
   if (error) {
@@ -46,11 +48,7 @@ const uploadUsersFromExcel = catchAsync(async (req, res) => {
   const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
   if (!sheetData || sheetData.length === 0) {
-    res.status(httpStatus.BAD_REQUEST).json({
-      status: httpStatus.BAD_REQUEST,
-      message: "Excel sheet is empty",
-    });
-    return;
+    throw new ApiError(httpStatus.BAD_REQUEST, "Excel sheet is empty");
   }
 
   const sheetDataWithPassword = sheetData.map((row: any) => ({
@@ -61,45 +59,69 @@ const uploadUsersFromExcel = catchAsync(async (req, res) => {
   const { createdUsers, failedUsers } = await userService.createUsersFromExcel(
     sheetDataWithPassword
   );
+  console.log("bsxbjsnbjs", failedUsers);
 
-  const duplicateErrors = failedUsers.filter(
-    (user) =>
-      user.error.includes("Email exists") || user.error.includes("Phone exists")
-  );
-
-  if (duplicateErrors.length > 0) {
-    const hasEmailDuplicate = duplicateErrors.some((user) =>
-      user.error.includes("Email exists")
+  if (failedUsers.length > 0) {
+    const hasMissingFields = failedUsers.some((user) =>
+      user.error.includes("Missing fields")
     );
-    const hasPhoneDuplicate = duplicateErrors.some((user) =>
-      user.error.includes("Phone exists")
+    const hasDuplicates = failedUsers.some(
+      (user) =>
+        user.error.includes("Email exists") ||
+        user.error.includes("Phone exists")
+    );
+    const hasValidationErrors = failedUsers.some((user) =>
+      user.error.includes("must be a")
+    );
+    const hasInvalidIds = failedUsers.some((user) =>
+      user.error.includes("does not exist")
     );
 
-    let errorMessage = "Duplicate ";
-    if (hasEmailDuplicate && hasPhoneDuplicate) {
-      errorMessage += "email and phone number found";
-    } else if (hasEmailDuplicate) {
-      errorMessage += "email found";
-    } else if (hasPhoneDuplicate) {
-      errorMessage += "phone number found";
+    let statusCode: 400 | 404 | 409 = httpStatus.BAD_REQUEST;
+    let message = "Some users failed to process";
+
+    if (hasMissingFields || hasValidationErrors) {
+      statusCode = httpStatus.BAD_REQUEST;
+      message = hasMissingFields
+        ? "Missing required fields in some users"
+        : "Validation errors in user data";
+    } else if (hasDuplicates) {
+      statusCode = httpStatus.CONFLICT;
+
+      message = "Duplicate email or phone number found";
+    } else if (hasInvalidIds && Array.isArray(failedUsers)) {
+      statusCode = httpStatus.NOT_FOUND;
+      const errors = failedUsers
+        .map((user) => {
+          const [mainMessage] = (user?.error || "").split(":");
+          return mainMessage.trim();
+        })
+        .filter(Boolean);
+      const uniqueErrors = [...new Set(errors)];
+      message = uniqueErrors.join(", ");
     }
 
-    res.status(httpStatus.CONFLICT).json({
-      status: httpStatus.CONFLICT,
-      message: errorMessage,
-      failedUsers: duplicateErrors,
+    res.status(statusCode).json({
+      status: statusCode,
+      message,
+      successCount: createdUsers.length,
+      failedCount: failedUsers.length,
+      createdUsers,
+      failedUsers,
     });
     return;
   }
 
+  // Only send success response if no failures
   res.status(httpStatus.CREATED).json({
     status: httpStatus.CREATED,
-    message: "Users processed from Excel file",
+    message: "All users processed successfully",
     successCount: createdUsers.length,
-    failedCount: failedUsers.length,
+    failedCount: 0,
     createdUsers,
-    failedUsers,
+    failedUsers: [],
   });
+  return;
 });
 //downloadUserExcelTemplate
 const downloadUserExcelTemplate = catchAsync(async (req, res) => {

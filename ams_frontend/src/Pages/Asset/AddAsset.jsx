@@ -33,6 +33,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
       model: "",
       serialNumber: "",
       status: "ACTIVE",
+      // locationId: "",
       branchId: "",
       departmentId: "",
     },

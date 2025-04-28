@@ -11,6 +11,12 @@ router
     validate(organizationValidation.createOrganizationValidation),
     organizationController.createOrganization
   );
+router.route("/searchOrganization");
+
+// .get(
+//   validate(organizationValidation.searchValidation),
+//   organizationController.searchOrganizations
+// );
 router
   .route("/getAllOrganizations")
   .get(

@@ -75,6 +75,7 @@ model Organization {
   id               String   @id @default(auto()) @map("_id") @db.ObjectId
   organizationName String
   branches         Branch[]
+  users          User[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @default(now()) @updatedAt
 }
@@ -120,6 +121,7 @@ model User {
   UserNotification UserNotification[]
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @default(now()) @updatedAt
+
   branchId         String?            @db.ObjectId
   branch           Branch?            @relation(fields: [branchId], references: [id])
   AssetAssignment  AssetAssignment[]
@@ -127,6 +129,8 @@ model User {
   departmentId     String?            @db.ObjectId
   department       Department?        @relation(fields: [departmentId], references: [id])
   //rfidTag          String?            @unique
+  companyId   String
+  company     Organization @relation(fields: [companyId], references: [id])
 }
 
 model Asset {

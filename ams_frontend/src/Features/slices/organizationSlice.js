@@ -81,6 +81,7 @@ const organizationSlice = createSlice({
     currentPage: 0,
     rowsPerPage: 5,
   },
+
   reducers: {
     setSelectedOrganization: (state, action) => {
       state.selectedOrganization = action.payload;
@@ -132,6 +133,7 @@ const organizationSlice = createSlice({
         state.loading = false;
         state.organizations = action.payload;
       })
+
       .addCase(getAllOrganizations.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;

@@ -67,6 +67,22 @@ const bulkDeleteOrganizations = {
   }),
 };
 
+const searchValidation = {
+  query: Joi.object().keys({
+    searchTerm: Joi.string().required().min(1).max(100).messages({
+      "string.base": `"searchTerm" should be a type of text`,
+      "string.empty": `"searchTerm" cannot be an empty field`,
+      "any.required": `"searchTerm" is a required field`,
+      "string.min": `"searchTerm" should have a minimum length of 1 character`,
+      "string.max": `"searchTerm" should have a maximum length of 100 characters`,
+    }),
+    page: Joi.number().integer().min(1).default(1),
+    limit: Joi.number().integer().min(1).max(100).default(10),
+    sortBy: Joi.string().optional(),
+    sortType: Joi.string().valid("asc", "desc").optional(),
+  }),
+};
+
 export default {
   createOrganizationValidation,
   getAllOrganizationsValidation,
@@ -74,4 +90,5 @@ export default {
   updateOrganizationValidation,
   deleteOrganizationValidation,
   bulkDeleteOrganizations,
+  searchValidation,
 };

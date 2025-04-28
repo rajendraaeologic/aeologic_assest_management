@@ -27,13 +27,21 @@ export const UserKeys: Prisma.UserSelect = {
   isEmailVerified: true,
   createdAt: true,
   updatedAt: true,
+  company: {
+    select: {
+      id: true,
+      organizationName: true,
+    },
+  },
   branch: {
     select: {
+      id: true,
       branchName: true,
     },
   },
   department: {
     select: {
+      id: true,
       departmentName: true,
     },
   },

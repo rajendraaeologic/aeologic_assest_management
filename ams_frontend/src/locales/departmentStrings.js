@@ -50,7 +50,7 @@ const departmentStrings = {
         multiple: "{count} departments deleted successfully!",
       },
     },
-    chipsList: {
+    notAvailable: {
       emptyText: "N/A",
     },
   },

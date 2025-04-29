@@ -388,49 +388,77 @@ const deleteUserById = async (
   userId: string
 ): Promise<Omit<User, "password">> => {
   const user = await getUserById(userId);
+
   if (!user) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
-  await db.user.delete({ where: { id: user.id } });
+
+  try {
+    await db.$transaction(
+      async (tx) => {
+        await tx.user.delete({ where: { id: user.id } });
+      },
+      {
+        maxWait: 5000,
+        timeout: 15000,
+      }
+    );
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to delete user. Please try again later."
+    );
+  }
+
   return user;
 };
 
 const deleteUsersByIds = async (
   userIds: string[]
 ): Promise<Omit<User, "password">[]> => {
-  return await db.$transaction(
-    async (tx) => {
-      const users = await Promise.all(
-        userIds.map((id) =>
-          tx.user.findUnique({
-            where: { id },
-            select: {
-              id: true,
-              userName: true,
-              email: true,
-            },
-          })
-        )
-      );
-
-      const notFoundIds = userIds.filter((_, index) => !users[index]);
-      if (notFoundIds.length > 0) {
-        throw new ApiError(
-          httpStatus.NOT_FOUND,
-          `Users not found: ${notFoundIds.join(", ")}`
+  try {
+    return await db.$transaction(
+      async (tx) => {
+        const users = await Promise.all(
+          userIds.map((id) =>
+            tx.user.findUnique({
+              where: { id },
+              select: {
+                id: true,
+                userName: true,
+                email: true,
+              },
+            })
+          )
         );
+
+        const notFoundIds = userIds.filter((_, index) => !users[index]);
+        if (notFoundIds.length > 0) {
+          throw new ApiError(
+            httpStatus.NOT_FOUND,
+            `Users not found: ${notFoundIds.join(", ")}`
+          );
+        }
+
+        await tx.user.deleteMany({
+          where: { id: { in: userIds } },
+        });
+
+        return users as Omit<User, "password">[];
+      },
+      {
+        maxWait: 5000,
+        timeout: 15000,
       }
-
-      await tx.user.deleteMany({
-        where: { id: { in: userIds } },
-      });
-
-      return users as Omit<User, "password">[];
-    },
-    {
-      timeout: 10000,
-    }
-  );
+    );
+  } catch (error) {
+    console.error("Error deleting users:", error);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to delete users. Please try again later."
+    );
+  }
 };
 
 // const getUsersByDepartmentId = async (departmentId: string): Promise<any[]> => {

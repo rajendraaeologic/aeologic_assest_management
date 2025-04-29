@@ -55,6 +55,7 @@ const Asset = () => {
     status: "",
     branch: "",
     department: "",
+    organizationName: "",
   });
 
   useEffect(() => {
@@ -309,6 +310,16 @@ const Asset = () => {
                   >
                     {strings.table.headers.status}
                   </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.organizationName}
+                  </th>
 
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -478,6 +489,26 @@ const Asset = () => {
                     <input
                       type="text"
                       name="branch"
+                      placeholder={
+                        strings.table.searchPlaceholders.organizationName
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.organizationName}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="branch"
                       placeholder={strings.table.searchPlaceholders.branch}
                       className="w-full px-2 py-1 border rounded-md focus:outline-none"
                       value={searchAsset.branch}
@@ -538,7 +569,7 @@ const Asset = () => {
                 {currentRows.length > 0 ? (
                   currentRows.map((asset, index) => (
                     <tr
-                      key={asset.id}
+                      key={asset.id || index}
                       className={`${
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}
@@ -603,7 +634,17 @@ const Asset = () => {
                       >
                         {asset.status}
                       </td>
-
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.company?.organizationName ||
+                          strings.table.notAvailable}
+                      </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
                         style={{
@@ -614,6 +655,7 @@ const Asset = () => {
                       >
                         {asset.branch?.branchName || strings.table.notAvailable}
                       </td>
+
                       <td
                         className="px-2 py-2 border border-gray-300"
                         style={{

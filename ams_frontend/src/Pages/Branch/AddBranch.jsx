@@ -28,6 +28,7 @@ const AddBranch = ({ onClose }) => {
     register,
     handleSubmit,
     setValue,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
@@ -104,7 +105,7 @@ const AddBranch = ({ onClose }) => {
     }
 
     try {
-      await dispatch(createBranch(data));
+      await dispatch(createBranch(data)).unwrap();
       dispatch(getAllBranches());
       toast.success(branchStrings.addBranch.toast.success, {
         position: "top-right",
@@ -112,9 +113,18 @@ const AddBranch = ({ onClose }) => {
       });
       handleClose();
     } catch (error) {
-      toast.error(branchStrings.addBranch.toast.error, {
+      if (error?.status === 409) {
+        setError("branchName", {
+          type: "manual",
+          message: error.message,
+        });
+        return;
+      }
+
+      const errorMessage = error.message || branchStrings.addBranch.toast.error;
+      toast.error(errorMessage, {
         position: "top-right",
-        autoClose: 1000,
+        autoClose: 1500,
       });
     }
   };

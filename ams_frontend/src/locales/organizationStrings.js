@@ -46,7 +46,7 @@ const organizationStrings = {
         multiple: "{count} organizations deleted successfully!",
       },
     },
-    chipsList: {
+    notAvailable: {
       emptyText: "N/A",
     },
   },

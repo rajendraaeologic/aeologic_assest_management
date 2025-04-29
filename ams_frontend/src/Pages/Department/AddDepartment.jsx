@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { createDepartment } from "../../Features/slices/departmentSlice";
 import departmentStrings from "../../locales/departmentStrings";
 import API from "../../App/api/axiosInstance";
+import { getAllDepartments } from "../../Features/slices/departmentSlice";
 
 const AddDepartment = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -182,17 +183,30 @@ const AddDepartment = ({ onClose }) => {
           departmentName: data.departmentName,
           branchId: data.branchId,
         })
-      );
+      ).unwrap();
+
+      dispatch(getAllDepartments());
       toast.success(departmentStrings.addDepartment.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
       handleClose();
     } catch (error) {
-      toast.error(departmentStrings.addDepartment.toast.error, {
-        position: "top-right",
-        autoClose: 1000,
-      });
+      if (error?.status === 409) {
+        setError("departmentName", {
+          type: "manual",
+          message: error.message,
+        });
+        return;
+      }
+
+      toast.error(
+        error.message ||
+          departmentStrings.addDepartment.toast.error || {
+            position: "top-right",
+            autoClose: 1500,
+          }
+      );
     }
   };
 

@@ -42,33 +42,42 @@ const createAssetValidation = {
         .optional()
         .custom(isValidMongoDBObjectId)
         .messages(isValidMongoDBObjectIdCustomMessages),
+      companyId: Joi.string()
+        .allow(null)
+        .optional()
+        .custom(isValidMongoDBObjectId)
+        .messages(isValidMongoDBObjectIdCustomMessages),
     })
     .min(1),
 };
 
 const getAllAssetsValidation = {
   query: Joi.object().keys({
-    name: Joi.string().optional(),
+    assetName: Joi.string().optional(),
 
     status: Joi.string().valid("ACTIVE", "INACTIVE", "UNDER_REPAIR").optional(),
+    uniqueId: Joi.string().required(),
+    description: Joi.string().allow("").optional(),
+    brand: Joi.string().allow("").optional(),
+    model: Joi.string().allow("").optional(),
+    serialNumber: Joi.string().allow("").optional(),
+    // categoryId: Joi.string()
+    //   .allow(null)
+    //   .optional()
+    //   .custom(isValidMongoDBObjectId)
+    //   .messages(isValidMongoDBObjectIdCustomMessages),
 
-    categoryId: Joi.string()
-      .allow(null)
-      .optional()
-      .custom(isValidMongoDBObjectId)
-      .messages(isValidMongoDBObjectIdCustomMessages),
+    // locationId: Joi.string()
+    //   .allow(null)
+    //   .optional()
+    //   .custom(isValidMongoDBObjectId)
+    //   .messages(isValidMongoDBObjectIdCustomMessages),
 
-    locationId: Joi.string()
-      .allow(null)
-      .optional()
-      .custom(isValidMongoDBObjectId)
-      .messages(isValidMongoDBObjectIdCustomMessages),
-
-    assignedToUserId: Joi.string()
-      .allow(null)
-      .optional()
-      .custom(isValidMongoDBObjectId)
-      .messages(isValidMongoDBObjectIdCustomMessages),
+    // assignedToUserId: Joi.string()
+    //   .allow(null)
+    //   .optional()
+    //   .custom(isValidMongoDBObjectId)
+    //   .messages(isValidMongoDBObjectIdCustomMessages),
 
     branchId: Joi.string()
       .allow(null)
@@ -82,6 +91,11 @@ const getAllAssetsValidation = {
       .custom(isValidMongoDBObjectId)
       .messages(isValidMongoDBObjectIdCustomMessages),
 
+    companyId: Joi.string()
+      .allow(null)
+      .optional()
+      .custom(isValidMongoDBObjectId)
+      .messages(isValidMongoDBObjectIdCustomMessages),
     from_date: Joi.date().iso().optional(),
 
     to_date: Joi.date()
@@ -131,40 +145,45 @@ const updateAssetValidation = {
   }),
   body: Joi.object()
     .keys({
-      name: Joi.string().optional(),
+      assetName: Joi.string().optional(),
       uniqueId: Joi.string().optional(),
       description: Joi.string().allow("").optional(),
       brand: Joi.string().allow("").optional(),
       model: Joi.string().allow("").optional(),
       serialNumber: Joi.string().allow("").optional(),
-      purchaseDate: Joi.date().optional(),
-      cost: Joi.number().optional(),
-      warrantyEndDate: Joi.date().optional(),
+      // purchaseDate: Joi.date().optional(),
+      // cost: Joi.number().optional(),
+      // warrantyEndDate: Joi.date().optional(),
       status: Joi.string().optional(),
-      categoryId: Joi.string()
-        .allow(null)
-        .optional()
-        .custom(isValidMongoDBObjectId)
-        .messages(isValidMongoDBObjectIdCustomMessages),
-      locationId: Joi.string()
-        .allow(null)
-        .optional()
-        .custom(isValidMongoDBObjectId)
-        .messages(isValidMongoDBObjectIdCustomMessages),
-      assignedToUserId: Joi.string()
-        .allow(null, "")
-        .optional()
-        .custom((value, helpers) => {
-          if (value === null || value === "") return value; // Allow null/empty
-          return isValidMongoDBObjectId(value, helpers);
-        })
-        .messages(isValidMongoDBObjectIdCustomMessages),
+      // categoryId: Joi.string()
+      //   .allow(null)
+      //   .optional()
+      //   .custom(isValidMongoDBObjectId)
+      //   .messages(isValidMongoDBObjectIdCustomMessages),
+      // locationId: Joi.string()
+      //   .allow(null)
+      //   .optional()
+      //   .custom(isValidMongoDBObjectId)
+      //   .messages(isValidMongoDBObjectIdCustomMessages),
+      // assignedToUserId: Joi.string()
+      //   .allow(null, "")
+      //   .optional()
+      //   .custom((value, helpers) => {
+      //     if (value === null || value === "") return value; // Allow null/empty
+      //     return isValidMongoDBObjectId(value, helpers);
+      //   })
+      //   .messages(isValidMongoDBObjectIdCustomMessages),
       branchId: Joi.string()
         .allow(null)
         .optional()
         .custom(isValidMongoDBObjectId)
         .messages(isValidMongoDBObjectIdCustomMessages),
       departmentId: Joi.string()
+        .allow(null)
+        .optional()
+        .custom(isValidMongoDBObjectId)
+        .messages(isValidMongoDBObjectIdCustomMessages),
+      companyId: Joi.string()
         .allow(null)
         .optional()
         .custom(isValidMongoDBObjectId)

@@ -42,7 +42,7 @@ const userStrings = {
         departmentName: "Search by department",
       },
     },
-    chipsList: {
+    notAvailable: {
       emptyText: "N/A",
     },
     modals: {

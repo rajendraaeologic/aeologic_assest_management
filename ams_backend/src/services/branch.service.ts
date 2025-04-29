@@ -105,47 +105,131 @@ const deleteBranchById = async (
   if (!branch) {
     throw new ApiError(httpStatus.NOT_FOUND, "Branch not found");
   }
-  return await db.$transaction(async (tx) => {
-    await tx.department.deleteMany({ where: { branchId } });
-    await tx.asset.deleteMany({ where: { branchId } });
-    await tx.user.deleteMany({ where: { branchId } });
-    await tx.branch.delete({ where: { id: branch.id } });
 
-    return branch;
-  });
+  try {
+    await db.$transaction(
+      async (tx) => {
+        await tx.department.deleteMany({ where: { branchId } });
+
+        await tx.asset.deleteMany({
+          where: {
+            OR: [{ branchId }, { department: { branchId } }],
+          },
+        });
+
+        await tx.assetAssignment.deleteMany({
+          where: {
+            OR: [
+              { user: { branchId } },
+              { user: { department: { branchId } } },
+            ],
+          },
+        });
+
+        await tx.assetHistory.deleteMany({
+          where: {
+            asset: {
+              OR: [{ branchId }, { department: { branchId } }],
+            },
+          },
+        });
+
+        await tx.user.deleteMany({
+          where: {
+            OR: [{ branchId }, { department: { branchId } }],
+          },
+        });
+
+        await tx.branch.delete({ where: { id: branchId } });
+      },
+      {
+        maxWait: 5000,
+        timeout: 15000,
+      }
+    );
+  } catch (err) {
+    console.error("Error while deleting branch:", err);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to delete branch. Try again later."
+    );
+  }
+
+  return branch;
 };
+
 //deleteBranchesByIds
 const deleteBranchesByIds = async (
   branchIds: string[]
 ): Promise<Omit<Branch, "sensitiveField">[]> => {
-  const branches = await Promise.all(
-    branchIds.map((id) => db.branch.findUnique({ where: { id } }))
-  );
+  const branches = await db.branch.findMany({
+    where: { id: { in: branchIds } },
+  });
 
-  const notFoundIds = branchIds.filter((_, index) => !branches[index]);
-  if (notFoundIds.length > 0) {
+  if (branches.length !== branchIds.length) {
+    const foundIds = branches.map((b) => b.id);
+    const missingIds = branchIds.filter((id) => !foundIds.includes(id));
     throw new ApiError(
       httpStatus.NOT_FOUND,
-      `Branches not found: ${notFoundIds.join(", ")}`
+      `Branches not found: ${missingIds.join(", ")}`
     );
   }
 
-  return await db.$transaction(async (tx) => {
-    await tx.department.deleteMany({ where: { branchId: { in: branchIds } } });
-    await tx.asset.deleteMany({ where: { branchId: { in: branchIds } } });
-    await tx.user.deleteMany({ where: { branchId: { in: branchIds } } });
+  try {
+    await db.$transaction(
+      async (tx) => {
+        await tx.department.deleteMany({
+          where: { branchId: { in: branchIds } },
+        });
 
-    const deletedBranches = await Promise.all(
-      branchIds.map((id) => tx.branch.delete({ where: { id } }))
+        await tx.asset.deleteMany({
+          where: {
+            OR: [
+              { branchId: { in: branchIds } },
+              {
+                department: {
+                  branchId: { in: branchIds },
+                },
+              },
+            ],
+          },
+        });
+
+        await tx.user.deleteMany({
+          where: {
+            OR: [
+              { branchId: { in: branchIds } },
+              {
+                department: {
+                  branchId: { in: branchIds },
+                },
+              },
+            ],
+          },
+        });
+
+        await tx.branch.deleteMany({
+          where: { id: { in: branchIds } },
+        });
+      },
+      {
+        maxWait: 5000,
+        timeout: 20000,
+      }
     );
+  } catch (error) {
+    console.error("Error deleting branches:", error);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to delete branches. Please try again later."
+    );
+  }
 
-    return deletedBranches;
-  });
+  return branches;
 };
 
 //getBranchesByOrganizationId
-
-export const getBranchesByOrganizationId = async (
+const getBranchesByOrganizationId = async (
   organizationId: string,
   options: {
     limit?: number;

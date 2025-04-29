@@ -50,7 +50,7 @@ const AddOrganization = ({ onClose }) => {
 
   const onSubmit = async (data) => {
     try {
-      await dispatch(createOrganization(data));
+      await dispatch(createOrganization(data)).unwrap();
       dispatch(getAllOrganizations());
 
       toast.success(organizationStrings.addOrganization.toast.success, {
@@ -60,10 +60,20 @@ const AddOrganization = ({ onClose }) => {
 
       handleClose();
     } catch (error) {
-      toast.error(organizationStrings.addOrganization.toast.error, {
-        position: "top-right",
-        autoClose: 1000,
-      });
+      if (error?.status === 409) {
+        setError("organizationName", {
+          type: "manual",
+          message: error.message,
+        });
+        return;
+      }
+      toast.error(
+        error.message || organizationStrings.addOrganization.toast.error,
+        {
+          position: "top-right",
+          autoClose: 1500,
+        }
+      );
     }
   };
 

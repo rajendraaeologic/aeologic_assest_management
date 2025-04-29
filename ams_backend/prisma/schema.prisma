@@ -75,7 +75,8 @@ model Organization {
   id               String   @id @default(auto()) @map("_id") @db.ObjectId
   organizationName String
   branches         Branch[]
-  users          User[]
+  users            User[]
+  assets           Asset[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @default(now()) @updatedAt
 }
@@ -146,11 +147,11 @@ model Asset {
   cost             Float?
   warrantyEndDate  DateTime?
   status           AssetStatus       @default(ACTIVE)
-  locationId       String            @db.ObjectId
+//locationId       String            @db.ObjectId
   assignedToUserId String?           @db.ObjectId
   assignedUser     User?             @relation(fields: [assignedToUserId], references: [id])
   //category       Category          @relation(fields: [categoryId], references: [id])
-  assetLocation    Location          @relation(fields: [locationId], references: [id])
+  // assetLocation    Location          @relation(fields: [locationId], references: [id])
   assetHistory     AssetHistory[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -158,7 +159,9 @@ model Asset {
   branchId         String?           @db.ObjectId
   branch           Branch?           @relation(fields: [branchId], references: [id])
   departmentId     String?           @db.ObjectId
-  department       Department?       @relation(fields: [departmentId], references: [id]) // Relation to Department
+  department       Department?       @relation(fields: [departmentId], references: [id])
+  companyId        String
+  company          Organization      @relation(fields: [companyId], references: [id])
 }
 
 // model Category {
@@ -174,7 +177,7 @@ model Location {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   locationName String
   address      String?
-  assets       Asset[]
+ // assets       Asset[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }

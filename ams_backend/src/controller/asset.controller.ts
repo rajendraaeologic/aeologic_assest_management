@@ -25,7 +25,7 @@ const createAsset = catchAsync(async (req, res) => {
       description: req.body.description,
       branchId: req.body.branchId,
       departmentId: req.body.departmentId,
-      locationId: req.body.locationId,
+      companyId: req.body.companyId,
     });
 
     res.status(httpStatus.CREATED).json({
@@ -42,8 +42,6 @@ const getAllAssets = catchAsync(async (req, res) => {
   const filter = pick(req.query, [
     "assetName",
     "status",
-    "locationId",
-    "assignedToUserId",
     "branchId",
     "departmentId",
     "from_date",

@@ -6,19 +6,19 @@ import { AssetKeys } from "@/utils/selects.utils";
 
 // createAsset
 const createAsset = async (
-    asset: Pick<
-        Asset,
-        | "assetName"
-        | "uniqueId"
-        | "brand"
-        | "model"
-        | "serialNumber"
-        | "status"
-        | "description"
-        | "branchId"
-        | "departmentId"
-        | "companyId"
-    >
+  asset: Pick<
+    Asset,
+    | "assetName"
+    | "uniqueId"
+    | "brand"
+    | "model"
+    | "serialNumber"
+    | "status"
+    | "description"
+    | "branchId"
+    | "departmentId"
+    | "companyId"
+  >
 ): Promise<Omit<Asset, "id"> | null> => {
   if (!asset.companyId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Company ID is required");
@@ -30,12 +30,13 @@ const createAsset = async (
     throw new ApiError(httpStatus.BAD_REQUEST, "Department ID is required");
   }
 
-  const [companyExists, branchExists, departmentExists, assetExists] = await Promise.all([
-    db.organization.findUnique({ where: { id: asset.companyId } }),
-    db.branch.findUnique({ where: { id: asset.branchId } }),
-    db.department.findUnique({ where: { id: asset.departmentId } }),
-    db.asset.findFirst({ where: { uniqueId: asset.uniqueId } }),
-  ]);
+  const [companyExists, branchExists, departmentExists, assetExists] =
+    await Promise.all([
+      db.organization.findUnique({ where: { id: asset.companyId } }),
+      db.branch.findUnique({ where: { id: asset.branchId } }),
+      db.department.findUnique({ where: { id: asset.departmentId } }),
+      db.asset.findFirst({ where: { uniqueId: asset.uniqueId } }),
+    ]);
 
   if (!companyExists) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Company ID");
@@ -48,8 +49,8 @@ const createAsset = async (
   }
   if (assetExists) {
     throw new ApiError(
-        httpStatus.CONFLICT,
-        `Asset with unique ID "${asset.uniqueId}" already exists`
+      httpStatus.CONFLICT,
+      `Asset with unique ID "${asset.uniqueId}" already exists`
     );
   }
 
@@ -74,53 +75,6 @@ const createAsset = async (
     },
   });
 };
-
-  //
-  // const branchExists = await db.branch.findUnique({
-  //   where: { id: asset.branchId },
-  // });
-  // if (!branchExists) {
-  //   throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Branch ID");
-  // }
-  //
-  // const departmentExists = await db.department.findUnique({
-  //   where: { id: asset.departmentId },
-  // });
-  // if (!departmentExists) {
-  //   throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Department ID");
-  // }
-
-  // const locationExists = await db.location.findUnique({
-  //   where: { id: asset.locationId },
-  // });
-  // if (!locationExists) {
-  //   throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Location ID");
-  // }
-
-  // const existingAsset = await db.asset.findFirst({
-  //   where: { uniqueId: asset.uniqueId },
-  // });
-  // if (existingAsset) {
-  //   throw new ApiError(
-  //     httpStatus.CONFLICT,
-  //     `Asset with unique ID "${existingAsset.uniqueId}" already exists`
-  //   );
-  // }
-//
-//   return await db.asset.create({
-//     data: {
-//       assetName: asset.assetName,
-//       uniqueId: asset.uniqueId,
-//       brand: asset.brand,
-//       model: asset.model,
-//       serialNumber: asset.serialNumber,
-//       status: asset.status,
-//       description: asset.description,
-//       branchId: asset.branchId,
-//       departmentId: asset.departmentId,
-//     },
-//   });
-// };
 
 // queryAssets
 const queryAssets = async (
@@ -185,7 +139,24 @@ const deleteAssetById = async (
     throw new ApiError(httpStatus.NOT_FOUND, "Asset not found");
   }
 
-  await db.asset.delete({ where: { id: asset.id } });
+  try {
+    await db.$transaction(
+      async (tx) => {
+        await tx.asset.delete({ where: { id: asset.id } });
+      },
+      {
+        maxWait: 5000,
+        timeout: 10000,
+      }
+    );
+  } catch (error) {
+    console.error("Error deleting asset:", error);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to delete asset. Please try again later."
+    );
+  }
+
   return asset;
 };
 
@@ -198,12 +169,33 @@ const deleteAssetsByIds = async (
   });
 
   if (assets.length !== assetIds.length) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Some assets not found");
+    const foundIds = assets.map((a) => a.id);
+    const missingIds = assetIds.filter((id) => !foundIds.includes(id));
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `Assets not found: ${missingIds.join(", ")}`
+    );
   }
 
-  await db.asset.deleteMany({
-    where: { id: { in: assetIds } },
-  });
+  try {
+    await db.$transaction(
+      async (tx) => {
+        await tx.asset.deleteMany({
+          where: { id: { in: assetIds } },
+        });
+      },
+      {
+        maxWait: 5000,
+        timeout: 10000,
+      }
+    );
+  } catch (error) {
+    console.error("Error deleting assets:", error);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to delete assets. Please try again later."
+    );
+  }
 
   return assets;
 };

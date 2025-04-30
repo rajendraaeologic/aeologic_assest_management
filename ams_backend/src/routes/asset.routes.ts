@@ -7,27 +7,45 @@ const router = express.Router();
 
 router
   .route("/createAsset")
-  .post(validate(assetValidation.createAssetValidation), assetController.createAsset);
+  .post(
+    validate(assetValidation.createAssetValidation),
+    assetController.createAsset
+  );
 
 router
   .route("/getAllAssets")
-  .get(validate(assetValidation.getAllAssetsValidation), assetController.getAllAssets);
+  .get(
+    validate(assetValidation.getAllAssetsValidation),
+    assetController.getAllAssets
+  );
 
 router
   .route("/:assetId")
-  .get(validate(assetValidation.getAssetByIdValidation), assetController.getAssetById);
+  .get(
+    validate(assetValidation.getAssetByIdValidation),
+    assetController.getAssetById
+  );
 
 router
   .route("/:assetId")
-  .put(validate(assetValidation.updateAssetValidation), assetController.updateAsset);
+  .put(
+    validate(assetValidation.updateAssetValidation),
+    assetController.updateAsset
+  );
 
 router
   .route("/:assetId")
-  .delete(validate(assetValidation.deleteAssetValidation), assetController.deleteAsset);
+  .delete(
+    validate(assetValidation.deleteAssetValidation),
+    assetController.deleteAsset
+  );
 
 router
   .route("/bulk-delete")
-  .post(validate(assetValidation.bulkDeleteAssetsValidation), assetController.bulkDeleteAssets);
+  .post(
+    validate(assetValidation.bulkDeleteAssetsValidation),
+    assetController.bulkDeleteAssets
+  );
 
 //   // Asset Assignment Routes
 // router

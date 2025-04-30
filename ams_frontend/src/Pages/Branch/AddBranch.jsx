@@ -3,7 +3,7 @@ import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useForm } from "react-hook-form";
-import axios from "axios";
+import API from "../../App/api/axiosInstance";
 import branchStrings from "../../locales/branchStrings";
 import {
   createBranch,
@@ -28,6 +28,7 @@ const AddBranch = ({ onClose }) => {
     register,
     handleSubmit,
     setValue,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
@@ -40,8 +41,8 @@ const AddBranch = ({ onClose }) => {
   const fetchOrganizations = async (page, search = "") => {
     try {
       setOrgLoading(true);
-      const response = await axios.get(
-        `http://localhost:3000/api/v1/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
+      const response = await API.get(
+        `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
       );
       const { data, totalPages } = response.data;
 
@@ -104,7 +105,7 @@ const AddBranch = ({ onClose }) => {
     }
 
     try {
-      await dispatch(createBranch(data));
+      await dispatch(createBranch(data)).unwrap();
       dispatch(getAllBranches());
       toast.success(branchStrings.addBranch.toast.success, {
         position: "top-right",
@@ -112,9 +113,18 @@ const AddBranch = ({ onClose }) => {
       });
       handleClose();
     } catch (error) {
-      toast.error(branchStrings.addBranch.toast.error, {
+      if (error?.status === 409) {
+        setError("branchName", {
+          type: "manual",
+          message: error.message,
+        });
+        return;
+      }
+
+      const errorMessage = error.message || branchStrings.addBranch.toast.error;
+      toast.error(errorMessage, {
         position: "top-right",
-        autoClose: 1000,
+        autoClose: 1500,
       });
     }
   };

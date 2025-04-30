@@ -51,7 +51,7 @@ const branchStrings = {
         multiple: "{count} branches deleted successfully!",
       },
     },
-    chipsList: {
+    notAvailable: {
       emptyText: "N/A",
     },
   },
@@ -83,6 +83,7 @@ const branchStrings = {
     toast: {
       success: "Branch added successfully!",
       error: "Failed to add branch",
+      branchNameExists: "Branch name already exists",
     },
   },
   updateBranch: {

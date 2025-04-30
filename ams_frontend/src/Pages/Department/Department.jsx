@@ -540,7 +540,7 @@ const UserDepartment = () => {
                         }}
                       >
                         {department.branch?.branchName ||
-                          departmentStrings.department.chipsList.emptyText}
+                          departmentStrings.department.notAvailable.emptyText}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -552,7 +552,7 @@ const UserDepartment = () => {
                         }}
                       >
                         {department.branch?.branchLocation ||
-                          departmentStrings.department.chipsList.emptyText}
+                          departmentStrings.department.notAvailable.emptyText}
                       </td>
                       {/* <td
                         className="px-2 py-2 border border-gray-300"
@@ -566,7 +566,7 @@ const UserDepartment = () => {
                         {department.users
                           ?.map((user) => user.userName)
                           .join(", ") ||
-                          departmentStrings.department.chipsList.emptyText}
+                          departmentStrings.department.notAvailable.emptyText}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -580,7 +580,7 @@ const UserDepartment = () => {
                         {department.assets
                           ?.map((asset) => asset.assetName)
                           .join(", ") ||
-                          departmentStrings.department.chipsList.emptyText}
+                          departmentStrings.department.notAvailable.emptyText}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -594,7 +594,7 @@ const UserDepartment = () => {
                         {department.assets
                           ?.map((asset) => asset.status)
                           .join(", ") ||
-                          departmentStrings.department.chipsList.emptyText}
+                          departmentStrings.department.notAvailable.emptyText}
                       </td> */}
                       <td
                         className="px-2 py-2 border border-gray-300"

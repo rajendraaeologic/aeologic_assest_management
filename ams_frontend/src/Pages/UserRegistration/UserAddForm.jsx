@@ -32,6 +32,7 @@ const AddUserForm = ({ onClose }) => {
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
 
+  // Department dropdown state
   const [departments, setDepartments] = useState([]);
   const [departmentPage, setDepartmentPage] = useState(1);
   const [hasMoreDepts, setHasMoreDepts] = useState(true);
@@ -62,6 +63,7 @@ const AddUserForm = ({ onClose }) => {
 
   const branchId = watch("branchId");
 
+  // Fetch organizations
   const fetchOrganizations = async (page, search = "") => {
     try {
       setOrgLoading(true);
@@ -79,6 +81,7 @@ const AddUserForm = ({ onClose }) => {
     }
   };
 
+  // Fetch branches
   const fetchBranches = async (page, search = "") => {
     if (!selectedOrgId) return;
     try {
@@ -97,6 +100,7 @@ const AddUserForm = ({ onClose }) => {
     }
   };
 
+  // Fetch departments
   const fetchDepartments = async (page, search = "") => {
     if (!branchId) return;
     try {
@@ -114,17 +118,13 @@ const AddUserForm = ({ onClose }) => {
       setLoadingDepartments(false);
     }
   };
+
   useEffect(() => {
     if (selectedOrg) {
-      setSelectedBranch("");
-      setSelectedDept("");
+      setSelectedBranch(null);
+      setSelectedDept(null);
     }
   }, [selectedOrg]);
-  useEffect(() => {
-    if (branchId) {
-      setSelectedDept("");
-    }
-  }, [branchId]);
 
   useEffect(() => {
     if (branchId) {
@@ -151,23 +151,16 @@ const AddUserForm = ({ onClose }) => {
   }, [selectedOrgId]);
 
   useEffect(() => {
-    const fetchDepartments = async () => {
-      if (!branchId) {
-        setDepartments([]);
-        return;
-      }
-      try {
-        setLoadingDepartments(true);
-        const response = await API.get(`/branch/${branchId}`);
-        setDepartments(response.data.data.departments);
-      } catch (error) {
-        toast.error(userStrings.addUser.toast.departmentError);
-      } finally {
-        setLoadingDepartments(false);
-      }
-    };
-    fetchDepartments();
-  }, [branchId]);
+    register("companyId", {
+      required: userStrings.addUser.validation.organizationRequired,
+    });
+    register("branchId", {
+      required: userStrings.addUser.validation.branchRequired,
+    });
+    register("departmentId", {
+      required: userStrings.addUser.validation.departmentRequired,
+    });
+  }, [register]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -182,7 +175,7 @@ const AddUserForm = ({ onClose }) => {
     }
   };
 
-  // Organization dropdown handlers
+  // Organization handlers
   const handleOrgScroll = (e) => {
     const bottomReached =
       e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
@@ -197,17 +190,10 @@ const AddUserForm = ({ onClose }) => {
     fetchOrganizations(1, search);
   };
 
-  const handleOrgClick = () => {
-    setShowOrgDropdown(!showOrgDropdown);
-    if (!showOrgDropdown && searchTerm === "") {
-      fetchOrganizations(1, "");
-    }
-  };
-
   const handleOrgSelect = (org) => {
     setSelectedOrg(org);
     setSelectedOrgId(org.id);
-    setValue("companyId", org.id);
+    setValue("companyId", org.id, { shouldValidate: true });
     setShowOrgDropdown(false);
     setSearchTerm("");
     setValue("branchId", "");
@@ -215,9 +201,10 @@ const AddUserForm = ({ onClose }) => {
     setBranches([]);
     setDepartments([]);
     setSelectedBranch(null);
+    setSelectedDept(null);
   };
 
-  // Branch dropdown handlers
+  // Branch handlers
   const handleBranchScroll = (e) => {
     const bottomReached =
       e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
@@ -232,15 +219,18 @@ const AddUserForm = ({ onClose }) => {
     fetchBranches(1, search);
   };
 
-  const handleBranchClick = () => {
-    if (!selectedOrgId) {
-      toast.error("Please select an organization first");
-      return;
-    }
-    setShowBranchDropdown(!showBranchDropdown);
+  const handleBranchSelect = (branch) => {
+    setValue("branchId", branch.id, { shouldValidate: true });
+    setSelectedBranch(branch);
+    setShowBranchDropdown(false);
+    setValue("departmentId", "");
+    setDepartments([]);
+    setSelectedDept(null);
+    setDeptSearchTerm("");
+    setDepartmentPage(1);
   };
 
-  // Department dropdown handlers
+  // Department handlers
   const handleDeptScroll = (e) => {
     const bottomReached =
       e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
@@ -255,24 +245,10 @@ const AddUserForm = ({ onClose }) => {
     fetchDepartments(1, search);
   };
 
-  const handleDeptClick = () => {
-    if (!branchId) {
-      toast.error("Please select a branch first");
-      return;
-    }
-    setShowDeptDropdown(!showDeptDropdown);
-  };
-
-  // Update branch selection handler to reset departments
-  const handleBranchSelect = (branch) => {
-    setValue("branchId", branch.id);
-    setSelectedBranch(branch);
-    setShowBranchDropdown(false);
-    setValue("departmentId", "");
-    setDepartments([]);
-    setSelectedDept(null);
-    setDeptSearchTerm("");
-    setDepartmentPage(1);
+  const handleDeptSelect = (dept) => {
+    setValue("departmentId", dept.id, { shouldValidate: true });
+    setSelectedDept(dept);
+    setShowDeptDropdown(false);
   };
 
   const onSubmit = async (data) => {
@@ -355,7 +331,7 @@ const AddUserForm = ({ onClose }) => {
                 )}
               </div>
 
-              {/* Phone Number */}
+              {/* Phone */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.addUser.formLabels.phone}
@@ -413,13 +389,20 @@ const AddUserForm = ({ onClose }) => {
                   {userStrings.addUser.formLabels.organization}
                 </label>
                 <div
-                  onClick={handleOrgClick}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis"
+                  onClick={() => setShowOrgDropdown(!showOrgDropdown)}
+                  className={`mt-1 p-2 w-full border ${
+                    errors.companyId ? "border-red-500" : "border-gray-300"
+                  } rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis`}
                 >
-                  {selectedOrg
-                    ? selectedOrg.organizationName
-                    : "Select Organization"}
+                  {selectedOrg?.organizationName || "Select Organization"}
                 </div>
+
+                {errors.companyId && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.companyId.message}
+                  </p>
+                )}
+
                 {showOrgDropdown && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
@@ -431,7 +414,7 @@ const AddUserForm = ({ onClose }) => {
                     />
                     <ul
                       onScroll={handleOrgScroll}
-                      className="max-h-40  overflow-auto"
+                      className="max-h-40 overflow-auto"
                     >
                       {organizations.map((org) => (
                         <li
@@ -458,10 +441,16 @@ const AddUserForm = ({ onClose }) => {
                   {userStrings.addUser.formLabels.branch}
                 </label>
                 <div
-                  onClick={handleBranchClick}
+                  onClick={() => {
+                    if (!selectedOrgId) {
+                      toast.error("Please select an organization first");
+                      return;
+                    }
+                    setShowBranchDropdown(!showBranchDropdown);
+                  }}
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
                 >
-                  {selectedBranch ? selectedBranch.branchName : "Select Branch"}
+                  {selectedBranch?.branchName || "Select Branch"}
                 </div>
                 {showBranchDropdown && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
@@ -479,13 +468,7 @@ const AddUserForm = ({ onClose }) => {
                       {branches.map((branch) => (
                         <li
                           key={branch.id}
-                          onClick={() => {
-                            setValue("branchId", branch.id);
-                            setSelectedBranch(branch);
-                            setShowBranchDropdown(false);
-                            setValue("departmentId", "");
-                            setDepartments([]);
-                          }}
+                          onClick={() => handleBranchSelect(branch)}
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                         >
                           {branch.branchName}
@@ -506,18 +489,22 @@ const AddUserForm = ({ onClose }) => {
                 )}
               </div>
 
-              {/* Department Select */}
+              {/* Department Dropdown */}
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.addUser.formLabels.department}
                 </label>
                 <div
-                  onClick={handleDeptClick}
+                  onClick={() => {
+                    if (!branchId) {
+                      toast.error("Please select a branch first");
+                      return;
+                    }
+                    setShowDeptDropdown(!showDeptDropdown);
+                  }}
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
                 >
-                  {selectedDept
-                    ? selectedDept.departmentName
-                    : "Select Department"}
+                  {selectedDept?.departmentName || "Select Department"}
                 </div>
                 {showDeptDropdown && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
@@ -535,11 +522,7 @@ const AddUserForm = ({ onClose }) => {
                       {departments.map((dept) => (
                         <li
                           key={dept.id}
-                          onClick={() => {
-                            setValue("departmentId", dept.id);
-                            setSelectedDept(dept);
-                            setShowDeptDropdown(false);
-                          }}
+                          onClick={() => handleDeptSelect(dept)}
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                         >
                           {dept.departmentName}
@@ -587,7 +570,7 @@ const AddUserForm = ({ onClose }) => {
                 )}
               </div>
 
-              {/* Status Dropdown */}
+              {/* Status */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.addUser.formLabels.status}
@@ -614,7 +597,8 @@ const AddUserForm = ({ onClose }) => {
                 )}
               </div>
             </div>
-            <hr className="mt-4"></hr>
+
+            <hr className="mt-4" />
             <div className="flex justify-end gap-4 mt-4">
               <button
                 type="button"

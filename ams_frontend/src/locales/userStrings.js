@@ -42,7 +42,7 @@ const userStrings = {
         departmentName: "Search by department",
       },
     },
-    chipsList: {
+    notAvailable: {
       emptyText: "N/A",
     },
     modals: {
@@ -95,6 +95,7 @@ const userStrings = {
       passwordRequired: "Password is required",
       passwordMinLength: "Password must be at least 8 characters",
       codeRequired: "User code is required",
+      organizationRequired: "Please select an organization",
       branchRequired: "Please select a branch",
       departmentRequired: "Please select a department",
       roleRequired: "Please select a role",

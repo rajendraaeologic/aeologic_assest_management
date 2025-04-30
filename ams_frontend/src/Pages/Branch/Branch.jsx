@@ -583,7 +583,7 @@ const Branch = () => {
                         }}
                       >
                         {branch.company?.organizationName ||
-                          branchStrings.branch.chipsList.emptyText}
+                          branchStrings.branch.notAvailable.emptyText}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -597,7 +597,9 @@ const Branch = () => {
                         <ChipsList
                           items={branch.departments || []}
                           labelKey="departmentName"
-                          emptyText={branchStrings.branch.chipsList.emptyText}
+                          emptyText={
+                            branchStrings.branch.notAvailable.emptyText
+                          }
                         />
                       </td>
                       {/* <td
@@ -612,7 +614,7 @@ const Branch = () => {
                         {branch.users
                           ?.map((user) => user.userName)
                           .join(", ") ||
-                          branchStrings.branch.chipsList.emptyText}
+                          branchStrings.branch.notAvailable.emptyText}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -626,7 +628,7 @@ const Branch = () => {
                         {branch.assets
                           ?.map((asset) => asset.assetName)
                           .join(", ") ||
-                          branchStrings.branch.chipsList.emptyText}
+                          branchStrings.branch.notAvailable.emptyText}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -640,7 +642,7 @@ const Branch = () => {
                         {branch.assets
                           ?.map((asset) => asset.status)
                           .join(", ") ||
-                          branchStrings.branch.chipsList.emptyText}
+                          branchStrings.branch.notAvailable.emptyText}
                       </td> */}
                       <td
                         className="px-2 py-2 border border-gray-300"

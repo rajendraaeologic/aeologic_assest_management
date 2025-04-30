@@ -197,6 +197,12 @@ export const AssetKeys: Prisma.AssetSelect = {
   //     address: true,
   //   },
   // },
+  company: {
+    select: {
+      id: true,
+      organizationName: true,
+    },
+  },
   branch: {
     select: {
       id: true,

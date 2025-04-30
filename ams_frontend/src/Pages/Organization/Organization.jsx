@@ -28,7 +28,7 @@ const Organization = () => {
   const { isSidebarOpen } = useContext(SliderContext);
 
   // Get localized organizationStrings
-  const { title, breadcrumb, buttons, table, modals, chipsList } =
+  const { title, breadcrumb, buttons, table, modals, notAvailable } =
     organizationStrings.organization;
 
   const { organizations, selectedOrganizations, currentPage, rowsPerPage } =
@@ -458,7 +458,7 @@ const Organization = () => {
                         <ChipsList
                           items={org.branches}
                           labelKey="branchName"
-                          emptyText={chipsList.emptyText}
+                          emptyText={notAvailable.emptyText}
                         />
                       </td>
                       <td
@@ -473,7 +473,7 @@ const Organization = () => {
                         <ChipsList
                           items={org.branches}
                           labelKey="branchLocation"
-                          emptyText={chipsList.emptyText}
+                          emptyText={notAvailable.emptyText}
                         />
                       </td>
                       <td
@@ -492,7 +492,7 @@ const Organization = () => {
                             ) || []
                           }
                           labelKey="departmentName"
-                          emptyText={chipsList.emptyText}
+                          emptyText={notAvailable.emptyText}
                         />
                       </td>
                       <td

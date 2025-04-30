@@ -102,32 +102,47 @@ const deleteDepartmentById = async (
   if (!department) {
     throw new ApiError(httpStatus.NOT_FOUND, "Department not found");
   }
-  await db.$transaction(async (tx) => {
-    await tx.assetAssignment.deleteMany({
-      where: {
-        OR: [{ asset: { departmentId } }, { user: { departmentId } }],
+
+  try {
+    await db.$transaction(
+      async (tx) => {
+        await tx.assetAssignment.deleteMany({
+          where: {
+            OR: [{ asset: { departmentId } }, { user: { departmentId } }],
+          },
+        });
+
+        await tx.assetHistory.deleteMany({
+          where: {
+            OR: [{ asset: { departmentId } }, { user: { departmentId } }],
+          },
+        });
+
+        await tx.asset.deleteMany({
+          where: { departmentId },
+        });
+
+        await tx.user.updateMany({
+          where: { departmentId },
+          data: { departmentId: null },
+        });
+
+        await tx.department.delete({
+          where: { id: departmentId },
+        });
       },
-    });
-
-    await tx.assetHistory.deleteMany({
-      where: {
-        OR: [{ asset: { departmentId } }, { user: { departmentId } }],
-      },
-    });
-
-    await tx.asset.deleteMany({
-      where: { departmentId },
-    });
-
-    await tx.user.updateMany({
-      where: { departmentId },
-      data: { departmentId: null },
-    });
-
-    await tx.department.delete({
-      where: { id: department.id },
-    });
-  });
+      {
+        maxWait: 5000,
+        timeout: 15000,
+      }
+    );
+  } catch (error) {
+    console.error("Error while deleting department:", error);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to delete department. Try again later."
+    );
+  }
 
   return department;
 };
@@ -149,41 +164,56 @@ const deleteDepartmentsByIds = async (
     );
   }
 
-  await db.$transaction(async (tx) => {
-    await tx.assetAssignment.deleteMany({
-      where: {
-        OR: [
-          { asset: { departmentId: { in: departmentIds } } },
-          { user: { departmentId: { in: departmentIds } } },
-        ],
+  try {
+    await db.$transaction(
+      async (tx) => {
+        await tx.assetAssignment.deleteMany({
+          where: {
+            OR: [
+              { asset: { departmentId: { in: departmentIds } } },
+              { user: { departmentId: { in: departmentIds } } },
+            ],
+          },
+        });
+
+        await tx.assetHistory.deleteMany({
+          where: {
+            OR: [
+              { asset: { departmentId: { in: departmentIds } } },
+              { user: { departmentId: { in: departmentIds } } },
+            ],
+          },
+        });
+
+        await tx.asset.deleteMany({
+          where: { departmentId: { in: departmentIds } },
+        });
+
+        await tx.user.updateMany({
+          where: { departmentId: { in: departmentIds } },
+          data: { departmentId: null },
+        });
+
+        await tx.department.deleteMany({
+          where: { id: { in: departmentIds } },
+        });
       },
-    });
-
-    await tx.assetHistory.deleteMany({
-      where: {
-        OR: [
-          { asset: { departmentId: { in: departmentIds } } },
-          { user: { departmentId: { in: departmentIds } } },
-        ],
-      },
-    });
-
-    await tx.asset.deleteMany({
-      where: { departmentId: { in: departmentIds } },
-    });
-
-    await tx.user.updateMany({
-      where: { departmentId: { in: departmentIds } },
-      data: { departmentId: null },
-    });
-
-    await tx.department.deleteMany({
-      where: { id: { in: departmentIds } },
-    });
-  });
+      {
+        maxWait: 5000,
+        timeout: 20000,
+      }
+    );
+  } catch (error) {
+    console.error("Error deleting departments:", error);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to delete departments. Please try again later."
+    );
+  }
 
   return departments;
 };
+
 //getDepartmentsByBranchId
 export const getDepartmentsByBranchId = async (
   branchId: string,

@@ -19,12 +19,15 @@ const AddOrganization = ({ onClose }) => {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
       organizationName: "",
     },
+    mode: "onChange",
   });
+  const organizationName = watch("organizationName");
 
   useEffect(() => {
     firstInputRef.current?.focus();
@@ -110,16 +113,29 @@ const AddOrganization = ({ onClose }) => {
                   organizationStrings.addOrganization.formLabels
                     .organizationName
                 }
+                <span className="text-red-500">*</span>
               </label>
               <input
-                ref={firstInputRef}
                 {...register("organizationName", {
                   required:
                     organizationStrings.addOrganization.validation
                       .organizationNameRequired,
+                  minLength: {
+                    value: 3,
+                    message:
+                      organizationStrings.addOrganization.validation
+                        .organizationNameMinLength,
+                  },
+                  maxLength: {
+                    value: 25,
+                    message:
+                      organizationStrings.addOrganization.validation
+                        .organizationNameMaxLength,
+                  },
                 })}
                 type="text"
                 id="organizationName"
+                maxLength={25}
                 placeholder={
                   organizationStrings.addOrganization.placeholders
                     .organizationName
@@ -128,9 +144,16 @@ const AddOrganization = ({ onClose }) => {
                   errors.organizationName ? "border-red-500" : "border-gray-300"
                 } outline-none rounded-md`}
               />
+
               {errors.organizationName && (
                 <p className="text-red-500 text-sm mt-1">
                   {errors.organizationName.message}
+                </p>
+              )}
+
+              {organizationName.length === 25 && (
+                <p className="text-red-500  text-sm mt-1">
+                  Maximum 25 characters allowed
                 </p>
               )}
             </div>

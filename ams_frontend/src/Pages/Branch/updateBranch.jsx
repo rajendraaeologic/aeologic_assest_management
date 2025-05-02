@@ -25,7 +25,15 @@ const UpdateBranch = ({ onClose }) => {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      branchName: "",
+      branchLocation: "",
+    },
+    mode: "onChange",
+  });
+  const branchName = watch("branchName");
+  const branchLocation = watch("branchLocation");
 
   useEffect(() => {
     firstInputRef.current?.focus();
@@ -110,16 +118,34 @@ const UpdateBranch = ({ onClose }) => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 gap-4">
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="branchName"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {branchStrings.updateBranch.formLabels.branchName}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   ref={firstInputRef}
                   {...register("branchName", {
                     required:
                       branchStrings.updateBranch.validation.branchNameRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        branchStrings.updateBranch.validation
+                          .branchNameMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        branchStrings.updateBranch.validation
+                          .branchNameMaxLength,
+                    },
                   })}
                   type="text"
+                  maxLength={25}
+                  id="branchName"
                   className={`mt-1 p-2 w-full border ${
                     errors.branchName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
@@ -129,19 +155,42 @@ const UpdateBranch = ({ onClose }) => {
                     {errors.branchName.message}
                   </p>
                 )}
+                {branchName.length === 25 && (
+                  <p className="text-red-500  text-sm mt-1">
+                    Maximum 25 characters allowed
+                  </p>
+                )}
               </div>
 
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="branchLocation"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {branchStrings.updateBranch.formLabels.branchLocation}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   {...register("branchLocation", {
                     required:
                       branchStrings.updateBranch.validation
                         .branchLocationRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        branchStrings.updateBranch.validation
+                          .branchLocationMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        branchStrings.updateBranch.validation
+                          .branchLocationMaxLength,
+                    },
                   })}
                   type="text"
+                  maxLength={25}
+                  id="branchLocation"
                   className={`mt-1 p-2 w-full border ${
                     errors.branchLocation ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
@@ -149,6 +198,11 @@ const UpdateBranch = ({ onClose }) => {
                 {errors.branchLocation && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.branchLocation.message}
+                  </p>
+                )}
+                {branchLocation.length === 25 && (
+                  <p className="text-red-500  text-sm mt-1">
+                    Maximum 25 characters allowed
                   </p>
                 )}
               </div>

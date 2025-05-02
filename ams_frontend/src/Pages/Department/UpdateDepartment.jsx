@@ -28,7 +28,14 @@ const UpdateDepartment = ({ onClose }) => {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      departmentName: "",
+    },
+    mode: "onChange",
+  });
+
+  const departmentName = watch("departmentName");
 
   useEffect(() => {
     dispatch(getAllBranches());
@@ -113,17 +120,36 @@ const UpdateDepartment = ({ onClose }) => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid sm:grid-cols-1 lg:grid-cols-1 gap-4">
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="departmentName"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {departmentStrings.updateDepartment.formLabels.departmentName}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <input
                   ref={firstInputRef}
                   {...register("departmentName", {
                     required:
                       departmentStrings.updateDepartment.validation
                         .departmentNameRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        departmentStrings.updateDepartment.validation
+                          .departmentNameMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        departmentStrings.updateDepartment.validation
+                          .departmentNameMaxLength,
+                    },
                   })}
                   type="text"
+                  maxLength={25}
+                  id="departmentName"
                   className={`mt-1 p-2 w-full border ${
                     errors.departmentName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
@@ -131,6 +157,11 @@ const UpdateDepartment = ({ onClose }) => {
                 {errors.departmentName && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.departmentName.message}
+                  </p>
+                )}
+                {departmentName.length === 25 && (
+                  <p className="text-red-500  text-sm mt-1">
+                    Maximum 25 characters allowed
                   </p>
                 )}
               </div>

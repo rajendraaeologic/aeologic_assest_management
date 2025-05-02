@@ -63,9 +63,15 @@ const AddAsset = ({ onClose, onSuccess }) => {
       departmentId: "",
       companyId: "",
     },
+    mode: "onChange",
   });
-
+  const assetName = watch("assetName");
+  const uniqueId = watch("uniqueId");
+  const brand = watch("brand");
+  const model = watch("model");
   const branchId = watch("branchId");
+  const serialNumber = watch("serialNumber");
+  const description = watch("description");
   const departmentId = watch("departmentId");
 
   const fetchOrganizations = async (page, search = "") => {
@@ -314,17 +320,33 @@ const AddAsset = ({ onClose, onSuccess }) => {
 
               {/* Asset Name */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="assetName"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {assetStrings.addAsset.formLabels.assetName}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   ref={firstInputRef}
+                  id="assetName"
                   type="text"
+                  maxLength={25}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                   placeholder={assetStrings.addAsset.placeholders.assetName}
                   {...register("assetName", {
                     required:
                       assetStrings.addAsset.validation.assetNameRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        assetStrings.addAsset.validation.assetNameMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        assetStrings.addAsset.validation.assetNameMaxLength,
+                    },
                   })}
                 />
                 {errors.assetName && (
@@ -332,19 +354,40 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.assetName.message}
                   </p>
                 )}
+                {assetName?.length === 25 && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Maximum 25 characters allowed
+                  </p>
+                )}
               </div>
 
               {/* Unique ID */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="uniqueId"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {assetStrings.addAsset.formLabels.uniqueId}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
+                  id="uniqueId"
+                  maxLength={15}
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                   placeholder={assetStrings.addAsset.placeholders.uniqueId}
                   {...register("uniqueId", {
                     required: assetStrings.addAsset.validation.uniqueIdRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        assetStrings.addAsset.validation.uniqueIdMinLength,
+                    },
+                    maxLength: {
+                      value: 15,
+                      message:
+                        assetStrings.addAsset.validation.uniqueIdMaxLength,
+                    },
                   })}
                 />
                 {errors.uniqueId && (
@@ -352,19 +395,38 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.uniqueId.message}
                   </p>
                 )}
+                {uniqueId?.length === 15 && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Maximum 15 characters allowed
+                  </p>
+                )}
               </div>
 
               {/* Brand */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="brand"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {assetStrings.addAsset.formLabels.brand}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
+                  maxLength={15}
+                  id="brand"
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                   placeholder={assetStrings.addAsset.placeholders.brand}
                   {...register("brand", {
                     required: assetStrings.addAsset.validation.brandRequired,
+                    minLength: {
+                      value: 3,
+                      message: assetStrings.addAsset.validation.brandMinLength,
+                    },
+                    maxLength: {
+                      value: 15,
+                      message: assetStrings.addAsset.validation.brandMaxLength,
+                    },
                   })}
                 />
                 {errors.brand && (
@@ -372,19 +434,38 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.brand.message}
                   </p>
                 )}
+                {brand?.length === 15 && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Maximum 15 characters allowed
+                  </p>
+                )}
               </div>
 
               {/* Model */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="model"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {assetStrings.addAsset.formLabels.model}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
+                  maxLength={15}
+                  id="model"
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                   placeholder={assetStrings.addAsset.placeholders.model}
                   {...register("model", {
                     required: assetStrings.addAsset.validation.modelRequired,
+                    minLength: {
+                      value: 3,
+                      message: assetStrings.addAsset.validation.modelMinLength,
+                    },
+                    maxLength: {
+                      value: 15,
+                      message: assetStrings.addAsset.validation.modelMaxLength,
+                    },
                   })}
                 />
                 {errors.model && (
@@ -392,25 +473,51 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.model.message}
                   </p>
                 )}
+                {model?.length === 15 && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Maximum 15 characters allowed
+                  </p>
+                )}
               </div>
 
               {/* Serial Number */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="serialNumber"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {assetStrings.addAsset.formLabels.serialNumber}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
+                  maxLength={15}
+                  id="serialNumber"
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                   placeholder={assetStrings.addAsset.placeholders.serialNumber}
                   {...register("serialNumber", {
                     required:
                       assetStrings.addAsset.validation.serialNumberRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        assetStrings.addAsset.validation.serialNumberMinLength,
+                    },
+                    maxLength: {
+                      value: 15,
+                      message:
+                        assetStrings.addAsset.validation.serialNumberMaxLength,
+                    },
                   })}
                 />
                 {errors.serialNumber && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.serialNumber.message}
+                  </p>
+                )}
+                {serialNumber?.length === 15 && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Maximum 15 characters allowed
                   </p>
                 )}
               </div>
@@ -419,6 +526,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   {assetStrings.addAsset.formLabels.status}
+                  <span className="text-red-500">*</span>
                 </label>
                 <select
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
@@ -448,16 +556,32 @@ const AddAsset = ({ onClose, onSuccess }) => {
 
               {/* Description */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {assetStrings.addAsset.formLabels.description}
+                  <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
                   rows={2}
+                  id="description"
+                  maxLength={200}
                   placeholder={assetStrings.addAsset.placeholders.description}
                   {...register("description", {
                     required:
                       assetStrings.addAsset.validation.descriptionRequired,
+                    minLength: {
+                      value: 10,
+                      message:
+                        assetStrings.addAsset.validation.descriptionMinLength,
+                    },
+                    maxLength: {
+                      value: 200,
+                      message:
+                        assetStrings.addAsset.validation.descriptionMaxLength,
+                    },
                   })}
                 />
                 {errors.description && (
@@ -465,12 +589,18 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.description.message}
                   </p>
                 )}
+                {description?.length === 200 && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Maximum 200 characters allowed
+                  </p>
+                )}
               </div>
 
               {/* Organization Dropdown */}
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
-                  Organization
+                  {assetStrings.addAsset.formLabels.organization}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div
                   onClick={() => setShowOrgDropdown(!showOrgDropdown)}
@@ -520,7 +650,8 @@ const AddAsset = ({ onClose, onSuccess }) => {
               {/* Branch Dropdown */}
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
-                  Branch
+                  {assetStrings.addAsset.formLabels.branch}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div
                   onClick={() => {
@@ -571,7 +702,8 @@ const AddAsset = ({ onClose, onSuccess }) => {
               {/* Department Dropdown */}
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
-                  Department
+                  {assetStrings.addAsset.formLabels.department}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div
                   onClick={() => {

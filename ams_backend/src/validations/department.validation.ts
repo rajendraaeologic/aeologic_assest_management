@@ -7,7 +7,7 @@ import {
 const createDepartmentValidation = {
   body: Joi.object()
     .keys({
-      departmentName: Joi.string().required(),
+      departmentName: Joi.string().min(3).max(25).required(),
       //location: Joi.string().required(),
       branchId: Joi.string().required(),
     })
@@ -44,7 +44,7 @@ const updateDepartmentValidation = {
   }),
   body: Joi.object()
     .keys({
-      departmentName: Joi.string().optional(),
+      departmentName: Joi.string().min(3).max(25).optional(),
     })
     .min(1),
 };

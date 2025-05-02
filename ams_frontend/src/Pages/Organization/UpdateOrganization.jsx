@@ -24,9 +24,16 @@ const UpdateOrganization = ({ onClose }) => {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
-  } = useForm();
 
+    formState: { errors, isSubmitting },
+    watch,
+  } = useForm({
+    defaultValues: {
+      organizationName: "",
+    },
+    mode: "onChange",
+  });
+  const organizationName = watch("organizationName");
   useEffect(() => {
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
@@ -108,11 +115,15 @@ const UpdateOrganization = ({ onClose }) => {
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="w-full">
-              <label className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="organizationName"
+                className="block text-sm font-medium text-gray-700"
+              >
                 {
                   organizationStrings.updateOrganization.formLabels
                     .organizationName
                 }
+                <span className="text-red-500">*</span>
               </label>
               <input
                 ref={firstInputRef}
@@ -120,8 +131,22 @@ const UpdateOrganization = ({ onClose }) => {
                   required:
                     organizationStrings.updateOrganization.validation
                       .organizationNameRequired,
+                  minLength: {
+                    value: 3,
+                    message:
+                      organizationStrings.addOrganization.validation
+                        .organizationNameMinLength,
+                  },
+                  maxLength: {
+                    value: 25,
+                    message:
+                      organizationStrings.addOrganization.validation
+                        .organizationNameMaxLength,
+                  },
                 })}
                 type="text"
+                id="organizationName"
+                maxLength={25}
                 placeholder={
                   organizationStrings.updateOrganization.placeholders
                     .organizationName
@@ -133,6 +158,11 @@ const UpdateOrganization = ({ onClose }) => {
               {errors.organizationName && (
                 <p className="text-red-500 text-sm mt-1">
                   {errors.organizationName.message}
+                </p>
+              )}
+              {organizationName.length === 25 && (
+                <p className="text-red-500  text-sm mt-1">
+                  Maximum 25 characters allowed
                 </p>
               )}
             </div>

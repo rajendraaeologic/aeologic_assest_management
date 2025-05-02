@@ -29,6 +29,7 @@ const AddBranch = ({ onClose }) => {
     handleSubmit,
     setValue,
     setError,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
@@ -36,7 +37,17 @@ const AddBranch = ({ onClose }) => {
       branchLocation: "",
       companyId: "",
     },
+    mode: "onChange",
   });
+
+  const branchName = watch("branchName");
+  const branchLocation = watch("branchLocation");
+
+  useEffect(() => {
+    register("companyId", {
+      required: branchStrings.addBranch.validation.organizationRequired,
+    });
+  }, [register]);
 
   const fetchOrganizations = async (page, search = "") => {
     try {
@@ -46,11 +57,7 @@ const AddBranch = ({ onClose }) => {
       );
       const { data, totalPages } = response.data;
 
-      if (page === 1) {
-        setOrganizations(data);
-      } else {
-        setOrganizations((prev) => [...prev, ...data]);
-      }
+      setOrganizations((prev) => (page === 1 ? data : [...prev, ...data]));
       setOrgPage(page);
       setHasMoreOrgs(page < totalPages);
     } catch (error) {
@@ -75,9 +82,7 @@ const AddBranch = ({ onClose }) => {
 
   const handleClose = () => {
     setIsVisible(false);
-    setTimeout(() => {
-      onClose();
-    }, 300);
+    setTimeout(onClose, 300);
   };
 
   const handleOutsideClick = (event) => {
@@ -87,8 +92,8 @@ const AddBranch = ({ onClose }) => {
   };
 
   const handleOrgScroll = (e) => {
-    const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+    const { scrollTop, clientHeight, scrollHeight } = e.target;
+    const bottomReached = scrollHeight - scrollTop <= clientHeight + 10;
 
     if (bottomReached && !orgLoading && hasMoreOrgs) {
       fetchOrganizations(orgPage + 1, searchTerm);
@@ -96,14 +101,6 @@ const AddBranch = ({ onClose }) => {
   };
 
   const onSubmit = async (data) => {
-    if (!data.companyId) {
-      toast.error("Please select a valid organization", {
-        position: "top-right",
-        autoClose: 1000,
-      });
-      return;
-    }
-
     try {
       await dispatch(createBranch(data)).unwrap();
       dispatch(getAllBranches());
@@ -120,9 +117,7 @@ const AddBranch = ({ onClose }) => {
         });
         return;
       }
-
-      const errorMessage = error.message || branchStrings.addBranch.toast.error;
-      toast.error(errorMessage, {
+      toast.error(error.message || branchStrings.addBranch.toast.error, {
         position: "top-right",
         autoClose: 1500,
       });
@@ -130,23 +125,16 @@ const AddBranch = ({ onClose }) => {
   };
 
   const handleOrgClick = async () => {
-    const newState = !showOrgDropdown;
-    setShowOrgDropdown(newState);
-
-    if (!newState) {
-      setSearchTerm("");
-    } else {
-      if (searchTerm.trim() === "") {
-        await fetchOrganizations(1, "");
-      }
-    }
+    setShowOrgDropdown((prev) => !prev);
+    if (searchTerm.trim() === "") await fetchOrganizations(1, "");
   };
 
   const handleOrgSelect = (org) => {
     setSelectedOrg(org);
-    setValue("companyId", org.id);
+    setValue("companyId", org.id, { shouldValidate: true });
     setShowOrgDropdown(false);
     setSearchTerm("");
+    setError("companyId", { type: "manual", message: "" });
   };
 
   const handleSearch = (e) => {
@@ -181,16 +169,32 @@ const AddBranch = ({ onClose }) => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="branchName"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {branchStrings.addBranch.formLabels.branchName}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   ref={firstInputRef}
                   {...register("branchName", {
                     required:
                       branchStrings.addBranch.validation.branchNameRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        branchStrings.addBranch.validation.branchNameMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        branchStrings.addBranch.validation.branchNameMaxLength,
+                    },
                   })}
                   type="text"
+                  id="branchName"
+                  maxLength={25}
                   placeholder={branchStrings.addBranch.placeholders.branchName}
                   className={`mt-1 p-2 w-full border ${
                     errors.branchName ? "border-red-500" : "border-gray-300"
@@ -201,18 +205,41 @@ const AddBranch = ({ onClose }) => {
                     {errors.branchName.message}
                   </p>
                 )}
+                {branchName?.length === 25 && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Maximum 25 characters allowed
+                  </p>
+                )}
               </div>
 
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="branchLocation"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {branchStrings.addBranch.formLabels.branchLocation}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   {...register("branchLocation", {
                     required:
                       branchStrings.addBranch.validation.branchLocationRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        branchStrings.addBranch.validation
+                          .branchLocationMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        branchStrings.addBranch.validation
+                          .branchLocationMaxLength,
+                    },
                   })}
                   type="text"
+                  maxLength={25}
+                  id="branchLocation"
                   placeholder={
                     branchStrings.addBranch.placeholders.branchLocation
                   }
@@ -225,19 +252,26 @@ const AddBranch = ({ onClose }) => {
                     {errors.branchLocation.message}
                   </p>
                 )}
+                {branchLocation?.length === 25 && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Maximum 25 characters allowed
+                  </p>
+                )}
               </div>
 
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {branchStrings.addBranch.formLabels.companyId}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div
                   onClick={handleOrgClick}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.companyId ? "border-red-500" : "border-gray-300"
+                  } rounded-md cursor-pointer bg-white`}
                 >
-                  {selectedOrg
-                    ? selectedOrg.organizationName
-                    : branchStrings.addBranch.select.defaultOption}
+                  {selectedOrg?.organizationName ||
+                    branchStrings.addBranch.select.defaultOption}
                 </div>
 
                 {showOrgDropdown && (

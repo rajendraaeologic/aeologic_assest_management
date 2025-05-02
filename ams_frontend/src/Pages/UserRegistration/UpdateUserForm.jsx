@@ -42,11 +42,20 @@ const UpdateUserForm = ({ onClose }) => {
   const {
     register,
     handleSubmit,
+
     reset,
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      userName: "",
+      phone: "",
+    },
+    mode: "onChange",
+  });
+  const userName = watch("userName");
+  const phone = watch("phone");
 
   const branchId = watch("branchId");
   const selectedOrgId = watch("companyId");
@@ -371,7 +380,10 @@ const UpdateUserForm = ({ onClose }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* User Name */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="userName"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {userStrings.updateUser.formLabels.userName}
                 </label>
                 <input
@@ -379,8 +391,20 @@ const UpdateUserForm = ({ onClose }) => {
                   {...register("userName", {
                     required:
                       userStrings.updateUser.validation.userNameRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        userStrings.updateUser.validation.userNameMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        userStrings.updateUser.validation.userNameMaxLength,
+                    },
                   })}
                   type="text"
+                  maxLength={25}
+                  id="userName"
                   className={`mt-1 p-2 w-full border ${
                     errors.userName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
@@ -390,22 +414,40 @@ const UpdateUserForm = ({ onClose }) => {
                     {errors.userName.message}
                   </p>
                 )}
+                {userName.length === 25 && (
+                  <p className="text-red-500  text-sm mt-1">
+                    Maximum 25 characters allowed
+                  </p>
+                )}
               </div>
 
               {/* Phone Number */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="phoneNumber"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {userStrings.updateUser.formLabels.phone}
                 </label>
                 <input
                   {...register("phone", {
                     required: userStrings.updateUser.validation.phoneRequired,
+                    minLength: {
+                      value: 7,
+                      message: userStrings.updateUser.validation.phoneMinLength,
+                    },
+                    maxLength: {
+                      value: 10,
+                      message: userStrings.updateUser.validation.phoneMaxLength,
+                    },
                     pattern: {
                       value: /^[0-9]{10}$/,
                       message: userStrings.updateUser.validation.phoneInvalid,
                     },
                   })}
                   type="tel"
+                  id="phoneNumber"
+                  maxLength={10}
                   className={`mt-1 p-2 w-full border ${
                     errors.phone ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
@@ -415,11 +457,19 @@ const UpdateUserForm = ({ onClose }) => {
                     {errors.phone.message}
                   </p>
                 )}
+                {phone.length === 25 && (
+                  <p className="text-red-500  text-sm mt-1">
+                    Maximum 10 Numbers allowed
+                  </p>
+                )}
               </div>
 
               {/* Email */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {userStrings.updateUser.formLabels.email}
                 </label>
                 <input
@@ -431,6 +481,7 @@ const UpdateUserForm = ({ onClose }) => {
                     },
                   })}
                   type="email"
+                  id="email"
                   className={`mt-1 p-2 w-full border ${
                     errors.email ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}

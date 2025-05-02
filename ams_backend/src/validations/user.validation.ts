@@ -3,8 +3,6 @@ import Joi from "joi";
 import {
   isValidMongoDBObjectId,
   isValidMongoDBObjectIdCustomMessages,
-  password,
-  passwordCustomMessages,
 } from "@/validations/custom.validation";
 
 const getUsers = {
@@ -47,8 +45,8 @@ const getUser = {
 const createUsers = {
   body: Joi.object()
     .keys({
-      userName: Joi.string().required(),
-      phone: Joi.string().required().min(7),
+      userName: Joi.string().min(3).max(25).required(),
+      phone: Joi.string().required().min(7).max(10),
       email: Joi.string().email().required(),
 
       userRole: Joi.string()
@@ -144,7 +142,7 @@ export const uploadUsers = {
 };
 
 const excelUserSchema = Joi.object({
-  userName: Joi.string().min(2).required().messages({
+  userName: Joi.string().min(3).max(25).required().messages({
     "any.required": "Username is required",
     "string.min": "Username must be at least 2 characters",
   }),

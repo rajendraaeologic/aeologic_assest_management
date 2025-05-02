@@ -57,16 +57,21 @@ const departmentStrings = {
   addDepartment: {
     title: "Add Department",
     formLabels: {
-      departmentName: "Department Name*",
-      selectOrganization: "Select Organization*",
-      selectBranch: "Select Branch*",
+      departmentName: "Department Name",
+      selectOrganization: "Select Organization",
+      selectBranch: "Select Branch",
     },
     placeholders: {
       departmentName: "Department name",
     },
     validation: {
       departmentNameRequired: "Department name is required",
+      departmentNameMinLength:
+        "Department Name must be at least 3 characters long",
+      departmentNameMaxLength:
+        "Department Name  must be at most 25 characters long",
       branchRequired: "Branch is required",
+      organizationRequired: "Organization is required",
     },
     buttons: {
       save: "Save",
@@ -81,10 +86,14 @@ const departmentStrings = {
   updateDepartment: {
     title: "Update Department",
     formLabels: {
-      departmentName: "Department Name*",
+      departmentName: "Department Name",
     },
     validation: {
       departmentNameRequired: "Department name is required",
+      departmentNameMinLength:
+        "Department Name must be at least 3 characters long",
+      departmentNameMaxLength:
+        "Department Name  must be at most 25 characters long",
     },
     buttons: {
       close: "Close",

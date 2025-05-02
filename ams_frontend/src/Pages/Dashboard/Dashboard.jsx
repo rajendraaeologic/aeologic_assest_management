@@ -31,7 +31,8 @@ const Dashboard = () => {
       try {
         const res = await API.get("/dashboard/counts");
         if (res.status === 200 && res.data?.data && isMounted) {
-          const { users, organizations, branches, departments } = res.data.data;
+          const { users, organizations, branches, departments, assets } =
+            res.data.data;
 
           const data = [
             {
@@ -56,7 +57,7 @@ const Dashboard = () => {
             },
             {
               name: dashboardStrings.dashboard.stats.assets,
-              value: 2,
+              value: assets,
               color: "#FBBF24",
             },
             {

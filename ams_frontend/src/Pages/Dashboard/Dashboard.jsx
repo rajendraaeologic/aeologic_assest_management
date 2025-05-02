@@ -14,12 +14,19 @@ import { motion } from "framer-motion";
 import SliderContext from "../../components/ContexApi";
 import dashboardStrings from "../../locales/DashboardStrings";
 import API from "../../App/api/axiosInstance";
-
+import { selectCurrentUser } from "../../Features/auth/authSlice";
+import { useSelector } from "react-redux";
+import { USER_ROLES } from "../../TypeRoles/constants.roles";
 const SkeletonCard = () => (
   <div className="animate-pulse bg-gray-300 h-24 rounded-lg shadow-lg"></div>
 );
 
 const Dashboard = () => {
+  const user = useSelector(selectCurrentUser);
+
+  if (user?.userRole === USER_ROLES.USER) {
+    return <Navigate to="/user-dashboard" replace />;
+  }
   const { isSidebarOpen } = useContext(SliderContext);
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);

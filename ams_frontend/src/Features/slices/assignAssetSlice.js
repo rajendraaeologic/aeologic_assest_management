@@ -21,17 +21,17 @@ export const createAssignAsset = createAsyncThunk(
 
 // Get All AssignAssets
 export const getAllAssignAssets = createAsyncThunk(
-  "assignAsset/getAll",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await getAllAssignAssetsService();
-      return response.data || [];
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch assign assets"
-      );
+    "assignAsset/getAll",
+    async (params, { rejectWithValue }) => {
+      try {
+        const response = await getAllAssignAssetsService(params);
+        return response.data || [];
+      } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || "Failed to fetch assign assets"
+        );
+      }
     }
-  }
 );
 
 // Update AssignAsset

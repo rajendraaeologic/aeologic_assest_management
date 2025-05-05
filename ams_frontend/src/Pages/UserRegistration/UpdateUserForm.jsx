@@ -679,7 +679,7 @@ const UpdateUserForm = ({ onClose }) => {
                   <option value="ACTIVE">
                     {userStrings.updateUser.select.statusActive}
                   </option>
-                  <option value="INACTIVE">
+                  <option value="IN_ACTIVE">
                     {userStrings.updateUser.select.statusInactive}
                   </option>
                 </select>

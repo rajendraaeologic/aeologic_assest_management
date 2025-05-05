@@ -34,8 +34,18 @@ const AssignAsset = () => {
     useSelector((state) => state.assignAssetData);
 
   useEffect(() => {
-    dispatch(getAllAssignAssets());
-  }, [dispatch, assignAssets.length]);
+    const fetchAssignments = async () => {
+      try {
+        await dispatch(getAllAssignAssets({
+          status: "IN_USE",
+        }));
+      } catch (error) {
+        console.error("Error fetching assignments:", error);
+      }
+    };
+
+    fetchAssignments();
+  }, [dispatch,assignAssets.length]);
 
   const [isAddAssignAsset, setIsAddAssignAsset] = useState(false);
   const [isUpdateAssignAsset, setIsUpdateAssignAsset] = useState(false);
@@ -51,6 +61,7 @@ const AssignAsset = () => {
   const [searchAssignAsset, setSearchAssignAsset] = useState({
     userName: "",
     assetName: "",
+    organizationName: "",
     branchName: "",
     departmentName: "",
   });
@@ -80,26 +91,15 @@ const AssignAsset = () => {
   };
 
   const filteredAssignAssets = assignAssets?.filter((asset) => {
+    const lowerCase = (str) => (str || "").toLowerCase();
     return (
-      (searchAssignAsset.userName === "" ||
-        (asset.userName || "")
-          .toLowerCase()
-          .includes(searchAssignAsset.userName.toLowerCase())) &&
-      (searchAssignAsset.assetName === "" ||
-        (asset.assetName || "")
-          .toLowerCase()
-          .includes(searchAssignAsset.assetName.toLowerCase())) &&
-      (searchAssignAsset.branchName === "" ||
-        (asset.branchName || "")
-          .toLowerCase()
-          .includes(searchAssignAsset.branchName.toLowerCase())) &&
-      (searchAssignAsset.departmentName === "" ||
-        (asset.departmentName || "")
-          .toLowerCase()
-          .includes(searchAssignAsset.departmentName.toLowerCase()))
+        lowerCase(asset.userName).includes(lowerCase(searchAssignAsset.userName)) &&
+        lowerCase(asset.assetName).includes(lowerCase(searchAssignAsset.assetName)) &&
+        lowerCase(asset.organizationName).includes(lowerCase(searchAssignAsset.organizationName)) &&
+        lowerCase(asset.branchName).includes(lowerCase(searchAssignAsset.branchName)) &&
+        lowerCase(asset.departmentName).includes(lowerCase(searchAssignAsset.departmentName))
     );
   });
-
   const startIndex = currentPage * rowsPerPage;
   const currentRows = filteredAssignAssets.slice(
     startIndex,
@@ -244,82 +244,35 @@ const AssignAsset = () => {
               style={{ tableLayout: "fixed" }}
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
-                <tr>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.userName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.assetName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.branchName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.departmentName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.action}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.deleteAll}
-                  </th>
-                </tr>
+              <tr>
+                <th className="px-2 py-4 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word" }}>
+                  {table.headers.userName}
+                </th>
+                <th className="px-2 py-4 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word" }}>
+                  {table.headers.assetName}
+                </th>
+                <th className="px-2 py-4 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word" }}>
+                  {table.headers.organizationName}
+                </th>
+                <th className="px-2 py-4 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word" }}>
+                  {table.headers.branchName}
+                </th>
+                <th className="px-2 py-4 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word" }}>
+                  {table.headers.departmentName}
+                </th>
+                <th className="px-2 py-4 border border-gray-300" style={{ maxWidth: "100px", minWidth: "100px", overflowWrap: "break-word" }}>
+                  {table.headers.action}
+                </th>
+                <th className="px-2 py-4 border border-gray-300" style={{ maxWidth: "100px", minWidth: "100px", overflowWrap: "break-word" }}>
+                  {table.headers.deleteAll}
+                </th>
+              </tr>
               </thead>
-
               {/* Search Row */}
               <tbody>
-                <tr className="bg-gray-100">
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
+              <tr className="bg-gray-100">
+                <td className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word" }}>
+                  <input
                       type="text"
                       name="userName"
                       placeholder={table.searchPlaceholders.userName}
@@ -327,17 +280,10 @@ const AssignAsset = () => {
                       value={searchAssignAsset.userName}
                       onChange={handleSearchChange}
                       style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
+                  />
+                </td>
+                <td className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word" }}>
+                  <input
                       type="text"
                       name="assetName"
                       placeholder={table.searchPlaceholders.assetName}
@@ -345,17 +291,21 @@ const AssignAsset = () => {
                       value={searchAssignAsset.assetName}
                       onChange={handleSearchChange}
                       style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
+                  />
+                </td>
+                <td className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word" }}>
+                  <input
+                      type="text"
+                      name="organizationName"
+                      placeholder={table.searchPlaceholders.organizationName}
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAssignAsset.organizationName}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                  />
+                </td>
+                <td className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word" }}>
+                  <input
                       type="text"
                       name="branchName"
                       placeholder={table.searchPlaceholders.branchName}
@@ -363,17 +313,10 @@ const AssignAsset = () => {
                       value={searchAssignAsset.branchName}
                       onChange={handleSearchChange}
                       style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
+                  />
+                </td>
+                <td className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word" }}>
+                  <input
                       type="text"
                       name="departmentName"
                       placeholder={table.searchPlaceholders.departmentName}
@@ -381,140 +324,84 @@ const AssignAsset = () => {
                       value={searchAssignAsset.departmentName}
                       onChange={handleSearchChange}
                       style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  ></td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      <div className="">
-                        <label className="flex items-center">
-                          <input
+                  />
+                </td>
+                <td className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]" style={{ maxWidth: "100px", wordWrap: "break-word" }}></td>
+                <td className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]" style={{ maxWidth: "100px", wordWrap: "break-word" }}>
+                  <div className="flex justify-center items-center">
+                    <div className="">
+                      <label className="flex items-center">
+                        <input
                             type="checkbox"
-                            checked={
-                              selectedAssignAssets.length ===
-                                assignAssets.length && assignAssets.length > 0
-                            }
+                            checked={selectedAssignAssets.length === assignAssets.length && assignAssets.length > 0}
                             onChange={handleSelectAllAssignAssets}
                             className="mr-2"
-                          />
-                        </label>
-                      </div>
-                      <button onClick={handleDeleteSelectedAssignAssets}>
-                        <MdDelete className="h-6 w-6  text-[red]" />
-                      </button>
+                        />
+                      </label>
                     </div>
-                  </td>
-                </tr>
+                    <button onClick={handleDeleteSelectedAssignAssets}>
+                      <MdDelete className="h-6 w-6  text-[red]" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
               </tbody>
 
               {/* Table Body */}
               <tbody>
-                {currentRows.length > 0 ? (
+              {currentRows.length > 0 ? (
                   currentRows.map((asset, index) => (
-                    <tr
-                      key={asset.id || index}
-                      className={`${
-                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-gray-200 divide-y divide-gray-300`}
-                    >
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {asset.userName}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {asset.assetName}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {asset.branchName}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {asset.departmentName}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
-                        <div className="flex ">
-                          <button
-                            onClick={() => {
-                              setIsUpdateAssignAsset(true);
-                              handlerUpdateData(asset);
-                            }}
-                            className="px-3 py-2 rounded-sm "
-                          >
-                            <FontAwesomeIcon icon={faPen} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClick(asset)}
-                            className="px-3 py-2 rounded-sm   text-[red]"
-                          >
-                            <MdDelete className="h-6 w-6" />
-                          </button>
-                        </div>
-                      </td>
-                      <td
-                        className="px-2 py-2 border text-center border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={
-                            selectedAssignAssets?.includes(asset.id) ?? false
-                          }
-                          onChange={() =>
-                            handleToggleAssignAssetSelection(asset.id)
-                          }
-                        />
-                      </td>
-                    </tr>
+                      <tr key={asset.id || index} className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-200 divide-y divide-gray-300`}>
+                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word", verticalAlign: "top" }}>
+                          {asset.userName}
+                        </td>
+                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word", verticalAlign: "top" }}>
+                          {asset.assetName}
+                        </td>
+                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word", verticalAlign: "top" }}>
+                          {asset.organizationName }
+                        </td>
+                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word", verticalAlign: "top" }}>
+                          {asset.branchName}
+                        </td>
+                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word", verticalAlign: "top" }}>
+                          {asset.departmentName}
+                        </td>
+                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "100px", wordWrap: "break-word" }}>
+                          <div className="flex ">
+                            <button
+                                onClick={() => {
+                                  setIsUpdateAssignAsset(true);
+                                  handlerUpdateData(asset);
+                                }}
+                                className="px-3 py-2 rounded-sm "
+                            >
+                              <FontAwesomeIcon icon={faPen} />
+                            </button>
+                            <button
+                                onClick={() => handleDeleteClick(asset)}
+                                className="px-3 py-2 rounded-sm   text-[red]"
+                            >
+                              <MdDelete className="h-6 w-6" />
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-2 py-2 border text-center border-gray-300" style={{ maxWidth: "100px", wordWrap: "break-word" }}>
+                          <input
+                              type="checkbox"
+                              checked={selectedAssignAssets?.includes(asset.id) ?? false}
+                              onChange={() => handleToggleAssignAssetSelection(asset.id)}
+                          />
+                        </td>
+                      </tr>
                   ))
-                ) : (
+              ) : (
                   <tr>
-                    <td
-                      colSpan="6"
-                      className="px-4 py-4 text-center text-black"
-                    >
+                    <td colSpan="9" className="px-4 py-4 text-center text-black">
                       {table.noData}
                     </td>
                   </tr>
-                )}
+              )}
               </tbody>
             </table>
           </div>

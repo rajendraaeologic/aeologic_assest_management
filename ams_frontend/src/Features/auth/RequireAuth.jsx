@@ -3,8 +3,6 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { selectCurrentToken, selectCurrentUser } from "./authSlice";
 
 const RequireAuth = ({ allowedRoles }) => {
-  console.log("user", allowedRoles);
-
   const token = useSelector(selectCurrentToken);
   const user = useSelector(selectCurrentUser);
   const location = useLocation();

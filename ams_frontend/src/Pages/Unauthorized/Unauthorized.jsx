@@ -4,27 +4,17 @@ import { useNavigate } from "react-router-dom";
 const Unauthorized = () => {
   const navigate = useNavigate();
 
-  const handleGoBack = () => {
-    navigate(-1);
-  };
-
   const handleGoHome = () => {
     navigate("/login");
   };
 
   return (
     <div className="text-center py-16 px-4 max-w-xl mx-auto">
-      <h1 className="text-4xl text-red-600">⛔ Unauthorized Access</h1>
+      <h1 className="text-4xl text-red-600">Unauthorized Access</h1>
       <p className="mt-6 text-lg text-gray-600">
         You do not have permission to view this page.
       </p>
       <div className="mt-8 flex justify-center gap-4">
-        <button
-          onClick={handleGoBack}
-          className="px-6 py-3 text-lg bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-all duration-300"
-        >
-          🔙 Go Back
-        </button>
         <button
           onClick={handleGoHome}
           className="px-6 py-3 text-lg bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all duration-300"

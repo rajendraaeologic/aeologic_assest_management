@@ -9,7 +9,7 @@ const router = express.Router();
 router
   .route("/")
   .get(
-    auth(),
+    auth("getAssignAssetUser"),
     validate(userDashboardValidations.getUserAssignAssetValidation),
     userDashboardController.getAssignAssetUser
   );

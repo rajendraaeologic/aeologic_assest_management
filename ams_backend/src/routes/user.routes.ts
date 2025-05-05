@@ -8,19 +8,33 @@ import { upload } from "@/middleware/upload";
 const router = express.Router();
 
 router
-  .get("/download-excel-template", userController.downloadUserExcelTemplate)
+  .get(
+    "/download-excel-template",
+    auth("manageUsers"),
+    userController.downloadUserExcelTemplate
+  )
   .route("/")
-  .post(validate(userValidation.createUsers), userController.createUser)
+  .post(
+    auth("manageUsers"),
+    validate(userValidation.createUsers),
+    userController.createUser
+  )
 
-  .get(validate(userValidation.getUsers), userController.getUsers);
+  .get(
+    auth("manageUsers"),
+    validate(userValidation.getUsers),
+    userController.getUsers
+  );
 router.post(
   "/upload-excel",
   upload.single("file"),
+  auth("manageUsers"),
   validate(userValidation.uploadUsers),
   userController.uploadUsersFromExcel
 );
 router.get(
   "/download-excel-template",
+  auth("manageUsers"),
   userController.downloadUserExcelTemplate
 );
 
@@ -35,12 +49,25 @@ router
 
 router
   .route("/:userId")
-  .get(validate(userValidation.getUser), userController.getUser)
-  .put(validate(userValidation.updateUser), userController.updateUser)
-  .delete(validate(userValidation.deleteUser), userController.deleteUser);
+  .get(
+    auth("manageUsers"),
+    validate(userValidation.getUser),
+    userController.getUser
+  )
+  .put(
+    auth("manageUsers"),
+    validate(userValidation.updateUser),
+    userController.updateUser
+  )
+  .delete(
+    auth("manageUsers"),
+    validate(userValidation.deleteUser),
+    userController.deleteUser
+  );
 router
   .route("/bulk-delete")
   .post(
+    auth("manageUsers"),
     validate(userValidation.deleteUsersValidation),
     userController.deleteUsers
   );

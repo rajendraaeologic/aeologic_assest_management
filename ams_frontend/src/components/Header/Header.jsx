@@ -13,12 +13,11 @@ import { selectCurrentUser } from "../../Features/auth/authSlice";
 const Header = () => {
   const { isSidebarOpen, setIsSidebarOpen } = useContext(SliderContext);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { departments } = useSelector((state) => state.departmentData);
   const navigate = useNavigate();
-
   const dispatch = useDispatch();
   const currentUser = useSelector(selectCurrentUser);
-
+  const allowedRoles = ["ADMIN", "MANAGER", "SUPERADMIN"];
+  const isAllowed = allowedRoles.includes(currentUser?.userRole);
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -41,9 +40,11 @@ const Header = () => {
       }`}
     >
       <div>
-        <button onClick={toggleSidebar} className="text-xl">
-          <FaBars />
-        </button>
+        {isAllowed && (
+          <button onClick={toggleSidebar} className="text-xl">
+            <FaBars />
+          </button>
+        )}
       </div>
 
       <div className="md:mr-10 sm:mr-8 flex justify-center items-center gap-3">

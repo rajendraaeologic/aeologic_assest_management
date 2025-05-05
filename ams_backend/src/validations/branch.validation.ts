@@ -8,10 +8,10 @@ import {
 const createBranchValidation = {
   body: Joi.object()
     .keys({
-      branchName: Joi.string().required().messages({
+      branchName: Joi.string().min(3).max(25).required().messages({
         "string.empty": "Branch name is required",
       }),
-      branchLocation: Joi.string().required().messages({
+      branchLocation: Joi.string().min(3).max(25).required().messages({
         "string.empty": "Branch location is required",
       }),
       companyId: Joi.string()
@@ -56,8 +56,8 @@ const updateBranchValidation = {
   }),
   body: Joi.object()
     .keys({
-      branchName: Joi.string().optional(),
-      branchLocation: Joi.string().optional(),
+      branchName: Joi.string().min(3).max(25).optional(),
+      branchLocation: Joi.string().min(3).max(25).optional(),
     })
     .min(1),
 };

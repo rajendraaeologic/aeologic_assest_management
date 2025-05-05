@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../../Features/auth/authSlice";
 import loginImage from "../../assets/login.jpg";
+import { USER_ROLES } from "../../TypeRoles/constants.roles";
 
 const LoginUser = () => {
   const userRef = useRef();
@@ -82,15 +83,21 @@ const LoginUser = () => {
       );
 
       if (result.meta.requestStatus === "fulfilled") {
-        navigate("/dashboard", { replace: true });
+        const userRole = result.payload.user?.userRole;
+
+        navigate(
+          userRole === USER_ROLES.USER ? "/user-dashboard" : "/dashboard",
+          { replace: true }
+        );
       } else if (result.meta.requestStatus === "rejected") {
-        // Handle the error object properly
+        console.log("result", result);
         const errorMessage =
-          result.payload?.message || result.error?.message || "Login failed";
+          result.payload?.message ||
+          result.error?.message ||
+          "Server Error !Please try again";
         setErrMsg(errorMessage);
       }
     } catch (err) {
-      // Handle unexpected errors
       setErrMsg("An unexpected error occurred. Please try again.");
     }
   };

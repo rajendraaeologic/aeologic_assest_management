@@ -1,9 +1,11 @@
 import React from "react";
 import "./App.css";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import {
+  createBrowserRouter,
+  RouterProvider,
+  Navigate,
+} from "react-router-dom";
 import { ToastContainer } from "react-toastify";
-
-import RequireAuth from "./Features/auth/RequireAuth";
 
 // Context Provider
 import SliderContextProvider from "./components/ContextProvider";
@@ -24,20 +26,25 @@ import Organization from "./Pages/Organization/Organization";
 import Branch from "./Pages/Branch/Branch";
 import AssignAsset from "./Pages/AssignAsset/AssignAsset";
 import Login from "./Pages/LoginUser/LoginUser";
-import { Navigate } from "react-router-dom";
+import UserDashboard from "./Pages/UserDashboard/UserDashboard";
+import UnauthorizedPage from "./Pages/Unauthorized/Unauthorized";
+
+// Auth
+import RequireAuth from "./Features/auth/RequireAuth";
+import { ADMIN_ROLES, USER_ROLES } from "./TypeRoles/constants.roles";
 
 const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
+  { path: "/unauthorized", element: <UnauthorizedPage /> },
 
+  // Admin Routes
   {
-    path: "/",
-    element: <RequireAuth />,
+    element: <RequireAuth allowedRoles={ADMIN_ROLES} />,
     children: [
       {
-        path: "/",
         element: <Layout />,
         children: [
-          { index: true, element: <Navigate to="/dashboard" replace /> },
+          { index: true, element: <Navigate to="dashboard" replace /> },
           { path: "dashboard", element: <Dashboard /> },
           { path: "registration", element: <UserRegistration /> },
           { path: "organization", element: <Organization /> },
@@ -46,7 +53,6 @@ const router = createBrowserRouter([
           { path: "asset", element: <Asset /> },
           { path: "assignAsset", element: <AssignAsset /> },
           { path: "assigntag", element: <AssignTag /> },
-
           { path: "outfordelivery", element: <OutForDelivery /> },
           { path: "datewishreport", element: <DateWishReport /> },
           { path: "daterangereport", element: <DateRangeReport /> },
@@ -56,6 +62,19 @@ const router = createBrowserRouter([
       },
     ],
   },
+
+  // User Routes
+  {
+    element: <RequireAuth allowedRoles={[USER_ROLES.USER]} />,
+    children: [
+      {
+        element: <Layout />,
+        children: [{ path: "/user-dashboard", element: <UserDashboard /> }],
+      },
+    ],
+  },
+
+  { path: "*", element: <Navigate to="/login" replace /> },
 ]);
 
 const App = () => {

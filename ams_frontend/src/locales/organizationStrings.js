@@ -53,13 +53,17 @@ const organizationStrings = {
   addOrganization: {
     title: "Add Organization",
     formLabels: {
-      organizationName: "Organization Name*",
+      organizationName: "Organization Name",
     },
     placeholders: {
       organizationName: "Enter organization name",
     },
     validation: {
       organizationNameRequired: "Organization name is required",
+      organizationNameMinLength:
+        "Organization name must be at least 3 characters long",
+      organizationNameMaxLength:
+        "Organization name must be at most 25 characters long",
     },
     buttons: {
       save: "Save",
@@ -74,13 +78,17 @@ const organizationStrings = {
   updateOrganization: {
     title: "Update Organization",
     formLabels: {
-      organizationName: "Organization Name*",
+      organizationName: "Organization Name",
     },
     placeholders: {
       organizationName: "Enter organization name",
     },
     validation: {
       organizationNameRequired: "Organization name is required",
+      organizationNameMinLength:
+        "Organization name must be at least 3 characters long",
+      organizationNameMaxLength:
+        "Organization name must be at most 25 characters long",
     },
     buttons: {
       update: "Update",

@@ -58,9 +58,9 @@ const branchStrings = {
   addBranch: {
     title: "Add Branch",
     formLabels: {
-      branchName: "Branch Name*",
-      branchLocation: "Location*",
-      companyId: "Organization*",
+      branchName: "Branch Name",
+      branchLocation: "Location",
+      companyId: "Organization",
     },
     placeholders: {
       branchName: "Branch name",
@@ -68,7 +68,14 @@ const branchStrings = {
     },
     validation: {
       branchNameRequired: "Branch name is required",
+      branchNameMinLength: "Branch name must be at least 3 characters long",
+      branchNameMaxLength: "Branch name must be at most 25 characters long",
+
       branchLocationRequired: "Branch location is required",
+      branchLocationMinLength:
+        "Branch Location  must be at least 3 characters long",
+      branchLocationMaxLength:
+        "Branch Location  must be at most 25 characters long",
       organizationRequired: "Organization selection is required",
     },
     select: {
@@ -89,12 +96,19 @@ const branchStrings = {
   updateBranch: {
     title: "Update Branch",
     formLabels: {
-      branchName: "Branch Name*",
-      branchLocation: "Location*",
+      branchName: "Branch Name",
+      branchLocation: "Location",
     },
     validation: {
       branchNameRequired: "Branch name is required",
+      branchNameMinLength: "Branch name must be at least 3 characters long",
+      branchNameMaxLength: "Branch name must be at most 25 characters long",
+
       branchLocationRequired: "Branch location is required",
+      branchLocationMinLength:
+        "Branch Location  must be at least 3 characters long",
+      branchLocationMaxLength:
+        "Branch Location  must be at most 25 characters long",
     },
     toast: {
       success: "Branch updated successfully!",

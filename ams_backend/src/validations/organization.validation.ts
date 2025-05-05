@@ -7,7 +7,7 @@ import {
 const createOrganizationValidation = {
   body: Joi.object()
     .keys({
-      organizationName: Joi.string().required(),
+      organizationName: Joi.string().min(3).max(25).required(),
     })
     .min(1),
 };
@@ -43,7 +43,7 @@ const updateOrganizationValidation = {
   }),
   body: Joi.object()
     .keys({
-      organizationName: Joi.string().optional(),
+      organizationName: Joi.string().min(3).max(25).optional(),
     })
     .min(1),
 };

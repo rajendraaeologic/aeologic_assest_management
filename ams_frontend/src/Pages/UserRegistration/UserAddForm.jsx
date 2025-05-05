@@ -59,8 +59,10 @@ const AddUserForm = ({ onClose }) => {
       companyId: "",
       status: "ACTIVE",
     },
+    mode: "onChange",
   });
-
+  const userName = watch("userName");
+  const phone = watch("phone");
   const branchId = watch("branchId");
 
   // Fetch organizations
@@ -310,15 +312,28 @@ const AddUserForm = ({ onClose }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* User Name */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="userName"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {userStrings.addUser.formLabels.userName}
                 </label>
                 <input
                   ref={firstInputRef}
                   {...register("userName", {
                     required: userStrings.addUser.validation.userNameRequired,
+                    minLength: {
+                      value: 3,
+                      message: userStrings.addUser.validation.userNameMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message: userStrings.addUser.validation.userNameMaxLength,
+                    },
                   })}
                   type="text"
+                  maxLength={25}
+                  id="userName"
                   placeholder={userStrings.addUser.placeholders.userName}
                   className={`mt-1 p-2 w-full border ${
                     errors.userName ? "border-red-500" : "border-gray-300"
@@ -329,22 +344,40 @@ const AddUserForm = ({ onClose }) => {
                     {errors.userName.message}
                   </p>
                 )}
+                {userName.length === 25 && (
+                  <p className="text-red-500  text-sm mt-1">
+                    Maximum 25 characters allowed
+                  </p>
+                )}
               </div>
 
               {/* Phone */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="phoneNumber"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {userStrings.addUser.formLabels.phone}
                 </label>
                 <input
                   {...register("phone", {
                     required: userStrings.addUser.validation.phoneRequired,
+                    minLength: {
+                      value: 7,
+                      message: userStrings.addUser.validation.phoneMinLength,
+                    },
+                    maxLength: {
+                      value: 10,
+                      message: userStrings.addUser.validation.phoneMaxLength,
+                    },
                     pattern: {
                       value: /^[0-9]{10}$/,
                       message: userStrings.addUser.validation.phoneInvalid,
                     },
                   })}
                   type="tel"
+                  maxLength={10}
+                  id="phoneNumber"
                   placeholder={userStrings.addUser.placeholders.phone}
                   className={`mt-1 p-2 w-full border ${
                     errors.phone ? "border-red-500" : "border-gray-300"
@@ -355,11 +388,19 @@ const AddUserForm = ({ onClose }) => {
                     {errors.phone.message}
                   </p>
                 )}
+                {phone.length === 25 && (
+                  <p className="text-red-500  text-sm mt-1">
+                    Maximum 10 Numbers allowed
+                  </p>
+                )}
               </div>
 
               {/* Email */}
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {userStrings.addUser.formLabels.email}
                 </label>
                 <input
@@ -371,6 +412,7 @@ const AddUserForm = ({ onClose }) => {
                     },
                   })}
                   type="email"
+                  id="email"
                   placeholder={userStrings.addUser.placeholders.email}
                   className={`mt-1 p-2 w-full border ${
                     errors.email ? "border-red-500" : "border-gray-300"
@@ -586,7 +628,7 @@ const AddUserForm = ({ onClose }) => {
                   <option value="ACTIVE">
                     {userStrings.addUser.select.statusActive}
                   </option>
-                  <option value="INACTIVE">
+                  <option value="IN_ACTIVE">
                     {userStrings.addUser.select.statusInactive}
                   </option>
                 </select>

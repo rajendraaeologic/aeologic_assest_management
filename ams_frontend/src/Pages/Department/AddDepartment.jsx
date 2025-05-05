@@ -35,14 +35,28 @@ const AddDepartment = ({ onClose }) => {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
     setValue,
   } = useForm({
     defaultValues: {
       departmentName: "",
       branchId: "",
+      organizationId: "",
     },
+    mode: "onChange",
   });
+
+  useEffect(() => {
+    register("organizationId", {
+      required: departmentStrings.addDepartment.validation.organizationRequired,
+    });
+    register("branchId", {
+      required: departmentStrings.addDepartment.validation.branchRequired,
+    });
+  }, [register]);
+
+  const departmentName = watch("departmentName");
 
   const fetchOrganizations = async (page, search = "") => {
     try {
@@ -140,6 +154,7 @@ const AddDepartment = ({ onClose }) => {
   const handleOrgSelect = (org) => {
     setSelectedOrg(org);
     setOrganizationId(org.id);
+    setValue("organizationId", org.id, { shouldValidate: true });
     setValue("branchId", "");
     setSelectedBranch(null);
     setShowOrgDropdown(false);
@@ -168,15 +183,13 @@ const AddDepartment = ({ onClose }) => {
     setShowBranchDropdown(!showBranchDropdown);
   };
 
-  const onSubmit = async (data) => {
-    if (!organizationId) {
-      toast.error("Please select a valid organization", {
-        position: "top-right",
-        autoClose: 1000,
-      });
-      return;
-    }
+  const handleBranchSelect = (branch) => {
+    setValue("branchId", branch.id, { shouldValidate: true });
+    setSelectedBranch(branch);
+    setShowBranchDropdown(false);
+  };
 
+  const onSubmit = async (data) => {
     try {
       await dispatch(
         createDepartment({
@@ -236,8 +249,12 @@ const AddDepartment = ({ onClose }) => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid sm:grid-cols-1 gap-4">
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="departmentName"
+                  className="block text-sm font-medium text-gray-700"
+                >
                   {departmentStrings.addDepartment.formLabels.departmentName}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   ref={firstInputRef}
@@ -245,8 +262,22 @@ const AddDepartment = ({ onClose }) => {
                     required:
                       departmentStrings.addDepartment.validation
                         .departmentNameRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        departmentStrings.addDepartment.validation
+                          .departmentNameMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        departmentStrings.addDepartment.validation
+                          .departmentNameMaxLength,
+                    },
                   })}
                   type="text"
+                  maxLength={25}
+                  id="departmentName"
                   placeholder={
                     departmentStrings.addDepartment.placeholders.departmentName
                   }
@@ -259,6 +290,11 @@ const AddDepartment = ({ onClose }) => {
                     {errors.departmentName.message}
                   </p>
                 )}
+                {departmentName.length === 25 && (
+                  <p className="text-red-500  text-sm mt-1">
+                    Maximum 25 characters allowed
+                  </p>
+                )}
               </div>
 
               <div className="w-full relative">
@@ -267,10 +303,13 @@ const AddDepartment = ({ onClose }) => {
                     departmentStrings.addDepartment.formLabels
                       .selectOrganization
                   }
+                  <span className="text-red-500">*</span>
                 </label>
                 <div
                   onClick={handleOrgClick}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.organizationId ? "border-red-500" : "border-gray-300"
+                  } rounded-md cursor-pointer bg-white`}
                 >
                   {selectedOrg
                     ? selectedOrg.organizationName
@@ -306,15 +345,23 @@ const AddDepartment = ({ onClose }) => {
                     </ul>
                   </div>
                 )}
+                {errors.organizationId && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.organizationId.message}
+                  </p>
+                )}
               </div>
 
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {departmentStrings.addDepartment.formLabels.selectBranch}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div
                   onClick={handleBranchClick}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.branchId ? "border-red-500" : "border-gray-300"
+                  } rounded-md cursor-pointer bg-white`}
                 >
                   {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                 </div>
@@ -334,11 +381,7 @@ const AddDepartment = ({ onClose }) => {
                       {branches.map((branch) => (
                         <li
                           key={branch.id}
-                          onClick={() => {
-                            setValue("branchId", branch.id);
-                            setSelectedBranch(branch);
-                            setShowBranchDropdown(false);
-                          }}
+                          onClick={() => handleBranchSelect(branch)}
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                         >
                           {branch.branchName}

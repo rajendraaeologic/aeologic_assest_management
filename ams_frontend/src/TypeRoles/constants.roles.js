@@ -1,0 +1,13 @@
+// TypeRoles/constants.roles.js
+export const USER_ROLES = {
+  USER: "USER",
+  ADMIN: "ADMIN",
+  SUPERADMIN: "SUPERADMIN",
+  MANAGER: "MANAGER",
+};
+
+export const ADMIN_ROLES = [
+  USER_ROLES.ADMIN,
+  USER_ROLES.SUPERADMIN,
+  USER_ROLES.MANAGER,
+];

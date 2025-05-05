@@ -2,12 +2,13 @@ import express from "express";
 import validate from "@/middleware/validation.middleware";
 import assetController from "@/controller/asset.controller";
 import assetValidation from "@/validations/asset.validations";
-
+import auth from "@/middleware/auth.middleware";
 const router = express.Router();
 
 router
   .route("/createAsset")
   .post(
+    auth("manageAssets"),
     validate(assetValidation.createAssetValidation),
     assetController.createAsset
   );
@@ -15,6 +16,7 @@ router
 router
   .route("/getAllAssets")
   .get(
+    auth("manageAssets"),
     validate(assetValidation.getAllAssetsValidation),
     assetController.getAllAssets
   );
@@ -22,6 +24,7 @@ router
 router
   .route("/:assetId")
   .get(
+    auth("manageAssets"),
     validate(assetValidation.getAssetByIdValidation),
     assetController.getAssetById
   );
@@ -29,6 +32,7 @@ router
 router
   .route("/:assetId")
   .put(
+    auth("manageAssets"),
     validate(assetValidation.updateAssetValidation),
     assetController.updateAsset
   );
@@ -36,6 +40,7 @@ router
 router
   .route("/:assetId")
   .delete(
+    auth("manageAssets"),
     validate(assetValidation.deleteAssetValidation),
     assetController.deleteAsset
   );
@@ -43,6 +48,7 @@ router
 router
   .route("/bulk-delete")
   .post(
+    auth("manageAssets"),
     validate(assetValidation.bulkDeleteAssetsValidation),
     assetController.bulkDeleteAssets
   );

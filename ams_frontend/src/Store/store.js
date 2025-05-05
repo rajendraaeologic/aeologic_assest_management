@@ -5,7 +5,7 @@ import storage from "redux-persist/lib/storage";
 import authReducer, { refreshToken } from "../Features/auth/authSlice";
 
 import DepartmentReducer from "../Features/slices/departmentSlice";
-import userAssetReducer from "../Features/slices/assetSlice";
+import AddAssetReducer from "../Features/slices/assetSlice";
 import userAssignTagReducer from "../Features/AssignTagSlice";
 import DateWishReportReducer from "../Features/DateWishReportSlice";
 import OutForDeliveryReducer from "../Features/OutForDeiverySlice";
@@ -28,7 +28,7 @@ export const store = configureStore({
     auth: persistedAuthReducer,
     usersData: UserReducer,
     departmentData: DepartmentReducer,
-    assetUserData: userAssetReducer,
+    assetUserData: AddAssetReducer,
     assignData: userAssignTagReducer,
     dateWishReportUser: DateWishReportReducer,
     outForDeliverUser: OutForDeliveryReducer,

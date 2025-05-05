@@ -7,12 +7,12 @@ import {
 const createAssetValidation = {
   body: Joi.object()
     .keys({
-      assetName: Joi.string().required(),
-      uniqueId: Joi.string().required(),
-      description: Joi.string().allow("").optional(),
-      brand: Joi.string().allow("").optional(),
-      model: Joi.string().allow("").optional(),
-      serialNumber: Joi.string().allow("").optional(),
+      assetName: Joi.string().min(3).max(25).required(),
+      uniqueId: Joi.string().required().min(3).max(25),
+      description: Joi.string().min(10).max(200).allow("").optional(),
+      brand: Joi.string().allow("").optional().min(3).max(15),
+      model: Joi.string().allow("").optional().min(3).max(15),
+      serialNumber: Joi.string().allow("").optional().min(3).max(15),
       // purchaseDate: Joi.date().optional(),
       // cost: Joi.number().optional(),
       // warrantyEndDate: Joi.date().optional(),
@@ -145,12 +145,12 @@ const updateAssetValidation = {
   }),
   body: Joi.object()
     .keys({
-      assetName: Joi.string().optional(),
+      assetName: Joi.string().optional().min(3).max(25),
       uniqueId: Joi.string().optional(),
-      description: Joi.string().allow("").optional(),
-      brand: Joi.string().allow("").optional(),
-      model: Joi.string().allow("").optional(),
-      serialNumber: Joi.string().allow("").optional(),
+      description: Joi.string().allow("").optional().min(3).max(200),
+      brand: Joi.string().allow("").optional().min(3).max(15),
+      model: Joi.string().allow("").optional().min(3).max(15),
+      serialNumber: Joi.string().allow("").optional().min(3).max(15),
       // purchaseDate: Joi.date().optional(),
       // cost: Joi.number().optional(),
       // warrantyEndDate: Joi.date().optional(),

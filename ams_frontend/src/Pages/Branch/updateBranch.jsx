@@ -8,7 +8,7 @@ import {
   updateBranch,
   getAllBranches,
 } from "../../Features/slices/branchSlice";
-import { getAllOrganizations } from "../../Features/slices/organizationSlice";
+import branchStrings from "../../locales/branchStrings";
 
 const UpdateBranch = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -17,9 +17,6 @@ const UpdateBranch = ({ onClose }) => {
   const modalRef = useRef(null);
 
   const { selectedBranch } = useSelector((state) => state.branchData);
-  const { organizations, loading: orgLoading } = useSelector(
-    (state) => state.organizationData
-  );
 
   const {
     register,
@@ -28,12 +25,17 @@ const UpdateBranch = ({ onClose }) => {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm();
-
-  const companyId = watch("companyId");
+  } = useForm({
+    defaultValues: {
+      branchName: "",
+      branchLocation: "",
+    },
+    mode: "onChange",
+  });
+  const branchName = watch("branchName");
+  const branchLocation = watch("branchLocation");
 
   useEffect(() => {
-    dispatch(getAllOrganizations());
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
@@ -45,9 +47,8 @@ const UpdateBranch = ({ onClose }) => {
   useEffect(() => {
     if (selectedBranch) {
       reset({
-        name: selectedBranch.name,
-        location: selectedBranch.location,
-        companyId: selectedBranch.organization?.id || "",
+        branchName: selectedBranch.branchName,
+        branchLocation: selectedBranch.branchLocation,
       });
     }
   }, [selectedBranch, reset]);
@@ -68,22 +69,23 @@ const UpdateBranch = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       const branchData = {
-        id: selectedBranch.id,
-        name: data.name,
-        location: data.location,
-        companyId: data.companyId,
+        params: { branchId: selectedBranch.id },
+        body: {
+          branchName: data.branchName,
+          branchLocation: data.branchLocation,
+        },
       };
 
       await dispatch(updateBranch(branchData));
       dispatch(getAllBranches());
 
-      toast.success("Branch updated successfully!", {
+      toast.success(branchStrings.updateBranch.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
       handleClose();
     } catch (error) {
-      toast.error(error.message || "Failed to update branch", {
+      toast.error(error.message || branchStrings.updateBranch.toast.error, {
         position: "top-right",
         autoClose: 1000,
       });
@@ -99,13 +101,13 @@ const UpdateBranch = ({ onClose }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[700px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[400px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
           <h2 className="text-[17px] font-semibold text-white">
-            Update Branch
+            {branchStrings.updateBranch.title}
           </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
@@ -114,76 +116,93 @@ const UpdateBranch = ({ onClose }) => {
 
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Branch Name*
+                <label
+                  htmlFor="branchName"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  {branchStrings.updateBranch.formLabels.branchName}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   ref={firstInputRef}
-                  {...register("name", {
-                    required: "Branch name is required",
+                  {...register("branchName", {
+                    required:
+                      branchStrings.updateBranch.validation.branchNameRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        branchStrings.updateBranch.validation
+                          .branchNameMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        branchStrings.updateBranch.validation
+                          .branchNameMaxLength,
+                    },
                   })}
                   type="text"
+                  maxLength={25}
+                  id="branchName"
                   className={`mt-1 p-2 w-full border ${
-                    errors.name ? "border-red-500" : "border-gray-300"
+                    errors.branchName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
                 />
-                {errors.name && (
+                {errors.branchName && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.name.message}
+                    {errors.branchName.message}
+                  </p>
+                )}
+                {branchName.length === 25 && (
+                  <p className="text-red-500  text-sm mt-1">
+                    Maximum 25 characters allowed
                   </p>
                 )}
               </div>
 
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Location*
+                <label
+                  htmlFor="branchLocation"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  {branchStrings.updateBranch.formLabels.branchLocation}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
-                  {...register("location", {
-                    required: "Location is required",
+                  {...register("branchLocation", {
+                    required:
+                      branchStrings.updateBranch.validation
+                        .branchLocationRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        branchStrings.updateBranch.validation
+                          .branchLocationMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        branchStrings.updateBranch.validation
+                          .branchLocationMaxLength,
+                    },
                   })}
                   type="text"
+                  maxLength={25}
+                  id="branchLocation"
                   className={`mt-1 p-2 w-full border ${
-                    errors.location ? "border-red-500" : "border-gray-300"
+                    errors.branchLocation ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
                 />
-                {errors.location && (
+                {errors.branchLocation && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.location.message}
+                    {errors.branchLocation.message}
                   </p>
                 )}
-              </div>
-
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Organization*
-                </label>
-                <select
-                  {...register("companyId", {
-                    required: "Organization is required",
-                  })}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.companyId ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                  disabled={orgLoading}
-                  value={companyId}
-                >
-                  <option value="">
-                    {orgLoading
-                      ? "Loading organizations..."
-                      : "Select Organization"}
-                  </option>
-                  {organizations?.map((org) => (
-                    <option key={org.id} value={org.id}>
-                      {org.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.companyId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.companyId.message}
+                {branchLocation.length === 25 && (
+                  <p className="text-red-500  text-sm mt-1">
+                    Maximum 25 characters allowed
                   </p>
                 )}
               </div>
@@ -197,14 +216,16 @@ const UpdateBranch = ({ onClose }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={isSubmitting}
               >
-                Close
+                {branchStrings.updateBranch.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Updating..." : "Update"}
+                {isSubmitting
+                  ? branchStrings.updateBranch.buttons.updating
+                  : branchStrings.updateBranch.buttons.update}
               </button>
             </div>
           </form>

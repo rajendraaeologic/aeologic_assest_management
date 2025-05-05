@@ -6,7 +6,7 @@ import { DepartmentKeys } from "@/utils/selects.utils";
 
 //createDepartment
 const createDepartment = async (
-  department: Pick<Department, "name" | "location" | "branchId">
+  department: Pick<Department, "departmentName" | "branchId">
 ): Promise<Omit<Department, "id"> | null> => {
   if (!department) return null;
 
@@ -19,20 +19,22 @@ const createDepartment = async (
   }
 
   const existingDepartment = await db.department.findFirst({
-    where: { name: department.name, branchId: department.branchId },
+    where: {
+      departmentName: department.departmentName,
+      branchId: department.branchId,
+    },
   });
 
   if (existingDepartment) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `Department with name "${department.name}" already exists in this branch.`
+      `Department with name "${department.departmentName}" already exists in this branch.`
     );
   }
 
   return await db.department.create({
     data: {
-      name: department.name,
-      location: department.location,
+      departmentName: department.departmentName,
       branch: { connect: { id: department.branchId } },
     },
   });
@@ -100,32 +102,47 @@ const deleteDepartmentById = async (
   if (!department) {
     throw new ApiError(httpStatus.NOT_FOUND, "Department not found");
   }
-  await db.$transaction(async (tx) => {
-    await tx.assetAssignment.deleteMany({
-      where: {
-        OR: [{ asset: { departmentId } }, { user: { departmentId } }],
+
+  try {
+    await db.$transaction(
+      async (tx) => {
+        await tx.assetAssignment.deleteMany({
+          where: {
+            OR: [{ asset: { departmentId } }, { user: { departmentId } }],
+          },
+        });
+
+        await tx.assetHistory.deleteMany({
+          where: {
+            OR: [{ asset: { departmentId } }, { user: { departmentId } }],
+          },
+        });
+
+        await tx.asset.deleteMany({
+          where: { departmentId },
+        });
+
+        await tx.user.updateMany({
+          where: { departmentId },
+          data: { departmentId: null },
+        });
+
+        await tx.department.delete({
+          where: { id: departmentId },
+        });
       },
-    });
-
-    await tx.assetHistory.deleteMany({
-      where: {
-        OR: [{ asset: { departmentId } }, { user: { departmentId } }],
-      },
-    });
-
-    await tx.asset.deleteMany({
-      where: { departmentId },
-    });
-
-    await tx.user.updateMany({
-      where: { departmentId },
-      data: { departmentId: null },
-    });
-
-    await tx.department.delete({
-      where: { id: department.id },
-    });
-  });
+      {
+        maxWait: 5000,
+        timeout: 15000,
+      }
+    );
+  } catch (error) {
+    console.error("Error while deleting department:", error);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to delete department. Try again later."
+    );
+  }
 
   return department;
 };
@@ -147,40 +164,122 @@ const deleteDepartmentsByIds = async (
     );
   }
 
-  await db.$transaction(async (tx) => {
-    await tx.assetAssignment.deleteMany({
-      where: {
-        OR: [
-          { asset: { departmentId: { in: departmentIds } } },
-          { user: { departmentId: { in: departmentIds } } },
-        ],
+  try {
+    await db.$transaction(
+      async (tx) => {
+        await tx.assetAssignment.deleteMany({
+          where: {
+            OR: [
+              { asset: { departmentId: { in: departmentIds } } },
+              { user: { departmentId: { in: departmentIds } } },
+            ],
+          },
+        });
+
+        await tx.assetHistory.deleteMany({
+          where: {
+            OR: [
+              { asset: { departmentId: { in: departmentIds } } },
+              { user: { departmentId: { in: departmentIds } } },
+            ],
+          },
+        });
+
+        await tx.asset.deleteMany({
+          where: { departmentId: { in: departmentIds } },
+        });
+
+        await tx.user.updateMany({
+          where: { departmentId: { in: departmentIds } },
+          data: { departmentId: null },
+        });
+
+        await tx.department.deleteMany({
+          where: { id: { in: departmentIds } },
+        });
       },
-    });
-
-    await tx.assetHistory.deleteMany({
-      where: {
-        OR: [
-          { asset: { departmentId: { in: departmentIds } } },
-          { user: { departmentId: { in: departmentIds } } },
-        ],
-      },
-    });
-
-    await tx.asset.deleteMany({
-      where: { departmentId: { in: departmentIds } },
-    });
-
-    await tx.user.updateMany({
-      where: { departmentId: { in: departmentIds } },
-      data: { departmentId: null },
-    });
-
-    await tx.department.deleteMany({
-      where: { id: { in: departmentIds } },
-    });
-  });
+      {
+        maxWait: 5000,
+        timeout: 20000,
+      }
+    );
+  } catch (error) {
+    console.error("Error deleting departments:", error);
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to delete departments. Please try again later."
+    );
+  }
 
   return departments;
+};
+
+//getDepartmentsByBranchId
+export const getDepartmentsByBranchId = async (
+  branchId: string,
+  options: {
+    limit?: number;
+    page?: number;
+    sortBy?: string;
+    sortType?: "asc" | "desc";
+    status?: string;
+    createdAtFrom?: Date;
+    createdAtTo?: Date;
+    searchTerm?: string;
+  }
+): Promise<{ data: any[]; total: number }> => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || "createdAt";
+  const sortType = options.sortType ?? "desc";
+
+  const filters: any = {
+    branchId,
+  };
+
+  if (options.status) filters.status = options.status;
+
+  if (options.createdAtFrom || options.createdAtTo) {
+    filters.createdAt = {};
+    if (options.createdAtFrom) filters.createdAt.gte = options.createdAtFrom;
+    if (options.createdAtTo) filters.createdAt.lte = options.createdAtTo;
+  }
+
+  const searchConditions = options.searchTerm?.trim()
+    ? {
+        OR: [
+          {
+            departmentName: {
+              contains: options.searchTerm,
+              mode: "insensitive" as const,
+            },
+          },
+        ],
+      }
+    : {};
+
+  const where = {
+    ...filters,
+    ...searchConditions,
+  };
+
+  const finalLimit = options.searchTerm ? 5 : limit;
+
+  const [data, total] = await Promise.all([
+    db.department.findMany({
+      where,
+      select: DepartmentKeys,
+      skip,
+      take: finalLimit,
+      orderBy: {
+        [sortBy]: sortType,
+      },
+    }),
+    db.department.count({ where }),
+  ]);
+
+  return { data, total };
 };
 
 export default {
@@ -190,4 +289,5 @@ export default {
   updateDepartmentById,
   deleteDepartmentById,
   deleteDepartmentsByIds,
+  getDepartmentsByBranchId,
 };

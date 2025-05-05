@@ -8,10 +8,10 @@ import {
 const createBranchValidation = {
   body: Joi.object()
     .keys({
-      name: Joi.string().required().messages({
+      branchName: Joi.string().min(3).max(25).required().messages({
         "string.empty": "Branch name is required",
       }),
-      location: Joi.string().required().messages({
+      branchLocation: Joi.string().min(3).max(25).required().messages({
         "string.empty": "Branch location is required",
       }),
       companyId: Joi.string()
@@ -24,8 +24,8 @@ const createBranchValidation = {
 
 const getAllBranchesValidation = {
   query: Joi.object().keys({
-    name: Joi.string().optional(),
-    location: Joi.string().optional(),
+    branchName: Joi.string().optional(),
+    branchLocation: Joi.string().optional(),
     branchId: Joi.string()
       .optional()
       .custom(isValidMongoDBObjectId)
@@ -56,11 +56,8 @@ const updateBranchValidation = {
   }),
   body: Joi.object()
     .keys({
-      name: Joi.string().optional(),
-      location: Joi.string().optional(),
-      companyId: Joi.optional()
-        .custom(isValidMongoDBObjectId)
-        .messages(isValidMongoDBObjectIdCustomMessages),
+      branchName: Joi.string().min(3).max(25).optional(),
+      branchLocation: Joi.string().min(3).max(25).optional(),
     })
     .min(1),
 };
@@ -90,6 +87,14 @@ const deleteBranchesValidation = {
   }),
 };
 
+const getBranchesByOrganizationIdValidation = {
+  params: Joi.object().keys({
+    organizationId: Joi.required()
+      .custom(isValidMongoDBObjectId)
+      .messages(isValidMongoDBObjectIdCustomMessages),
+  }),
+};
+
 export default {
   createBranchValidation,
   getAllBranchesValidation,
@@ -97,4 +102,5 @@ export default {
   updateBranchValidation,
   deleteBranchValidation,
   deleteBranchesValidation,
+  getBranchesByOrganizationIdValidation,
 };

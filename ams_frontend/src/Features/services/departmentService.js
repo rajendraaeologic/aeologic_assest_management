@@ -1,7 +1,10 @@
 import API from "../../App/api/axiosInstance";
 
 export const createDepartmentService = async (data) => {
-  const response = await API.post("/department/createDepartment", data);
+  const response = await API.post("/department/createDepartment", {
+    departmentName: data.departmentName,
+    branchId: data.branchId,
+  });
   return response.data;
 };
 
@@ -11,17 +14,11 @@ export const getAllDepartmentsService = async () => {
 };
 
 export const updateDepartmentService = async (data) => {
-  try {
-    const updatePayload = {
-      name: data.name,
-      location: data.location,
-      branchId: data.branchId,
-    };
-    const response = await API.put(`/department/${data.id}`, updatePayload);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || "Error updating Department";
-  }
+  const response = await API.put(
+    `/department/${data.params.departmentId}`,
+    data.body
+  );
+  return response.data;
 };
 
 export const deleteDepartmentService = async (ids) => {
@@ -38,7 +35,6 @@ export const deleteDepartmentService = async (ids) => {
       const response = await API.post("/department/bulk-delete", {
         departmentIds: idsArray,
       });
-
       return {
         ...response.data,
         success: true,
@@ -47,7 +43,7 @@ export const deleteDepartmentService = async (ids) => {
   } catch (error) {
     console.error("Delete Error:", error.response?.data);
     const errorMsg =
-      error.response?.data?.message || "Error deleting Department(s)";
+      error.response?.data?.message || "Error deleting department(s)";
     throw new Error(errorMsg);
   }
 };

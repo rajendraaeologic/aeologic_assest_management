@@ -1,52 +1,88 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { IoClose } from "react-icons/io5";
-import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useForm } from "react-hook-form";
+import API from "../../App/api/axiosInstance";
+import branchStrings from "../../locales/branchStrings";
 import {
   createBranch,
   getAllBranches,
 } from "../../Features/slices/branchSlice";
-import { getAllOrganizations } from "../../Features/slices/organizationSlice";
+import { useDispatch } from "react-redux";
 
 const AddBranch = ({ onClose }) => {
   const dispatch = useDispatch();
+  const modalRef = useRef(null);
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
-  const modalRef = useRef(null);
-
-  const { organizations, loading: orgLoading } = useSelector(
-    (state) => state.organizationData
-  );
+  const [organizations, setOrganizations] = useState([]);
+  const [orgLoading, setOrgLoading] = useState(false);
+  const [orgPage, setOrgPage] = useState(1);
+  const [hasMoreOrgs, setHasMoreOrgs] = useState(true);
+  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
+  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const {
     register,
     handleSubmit,
+    setValue,
+    setError,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
-      name: "",
-      location: "",
+      branchName: "",
+      branchLocation: "",
       companyId: "",
     },
+    mode: "onChange",
   });
 
+  const branchName = watch("branchName");
+  const branchLocation = watch("branchLocation");
+
   useEffect(() => {
-    dispatch(getAllOrganizations());
+    register("companyId", {
+      required: branchStrings.addBranch.validation.organizationRequired,
+    });
+  }, [register]);
+
+  const fetchOrganizations = async (page, search = "") => {
+    try {
+      setOrgLoading(true);
+      const response = await API.get(
+        `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
+      );
+      const { data, totalPages } = response.data;
+
+      setOrganizations((prev) => (page === 1 ? data : [...prev, ...data]));
+      setOrgPage(page);
+      setHasMoreOrgs(page < totalPages);
+    } catch (error) {
+      toast.error(branchStrings.addBranch.toast.error, {
+        position: "top-right",
+        autoClose: 1000,
+      });
+    } finally {
+      setOrgLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrganizations(1, "");
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [dispatch]);
+  }, []);
 
   const handleClose = () => {
     setIsVisible(false);
-    setTimeout(() => {
-      onClose();
-    }, 300);
+    setTimeout(onClose, 300);
   };
 
   const handleOutsideClick = (event) => {
@@ -55,23 +91,56 @@ const AddBranch = ({ onClose }) => {
     }
   };
 
+  const handleOrgScroll = (e) => {
+    const { scrollTop, clientHeight, scrollHeight } = e.target;
+    const bottomReached = scrollHeight - scrollTop <= clientHeight + 10;
+
+    if (bottomReached && !orgLoading && hasMoreOrgs) {
+      fetchOrganizations(orgPage + 1, searchTerm);
+    }
+  };
+
   const onSubmit = async (data) => {
     try {
-      await dispatch(createBranch(data));
+      await dispatch(createBranch(data)).unwrap();
       dispatch(getAllBranches());
-
-      toast.success("Branch added successfully!", {
+      toast.success(branchStrings.addBranch.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
-
       handleClose();
     } catch (error) {
-      toast.error("Failed to add branch", {
+      if (error?.status === 409) {
+        setError("branchName", {
+          type: "manual",
+          message: error.message,
+        });
+        return;
+      }
+      toast.error(error.message || branchStrings.addBranch.toast.error, {
         position: "top-right",
-        autoClose: 1000,
+        autoClose: 1500,
       });
     }
+  };
+
+  const handleOrgClick = async () => {
+    setShowOrgDropdown((prev) => !prev);
+    if (searchTerm.trim() === "") await fetchOrganizations(1, "");
+  };
+
+  const handleOrgSelect = (org) => {
+    setSelectedOrg(org);
+    setValue("companyId", org.id, { shouldValidate: true });
+    setShowOrgDropdown(false);
+    setSearchTerm("");
+    setError("companyId", { type: "manual", message: "" });
+  };
+
+  const handleSearch = (e) => {
+    const search = e.target.value;
+    setSearchTerm(search);
+    fetchOrganizations(1, search);
   };
 
   return (
@@ -83,12 +152,14 @@ const AddBranch = ({ onClose }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[700px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[500px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
-          <h2 className="text-[17px] font-semibold text-white">Add Branch</h2>
+          <h2 className="text-[17px] font-semibold text-white">
+            {branchStrings.addBranch.title}
+          </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
           </button>
@@ -99,86 +170,140 @@ const AddBranch = ({ onClose }) => {
             <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4">
               <div className="w-full">
                 <label
-                  htmlFor="name"
+                  htmlFor="branchName"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Branch Name*
+                  {branchStrings.addBranch.formLabels.branchName}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   ref={firstInputRef}
-                  {...register("name", {
-                    required: "Branch name is required",
+                  {...register("branchName", {
+                    required:
+                      branchStrings.addBranch.validation.branchNameRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        branchStrings.addBranch.validation.branchNameMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        branchStrings.addBranch.validation.branchNameMaxLength,
+                    },
                   })}
                   type="text"
-                  id="name"
-                  name="name"
-                  placeholder="Branch name"
+                  id="branchName"
+                  maxLength={25}
+                  placeholder={branchStrings.addBranch.placeholders.branchName}
                   className={`mt-1 p-2 w-full border ${
-                    errors.name ? "border-red-500" : "border-gray-300"
+                    errors.branchName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
                 />
-                {errors.name && (
+                {errors.branchName && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.name.message}
+                    {errors.branchName.message}
+                  </p>
+                )}
+                {branchName?.length === 25 && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Maximum 25 characters allowed
                   </p>
                 )}
               </div>
 
               <div className="w-full">
                 <label
-                  htmlFor="location"
+                  htmlFor="branchLocation"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Location*
+                  {branchStrings.addBranch.formLabels.branchLocation}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
-                  {...register("location", {
-                    required: "Location is required",
+                  {...register("branchLocation", {
+                    required:
+                      branchStrings.addBranch.validation.branchLocationRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        branchStrings.addBranch.validation
+                          .branchLocationMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        branchStrings.addBranch.validation
+                          .branchLocationMaxLength,
+                    },
                   })}
                   type="text"
-                  id="location"
-                  name="location"
-                  placeholder="Branch location"
+                  maxLength={25}
+                  id="branchLocation"
+                  placeholder={
+                    branchStrings.addBranch.placeholders.branchLocation
+                  }
                   className={`mt-1 p-2 w-full border ${
-                    errors.location ? "border-red-500" : "border-gray-300"
+                    errors.branchLocation ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
                 />
-                {errors.location && (
+                {errors.branchLocation && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.location.message}
+                    {errors.branchLocation.message}
+                  </p>
+                )}
+                {branchLocation?.length === 25 && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Maximum 25 characters allowed
                   </p>
                 )}
               </div>
 
-              <div className="w-full">
-                <label
-                  htmlFor="companyId"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Organization*
+              <div className="w-full relative">
+                <label className="block text-sm font-medium text-gray-700">
+                  {branchStrings.addBranch.formLabels.companyId}
+                  <span className="text-red-500">*</span>
                 </label>
-                <select
-                  {...register("companyId", {
-                    required: "Organization selection is required",
-                  })}
-                  id="companyId"
-                  name="companyId"
+                <div
+                  onClick={handleOrgClick}
                   className={`mt-1 p-2 w-full border ${
                     errors.companyId ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                  disabled={orgLoading}
+                  } rounded-md cursor-pointer bg-white`}
                 >
-                  <option value="">
-                    {orgLoading
-                      ? "Loading organizations..."
-                      : "Select Organization"}
-                  </option>
-                  {organizations?.map((org) => (
-                    <option key={org.id} value={org.id}>
-                      {org.name}
-                    </option>
-                  ))}
-                </select>
+                  {selectedOrg?.organizationName ||
+                    branchStrings.addBranch.select.defaultOption}
+                </div>
+
+                {showOrgDropdown && (
+                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                    <input
+                      type="text"
+                      placeholder="Search organization..."
+                      value={searchTerm}
+                      onChange={handleSearch}
+                      className="p-2 w-full border-b outline-none"
+                    />
+                    <ul
+                      onScroll={handleOrgScroll}
+                      className="max-h-40 overflow-auto"
+                    >
+                      {organizations.map((org) => (
+                        <li
+                          key={org.id}
+                          onClick={() => handleOrgSelect(org)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {org.organizationName}
+                        </li>
+                      ))}
+                      {orgLoading && (
+                        <li className="px-4 py-2 text-sm text-gray-500">
+                          Loading...
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
                 {errors.companyId && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.companyId.message}
@@ -195,14 +320,16 @@ const AddBranch = ({ onClose }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={isSubmitting}
               >
-                Close
+                {branchStrings.addBranch.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Saving..." : "Save"}
+                {isSubmitting
+                  ? branchStrings.addBranch.buttons.saving
+                  : branchStrings.addBranch.buttons.save}
               </button>
             </div>
           </form>

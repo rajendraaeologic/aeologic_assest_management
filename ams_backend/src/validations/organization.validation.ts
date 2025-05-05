@@ -7,20 +7,23 @@ import {
 const createOrganizationValidation = {
   body: Joi.object()
     .keys({
-      name: Joi.string().required(),
+      organizationName: Joi.string().min(3).max(25).required(),
     })
     .min(1),
 };
 
 const getAllOrganizationsValidation = {
   query: Joi.object().keys({
-    name: Joi.string().optional(),
+    organizationName: Joi.string().optional(),
     from_date: Joi.string().optional().isoDate(),
     to_date: Joi.string().optional().isoDate(),
     sortBy: Joi.string(),
     sortType: Joi.string().valid("asc", "desc").default("desc"),
     limit: Joi.number().integer(),
     page: Joi.number().integer(),
+    searchTerm: Joi.string().trim().optional(),
+    createdAtFrom: Joi.date().iso().optional(),
+    createdAtTo: Joi.date().iso().optional(),
   }),
 };
 
@@ -40,7 +43,7 @@ const updateOrganizationValidation = {
   }),
   body: Joi.object()
     .keys({
-      name: Joi.string().optional(),
+      organizationName: Joi.string().min(3).max(25).optional(),
     })
     .min(1),
 };

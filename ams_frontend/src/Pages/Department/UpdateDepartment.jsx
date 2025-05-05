@@ -9,6 +9,7 @@ import {
   getAllDepartments,
 } from "../../Features/slices/departmentSlice";
 import { getAllBranches } from "../../Features/slices/branchSlice";
+import departmentStrings from "../../locales/departmentStrings";
 
 const UpdateDepartment = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -16,9 +17,6 @@ const UpdateDepartment = ({ onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
 
-  const { branches, loading: branchLoading } = useSelector(
-    (state) => state.branchData
-  );
   const selectedDepartment = useSelector(
     (state) => state.departmentData.selectedDepartment
   );
@@ -30,9 +28,14 @@ const UpdateDepartment = ({ onClose }) => {
     setValue,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      departmentName: "",
+    },
+    mode: "onChange",
+  });
 
-  const branchId = watch("branchId");
+  const departmentName = watch("departmentName");
 
   useEffect(() => {
     dispatch(getAllBranches());
@@ -47,9 +50,7 @@ const UpdateDepartment = ({ onClose }) => {
   useEffect(() => {
     if (selectedDepartment) {
       reset({
-        name: selectedDepartment.name,
-        location: selectedDepartment.location,
-        branchId: selectedDepartment.branchId,
+        departmentName: selectedDepartment.departmentName,
       });
     }
   }, [selectedDepartment, reset]);
@@ -70,23 +71,23 @@ const UpdateDepartment = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       const departmentData = {
-        id: selectedDepartment.id,
-        name: data.name,
-        location: data.location,
-        branchId: data.branchId,
+        params: { departmentId: selectedDepartment.id },
+        body: {
+          departmentName: data.departmentName,
+        },
       };
 
       await dispatch(updateDepartment(departmentData));
       dispatch(getAllDepartments());
 
-      toast.success("Department updated successfully!", {
+      toast.success(departmentStrings.updateDepartment.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
 
       handleClose();
     } catch (error) {
-      toast.error("Failed to update department", {
+      toast.error(departmentStrings.updateDepartment.toast.error, {
         position: "top-right",
         autoClose: 1000,
       });
@@ -102,13 +103,13 @@ const UpdateDepartment = ({ onClose }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[700px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[400px] min-h-40 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
           <h2 className="text-[17px] font-semibold text-white">
-            Update Department
+            {departmentStrings.updateDepartment.title}
           </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
@@ -117,71 +118,50 @@ const UpdateDepartment = ({ onClose }) => {
 
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid sm:grid-cols-1 lg:grid-cols-1 gap-4">
               <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Department Name*
+                <label
+                  htmlFor="departmentName"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  {departmentStrings.updateDepartment.formLabels.departmentName}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <input
                   ref={firstInputRef}
-                  {...register("name", {
-                    required: "Department name is required",
+                  {...register("departmentName", {
+                    required:
+                      departmentStrings.updateDepartment.validation
+                        .departmentNameRequired,
+                    minLength: {
+                      value: 3,
+                      message:
+                        departmentStrings.updateDepartment.validation
+                          .departmentNameMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message:
+                        departmentStrings.updateDepartment.validation
+                          .departmentNameMaxLength,
+                    },
                   })}
                   type="text"
+                  maxLength={25}
+                  id="departmentName"
                   className={`mt-1 p-2 w-full border ${
-                    errors.name ? "border-red-500" : "border-gray-300"
+                    errors.departmentName ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
                 />
-                {errors.name && (
+                {errors.departmentName && (
                   <p className="text-red-500 text-sm mt-1">
-                    {errors.name.message}
+                    {errors.departmentName.message}
                   </p>
                 )}
-              </div>
-
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Department Location*
-                </label>
-                <input
-                  {...register("location", {
-                    required: "Department location is required",
-                  })}
-                  type="text"
-                  className={`mt-1 p-2 w-full border ${
-                    errors.location ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                />
-                {errors.location && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.location.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  Branch*
-                </label>
-                <select
-                  {...register("branchId", {
-                    required: "Branch selection is required",
-                  })}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.branchId ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                  disabled={branchLoading}
-                  value={branchId}
-                >
-                  {branches?.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.name}
-                    </option>
-                  ))}
-                </select>
-                {errors.branchId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.branchId.message}
+                {departmentName.length === 25 && (
+                  <p className="text-red-500  text-sm mt-1">
+                    Maximum 25 characters allowed
                   </p>
                 )}
               </div>
@@ -195,14 +175,16 @@ const UpdateDepartment = ({ onClose }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={isSubmitting}
               >
-                Close
+                {departmentStrings.updateDepartment.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Updating..." : "Update"}
+                {isSubmitting
+                  ? departmentStrings.updateDepartment.buttons.updating
+                  : departmentStrings.updateDepartment.buttons.update}
               </button>
             </div>
           </form>

@@ -11,8 +11,8 @@ export const createBranch = createAsyncThunk(
   "branch/create",
   async (data, { rejectWithValue }) => {
     try {
-      console.log("data", data);
-      return await createBranchService(data);
+      const response = await createBranchService(data);
+      return response;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Something went wrong");
     }
@@ -25,12 +25,7 @@ export const getAllBranches = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await getAllBranchesService();
-
-      if (!response.data || response.data.length === 0) {
-        return rejectWithValue(response.message);
-      }
-
-      return response.data;
+      return response.data || [];
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch branches"
@@ -45,11 +40,6 @@ export const updateBranch = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const response = await updateBranchService(data);
-
-      if (!response) {
-        return rejectWithValue("Failed to update branch.");
-      }
-
       return response;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Error updating branch");
@@ -64,11 +54,12 @@ export const deleteBranch = createAsyncThunk(
     try {
       const ids = Array.isArray(branchIds) ? branchIds : [branchIds];
       const response = await deleteBranchService(ids);
-      return { deletedBranchIds: ids };
+      return {
+        deletedBranchIds: ids,
+        ...response,
+      };
     } catch (error) {
-      return rejectWithValue(
-        error.response?.data || "Failed to delete branch(s)"
-      );
+      return rejectWithValue(error.message || "Failed to delete branch(s)");
     }
   }
 );
@@ -79,6 +70,7 @@ const branchSlice = createSlice({
     branches: [],
     loading: false,
     error: null,
+
     selectedBranch: null,
     selectedBranches: [],
     currentPage: 0,
@@ -141,6 +133,7 @@ const branchSlice = createSlice({
       })
       .addCase(updateBranch.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(updateBranch.fulfilled, (state, action) => {
         state.loading = false;

@@ -8,6 +8,7 @@ import {
   updateOrganization,
   getAllOrganizations,
 } from "../../Features/slices/organizationSlice";
+import organizationStrings from "../../locales/organizationStrings";
 
 const UpdateOrganization = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -23,9 +24,16 @@ const UpdateOrganization = ({ onClose }) => {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
-  } = useForm();
 
+    formState: { errors, isSubmitting },
+    watch,
+  } = useForm({
+    defaultValues: {
+      organizationName: "",
+    },
+    mode: "onChange",
+  });
+  const organizationName = watch("organizationName");
   useEffect(() => {
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
@@ -38,7 +46,7 @@ const UpdateOrganization = ({ onClose }) => {
   useEffect(() => {
     if (selectedOrganization) {
       reset({
-        name: selectedOrganization.name,
+        organizationName: selectedOrganization.organizationName,
       });
     }
   }, [selectedOrganization, reset]);
@@ -59,21 +67,23 @@ const UpdateOrganization = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       const organizationData = {
-        id: selectedOrganization.id,
-        name: data.name,
+        params: { organizationId: selectedOrganization.id },
+        body: {
+          organizationName: data.organizationName,
+        },
       };
 
       await dispatch(updateOrganization(organizationData));
       dispatch(getAllOrganizations());
 
-      toast.success("Organization updated successfully!", {
+      toast.success(organizationStrings.updateOrganization.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
 
       handleClose();
     } catch (error) {
-      toast.error("Failed to update organization", {
+      toast.error(organizationStrings.updateOrganization.toast.error, {
         position: "top-right",
         autoClose: 1000,
       });
@@ -89,13 +99,13 @@ const UpdateOrganization = ({ onClose }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[500px] min-h-60 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[400px] min-h-60 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
           <h2 className="text-[17px] font-semibold text-white">
-            Update Organization
+            {organizationStrings.updateOrganization.title}
           </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
@@ -105,22 +115,54 @@ const UpdateOrganization = ({ onClose }) => {
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="w-full">
-              <label className="block text-sm font-medium text-gray-700">
-                Organization Name*
+              <label
+                htmlFor="organizationName"
+                className="block text-sm font-medium text-gray-700"
+              >
+                {
+                  organizationStrings.updateOrganization.formLabels
+                    .organizationName
+                }
+                <span className="text-red-500">*</span>
               </label>
               <input
                 ref={firstInputRef}
-                {...register("name", {
-                  required: "Organization name is required",
+                {...register("organizationName", {
+                  required:
+                    organizationStrings.updateOrganization.validation
+                      .organizationNameRequired,
+                  minLength: {
+                    value: 3,
+                    message:
+                      organizationStrings.addOrganization.validation
+                        .organizationNameMinLength,
+                  },
+                  maxLength: {
+                    value: 25,
+                    message:
+                      organizationStrings.addOrganization.validation
+                        .organizationNameMaxLength,
+                  },
                 })}
                 type="text"
+                id="organizationName"
+                maxLength={25}
+                placeholder={
+                  organizationStrings.updateOrganization.placeholders
+                    .organizationName
+                }
                 className={`mt-1 p-2 w-full border ${
-                  errors.name ? "border-red-500" : "border-gray-300"
+                  errors.organizationName ? "border-red-500" : "border-gray-300"
                 } outline-none rounded-md`}
               />
-              {errors.name && (
+              {errors.organizationName && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.name.message}
+                  {errors.organizationName.message}
+                </p>
+              )}
+              {organizationName.length === 25 && (
+                <p className="text-red-500  text-sm mt-1">
+                  Maximum 25 characters allowed
                 </p>
               )}
             </div>
@@ -133,14 +175,16 @@ const UpdateOrganization = ({ onClose }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={isSubmitting}
               >
-                Close
+                {organizationStrings.updateOrganization.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Updating..." : "Update"}
+                {isSubmitting
+                  ? organizationStrings.updateOrganization.buttons.updating
+                  : organizationStrings.updateOrganization.buttons.update}
               </button>
             </div>
           </form>

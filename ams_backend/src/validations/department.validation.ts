@@ -7,8 +7,8 @@ import {
 const createDepartmentValidation = {
   body: Joi.object()
     .keys({
-      name: Joi.string().required(),
-      location: Joi.string().required(),
+      departmentName: Joi.string().min(3).max(25).required(),
+      //location: Joi.string().required(),
       branchId: Joi.string().required(),
     })
     .min(1),
@@ -16,7 +16,7 @@ const createDepartmentValidation = {
 
 const getAllDepartmentsValidation = {
   query: Joi.object().keys({
-    name: Joi.string().optional(),
+    departmentName: Joi.string().optional(),
     location: Joi.string().optional(),
     branchId: Joi.string().optional(),
     from_date: Joi.string().optional().isoDate(),
@@ -44,11 +44,7 @@ const updateDepartmentValidation = {
   }),
   body: Joi.object()
     .keys({
-      name: Joi.string().optional(),
-      location: Joi.string().optional(),
-      branchId: Joi.optional()
-        .custom(isValidMongoDBObjectId)
-        .messages(isValidMongoDBObjectIdCustomMessages),
+      departmentName: Joi.string().min(3).max(25).optional(),
     })
     .min(1),
 };
@@ -61,7 +57,7 @@ const deleteDepartmentValidation = {
   }),
 };
 
-const bulkDeleteDpartmentsValidation = {
+const bulkDeleteDepartmentsValidation = {
   body: Joi.object().keys({
     departmentIds: Joi.array()
       .items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/))
@@ -74,11 +70,32 @@ const bulkDeleteDpartmentsValidation = {
       }),
   }),
 };
+
+export const getDepartmentsByBranchIdValidation = {
+  params: Joi.object().keys({
+    branchId: Joi.string()
+      .required()
+      .custom(isValidMongoDBObjectId)
+      .messages(isValidMongoDBObjectIdCustomMessages),
+  }),
+
+  query: Joi.object().keys({
+    limit: Joi.number().integer().min(1).optional(),
+    page: Joi.number().integer().min(1).optional(),
+    sortBy: Joi.string().optional(),
+    sortType: Joi.string().valid("asc", "desc").optional(),
+    status: Joi.string().optional(),
+    createdAtFrom: Joi.date().iso().optional(),
+    createdAtTo: Joi.date().iso().optional(),
+    searchTerm: Joi.string().optional(),
+  }),
+};
 export default {
   createDepartmentValidation,
   getAllDepartmentsValidation,
   getDepartmentValidation,
   updateDepartmentValidation,
   deleteDepartmentValidation,
-  bulkDeleteDpartmentsValidation,
+  bulkDeleteDepartmentsValidation,
+  getDepartmentsByBranchIdValidation,
 };

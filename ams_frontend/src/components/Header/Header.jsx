@@ -1,22 +1,23 @@
 import React, { useContext, useState } from "react";
 import SliderContext from "../ContexApi";
 import { FaBars } from "react-icons/fa";
-import navImage from "../../assets/navImage.jpg";
+// import navImage from "../../assets/navImage.jpg";
 import { TfiArrowCircleUp } from "react-icons/tfi";
 import { BiLogOut } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
-
+import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { logoutUser } from "../../Features/auth/authSlice";
 import { persistor } from "../../Store/store";
-
+import { selectCurrentUser } from "../../Features/auth/authSlice";
 const Header = () => {
   const { isSidebarOpen, setIsSidebarOpen } = useContext(SliderContext);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigate = useNavigate();
-
   const dispatch = useDispatch();
-
+  const currentUser = useSelector(selectCurrentUser);
+  const allowedRoles = ["ADMIN", "MANAGER", "SUPERADMIN"];
+  const isAllowed = allowedRoles.includes(currentUser?.userRole);
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
   };
@@ -39,17 +40,18 @@ const Header = () => {
       }`}
     >
       <div>
-        <button onClick={toggleSidebar} className="text-xl">
-          <FaBars />
-        </button>
+        {isAllowed && (
+          <button onClick={toggleSidebar} className="text-xl">
+            <FaBars />
+          </button>
+        )}
       </div>
 
       <div className="md:mr-10 sm:mr-8 flex justify-center items-center gap-3">
-        <img
-          src={navImage}
-          className="w-[40px] h-[40px] rounded-full"
-          alt="User"
-        />
+        <ul>
+          <li className="font-bold text-lg">{currentUser?.userName}</li>
+          <li className="text-sm">{currentUser?.userRole}</li>
+        </ul>
 
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}

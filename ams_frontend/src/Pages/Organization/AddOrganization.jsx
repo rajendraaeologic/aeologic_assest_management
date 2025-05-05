@@ -8,6 +8,7 @@ import {
   createOrganization,
   getAllOrganizations,
 } from "../../Features/slices/organizationSlice";
+import organizationStrings from "../../locales/organizationStrings";
 
 const AddOrganization = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -18,12 +19,15 @@ const AddOrganization = ({ onClose }) => {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
-      name: "",
+      organizationName: "",
     },
+    mode: "onChange",
   });
+  const organizationName = watch("organizationName");
 
   useEffect(() => {
     firstInputRef.current?.focus();
@@ -49,20 +53,30 @@ const AddOrganization = ({ onClose }) => {
 
   const onSubmit = async (data) => {
     try {
-      await dispatch(createOrganization(data));
+      await dispatch(createOrganization(data)).unwrap();
       dispatch(getAllOrganizations());
 
-      toast.success("Organization added successfully!", {
+      toast.success(organizationStrings.addOrganization.toast.success, {
         position: "top-right",
         autoClose: 1000,
       });
 
       handleClose();
     } catch (error) {
-      toast.error("Failed to add organization", {
-        position: "top-right",
-        autoClose: 1000,
-      });
+      if (error?.status === 409) {
+        setError("organizationName", {
+          type: "manual",
+          message: error.message,
+        });
+        return;
+      }
+      toast.error(
+        error.message || organizationStrings.addOrganization.toast.error,
+        {
+          position: "top-right",
+          autoClose: 1500,
+        }
+      );
     }
   };
 
@@ -75,13 +89,13 @@ const AddOrganization = ({ onClose }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[500px] min-h-60 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[400px] min-h-60 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
         <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
           <h2 className="text-[17px] font-semibold text-white">
-            Add Organization
+            {organizationStrings.addOrganization.title}
           </h2>
           <button onClick={handleClose} className="text-white rounded-md">
             <IoClose className="h-7 w-7" />
@@ -92,26 +106,54 @@ const AddOrganization = ({ onClose }) => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="w-full">
               <label
-                htmlFor="name"
+                htmlFor="organizationName"
                 className="block text-sm font-medium text-gray-700"
               >
-                Organization Name*
+                {
+                  organizationStrings.addOrganization.formLabels
+                    .organizationName
+                }
+                <span className="text-red-500">*</span>
               </label>
               <input
-                ref={firstInputRef}
-                {...register("name", {
-                  required: "Organization name is required",
+                {...register("organizationName", {
+                  required:
+                    organizationStrings.addOrganization.validation
+                      .organizationNameRequired,
+                  minLength: {
+                    value: 3,
+                    message:
+                      organizationStrings.addOrganization.validation
+                        .organizationNameMinLength,
+                  },
+                  maxLength: {
+                    value: 25,
+                    message:
+                      organizationStrings.addOrganization.validation
+                        .organizationNameMaxLength,
+                  },
                 })}
                 type="text"
-                id="name"
-                placeholder="Enter organization name"
+                id="organizationName"
+                maxLength={25}
+                placeholder={
+                  organizationStrings.addOrganization.placeholders
+                    .organizationName
+                }
                 className={`mt-1 p-2 w-full border ${
-                  errors.name ? "border-red-500" : "border-gray-300"
+                  errors.organizationName ? "border-red-500" : "border-gray-300"
                 } outline-none rounded-md`}
               />
-              {errors.name && (
+
+              {errors.organizationName && (
                 <p className="text-red-500 text-sm mt-1">
-                  {errors.name.message}
+                  {errors.organizationName.message}
+                </p>
+              )}
+
+              {organizationName.length === 25 && (
+                <p className="text-red-500  text-sm mt-1">
+                  Maximum 25 characters allowed
                 </p>
               )}
             </div>
@@ -124,14 +166,16 @@ const AddOrganization = ({ onClose }) => {
                 className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
                 disabled={isSubmitting}
               >
-                Close
+                {organizationStrings.addOrganization.buttons.close}
               </button>
               <button
                 type="submit"
                 className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Saving..." : "Save"}
+                {isSubmitting
+                  ? organizationStrings.addOrganization.buttons.saving
+                  : organizationStrings.addOrganization.buttons.save}
               </button>
             </div>
           </form>

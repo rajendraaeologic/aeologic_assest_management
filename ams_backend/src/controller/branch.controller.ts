@@ -9,8 +9,8 @@ import pick from "@/lib/pick";
 const createBranch = catchAsync(async (req, res) => {
   try {
     const branch = await branchService.createBranch({
-      name: req.body.name,
-      location: req.body.location,
+      branchName: req.body.branchName,
+      branchLocation: req.body.branchLocation,
       companyId: req.body.companyId,
     } as Branch);
 
@@ -25,7 +25,7 @@ const createBranch = catchAsync(async (req, res) => {
 
 const getAllBranches = catchAsync(async (req, res) => {
   const filter = pick(req.query, [
-    "name",
+    "branchName",
     "location",
     "companyId",
     "from_date",
@@ -35,9 +35,9 @@ const getAllBranches = catchAsync(async (req, res) => {
 
   applyDateFilter(filter);
 
-  if (filter.name) {
-    filter.name = {
-      contains: filter.name,
+  if (filter.branchName) {
+    filter.branchName = {
+      contains: filter.branchName,
       mode: "insensitive",
     };
   }
@@ -61,6 +61,7 @@ const getAllBranches = catchAsync(async (req, res) => {
 });
 
 // getBranchById
+
 const getBranchById = catchAsync(async (req, res) => {
   const branch = await branchService.getBranchById(req.params.branchId);
 
@@ -95,7 +96,7 @@ const updateBranch = catchAsync(async (req, res) => {
   }
 });
 
-export const deleteBranch = catchAsync(async (req, res) => {
+const deleteBranch = catchAsync(async (req, res) => {
   try {
     await branchService.deleteBranchById(req.params.branchId);
     res.status(httpStatus.NO_CONTENT);
@@ -105,7 +106,7 @@ export const deleteBranch = catchAsync(async (req, res) => {
   }
 });
 
-export const deleteBranches = catchAsync(async (req, res) => {
+const deleteBranches = catchAsync(async (req, res) => {
   try {
     await branchService.deleteBranchesByIds(req.body.branchIds);
     res.status(httpStatus.NO_CONTENT);
@@ -115,6 +116,71 @@ export const deleteBranches = catchAsync(async (req, res) => {
   }
 });
 
+export const getBranchesByOrganizationId = catchAsync(async (req, res) => {
+  const { organizationId } = req.params;
+
+  // Extracting query parameters from the request
+  const rawOptions = pick(req.query, [
+    "limit",
+    "page",
+    "sortBy",
+    "sortType",
+    "status",
+    "createdAtFrom",
+    "createdAtTo",
+    "searchTerm",
+  ]);
+
+  // Setting options for pagination, sorting, and filtering
+  const options = {
+    limit: rawOptions.searchTerm
+      ? 5
+      : rawOptions.limit
+      ? parseInt(rawOptions.limit as string, 10)
+      : 10,
+    page: rawOptions.page ? parseInt(rawOptions.page as string, 10) : 1,
+    sortBy: rawOptions.sortBy as string,
+    sortType: rawOptions.sortType as "asc" | "desc",
+    status: rawOptions.status as string,
+    createdAtFrom: rawOptions.createdAtFrom
+      ? new Date(rawOptions.createdAtFrom as string)
+      : undefined,
+    createdAtTo: rawOptions.createdAtTo
+      ? new Date(rawOptions.createdAtTo as string)
+      : undefined,
+    searchTerm: rawOptions.searchTerm as string,
+  };
+
+  // Fetching branches from the service
+  const result = await branchService.getBranchesByOrganizationId(
+    organizationId,
+    options
+  );
+  if (!result || result.data.length === 0) {
+    res.status(200).json({
+      status: "404",
+      message: "No barnch found for this organizations",
+      data: [],
+      totalData: result.total,
+      page: options.page,
+      limit: options.limit,
+      totalPages: Math.ceil(result.total / options.limit),
+    });
+    return;
+  }
+
+  // Sending response back to the client
+  res.status(200).json({
+    success: true,
+    message: "Branches fetched successfully",
+    data: result.data,
+    totalData: result.total,
+    page: options.page,
+    limit: options.limit,
+    totalPages: Math.ceil(result.total / options.limit),
+  });
+});
+
 export default {
   createBranch,
   getAllBranches,
@@ -122,4 +188,5 @@ export default {
   updateBranch,
   deleteBranch,
   deleteBranches,
+  getBranchesByOrganizationId,
 };

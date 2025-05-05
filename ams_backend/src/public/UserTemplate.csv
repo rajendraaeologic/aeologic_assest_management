@@ -1,0 +1,4 @@
+﻿userName,email,phone,userRole,status,branchId,departmentId
+JohnDoe,akashsolanki1292001@gmail.com,1234567890,ADMIN,ACTIVE,67ff3bd2c16ca90adb8c3b2c,67ff3bfcc16ca90adb8c3b2d
+JaneSmith,jane@gmail.com,9876543210,ADMIN,ACTIVE,67ff3bd2c16ca90adb8c3b2c,67ff3bfcc16ca90adb8c3b2d
+AliceLee,alice@gmail.com,5555555555,ADMIN,ACTIVE,67ff3bd2c16ca90adb8c3b2c,67ff3bfcc16ca90adb8c3b2d

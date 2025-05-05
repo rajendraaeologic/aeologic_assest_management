@@ -11,7 +11,8 @@ export const createOrganization = createAsyncThunk(
   "organization/create",
   async (data, { rejectWithValue }) => {
     try {
-      return await createOrganizationService(data);
+      const response = await createOrganizationService(data);
+      return response;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Something went wrong");
     }
@@ -24,12 +25,7 @@ export const getAllOrganizations = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await getAllOrganizationsService();
-
-      if (!response.data || response.data.length === 0) {
-        return rejectWithValue(response.message);
-      }
-
-      return response.data;
+      return response.data || [];
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch organizations"
@@ -44,11 +40,6 @@ export const updateOrganization = createAsyncThunk(
   async (data, { rejectWithValue }) => {
     try {
       const response = await updateOrganizationService(data);
-
-      if (!response) {
-        return rejectWithValue("Failed to update organization.");
-      }
-
       return response;
     } catch (error) {
       return rejectWithValue(
@@ -67,10 +58,13 @@ export const deleteOrganization = createAsyncThunk(
         ? organizationIds
         : [organizationIds];
       const response = await deleteOrganizationService(ids);
-      return { deletedOrganizationIds: ids };
+      return {
+        deletedOrganizationIds: ids,
+        ...response,
+      };
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || "Failed to delete organization(s)"
+        error.message || "Failed to delete organization(s)"
       );
     }
   }
@@ -87,6 +81,7 @@ const organizationSlice = createSlice({
     currentPage: 0,
     rowsPerPage: 5,
   },
+
   reducers: {
     setSelectedOrganization: (state, action) => {
       state.selectedOrganization = action.payload;
@@ -124,7 +119,7 @@ const organizationSlice = createSlice({
       })
       .addCase(createOrganization.fulfilled, (state, action) => {
         state.loading = false;
-        state.organizations.push(action.payload);
+        state.organizations.unshift(action.payload);
       })
       .addCase(createOrganization.rejected, (state, action) => {
         state.loading = false;
@@ -138,12 +133,14 @@ const organizationSlice = createSlice({
         state.loading = false;
         state.organizations = action.payload;
       })
+
       .addCase(getAllOrganizations.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
       .addCase(updateOrganization.pending, (state) => {
         state.loading = true;
+        state.error = null;
       })
       .addCase(updateOrganization.fulfilled, (state, action) => {
         state.loading = false;

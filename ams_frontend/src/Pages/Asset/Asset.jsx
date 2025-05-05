@@ -4,169 +4,109 @@ import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import {
-  setUsers,
   setCurrentPage,
   setRowsPerPage,
-  deleteSelectedUsers,
-  toggleSelectUser,
-  selectAllUsers,
-  deselectAllUsers,
-} from "../../Features/UserAssetSlice";
+  toggleSelectAsset,
+  selectAllAssets,
+  deselectAllAssets,
+  setSelectedAsset,
+} from "../../Features/slices/assetSlice";
 import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import AddAsset from "./AddAsset";
 import UpdateAsset from "./UpdateAsset";
 import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
+import { getAllAssets } from "../../Features/slices/assetSlice";
+import { deleteAsset } from "../../Features/slices/assetSlice";
+import assetStrings from "../../locales/assetStrings";
 
 const Asset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isSidebarOpen } = useContext(SliderContext);
+  const strings = assetStrings.asset;
 
-  const { assetUsersData, selectedUsers, currentPage, rowsPerPage } =
-    useSelector((state) => state.assetUserData);
-  const [isAddAssetUser, setIsAddAssetUser] = useState(false);
-  const [isUpdateAssetUser, setIsUpdateAssetUser] = useState(false);
+  const { assets, selectedAssets, currentPage, rowsPerPage } = useSelector(
+    (state) => state.assetUserData
+  );
 
   useEffect(() => {
-    dispatch(
-      setUsers([
-        {
-          id: 1,
-          name: "akash",
-          serialno: "LG001234",
-          department: "Accounts",
-          departmentcode: "4001",
-          assettype: "sdgvsd",
-          make: "Mt",
-          assetdetails: "chip",
-          model: "CHIP1001",
-          mtkassetcode: "	MTK1001",
-          hardwaretype: "HARD1",
-          status: "inventory",
-          assetstatus: "working",
-          awb: "	3453535445664",
-          amsowner: "Mohan",
-          usercode: "102",
-          scanstatus: "Not Verified",
-        },
-        {
-          id: 2,
-          name: "vikash",
-          serialno: "LG001234",
-          department: "Accounts",
-          departmentcode: "4001",
-          assettype: "sdgvsd",
-          make: "Mt",
-          assetdetails: "chip",
-          model: "CHIP1001",
-          mtkassetcode: "	MTK1001",
-          hardwaretype: "HARD1",
-          status: "inventory",
-          assetstatus: "working",
-          awb: "	3453535445664",
-          amsowner: "Mohan",
-          usercode: "102",
-          scanstatus: "Not Verified",
-        },
-        {
-          id: 3,
-          name: "akash",
-          serialno: "LG001234",
-          department: "Accounts",
-          departmentcode: "4001",
-          assettype: "sdgvsd",
-          make: "Mt",
-          assetdetails: "chip",
-          model: "CHIP1001",
-          mtkassetcode: "	MTK1001",
-          hardwaretype: "HARD1",
-          status: "inventory",
-          assetstatus: "working",
-          awb: "	3453535445664",
-          amsowner: "Mohan",
-          usercode: "102",
-          scanstatus: "Not Verified",
-        },
-        {
-          id: 4,
-          name: "akash",
-          serialno: "LG001234",
-          department: "Accounts",
-          departmentcode: "4001",
-          assettype: "sdgvsd",
-          make: "Mt",
-          assetdetails: "chip",
-          model: "CHIP1001",
-          mtkassetcode: "	MTK1001",
-          hardwaretype: "HARD1",
-          status: "inventory",
-          assetstatus: "working",
-          awb: "	3453535445664",
-          amsowner: "Mohan",
-          usercode: "102",
-          scanstatus: "Not Verified",
-        },
-        {
-          id: 5,
-          name: "akash",
-          serialno: "LG001234",
-          department: "Accounts",
-          departmentcode: "4001",
-          assettype: "sdgvsd",
-          make: "Mt",
-          assetdetails: "chip",
-          model: "CHIP1001",
-          mtkassetcode: "	MTK1001",
-          hardwaretype: "HARD1",
-          status: "inventory",
-          assetstatus: "working",
-          awb: "	3453535445664",
-          amsowner: "Mohan",
-          usercode: "102",
-          scanstatus: "Not Verified",
-        },
-      ])
-    );
+    dispatch(getAllAssets());
   }, [dispatch]);
 
-  const options = ["5", "10", "25", "50", "100"];
-  const totalPages = Math.ceil(assetUsersData.length / rowsPerPage);
+  const [isAddAsset, setIsAddAsset] = useState(false);
+  const [isUpdateAsset, setIsUpdateAsset] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [assetToDelete, setAssetToDelete] = useState(null);
+  const [showSelectFirstPopup, setShowSelectFirstPopup] = useState(false);
+  const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
+  const [deleteMessage, setDeleteMessage] = useState("");
 
-  const [searchUsers, setSearchUsers] = useState({
-    name: "",
-    serialno: "",
-    department: "",
-    departmentcode: "",
-    assettype: "",
-    make: "",
-    assetdetails: "",
+  const options = ["5", "10", "25", "50", "100"];
+  const totalPages = Math.ceil(assets.length / rowsPerPage);
+
+  const [searchAsset, setSearchAsset] = useState({
+    assetName: "",
+    uniqueId: "",
+    brand: "",
     model: "",
-    mtkassetcode: "",
-    hardwaretype: "",
+    serialNumber: "",
     status: "",
-    assetstatus: "",
-    awb: "",
-    amsowner: "",
-    usercode: "",
-    scanstatus: "",
+    branch: "",
+    department: "",
+    organizationName: "",
   });
+
+  useEffect(() => {
+    if (
+      showDeleteConfirmation ||
+      showSelectFirstPopup ||
+      showDeleteSuccessPopup
+    ) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [showDeleteConfirmation, showSelectFirstPopup, showDeleteSuccessPopup]);
+
   const handleSearchChange = (e) => {
     const { name, value } = e.target;
-    setSearchUsers((prev) => ({
+    setSearchAsset((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
-  const filteredUsers = assetUsersData?.filter((user) => {
-    return Object.entries(searchUsers).every(([key, searchValue]) =>
-      (user[key] || "").toLowerCase().includes(searchValue.toLowerCase())
-    );
+
+  const filteredAssets = assets?.filter((asset) => {
+    return Object.entries(searchAsset).every(([key, searchValue]) => {
+      if (key === "branch" && asset.branch) {
+        return asset.branch.branchName
+          .toLowerCase()
+          .includes(searchValue.toLowerCase());
+      }
+      if (key === "department" && asset.department) {
+        return asset.department.departmentName
+          .toLowerCase()
+          .includes(searchValue.toLowerCase());
+      }
+
+      return (asset[key] || "")
+        .toString()
+        .toLowerCase()
+        .includes(searchValue.toLowerCase());
+    });
   });
 
   const startIndex = currentPage * rowsPerPage;
-  const currentRows = filteredUsers.slice(startIndex, startIndex + rowsPerPage);
+  const currentRows = filteredAssets.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
 
   const handleNavigate = () => {
     navigate("/dashboard");
@@ -180,72 +120,118 @@ const Asset = () => {
     if (currentPage < totalPages - 1) dispatch(setCurrentPage(currentPage + 1));
   };
 
-  const handleDeleteSelectedUsers = () => {
-    dispatch(deleteSelectedUsers());
+  const handleDeleteSelectedAssets = () => {
+    if (selectedAssets.length === 0) {
+      setShowSelectFirstPopup(true);
+      return;
+    }
+    setShowDeleteConfirmation(true);
   };
 
-  const handleSelectAllUsers = (e) => {
+  const handleSelectAllAssets = (e) => {
     if (e.target.checked) {
-      dispatch(selectAllUsers());
+      dispatch(selectAllAssets());
     } else {
-      dispatch(deselectAllUsers());
+      dispatch(deselectAllAssets());
     }
   };
 
-  const handleToggleUserSelection = (id) => {
-    dispatch(toggleSelectUser(id));
+  const handleToggleAssetSelection = (id) => {
+    dispatch(toggleSelectAsset(id));
+  };
+
+  const handleEditAsset = (asset) => {
+    dispatch(setSelectedAsset(asset));
+    setIsUpdateAsset(true);
+  };
+
+  const handleDeleteClick = (asset) => {
+    setAssetToDelete(asset.id);
+    setShowDeleteConfirmation(true);
+  };
+
+  const confirmDelete = () => {
+    if (assetToDelete) {
+      dispatch(deleteAsset([assetToDelete]));
+      setDeleteMessage(strings.modals.deleteSuccess.single);
+    } else if (selectedAssets.length > 0) {
+      dispatch(deleteAsset(selectedAssets));
+      setDeleteMessage(
+        strings.modals.deleteSuccess.multiple.replace(
+          "{count}",
+          selectedAssets.length
+        )
+      );
+    }
+    setShowDeleteConfirmation(false);
+    setAssetToDelete(null);
+    setShowDeleteSuccessPopup(true);
+    setTimeout(() => {
+      setShowDeleteSuccessPopup(false);
+    }, 2000);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteConfirmation(false);
+    setAssetToDelete(null);
+  };
+
+  const closeSelectFirstPopup = () => {
+    setShowSelectFirstPopup(false);
   };
 
   return (
     <div
-      className={`w-full min-h-screen bg-slate-100 px-2  ${
+      className={`w-full min-h-screen bg-slate-100 px-2 ${
         isSidebarOpen ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"
       }`}
     >
       <div
         className={`mx-auto min-h-screen ${
           isSidebarOpen
-            ? "lg:w-[78%] md:ml-[260px] md:w-[65%]  "
-            : "lg:w-[90%] md:ml-[100px] "
+            ? "pl-0 md:pl-[250px] lg:pl-[250px]"
+            : "pl-0 md:pl-[90px] lg:pl-[90px]"
         }`}
       >
         <div className="pt-24">
           <div className="flex justify-between mx-5 mt-2">
-            <h3 className="text-xl font-semibold text-[#6c757D]">Asset List</h3>
+            <h3 className="text-xl font-semibold text-[#6c757D]">
+              {strings.title}
+            </h3>
             <div className="flex gap-3 md:mr-8">
               <button className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg">
                 <CiSaveUp2 className="h-6 w-6" />
               </button>
               <button
-                onClick={() => setIsAddAssetUser(true)}
+                onClick={() => setIsAddAsset(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
               >
-                Add Asset
+                {strings.buttons.addAsset}
               </button>
             </div>
           </div>
 
           <div className="mx-5 flex gap-2 mb-4">
-            <button onClick={handleNavigate} className="text-[#6c757D] ">
-              Dashboard
+            <button onClick={handleNavigate} className="text-[#6c757D]">
+              {strings.breadcrumb.dashboard}
             </button>
             <span>
               <MdKeyboardArrowLeft className="h-6 w-6" />
             </span>
-            <p className="text-[#6c757D]">Asset List</p>
+            <p className="text-[#6c757D]">{strings.breadcrumb.asset}</p>
           </div>
         </div>
 
-        <div className=" min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex Users-center gap-2 pt-8 ml-3">
-            <p>Show</p>
+        <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
+          <div className="flex items-center gap-2 pt-8 ml-3">
+            <p>{strings.table.showEntries}</p>
             <div className="border-2 flex justify-evenly">
               <select
                 value={rowsPerPage}
                 onChange={(e) =>
                   dispatch(setRowsPerPage(parseInt(e.target.value)))
                 }
-                className="outline-none px-6"
+                className="outline-none px-1"
               >
                 {options.map((option, index) => (
                   <option key={index} value={option}>
@@ -254,7 +240,7 @@ const Asset = () => {
                 ))}
               </select>
             </div>
-            <p>Entries</p>
+            <p>{strings.table.entries}</p>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
@@ -264,76 +250,116 @@ const Asset = () => {
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Name
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.assetName}
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Serial No
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.uniqueId}
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Department
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.brand}
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Department Code
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.model}
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Asset Type
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.serialNumber}
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Make
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.status}
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Asset Details
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.organizationName}
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Model
+
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.branch}
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    MTK Asset Code
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.department}
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Hardware Type
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "100px",
+                      minWidth: "100px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.action}
                   </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Status
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Asset Status
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    AWB Number
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    AMS Owner
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    User Code
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[240px]">
-                    Scan Status
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[100px]">
-                    Action
-                  </th>
-                  <th className="px-4 py-4 border border-gray-300 w-[100px]">
-                    <div className="flex justify-center Users-center ">
-                      <div className="">
-                        <label className="flex Users-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedUsers.length === assetUsersData.length &&
-                              assetUsersData.length > 0
-                            }
-                            onChange={handleSelectAllUsers}
-                            className="mr-2"
-                          />
-                        </label>
-                      </div>
-                      <button onClick={handleDeleteSelectedUsers}>
-                        <MdDelete className="h-6 w-6" />
-                      </button>
-                    </div>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "100px",
+                      minWidth: "100px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {strings.table.headers.deleteAll}
                   </th>
                 </tr>
               </thead>
@@ -341,297 +367,478 @@ const Asset = () => {
               {/* Search Row */}
               <tbody>
                 <tr className="bg-gray-100">
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
-                      placeholder=" name"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="name"
-                      value={searchUsers.name}
+                      name="assetName"
+                      placeholder={strings.table.searchPlaceholders.assetName}
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.assetName}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
-                      placeholder="serial no"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="serialno"
-                      value={searchUsers.serialno}
+                      name="uniqueId"
+                      placeholder={strings.table.searchPlaceholders.uniqueId}
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.uniqueId}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
-                      placeholder="department"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="department"
-                      value={searchUsers.department}
+                      name="brand"
+                      placeholder={strings.table.searchPlaceholders.brand}
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.brand}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
-                      placeholder="departmnt code"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="departmentcode"
-                      value={searchUsers.departmentcode}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="asset type"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="assettype"
-                      value={searchUsers.assettype}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="make"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="make"
-                      value={searchUsers.make}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="asset details"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="assetdetails"
-                      value={searchUsers.assetdetails}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="model"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
                       name="model"
-                      value={searchUsers.model}
+                      placeholder={strings.table.searchPlaceholders.model}
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.model}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
-                      placeholder="mtk asset code"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="mtkassetcode"
-                      value={searchUsers.mtkassetcode}
+                      name="serialNumber"
+                      placeholder={
+                        strings.table.searchPlaceholders.serialNumber
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.serialNumber}
                       onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
                     <input
                       type="text"
-                      placeholder="hardware type"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="hardwaretype"
-                      value={searchUsers.hardwaretype}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="status"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
                       name="status"
-                      value={searchUsers.status}
+                      placeholder={strings.table.searchPlaceholders.status}
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.status}
                       onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="asset status"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="assetstatus"
-                      value={searchUsers.assetstatus}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="awn number"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="awb"
-                      value={searchUsers.awb}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="ams owner"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="amsowner"
-                      value={searchUsers.amsowner}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="user code"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="usercode"
-                      value={searchUsers.usercode}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]">
-                    <input
-                      type="text"
-                      placeholder="scan status"
-                      className="w-80% px-2 py-1 border rounded-md focus:outline-none"
-                      name="scanstatus"
-                      value={searchUsers.scanstatus}
-                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
                     />
                   </td>
 
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]"></td>
-                  <td className="px-4 py-3 border border-gray-300 bg-[#b4b6b8]"></td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="branch"
+                      placeholder={
+                        strings.table.searchPlaceholders.organizationName
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.organizationName}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="branch"
+                      placeholder={strings.table.searchPlaceholders.branch}
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.branch}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="department"
+                      placeholder={strings.table.searchPlaceholders.department}
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchAsset.department}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                  ></td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      <div className="">
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedAssets.length === assets.length &&
+                              assets.length > 0
+                            }
+                            onChange={handleSelectAllAssets}
+                            className="mr-2"
+                          />
+                        </label>
+                      </div>
+                      <button onClick={handleDeleteSelectedAssets}>
+                        <MdDelete className="h-6 w-6 text-[red]" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               </tbody>
 
               {/* Table Body */}
               <tbody>
-                {currentRows.map((user, index) => (
-                  <tr
-                    key={user.id}
-                    className={`${
-                      index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                    } hover:bg-gray-200 divide-y divide-gray-300`}
-                  >
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.name}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.serialno}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.department}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.departmentcode}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.assettype}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.make}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.assetdetails}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.model}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.mtkassetcode}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.hardwaretype}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.status}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.assetstatus}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.awb}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.amsowner}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.usercode}
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      {user.scanstatus}
-                    </td>
-
-                    <td className="px-4 py-2 border border-gray-300">
-                      <button
-                        onClick={() => setIsUpdateAssetUser(true)}
-                        className="px-3 py-2 rounded-sm bg-[#3BC0C3]"
+                {currentRows.length > 0 ? (
+                  currentRows.map((asset, index) => (
+                    <tr
+                      key={asset.id || index}
+                      className={`${
+                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                      } hover:bg-gray-200 divide-y divide-gray-300`}
+                    >
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
                       >
-                        <FontAwesomeIcon icon={faPen} />
-                      </button>
-                    </td>
-                    <td className="px-4 py-2 border border-gray-300">
-                      <input
-                        type="checkbox"
-                        checked={selectedUsers?.includes(user.id) ?? false}
-                        onChange={() => handleToggleUserSelection(user.id)}
-                      />
+                        {asset.assetName}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.uniqueId}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.brand}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.model}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.serialNumber}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.status}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.company?.organizationName ||
+                          strings.table.notAvailable}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.branch?.branchName || strings.table.notAvailable}
+                      </td>
+
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{
+                          maxWidth: "180px",
+                          minWidth: "120px",
+                          overflowWrap: "break-word",
+                        }}
+                      >
+                        {asset.department?.departmentName ||
+                          strings.table.notAvailable}
+                      </td>
+                      <td
+                        className="px-2 py-2 border border-gray-300"
+                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                      >
+                        <div className="flex ">
+                          <button
+                            onClick={() => handleEditAsset(asset)}
+                            className="px-3 py-2 rounded-sm "
+                          >
+                            <FontAwesomeIcon icon={faPen} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteClick(asset)}
+                            className="px-3 py-2 rounded-sm text-[red]"
+                          >
+                            <MdDelete className="h-6 w-6" />
+                          </button>
+                        </div>
+                      </td>
+                      <td
+                        className="px-2 py-2 border text-center border-gray-300"
+                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedAssets?.includes(asset.id) ?? false}
+                          onChange={() => handleToggleAssetSelection(asset.id)}
+                        />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan="12"
+                      className="px-2 py-4 text-center border border-gray-300"
+                    >
+                      {strings.table.noData}
                     </td>
                   </tr>
-                ))}
+                )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination Controls */}
           <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2">
+            <div className="px-2 py-2 border-2 flex items-center gap-2">
               <button
                 onClick={handlePrev}
-                disabled={currentPage === 0}
-                className="text-black"
+                disabled={currentPage === 0 || totalPages === 0}
+                className={`${
+                  currentPage === 0 || totalPages === 0
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-gray-100"
+                }`}
               >
-                Previous
+                {assetStrings.asset.buttons.previous}
               </button>
-              <span className="px-2 space-x-1">
-                <span
-                  className={`${
-                    currentPage === 0
-                      ? "bg-[#3bc0c3] py-1 px-3"
-                      : "border-2 py-1 px-3"
-                  }`}
-                >
-                  {currentPage + 1}
-                </span>
 
-                <span
-                  className={`${
-                    currentPage + 1 === totalPages
-                      ? "py-1 px-3 bg-[#3bc0c3]"
-                      : "py-1 px-3"
-                  }`}
-                >
-                  {totalPages}
-                </span>
+              <span className="px-2 space-x-1">
+                {totalPages > 0 ? (
+                  <>
+                    <span
+                      className={`py-1 px-3 ${
+                        currentPage + 1 < totalPages
+                          ? "bg-[#3bc0c3] text-white"
+                          : "border-2"
+                      }`}
+                    >
+                      {currentPage + 1}
+                    </span>
+                    <span
+                      className={`py-1 px-3 ${
+                        currentPage + 1 === totalPages
+                          ? "bg-[#3bc0c3] text-white"
+                          : "border-2"
+                      }`}
+                    >
+                      {totalPages}
+                    </span>
+                  </>
+                ) : (
+                  <span className="py-1 px-3">0 / 0</span>
+                )}
               </span>
+
               <button
                 onClick={handleNext}
-                disabled={currentPage + 1 === totalPages}
-                className="text-black"
+                disabled={currentPage + 1 >= totalPages || totalPages === 0}
+                className={`${
+                  currentPage + 1 >= totalPages
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-gray-100"
+                }`}
               >
-                Next
+                {assetStrings.asset.buttons.next}
               </button>
             </div>
           </div>
         </div>
       </div>
       {/* Modals */}
-      {isAddAssetUser && <AddAsset onClose={() => setIsAddAssetUser(false)} />}
-      {isUpdateAssetUser && (
-        <UpdateAsset onClose={() => setIsUpdateAssetUser(false)} />
+      {isAddAsset && (
+        <AddAsset
+          onClose={() => setIsAddAsset(false)}
+          onSuccess={() => dispatch(getAllAssets())}
+        />
+      )}
+      {isUpdateAsset && (
+        <UpdateAsset
+          onClose={() => setIsUpdateAsset(false)}
+          onSuccess={() => dispatch(getAllAssets())}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirmation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">
+              {assetToDelete
+                ? strings.modals.deleteConfirmation.single
+                : strings.modals.deleteConfirmation.multiple.replace(
+                    "{count}",
+                    selectedAssets.length
+                  )}
+            </h3>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 bg-gray-300 rounded-md"
+              >
+                {strings.buttons.no}
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-500 text-white rounded-md"
+              >
+                {strings.buttons.yes}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Select First Popup */}
+      {showSelectFirstPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">
+              {strings.modals.selectFirst}
+            </h3>
+            <div className="flex justify-end">
+              <button
+                onClick={closeSelectFirstPopup}
+                className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
+              >
+                {strings.buttons.ok}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Success Popup */}
+      {showDeleteSuccessPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">{deleteMessage}</h3>
+          </div>
+        </div>
       )}
     </div>
   );

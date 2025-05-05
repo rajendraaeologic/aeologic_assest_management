@@ -9,8 +9,7 @@ import { applyDateFilter } from "@/utils/filters.utils";
 const createDepartment = catchAsync(async (req, res) => {
   try {
     const department = await departmentService.createDepartment({
-      name: req.body.name,
-      location: req.body.location,
+      departmentName: req.body.departmentName,
       branchId: req.body.branchId,
     } as Department);
 
@@ -26,7 +25,7 @@ const createDepartment = catchAsync(async (req, res) => {
 
 const getAllDepartments = catchAsync(async (req, res) => {
   const filter = pick(req.query, [
-    "name",
+    "departmentName",
     "location",
     "branchId",
     "from_date",
@@ -36,9 +35,9 @@ const getAllDepartments = catchAsync(async (req, res) => {
 
   applyDateFilter(filter);
 
-  if (filter.name) {
-    filter.name = {
-      contains: filter.name,
+  if (filter.departmentName) {
+    filter.departmentName = {
+      contains: filter.departmentName,
       mode: "insensitive",
     };
   }
@@ -121,6 +120,68 @@ const deleteDepartments = catchAsync(async (req, res) => {
   }
 });
 
+export const getDepartmentsByBranchId = catchAsync(async (req, res) => {
+  const { branchId } = req.params;
+
+  const rawOptions = pick(req.query, [
+    "limit",
+    "page",
+    "sortBy",
+    "sortType",
+    "status",
+    "createdAtFrom",
+    "createdAtTo",
+    "searchTerm",
+  ]);
+
+  const options = {
+    limit: rawOptions.searchTerm
+      ? 5
+      : rawOptions.limit
+      ? parseInt(rawOptions.limit as string, 10)
+      : 10,
+    page: rawOptions.page ? parseInt(rawOptions.page as string, 10) : 1,
+    sortBy: rawOptions.sortBy as string,
+    sortType: rawOptions.sortType as "asc" | "desc",
+    status: rawOptions.status as string,
+    createdAtFrom: rawOptions.createdAtFrom
+      ? new Date(rawOptions.createdAtFrom as string)
+      : undefined,
+    createdAtTo: rawOptions.createdAtTo
+      ? new Date(rawOptions.createdAtTo as string)
+      : undefined,
+    searchTerm: rawOptions.searchTerm as string,
+  };
+
+  const result = await departmentService.getDepartmentsByBranchId(
+    branchId,
+    options
+  );
+
+  if (!result || result.data.length === 0) {
+    res.status(200).json({
+      status: "404",
+      message: "No departments found for this branch",
+      data: [],
+      totalData: result.total,
+      page: options.page,
+      limit: options.limit,
+      totalPages: Math.ceil(result.total / options.limit),
+    });
+    return;
+  }
+
+  res.status(200).json({
+    success: true,
+    message: "Departments fetched successfully",
+    data: result.data,
+    totalData: result.total,
+    page: options.page,
+    limit: options.limit,
+    totalPages: Math.ceil(result.total / options.limit),
+  });
+});
+
 export default {
   createDepartment,
   getAllDepartments,
@@ -128,4 +189,5 @@ export default {
   updateDepartment,
   deleteDepartment,
   deleteDepartments,
+  getDepartmentsByBranchId,
 };

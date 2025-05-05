@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 export const LoginUserKeys: Prisma.UserSelect = {
   id: true,
   email: true,
-  name: true,
+  userName: true,
   ISDCode: true,
   phone: true,
   image: true,
@@ -19,7 +19,7 @@ export const LoginUserKeys: Prisma.UserSelect = {
 export const UserKeys: Prisma.UserSelect = {
   id: true,
   email: true,
-  name: true,
+  userName: true,
   phone: true,
   image: true,
   status: true,
@@ -27,6 +27,24 @@ export const UserKeys: Prisma.UserSelect = {
   isEmailVerified: true,
   createdAt: true,
   updatedAt: true,
+  company: {
+    select: {
+      id: true,
+      organizationName: true,
+    },
+  },
+  branch: {
+    select: {
+      id: true,
+      branchName: true,
+    },
+  },
+  department: {
+    select: {
+      id: true,
+      departmentName: true,
+    },
+  },
 };
 
 export const UserNotificationKeys: Prisma.UserNotificationSelect = {
@@ -34,7 +52,7 @@ export const UserNotificationKeys: Prisma.UserNotificationSelect = {
   User: {
     select: {
       id: true,
-      name: true,
+      userName: true,
       phone: true,
       email: true,
       image: true,
@@ -52,32 +70,32 @@ export const UserNotificationKeys: Prisma.UserNotificationSelect = {
 
 export const OrganizationKeys: Prisma.OrganizationSelect = {
   id: true,
-  name: true,
+  organizationName: true,
   createdAt: true,
   updatedAt: true,
   branches: {
     select: {
       id: true,
-      name: true,
-      location: true,
+      branchName: true,
+      branchLocation: true,
       // companyId: true,
       departments: {
         select: {
           id: true,
-          name: true,
+          departmentName: true,
         },
       },
       users: {
         select: {
           id: true,
-          name: true,
+          userName: true,
           email: true,
         },
       },
       assets: {
         select: {
           id: true,
-          name: true,
+          assetName: true,
           status: true,
         },
       },
@@ -88,27 +106,27 @@ export const OrganizationKeys: Prisma.OrganizationSelect = {
 //department
 export const DepartmentKeys: Prisma.DepartmentSelect = {
   id: true,
-  name: true,
-  location: true,
+  departmentName: true,
   createdAt: true,
   updatedAt: true,
   branch: {
     select: {
       id: true,
-      name: true,
+      branchName: true,
+      branchLocation: true,
     },
   },
   users: {
     select: {
       id: true,
-      name: true,
+      userName: true,
       email: true,
     },
   },
   Asset: {
     select: {
       id: true,
-      name: true,
+      assetName: true,
       status: true,
     },
   },
@@ -118,34 +136,148 @@ export const DepartmentKeys: Prisma.DepartmentSelect = {
 
 export const BranchKeys: Prisma.BranchSelect = {
   id: true,
-  name: true,
-  location: true,
+  branchName: true,
+  branchLocation: true,
   createdAt: true,
   updatedAt: true,
   company: {
     select: {
       id: true,
-      name: true,
+      organizationName: true,
     },
   },
   departments: {
     select: {
       id: true,
-      name: true,
+      departmentName: true,
     },
   },
   users: {
     select: {
       id: true,
-      name: true,
+      userName: true,
       email: true,
     },
   },
   assets: {
     select: {
       id: true,
-      name: true,
+      assetName: true,
       status: true,
+    },
+  },
+};
+
+//AssetKeys
+export const AssetKeys: Prisma.AssetSelect = {
+  id: true,
+  assetName: true,
+  description: true,
+  uniqueId: true,
+  brand: true,
+  model: true,
+  serialNumber: true,
+  purchaseDate: true,
+  cost: true,
+  warrantyEndDate: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+  // assignedUser: {
+  //   select: {
+  //     id: true,
+  //     userName: true,
+  //     email: true,
+  //   },
+  // },
+  // assetLocation: {
+  //   select: {
+  //     id: true,
+  //     locationName: true,
+  //     address: true,
+  //   },
+  // },
+  company: {
+    select: {
+      id: true,
+      organizationName: true,
+    },
+  },
+  branch: {
+    select: {
+      id: true,
+      branchName: true,
+      branchLocation: true,
+    },
+  },
+  department: {
+    select: {
+      id: true,
+      departmentName: true,
+    },
+  },
+  // assetHistory: {
+  //   select: {
+  //     id: true,
+  //     action: true,
+  //     timestamp: true,
+  //     user: {
+  //       select: {
+  //         id: true,
+  //         userName: true,
+  //       },
+  //     },
+  //   },
+  // },
+  // AssetAssignment: {
+  //   select: {
+  //     id: true,
+  //     assignedAt: true,
+  //     user: {
+  //       select: {
+  //         id: true,
+  //         userName: true,
+  //         email: true,
+  //       },
+  //     },
+  //   },
+  // },
+};
+
+export const AssetAssignmentKeys: Prisma.AssetAssignmentSelect = {
+  id: true,
+  assignedAt: true,
+  asset: {
+    select: {
+      id: true,
+      assetName: true,
+      uniqueId: true,
+    },
+  },
+  user: {
+    select: {
+      id: true,
+      userName: true,
+      email: true,
+    },
+  },
+};
+
+export const AssetHistoryKeys: Prisma.AssetHistorySelect = {
+  id: true,
+  action: true,
+  timestamp: true,
+  asset: {
+    select: {
+      id: true,
+      assetName: true,
+      uniqueId: true,
+    },
+  },
+  user: {
+    select: {
+      id: true,
+      userName: true,
     },
   },
 };

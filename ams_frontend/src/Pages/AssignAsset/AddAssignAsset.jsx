@@ -4,85 +4,347 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
 import API from "../../App/api/axiosInstance";
-import assignAssetStrings from "../../locales/assignAssetStrings";
-import { createAsset, getAllAssets } from "../../Features/slices/assetSlice";
+import assignAssetStrings from "../../locales/assignAssetString.js";
+import {
+  createAssignAsset,
+  getAllAssignAssets,
+} from "../../Features/slices/assignAssetSlice.js";
 
 const AddAssignAsset = ({ onClose }) => {
   const dispatch = useDispatch();
   const firstInputRef = useRef(null);
   const modalRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [branches, setBranches] = useState([]);
-  const [departments, setDepartments] = useState([]);
-  const [loadingBranches, setLoadingBranches] = useState(false);
-  const [loadingDepartments, setLoadingDepartments] = useState(false);
 
-  const { organizations } = useSelector((state) => state.organizationData);
+  // State variables for dropdowns
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  const [userPage, setUserPage] = useState(1);
+  const [hasMoreUsers, setHasMoreUsers] = useState(true);
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+
+  const [assets, setAssets] = useState([]);
+  const [loadingAssets, setLoadingAssets] = useState(false);
+  const [assetPage, setAssetPage] = useState(1);
+  const [hasMoreAssets, setHasMoreAssets] = useState(true);
+  const [assetSearchTerm, setAssetSearchTerm] = useState("");
+  const [showAssetDropdown, setShowAssetDropdown] = useState(false);
+
+  const [organizations, setOrganizations] = useState([]);
+  const [orgLoading, setOrgLoading] = useState(false);
+  const [orgPage, setOrgPage] = useState(1);
+  const [hasMoreOrgs, setHasMoreOrgs] = useState(true);
+  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
+  const [selectedOrg, setSelectedOrg] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const [branches, setBranches] = useState([]);
+  const [branchPage, setBranchPage] = useState(1);
+  const [hasMoreBranches, setHasMoreBranches] = useState(true);
+  const [loadingBranches, setLoadingBranches] = useState(false);
+  const [branchSearchTerm, setBranchSearchTerm] = useState("");
+  const [showBranchDropdown, setShowBranchDropdown] = useState(false);
+  const [selectedBranch, setSelectedBranch] = useState(null);
+  const [selectedOrgId, setSelectedOrgId] = useState("");
+
+  const [departments, setDepartments] = useState([]);
+  const [departmentPage, setDepartmentPage] = useState(1);
+  const [hasMoreDepts, setHasMoreDepts] = useState(true);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+  const [deptSearchTerm, setDeptSearchTerm] = useState("");
+  const [showDeptDropdown, setShowDeptDropdown] = useState(false);
+  const [selectedDept, setSelectedDept] = useState(null);
 
   const {
     register,
     handleSubmit,
     setError,
+    setValue,
+    reset,
     watch,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
+      companyId: "",
       branchId: "",
       departmentId: "",
       assetId: "",
+      userId: "",
     },
   });
 
   const branchId = watch("branchId");
+  const departmentId = watch("departmentId");
   const assetId = watch("assetId");
+  const userId = watch("userId");
+
+  // Fetch users by department
+  const fetchUsersByDepartmentId = async (page, search = "") => {
+    if (!departmentId) return;
+    try {
+      setLoadingUsers(true);
+      const response = await API.get(
+        `/assignAsset/${departmentId}/users?page=${page}&limit=5&searchTerm=${search}`
+      );
+      const { data, totalPages } = response.data;
+      setUsers((prev) => (page === 1 ? data : [...prev, ...data]));
+      setUserPage(page);
+      setHasMoreUsers(page < totalPages);
+    } catch (error) {
+      console.error("Error fetching users", error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
   useEffect(() => {
+    if (departmentId) {
+      setUserSearchTerm("");
+      setUserPage(1);
+      fetchUsersByDepartmentId(1, "");
+    } else {
+      setUsers([]);
+      setValue("userId", "");
+    }
+  }, [departmentId]);
+
+  // Fetch assets by department
+  const fetchAssetsByDepartmentId = async (page, search = "") => {
+    if (!departmentId) return;
+    try {
+      setLoadingAssets(true);
+      const response = await API.get(
+        `/assignAsset/${departmentId}/assets?page=${page}&limit=5&searchTerm=${search}`
+      );
+      const { data, totalPages } = response.data;
+      setAssets((prev) => (page === 1 ? data : [...prev, ...data]));
+      setAssetPage(page);
+      setHasMoreAssets(page < totalPages);
+    } catch (error) {
+      console.error("Error fetching assets", error);
+    } finally {
+      setLoadingAssets(false);
+    }
+  };
+
+  useEffect(() => {
+    if (departmentId) {
+      setAssetSearchTerm("");
+      setAssetPage(1);
+      fetchAssetsByDepartmentId(1, "");
+    } else {
+      setAssets([]);
+      setValue("assetId", "");
+    }
+  }, [departmentId]);
+
+  // Fetch organizations
+  const fetchOrganizations = async (page, search = "") => {
+    try {
+      setOrgLoading(true);
+      const response = await API.get(
+        `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
+      );
+      const { data, totalPages } = response.data;
+      setOrganizations((prev) => (page === 1 ? data : [...prev, ...data]));
+      setOrgPage(page);
+      setHasMoreOrgs(page < totalPages);
+    } catch (error) {
+      console.error("Error fetching organizations", error);
+    } finally {
+      setOrgLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrganizations(1, "");
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
+
     return () => {
       document.body.style.overflow = "auto";
     };
   }, []);
 
-  useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        setLoadingBranches(true);
-        const response = await API.get(`/branches`);
-        setBranches(response.data.data);
-      } catch (error) {
-        toast.error(assignAssetStrings.addAssignAsset.toast.branchError);
-      } finally {
-        setLoadingBranches(false);
-      }
-    };
-    fetchBranches();
-  }, []);
+  // Fetch branches
+  const fetchBranches = async (page, search = "") => {
+    if (!selectedOrgId) return;
+    try {
+      setLoadingBranches(true);
+      const response = await API.get(
+        `/branch/${selectedOrgId}/branches?limit=5&page=${page}&searchTerm=${search}`
+      );
+      const { data, totalPages } = response.data;
+      setBranches((prev) => (page === 1 ? data : [...prev, ...data]));
+      setBranchPage(page);
+      setHasMoreBranches(page < totalPages);
+    } catch (error) {
+      console.error("Error fetching branches", error);
+    } finally {
+      setLoadingBranches(false);
+    }
+  };
+
+  // Fetch departments
+  const fetchDepartments = async (page, search = "") => {
+    if (!branchId) return;
+    try {
+      setLoadingDepartments(true);
+      const response = await API.get(
+        `/department/${branchId}/departments?page=${page}&limit=5&searchTerm=${search}`
+      );
+      const { data, totalPages } = response.data;
+      setDepartments((prev) => (page === 1 ? data : [...prev, ...data]));
+      setDepartmentPage(page);
+      setHasMoreDepts(page < totalPages);
+    } catch (error) {
+      console.error("Error fetching departments", error);
+    } finally {
+      setLoadingDepartments(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchDepartments = async () => {
-      if (!branchId) {
-        setDepartments([]);
-        return;
-      }
-      try {
-        setLoadingDepartments(true);
-        const response = await API.get(`/department/${branchId}/departments`);
-        setDepartments(response.data.data);
-      } catch (error) {
-        toast.error(assignAssetStrings.addAssignAsset.toast.departmentError);
-      } finally {
-        setLoadingDepartments(false);
-      }
-    };
-    fetchDepartments();
-  }, [branchId]);
+    if (selectedOrgId) {
+      setBranchSearchTerm("");
+      setBranchPage(1);
+      fetchBranches(1, "");
+    }
+  }, [selectedOrgId]);
+
+  useEffect(() => {
+    if (branchId) {
+      fetchDepartments(1, deptSearchTerm);
+    }
+  }, [branchId, deptSearchTerm]);
+
+  // User dropdown handlers
+  const handleUserScroll = (e) => {
+    const bottomReached =
+      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+    if (bottomReached && !loadingUsers && hasMoreUsers) {
+      fetchUsersByDepartmentId(userPage + 1, userSearchTerm);
+    }
+  };
+
+  const handleUserSearch = (e) => {
+    const search = e.target.value;
+    setUserSearchTerm(search);
+    fetchUsersByDepartmentId(1, search);
+  };
+
+  const handleUserSelect = (user) => {
+    setValue("userId", user.id, { shouldValidate: true });
+    setShowUserDropdown(false);
+  };
+
+  // Asset dropdown handlers
+  const handleAssetScroll = (e) => {
+    const bottomReached =
+      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+    if (bottomReached && !loadingAssets && hasMoreAssets) {
+      fetchAssetsByDepartmentId(assetPage + 1, assetSearchTerm);
+    }
+  };
+
+  const handleAssetSearch = (e) => {
+    const search = e.target.value;
+    setAssetSearchTerm(search);
+    fetchAssetsByDepartmentId(1, search);
+  };
+
+  const handleAssetSelect = (asset) => {
+    setValue("assetId", asset.id, { shouldValidate: true });
+    setShowAssetDropdown(false);
+  };
+
+  // Organization handlers
+  const handleOrgScroll = (e) => {
+    const bottomReached =
+      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+    if (bottomReached && !orgLoading && hasMoreOrgs) {
+      fetchOrganizations(orgPage + 1, searchTerm);
+    }
+  };
+
+  const handleOrgSearch = (e) => {
+    const search = e.target.value;
+    setSearchTerm(search);
+    fetchOrganizations(1, search);
+  };
+
+  const handleOrgSelect = (org) => {
+    setSelectedOrg(org);
+    setSelectedOrgId(org.id);
+    setValue("companyId", org.id, { shouldValidate: true });
+    setShowOrgDropdown(false);
+    setSearchTerm("");
+    setValue("branchId", "");
+    setValue("departmentId", "");
+    setValue("userId", "");
+    setBranches([]);
+    setDepartments([]);
+    setUsers([]);
+    setSelectedBranch(null);
+    setSelectedDept(null);
+  };
+
+  // Branch handlers
+  const handleBranchScroll = (e) => {
+    const bottomReached =
+      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+    if (bottomReached && !loadingBranches && hasMoreBranches) {
+      fetchBranches(branchPage + 1, branchSearchTerm);
+    }
+  };
+
+  const handleBranchSearch = (e) => {
+    const search = e.target.value;
+    setBranchSearchTerm(search);
+    fetchBranches(1, search);
+  };
+
+  const handleBranchSelect = (branch) => {
+    setValue("branchId", branch.id, { shouldValidate: true });
+    setSelectedBranch(branch);
+    setShowBranchDropdown(false);
+    setValue("departmentId", "");
+    setValue("userId", "");
+    setDepartments([]);
+    setUsers([]);
+    setSelectedDept(null);
+    setDeptSearchTerm("");
+    setDepartmentPage(1);
+  };
+
+  // Department handlers
+  const handleDeptScroll = (e) => {
+    const bottomReached =
+      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+    if (bottomReached && !loadingDepartments && hasMoreDepts) {
+      fetchDepartments(departmentPage + 1, deptSearchTerm);
+    }
+  };
+
+  const handleDeptSearch = (e) => {
+    const search = e.target.value;
+    setDeptSearchTerm(search);
+    fetchDepartments(1, search);
+  };
+
+  const handleDeptSelect = (dept) => {
+    setValue("departmentId", dept.id, { shouldValidate: true });
+    setSelectedDept(dept);
+    setShowDeptDropdown(false);
+  };
 
   const handleClose = () => {
     setIsVisible(false);
     setTimeout(() => {
       onClose();
+      reset();
     }, 300);
   };
 
@@ -92,32 +354,64 @@ const AddAssignAsset = ({ onClose }) => {
     }
   };
 
+  // Register form validation
+  useEffect(() => {
+    register("companyId", {
+      required:
+        assignAssetStrings.addAssignAsset.validation.organizationRequired,
+    });
+    register("branchId", {
+      required: assignAssetStrings.addAssignAsset.validation.branchRequired,
+    });
+    register("departmentId", {
+      required: assignAssetStrings.addAssignAsset.validation.departmentRequired,
+    });
+    register("assetId", {
+      required: assignAssetStrings.addAssignAsset.validation.assetRequired,
+    });
+    register("userId", {
+      required: assignAssetStrings.addAssignAsset.validation.userNameRequired,
+    });
+  }, [register]);
+
   const onSubmit = async (data) => {
     try {
-      await dispatch(createAsset(data)).unwrap();
-      dispatch(getAllAssets());
+      const payload = {
+        assetId: data.assetId,
+        userId: data.userId,
+      };
+
+      await dispatch(createAssignAsset(payload)).unwrap();
+      dispatch(getAllAssignAssets());
       toast.success(assignAssetStrings.addAssignAsset.toast.success, {
         position: "top-right",
         autoClose: 2000,
       });
-      handleClose();
+
+      setIsVisible(false);
+
+      reset();
+      onClose();
     } catch (error) {
       const errorMessage = error?.message || "";
-
-      if (errorMessage.includes("Asset already assigned")) {
-        toast.error(assignAssetStrings.addAssignAsset.toast.assetAssigned, {
-          autoClose: 2000,
+      if (errorMessage.includes("Asset is not available for assignment")) {
+        toast.error(errorMessage, {
+          position: "top-right",
+          autoClose: 5000,
         });
         return setError("assetId", {
           type: "manual",
-          message: assignAssetStrings.addAssignAsset.toast.assetAssigned,
+          message: errorMessage,
         });
       }
 
-      toast.error(assignAssetStrings.addAssignAsset.toast.error, {
-        position: "top-right",
-        autoClose: 2000,
-      });
+      toast.error(
+        errorMessage || assignAssetStrings.addAssignAsset.toast.error,
+        {
+          position: "top-right",
+          autoClose: 5000,
+        }
+      );
     }
   };
 
@@ -146,100 +440,276 @@ const AddAssignAsset = ({ onClose }) => {
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-              {/* Branch Select */}
-              <div className="w-full">
+              {/* Organization Dropdown */}
+              <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
-                  {assignAssetStrings.addAssignAsset.formLabels.branch}
+                  {assignAssetStrings.addAssignAsset.formLabels.organization}
                 </label>
-                <select
-                  {...register("branchId", {
-                    required:
-                      assignAssetStrings.addAssignAsset.validation
-                        .branchRequired,
-                  })}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.branchId ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                  disabled={loadingBranches}
+                <div
+                  onClick={() => setShowOrgDropdown(!showOrgDropdown)}
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
                 >
-                  <option value="">
-                    {loadingBranches
-                      ? assignAssetStrings.addAssignAsset.select.loadingBranches
-                      : assignAssetStrings.addAssignAsset.select.branchDefault}
-                  </option>
-                  {branches?.map((branch) => (
-                    <option key={branch.id} value={branch.id}>
-                      {branch.branchName}
-                    </option>
-                  ))}
-                </select>
+                  {selectedOrg
+                    ? selectedOrg.organizationName
+                    : assignAssetStrings.addAssignAsset.select
+                        .organizationDefault}
+                </div>
+                {errors.companyId && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.companyId.message}
+                  </p>
+                )}
+                {showOrgDropdown && (
+                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                    <input
+                      type="text"
+                      placeholder={
+                        assignAssetStrings.addAssignAsset.select
+                          .organizationDefault
+                      }
+                      value={searchTerm}
+                      onChange={handleOrgSearch}
+                      className="p-2 w-full border-b outline-none"
+                    />
+                    <ul
+                      onScroll={handleOrgScroll}
+                      className="max-h-40 overflow-auto"
+                    >
+                      {organizations.map((org) => (
+                        <li
+                          key={org.id}
+                          onClick={() => handleOrgSelect(org)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {org.organizationName}
+                        </li>
+                      ))}
+                      {orgLoading && (
+                        <li className="px-4 py-2 text-sm text-gray-500">
+                          {
+                            assignAssetStrings.addAssignAsset.select
+                              .loadingBranches
+                          }
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+              {/* Branch Dropdown */}
+              <div className="w-full relative">
+                <label className="block text-sm font-medium text-gray-700">
+                  Branch
+                </label>
+                <div
+                  onClick={() => {
+                    if (!selectedOrgId) return;
+                    setShowBranchDropdown(!showBranchDropdown);
+                  }}
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                >
+                  {selectedBranch ? selectedBranch.branchName : "Select Branch"}
+                </div>
                 {errors.branchId && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.branchId.message}
                   </p>
                 )}
+                {showBranchDropdown && (
+                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                    <input
+                      type="text"
+                      placeholder="Search branch..."
+                      value={branchSearchTerm}
+                      onChange={handleBranchSearch}
+                      className="p-2 w-full border-b outline-none"
+                    />
+                    <ul
+                      onScroll={handleBranchScroll}
+                      className="max-h-40 overflow-auto"
+                    >
+                      {branches.map((branch) => (
+                        <li
+                          key={branch.id}
+                          onClick={() => handleBranchSelect(branch)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {branch.branchName}
+                        </li>
+                      ))}
+                      {loadingBranches && (
+                        <li className="px-4 py-2 text-sm text-gray-500">
+                          Loading...
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
               </div>
 
-              {/* Department Select */}
-              <div className="w-full">
+              {/* Department Dropdown */}
+              <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
-                  {assignAssetStrings.addAssignAsset.formLabels.department}
+                  Department
                 </label>
-                <select
-                  {...register("departmentId", {
-                    required:
-                      assignAssetStrings.addAssignAsset.validation
-                        .departmentRequired,
-                  })}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.departmentId ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                  disabled={loadingDepartments || !branchId}
+                <div
+                  onClick={() => {
+                    if (!branchId) return;
+                    setShowDeptDropdown(!showDeptDropdown);
+                  }}
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
                 >
-                  <option value="">
-                    {loadingDepartments
-                      ? assignAssetStrings.addAssignAsset.select
-                          .loadingDepartments
-                      : assignAssetStrings.addAssignAsset.select
-                          .departmentDefault}
-                  </option>
-                  {departments?.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.departmentName}
-                    </option>
-                  ))}
-                </select>
+                  {selectedDept
+                    ? selectedDept.departmentName
+                    : "Select Department"}
+                </div>
                 {errors.departmentId && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.departmentId.message}
                   </p>
                 )}
+                {showDeptDropdown && (
+                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                    <input
+                      type="text"
+                      placeholder="Search department..."
+                      value={deptSearchTerm}
+                      onChange={handleDeptSearch}
+                      className="p-2 w-full border-b outline-none"
+                    />
+                    <ul
+                      onScroll={handleDeptScroll}
+                      className="max-h-40 overflow-auto"
+                    >
+                      {departments.map((dept) => (
+                        <li
+                          key={dept.id}
+                          onClick={() => handleDeptSelect(dept)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {dept.departmentName}
+                        </li>
+                      ))}
+                      {loadingDepartments && (
+                        <li className="px-4 py-2 text-sm text-gray-500">
+                          Loading...
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
               </div>
 
               {/* Asset Select */}
-              <div className="w-full">
+              <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {assignAssetStrings.addAssignAsset.formLabels.asset}
                 </label>
-                <select
-                  {...register("assetId", {
-                    required:
-                      assignAssetStrings.addAssignAsset.validation
-                        .assetRequired,
-                  })}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.assetId ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
+                <div
+                  onClick={() => {
+                    if (!departmentId) return;
+                    setShowAssetDropdown(!showAssetDropdown);
+                  }}
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
                 >
-                  <option value="">
-                    {assignAssetStrings.addAssignAsset.select.assetDefault}
-                  </option>
-                  {/* Add asset options here */}
-                </select>
+                  {assets.find((a) => a.id === assetId)
+                    ? `${assets.find((a) => a.id === assetId).assetName} (${
+                        assets.find((a) => a.id === assetId).uniqueId
+                      })`
+                    : assignAssetStrings.addAssignAsset.select.assetDefault}
+                </div>
                 {errors.assetId && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.assetId.message}
                   </p>
+                )}
+                {showAssetDropdown && (
+                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                    <input
+                      type="text"
+                      placeholder="Search asset..."
+                      value={assetSearchTerm}
+                      onChange={handleAssetSearch}
+                      className="p-2 w-full border-b outline-none"
+                    />
+                    <ul
+                      onScroll={handleAssetScroll}
+                      className="max-h-40 overflow-auto"
+                    >
+                      {assets.map((asset) => (
+                        <li
+                          key={asset.id}
+                          onClick={() => handleAssetSelect(asset)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {asset.assetName} ({asset.uniqueId}) -{" "}
+                          {asset.branch?.branchName}
+                        </li>
+                      ))}
+                      {loadingAssets && (
+                        <li className="px-4 py-2 text-sm text-gray-500">
+                          Loading...
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* User Select */}
+              <div className="w-full relative">
+                <label className="block text-sm font-medium text-gray-700">
+                  {assignAssetStrings.addAssignAsset.formLabels.userName}
+                </label>
+                <div
+                  onClick={() => {
+                    if (!departmentId) return;
+                    setShowUserDropdown(!showUserDropdown);
+                  }}
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                >
+                  {users.find((u) => u.id === watch("userId"))
+                    ? `${
+                        users.find((u) => u.id === watch("userId")).userName
+                      } (${
+                        users.find((u) => u.id === watch("userId")).userName
+                      })`
+                    : assignAssetStrings.addAssignAsset.select.userDefault}
+                </div>
+                {errors.userId && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.userId.message}
+                  </p>
+                )}
+                {showUserDropdown && (
+                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                    <input
+                      type="text"
+                      placeholder="Search user..."
+                      value={userSearchTerm}
+                      onChange={handleUserSearch}
+                      className="p-2 w-full border-b outline-none"
+                    />
+                    <ul
+                      onScroll={handleUserScroll}
+                      className="max-h-40 overflow-auto"
+                    >
+                      {users.map((user) => (
+                        <li
+                          key={user.id}
+                          onClick={() => handleUserSelect(user)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {user.userName}
+                        </li>
+                      ))}
+                      {loadingUsers && (
+                        <li className="px-4 py-2 text-sm text-gray-500">
+                          Loading...
+                        </li>
+                      )}
+                    </ul>
+                  </div>
                 )}
               </div>
             </div>

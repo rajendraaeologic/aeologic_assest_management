@@ -4,7 +4,7 @@ import {
   getAllAssignAssetsService,
   updateAssignAssetService,
   deleteAssignAssetService,
-} from "../services/assignAssetService";
+} from "../services/asssignAssetService";
 
 // Create AssignAsset
 export const createAssignAsset = createAsyncThunk(
@@ -22,9 +22,9 @@ export const createAssignAsset = createAsyncThunk(
 // Get All AssignAssets
 export const getAllAssignAssets = createAsyncThunk(
   "assignAsset/getAll",
-  async (_, { rejectWithValue }) => {
+  async (params, { rejectWithValue }) => {
     try {
-      const response = await getAllAssignAssetsService();
+      const response = await getAllAssignAssetsService(params);
       return response.data || [];
     } catch (error) {
       return rejectWithValue(

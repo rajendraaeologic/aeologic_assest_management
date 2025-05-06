@@ -111,7 +111,7 @@ const assignAssetStrings = {
       assignAsset: "Assign Asset",
     },
     buttons: {
-      save: "Save",
+      update: "Update",
       updating: "Updating...",
       close: "Close",
     },

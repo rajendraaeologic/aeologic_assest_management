@@ -10,6 +10,12 @@ const getAvailableAssets = async (
 ): Promise<Asset[]> => {
   const where: Prisma.AssetWhereInput = {
     status: AssetStatus.ACTIVE,
+    assignedToUserId: null,
+    AssetAssignment: {
+      none: {
+        status: AssetStatus.IN_USE,
+      },
+    },
   };
 
   if (branchId) where.branchId = branchId;
@@ -514,6 +520,136 @@ const updateAssetAssignment = async (
     ...(oldAsset ? { oldAsset } : {}),
   };
 };
+// Delete single assignment by ID
+const deleteAssignmentById = async (
+  assignmentId: string
+): Promise<{
+  assignment: any;
+  asset: Asset;
+}> => {
+  // First find the assignment to verify it exists
+  const assignment = await db.assetAssignment.findUnique({
+    where: { id: assignmentId },
+    include: {
+      asset: true,
+    },
+  });
+
+  if (!assignment) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Assignment not found");
+  }
+
+  try {
+    // Use transaction to ensure data consistency
+    const [deletedAssignment, updatedAsset] = await db.$transaction([
+      db.assetAssignment.delete({
+        where: { id: assignmentId },
+      }),
+      db.asset.update({
+        where: { id: assignment.assetId },
+        data: {
+          assignedToUserId: null,
+          status: AssetStatus.ACTIVE,
+        },
+      }),
+    ]);
+
+    // Create history record
+    await db.assetHistory.create({
+      data: {
+        assetId: assignment.assetId,
+        userId: assignment.userId,
+        action: "ASSIGNMENT_DELETED",
+      },
+    });
+
+    return {
+      assignment: deletedAssignment,
+      asset: updatedAsset,
+    };
+  } catch (error) {
+    console.error("Error deleting assignment:", error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
+  }
+};
+
+// Bulk delete assignments by IDs
+const deleteAssignmentsByIds = async (
+  assignmentIds: string[]
+): Promise<{
+  deletedCount: number;
+  affectedAssets: Asset[];
+}> => {
+  // First verify all assignments exist
+  const assignments = await db.assetAssignment.findMany({
+    where: { id: { in: assignmentIds } },
+    include: {
+      asset: true,
+    },
+  });
+
+  if (assignments.length !== assignmentIds.length) {
+    const foundIds = assignments.map((a) => a.id);
+    const missingIds = assignmentIds.filter((id) => !foundIds.includes(id));
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `Assignments not found: ${missingIds.join(", ")}`
+    );
+  }
+
+  try {
+    // Get unique asset IDs that will be affected
+    const assetIds = [...new Set(assignments.map((a) => a.assetId))];
+
+    // Use transaction for atomic operations
+    const result = await db.$transaction(async (prisma) => {
+      // Delete the assignments
+      const { count: deletedCount } = await prisma.assetAssignment.deleteMany({
+        where: { id: { in: assignmentIds } },
+      });
+
+      // For each affected asset, check if it still has assignments
+      const assetUpdates = await Promise.all(
+        assetIds.map(async (assetId) => {
+          const remainingAssignments = await prisma.assetAssignment.count({
+            where: { assetId },
+          });
+
+          // If no assignments left, update asset status
+          if (remainingAssignments === 0) {
+            return prisma.asset.update({
+              where: { id: assetId },
+              data: {
+                assignedToUserId: null,
+                status: AssetStatus.ACTIVE,
+              },
+            });
+          }
+          return null;
+        })
+      );
+
+      // Create history records for each deleted assignment
+      await prisma.assetHistory.createMany({
+        data: assignments.map((assignment) => ({
+          assetId: assignment.assetId,
+          userId: assignment.userId,
+          action: "ASSIGNMENT_DELETED",
+        })),
+      });
+
+      return {
+        deletedCount,
+        affectedAssets: assetUpdates.filter(Boolean) as Asset[],
+      };
+    });
+
+    return result;
+  } catch (error) {
+    console.error("Error bulk deleting assignments:", error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
+  }
+};
 
 export default {
   assignAsset,
@@ -525,4 +661,6 @@ export default {
   getAssetsByDepartmentId,
   getUsersByDepartmentId,
   updateAssetAssignment,
+  deleteAssignmentsByIds,
+  deleteAssignmentById,
 };

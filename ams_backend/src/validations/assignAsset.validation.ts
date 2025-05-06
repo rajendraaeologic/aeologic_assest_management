@@ -173,6 +173,28 @@ const updateAssetAssignmentValidation = {
   }),
 };
 
+const deleteAssignAssetValidation = {
+  params: Joi.object().keys({
+    assignmentId: Joi.required()
+      .custom(isValidMongoDBObjectId)
+      .messages(isValidMongoDBObjectIdCustomMessages),
+  }),
+};
+
+const bulkDeleteAssetsValidation = {
+  body: Joi.object().keys({
+    assignmentIds: Joi.array()
+      .items(Joi.string().pattern(/^[0-9a-fA-F]{24}$/))
+      .min(1)
+      .required()
+      .messages({
+        "array.base": '"assetIds" must be an array',
+        "array.min": "At least one asset ID is required",
+        "string.pattern.base": "Each ID must be a valid MongoDB ID",
+      }),
+  }),
+};
+
 export default {
   assignAssetValidation,
   unassignAssetValidation,
@@ -183,4 +205,6 @@ export default {
   getAssetsByDepartmentIdValidation,
   getUsersByDepartmentIdValidation,
   updateAssetAssignmentValidation,
+  deleteAssignAssetValidation,
+  bulkDeleteAssetsValidation,
 };

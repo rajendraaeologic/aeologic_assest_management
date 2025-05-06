@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
-// import ChipsList from "../../components/UI/ChipsList";
+
 import {
   setCurrentPage,
   setRowsPerPage,

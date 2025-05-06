@@ -375,6 +375,14 @@ const AddAssignAsset = ({ onClose }) => {
   }, [register]);
 
   const onSubmit = async (data) => {
+    if (!data.companyId) {
+      toast.error("Please select a valid organization", {
+        position: "top-right",
+        autoClose: 1000,
+      });
+      return;
+    }
+
     try {
       const payload = {
         assetId: data.assetId,
@@ -383,28 +391,41 @@ const AddAssignAsset = ({ onClose }) => {
 
       await dispatch(createAssignAsset(payload)).unwrap();
       dispatch(getAllAssignAssets());
+
+      // Refresh available assets
+      if (departmentId) {
+        fetchAssetsByDepartmentId(1, "");
+      }
+
       toast.success(assignAssetStrings.addAssignAsset.toast.success, {
         position: "top-right",
         autoClose: 2000,
       });
 
       setIsVisible(false);
-
       reset();
       onClose();
     } catch (error) {
       const errorMessage = error?.message || "";
-      if (errorMessage.includes("Asset is not available for assignment")) {
-        toast.error(errorMessage, {
-          position: "top-right",
-          autoClose: 5000,
-        });
+
+      if (
+        errorMessage.includes("Asset is not available for assignment") ||
+        errorMessage.includes("IN_USE")
+      ) {
+        toast.error(
+          "The selected asset is already in use and cannot be assigned",
+          {
+            position: "top-right",
+            autoClose: 5000,
+          }
+        );
         return setError("assetId", {
           type: "manual",
-          message: errorMessage,
+          message: "This asset is already in use",
         });
       }
 
+      // Handle other errors
       toast.error(
         errorMessage || assignAssetStrings.addAssignAsset.toast.error,
         {
@@ -414,7 +435,6 @@ const AddAssignAsset = ({ onClose }) => {
       );
     }
   };
-
   return (
     <div
       className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${
@@ -636,19 +656,35 @@ const AddAssignAsset = ({ onClose }) => {
                       onScroll={handleAssetScroll}
                       className="max-h-40 overflow-auto"
                     >
-                      {assets.map((asset) => (
-                        <li
-                          key={asset.id}
-                          onClick={() => handleAssetSelect(asset)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {asset.assetName} ({asset.uniqueId}) -{" "}
-                          {asset.branch?.branchName}
-                        </li>
-                      ))}
+                      {assets.map((asset) => {
+                        const isInUse = asset.status === "IN_USE";
+                        return (
+                          <li
+                            key={asset.id}
+                            onClick={() => !isInUse && handleAssetSelect(asset)}
+                            className={`px-4 py-2 hover:bg-gray-100 ${
+                              isInUse
+                                ? "cursor-not-allowed text-gray-400"
+                                : "cursor-pointer"
+                            }`}
+                          >
+                            {asset.assetName} ({asset.uniqueId})
+                            {isInUse && (
+                              <span className="ml-2 text-sm text-red-500">
+                                (In Use)
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
                       {loadingAssets && (
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
+                        </li>
+                      )}
+                      {assets.length === 0 && !loadingAssets && (
+                        <li className="px-4 py-2 text-sm text-gray-500">
+                          No available assets found
                         </li>
                       )}
                     </ul>
@@ -669,11 +705,7 @@ const AddAssignAsset = ({ onClose }) => {
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
                 >
                   {users.find((u) => u.id === watch("userId"))
-                    ? `${
-                        users.find((u) => u.id === watch("userId")).userName
-                      } (${
-                        users.find((u) => u.id === watch("userId")).userName
-                      })`
+                    ? `${users.find((u) => u.id === watch("userId")).userName}`
                     : assignAssetStrings.addAssignAsset.select.userDefault}
                 </div>
                 {errors.userId && (

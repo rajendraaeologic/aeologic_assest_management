@@ -13,7 +13,6 @@ const UpdateUserForm = ({ onClose }) => {
   const modalRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const selectedUser = useSelector((state) => state.usersData.selectedUser);
-  console.log("sbnsjs", selectedUser);
 
   const [organizations, setOrganizations] = useState([]);
   const [orgLoading, setOrgLoading] = useState(false);
@@ -266,7 +265,6 @@ const UpdateUserForm = ({ onClose }) => {
   };
 
   const handleBranchSelect = (branch) => {
-    console.log("sns", branch.id);
     setValue("branchId", branch.id);
     setSelectedBranch(branch);
     setShowBranchDropdown(false);
@@ -301,7 +299,6 @@ const UpdateUserForm = ({ onClose }) => {
     }
   };
   const onSubmit = async (data) => {
-    console.log("dataabvhab", data);
     try {
       const userData = {
         params: { userId: selectedUser.id },
@@ -679,7 +676,7 @@ const UpdateUserForm = ({ onClose }) => {
                   <option value="ACTIVE">
                     {userStrings.updateUser.select.statusActive}
                   </option>
-                  <option value="INACTIVE">
+                  <option value="IN_ACTIVE">
                     {userStrings.updateUser.select.statusInactive}
                   </option>
                 </select>

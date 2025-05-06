@@ -10,17 +10,14 @@ import {
   getAllAssignAssets,
 } from "../../Features/slices/assignAssetSlice.js";
 
-const UpdateAssignAsset = ({ onClose, assignmentId }) => {
+const UpdateAssignAsset = ({ onClose }) => {
   const dispatch = useDispatch();
   const firstInputRef = useRef(null);
   const modalRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
-  const selectedAssignment = useSelector((state) =>
-    state.assignAssetData.assignAssets.find(
-      (asset) => asset.id === assignmentId
-    )
+  const selectedAssignment = useSelector(
+    (state) => state.assignAssetData.selectedAssignAsset
   );
-  console.log("sn", selectedAssignment);
 
   // User dropdown state
   const [users, setUsers] = useState([]);
@@ -92,7 +89,7 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
       setOrgPage(page);
       setHasMoreOrgs(page < totalPages);
     } catch (error) {
-      toast.error("Error fetching organizations");
+      toast.error("Error fetching organizations", error);
     } finally {
       setOrgLoading(false);
     }
@@ -110,7 +107,7 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
       setBranchPage(page);
       setHasMoreBranches(page < totalPages);
     } catch (error) {
-      toast.error("Error fetching branches");
+      toast.error("Error fetching branches", error);
     } finally {
       setLoadingBranches(false);
     }
@@ -128,7 +125,7 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
       setDepartmentPage(page);
       setHasMoreDepts(page < totalPages);
     } catch (error) {
-      toast.error("Error fetching departments");
+      toast.error("Error fetching departments", error);
     } finally {
       setLoadingDepartments(false);
     }
@@ -146,7 +143,7 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
       setUserPage(page);
       setHasMoreUsers(page < totalPages);
     } catch (error) {
-      toast.error("Error fetching users");
+      toast.error("Error fetching users", error);
     } finally {
       setLoadingUsers(false);
     }
@@ -164,7 +161,7 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
       setAssetPage(page);
       setHasMoreAssets(page < totalPages);
     } catch (error) {
-      toast.error("Error fetching assets");
+      toast.error("Error fetching assets", error);
     } finally {
       setLoadingAssets(false);
     }
@@ -202,42 +199,40 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
   useEffect(() => {
     if (selectedAssignment) {
       reset({
-        companyId: selectedAssignment.asset?.branch?.organization?.id,
-        branchId: selectedAssignment.asset?.branch?.id,
-        departmentId: selectedAssignment.department?.id,
+        companyId: selectedAssignment.user?.company?.id,
+        branchId: selectedAssignment.user?.branch?.id,
+        departmentId: selectedAssignment.user?.department?.id,
         assetId: selectedAssignment.asset?.id,
         userId: selectedAssignment.user?.id,
       });
 
       // Set selected organization if exists
-      if (selectedAssignment.asset?.branch?.organization) {
-        setSelectedOrg(selectedAssignment.asset.branch.organization);
+      if (selectedAssignment.user?.company) {
+        setSelectedOrg(selectedAssignment.user.company);
         setOrganizations((prev) =>
-          prev.some(
-            (org) => org.id === selectedAssignment.asset.branch.organization.id
-          )
+          prev.some((org) => org.id === selectedAssignment.user.company.id)
             ? prev
-            : [...prev, selectedAssignment.asset.branch.organization]
+            : [...prev, selectedAssignment.user.company]
         );
       }
 
       // Set selected branch if exists
-      if (selectedAssignment.asset?.branch) {
-        setSelectedBranch(selectedAssignment.asset.branch);
+      if (selectedAssignment.user?.branch) {
+        setSelectedBranch(selectedAssignment.user.branch);
         setBranches((prev) =>
-          prev.some((b) => b.id === selectedAssignment.asset.branch.id)
+          prev.some((b) => b.id === selectedAssignment.user.branch.id)
             ? prev
-            : [...prev, selectedAssignment.asset.branch]
+            : [...prev, selectedAssignment.user.branch]
         );
       }
 
       // Set selected department if exists
-      if (selectedAssignment.department) {
-        setSelectedDept(selectedAssignment.department);
+      if (selectedAssignment.user?.department) {
+        setSelectedDept(selectedAssignment.user.department);
         setDepartments((prev) =>
-          prev.some((d) => d.id === selectedAssignment.department.id)
+          prev.some((d) => d.id === selectedAssignment.user.department.id)
             ? prev
-            : [...prev, selectedAssignment.department]
+            : [...prev, selectedAssignment.user.department]
         );
       }
 
@@ -293,7 +288,7 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
 
   const handleOrgSelect = (org) => {
     setSelectedOrg(org);
-    setValue("companyId", org.id);
+    setValue("companyId", org.id, { shouldValidate: true });
     setShowOrgDropdown(false);
     setSearchTerm("");
     setValue("branchId", "");
@@ -326,7 +321,7 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
   };
 
   const handleBranchSelect = (branch) => {
-    setValue("branchId", branch.id);
+    setValue("branchId", branch.id, { shouldValidate: true });
     setSelectedBranch(branch);
     setShowBranchDropdown(false);
     setValue("departmentId", "");
@@ -358,7 +353,7 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
   };
 
   const handleDeptSelect = (dept) => {
-    setValue("departmentId", dept.id);
+    setValue("departmentId", dept.id, { shouldValidate: true });
     setSelectedDept(dept);
     setShowDeptDropdown(false);
     setValue("assetId", "");
@@ -385,7 +380,7 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
   };
 
   const handleAssetSelect = (asset) => {
-    setValue("assetId", asset.id);
+    setValue("assetId", asset.id, { shouldValidate: true });
     setSelectedAsset(asset);
     setShowAssetDropdown(false);
   };
@@ -406,23 +401,38 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
   };
 
   const handleUserSelect = (user) => {
-    setValue("userId", user.id);
+    setValue("userId", user.id, { shouldValidate: true });
     setSelectedUser(user);
     setShowUserDropdown(false);
   };
 
   const onSubmit = async (data) => {
-    console.log("sdsdssds", data);
     try {
+      // Check if required IDs are available
+      if (!selectedAssignment || !selectedAssignment.id) {
+        toast.error("Selected assignment is missing or invalid");
+        return;
+      }
+
+      if (!data.assetId || !data.userId) {
+        toast.error("Asset and user selection are required");
+        return;
+      }
+
       const payload = {
-        params: { id: selectedAssignment.id },
+        params: { assignmentId: selectedAssignment.id },
         body: {
           assetId: data.assetId,
           userId: data.userId,
         },
       };
 
+      console.log("Updating assignment with payload:", payload);
+
+      // Dispatch the update action
       await dispatch(updateAssignAsset(payload)).unwrap();
+
+      // After successful update, refresh the assignments list
       dispatch(getAllAssignAssets());
 
       toast.success(assignAssetStrings.updateAssignAsset.toast.success, {
@@ -431,17 +441,34 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
       });
 
       handleClose();
-      if (onSuccess) onSuccess();
     } catch (error) {
-      const errorMessage = error?.message || "";
+      console.error("Error updating assignment:", error);
 
-      if (errorMessage.includes("Asset is not available for assignment")) {
-        toast.error(errorMessage, {
-          autoClose: 2000,
+      // Handle specific error cases
+      if (error?.message) {
+        // Specifically handle the asset in use error
+        if (
+          error.message.includes("not available for assignment") ||
+          error.message.includes("IN_USE")
+        ) {
+          toast.error(
+            "The selected asset is already in use and cannot be assigned",
+            {
+              autoClose: 3000,
+            }
+          );
+          return;
+        }
+
+        // Display the specific error message from the backend if available
+        toast.error(error.message, {
+          position: "top-right",
+          autoClose: 3000,
         });
         return;
       }
 
+      // Default error message
       toast.error(assignAssetStrings.updateAssignAsset.toast.error, {
         position: "top-right",
         autoClose: 1000,
@@ -473,11 +500,46 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
 
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <input type="hidden" {...register("companyId")} />
-            <input type="hidden" {...register("branchId")} />
-            <input type="hidden" {...register("departmentId")} />
-            <input type="hidden" {...register("assetId")} />
-            <input type="hidden" {...register("userId")} />
+            {/* Hidden Inputs with Validation */}
+            <input
+              type="hidden"
+              {...register("companyId", {
+                required:
+                  assignAssetStrings.updateAssignAsset.validation
+                    .organizationRequired,
+              })}
+            />
+            <input
+              type="hidden"
+              {...register("branchId", {
+                required:
+                  assignAssetStrings.updateAssignAsset.validation
+                    .branchRequired,
+              })}
+            />
+            <input
+              type="hidden"
+              {...register("departmentId", {
+                required:
+                  assignAssetStrings.updateAssignAsset.validation
+                    .departmentRequired,
+              })}
+            />
+            <input
+              type="hidden"
+              {...register("assetId", {
+                required:
+                  assignAssetStrings.updateAssignAsset.validation.assetRequired,
+              })}
+            />
+            <input
+              type="hidden"
+              {...register("userId", {
+                required:
+                  assignAssetStrings.updateAssignAsset.validation
+                    .userNameRequired,
+              })}
+            />
 
             <div className="grid grid-cols-1 gap-4">
               {/* Organization Dropdown */}
@@ -493,6 +555,11 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
                     ? selectedOrg.organizationName
                     : "Select Organization"}
                 </div>
+                {errors.companyId && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.companyId.message}
+                  </p>
+                )}
                 {showOrgDropdown && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
@@ -542,6 +609,11 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
                 >
                   {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                 </div>
+                {errors.branchId && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.branchId.message}
+                  </p>
+                )}
                 {showBranchDropdown && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
@@ -593,6 +665,11 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
                     ? selectedDept.departmentName
                     : "Select Department"}
                 </div>
+                {errors.departmentId && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.departmentId.message}
+                  </p>
+                )}
                 {showDeptDropdown && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
@@ -657,22 +734,50 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
                       onScroll={handleAssetScroll}
                       className="max-h-40 overflow-auto"
                     >
-                      {assets.map((asset) => (
-                        <li
-                          key={asset.id}
-                          onClick={() => handleAssetSelect(asset)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {asset.assetName} ({asset.uniqueId})
-                        </li>
-                      ))}
+                      {assets.map((asset) => {
+                        const isCurrentAsset =
+                          selectedAssignment?.asset?.id === asset.id;
+                        const isInUse = asset.status === "IN_USE";
+                        const isDisabled = isInUse && !isCurrentAsset;
+
+                        return (
+                          <li
+                            key={asset.id}
+                            onClick={() =>
+                              !isDisabled && handleAssetSelect(asset)
+                            }
+                            className={`px-4 py-2 hover:bg-gray-100 ${
+                              isDisabled
+                                ? "cursor-not-allowed text-gray-400"
+                                : "cursor-pointer"
+                            }`}
+                          >
+                            {asset.assetName} ({asset.uniqueId})
+                            {isInUse && (
+                              <span className="ml-2 text-sm text-red-500">
+                                {isCurrentAsset ? "(Current)" : "(In Use)"}
+                              </span>
+                            )}
+                          </li>
+                        );
+                      })}
                       {loadingAssets && (
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
                       )}
+                      {assets.length === 0 && !loadingAssets && (
+                        <li className="px-4 py-2 text-sm text-gray-500">
+                          No available assets found
+                        </li>
+                      )}
                     </ul>
                   </div>
+                )}
+                {errors.assetId && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.assetId.message}
+                  </p>
                 )}
               </div>
 
@@ -689,11 +794,7 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
                 >
                   {users.find((u) => u.id === watch("userId"))
-                    ? `${
-                        users.find((u) => u.id === watch("userId")).userName
-                      } (${
-                        users.find((u) => u.id === watch("userId")).userName
-                      })`
+                    ? `${users.find((u) => u.id === watch("userId")).userName} `
                     : assignAssetStrings.updateAssignAsset.select.userDefault}
                 </div>
                 {errors.userId && (
@@ -750,8 +851,8 @@ const UpdateAssignAsset = ({ onClose, assignmentId }) => {
                 disabled={isSubmitting}
               >
                 {isSubmitting
-                  ? assignAssetStrings.updateAssignAsset.buttons.saving
-                  : assignAssetStrings.updateAssignAsset.buttons.save}
+                  ? assignAssetStrings.updateAssignAsset.buttons.updating
+                  : assignAssetStrings.updateAssignAsset.buttons.update}
               </button>
             </div>
           </form>

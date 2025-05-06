@@ -172,8 +172,8 @@ const userStrings = {
     },
     buttons: {
       close: "Close",
-      updating: "Saving...",
-      update: "Save",
+      updating: "Updating...",
+      update: "Update",
     },
     toast: {
       success: "User updated successfully!",

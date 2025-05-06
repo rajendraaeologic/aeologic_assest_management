@@ -138,10 +138,7 @@ const deleteDepartmentById = async (
     );
   } catch (error) {
     console.error("Error while deleting department:", error);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to delete department. Try again later."
-    );
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
 
   return department;
@@ -205,10 +202,7 @@ const deleteDepartmentsByIds = async (
     );
   } catch (error) {
     console.error("Error deleting departments:", error);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to delete departments. Please try again later."
-    );
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
 
   return departments;

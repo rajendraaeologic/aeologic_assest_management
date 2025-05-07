@@ -50,10 +50,8 @@ const getAllAssets = catchAsync(async (req, res) => {
   const options = pick(req.query, ["sortBy", "sortType", "limit", "page"]);
 
   applyDateFilter(filter);
-  const result = await prisma.asset.findMany({
-    where: filter,
-    select: AssetKeys,
-  });
+
+  const result = await assetService.queryAssets(filter, options);
 
   res.status(200).json({
     success: true,
@@ -81,17 +79,12 @@ const getAssetById = catchAsync(async (req, res) => {
 });
 
 const updateAsset = catchAsync(async (req, res) => {
-  const asset = await prisma.asset.update({
-    where: { id: req.params.assetId },
-    data: req.body,
-    select: AssetKeys,
-  });
+  const assetId = req.params.assetId;
+  const updateBody = req.body;
 
-  res.status(200).json({
-    success: true,
-    message: "Asset updated successfully",
-    data: asset,
-  });
+  const updatedAsset = await assetService.updateAssetById(assetId, updateBody);
+
+  res.send(updatedAsset);
 });
 
 const deleteAsset = catchAsync(async (req, res) => {

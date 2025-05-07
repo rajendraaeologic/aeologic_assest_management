@@ -13,13 +13,6 @@ interface CustomUser {
 const getAssignAssetUser = catchAsync(async (req, res) => {
   const user = req.user as CustomUser;
 
-  if (user.userRole !== UserRole.USER) {
-    throw new ApiError(
-      httpStatus.FORBIDDEN,
-      "This route is accessible only for users with USER role!"
-    );
-  }
-
   const filter = pick(req.query, ["status", "from_date", "to_date"]);
   const options = pick(req.query, ["sortBy", "sortType", "limit", "page"]);
 
@@ -48,6 +41,7 @@ const getAssignAssetUser = catchAsync(async (req, res) => {
   }
 
   res.status(200).json({
+    status: 200,
     success: true,
     message: "Assigned assets fetched successfully for User",
     data: assignments,

@@ -3,7 +3,7 @@ import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
 import pick from "@/lib/pick";
 import { applyDateFilter } from "@/utils/filters.utils";
-import assignAssetService from "@/services/assignasset.service";
+import assignAssetService from "@/services/assignAsset.service";
 import { AssetStatus, PrismaClient } from "@prisma/client";
 import db from "@/lib/db";
 

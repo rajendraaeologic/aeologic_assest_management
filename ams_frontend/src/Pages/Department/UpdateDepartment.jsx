@@ -77,7 +77,7 @@ const UpdateDepartment = ({ onClose }) => {
         },
       };
 
-      await dispatch(updateDepartment(departmentData));
+      await dispatch(updateDepartment(departmentData)).unwrap();
       dispatch(getAllDepartments());
 
       toast.success(departmentStrings.updateDepartment.toast.success, {
@@ -87,10 +87,21 @@ const UpdateDepartment = ({ onClose }) => {
 
       handleClose();
     } catch (error) {
-      toast.error(departmentStrings.updateDepartment.toast.error, {
-        position: "top-right",
-        autoClose: 1000,
-      });
+      if (error?.status === 409) {
+        setError("departmentName", {
+          type: "manual",
+          message: error.message,
+        });
+        return;
+      }
+
+      toast.error(
+        error.message ||
+          departmentStrings.updateDepartment.toast.error || {
+            position: "top-right",
+            autoClose: 1500,
+          }
+      );
     }
   };
 

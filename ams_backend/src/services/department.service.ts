@@ -86,7 +86,39 @@ const updateDepartmentById = async (
   if (!department) {
     throw new ApiError(httpStatus.NOT_FOUND, "Department not found");
   }
+  // Check if departmentName is being updated
+  if (updateBody.departmentName) {
+    const currentName = department.departmentName;
+    let newName: string | undefined;
 
+    // Extract new name value from update body
+    if (typeof updateBody.departmentName === "string") {
+      newName = updateBody.departmentName;
+    } else if (
+      updateBody.departmentName &&
+      typeof updateBody.departmentName === "object" &&
+      "set" in updateBody.departmentName
+    ) {
+      newName = updateBody.departmentName.set;
+    }
+
+    // Check if name is actually changing
+    if (newName && newName !== currentName) {
+      const existingDepartmentWithName = await db.department.findFirst({
+        where: {
+          departmentName: newName,
+          id: { not: departmentId },
+        },
+      });
+
+      if (existingDepartmentWithName) {
+        throw new ApiError(
+          httpStatus.CONFLICT,
+          "Department name already exists"
+        );
+      }
+    }
+  }
   return await db.department.update({
     where: { id: departmentId },
     data: updateBody,

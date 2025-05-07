@@ -17,6 +17,7 @@ const manageBranchesPermissions = ["manageBranches"];
 const manageDepartmentsPermissions = ["manageDepartments"];
 const manageAssetsPermissions = ["manageAssets"];
 const manageDashboardPermissions = ["manageDashboard"];
+const manageAssignAssetPermissions = ["manageAssignAsset"];
 
 const adminPermissions = [
   ...manageUsersPermissions,
@@ -25,6 +26,7 @@ const adminPermissions = [
   ...manageDepartmentsPermissions,
   ...manageAssetsPermissions,
   ...manageDashboardPermissions,
+  ...manageAssignAssetPermissions,
 ];
 const managerPermissions = [
   ...manageUsersPermissions,
@@ -33,6 +35,7 @@ const managerPermissions = [
   ...manageDepartmentsPermissions,
   ...manageAssetsPermissions,
   ...manageDashboardPermissions,
+  ...manageAssignAssetPermissions,
 ];
 const superAdminPermissions = [
   ...manageUsersPermissions,
@@ -41,6 +44,7 @@ const superAdminPermissions = [
   ...manageDepartmentsPermissions,
   ...manageAssetsPermissions,
   ...manageDashboardPermissions,
+  ...manageAssignAssetPermissions,
 ];
 
 const allRoles = {

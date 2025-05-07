@@ -6,7 +6,7 @@ import { AuthTokensResponse } from "@/types/response.type";
 import { userService } from "@/services";
 import { encryptPassword, isPasswordMatch } from "@/lib/encryption";
 import exclude from "@/lib/exclude";
-import {PhoneOtp, TokenType, User} from "@prisma/client";
+import {TokenType, User} from "@prisma/client";
 
 const loginUserWithEmailAndPassword = async (
   email: string,
@@ -62,7 +62,7 @@ const refreshAuth = async (
   }
 };*/
 
-const upsertPhoneOTP = async (
+/*const upsertPhoneOTP = async (
   ISDCode: string,
   phone: string,
   otp: string
@@ -80,7 +80,7 @@ const upsertPhoneOTP = async (
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Send OTP failed");
   }
-};
+};*/
 
 const resetPassword = async (
   resetPasswordToken: string,
@@ -132,5 +132,5 @@ export default {
   resetPassword,
   verifyEmail,
   //verifyOtp,
-  upsertPhoneOTP,
+  //upsertPhoneOTP,
 };

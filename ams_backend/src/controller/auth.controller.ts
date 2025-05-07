@@ -21,7 +21,7 @@ const login = catchAsync(async (req, res) => {
   res.send({ user, tokens });
 });
 
-const sendOTP = catchAsync(async (req, res) => {
+/*const sendOTP = catchAsync(async (req, res) => {
   const { phone } = req.body;
   const otp = generateCode();
   let ISDCode = req.body.ISDCode || "971";
@@ -34,7 +34,7 @@ const sendOTP = catchAsync(async (req, res) => {
     });
   }
   res.send(phoneOTP);
-});
+});*/
 
 /*const verifyOTP = catchAsync(async (req, res) => {
   const { phone, otp } = req.body;
@@ -116,7 +116,7 @@ const verifyEmail = catchAsync(async (req, res) => {
 
 export default {
   login,
-  sendOTP,
+  //sendOTP,
   //verifyOTP,
   logout,
   refreshTokens,

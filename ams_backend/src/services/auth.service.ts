@@ -1,12 +1,12 @@
 import httpStatus from "http-status";
 import tokenService from "./token.service";
 import ApiError from "@/lib/ApiError";
-import { PhoneOtp, TokenType, User } from "@prisma/client";
 import db from "@/lib/db";
 import { AuthTokensResponse } from "@/types/response.type";
 import { userService } from "@/services";
 import { encryptPassword, isPasswordMatch } from "@/lib/encryption";
 import exclude from "@/lib/exclude";
+import {PhoneOtp, TokenType, User} from "@prisma/client";
 
 const loginUserWithEmailAndPassword = async (
   email: string,
@@ -49,7 +49,7 @@ const refreshAuth = async (
   }
 };
 
-const verifyOtp = async (
+/*const verifyOtp = async (
   phone: string,
   otp: string
 ): Promise<Pick<PhoneOtp, "phone" | "otp"> | null> => {
@@ -60,7 +60,7 @@ const verifyOtp = async (
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Verify OTP failed");
   }
-};
+};*/
 
 const upsertPhoneOTP = async (
   ISDCode: string,
@@ -131,6 +131,6 @@ export default {
   refreshAuth,
   resetPassword,
   verifyEmail,
-  verifyOtp,
+  //verifyOtp,
   upsertPhoneOTP,
 };

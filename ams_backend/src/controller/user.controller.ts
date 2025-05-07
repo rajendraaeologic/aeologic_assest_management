@@ -59,7 +59,6 @@ const uploadUsersFromExcel = catchAsync(async (req, res) => {
   const { createdUsers, failedUsers } = await userService.createUsersFromExcel(
     sheetDataWithPassword
   );
-  console.log("bsxbjsnbjs", failedUsers);
 
   if (failedUsers.length > 0) {
     const hasMissingFields = failedUsers.some((user) =>

@@ -25,7 +25,7 @@ const createUser = async (
   }
 
   const { companyId, branchId, departmentId, plainPassword, ...rest } = user;
-  console.log("snsns", user);
+
   if (!companyId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Company ID is required");
   }

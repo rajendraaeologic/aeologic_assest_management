@@ -110,6 +110,26 @@ const getAssetById = async (assetId: string) => {
 };
 
 // updateAssetById
+// const updateAssetById = async (
+//   assetId: string,
+//   updateBody: Prisma.AssetUpdateInput,
+//   selectKeys: Prisma.AssetSelect = AssetKeys
+// ): Promise<any | null> => {
+//   const asset = await db.asset.findUnique({
+//     where: { id: assetId },
+//   });
+
+//   if (!asset) {
+//     throw new ApiError(httpStatus.NOT_FOUND, "Asset not found");
+//   }
+
+//   return await db.asset.update({
+//     where: { id: assetId },
+//     data: updateBody,
+//     select: selectKeys,
+//   });
+// };
+
 const updateAssetById = async (
   assetId: string,
   updateBody: Prisma.AssetUpdateInput,
@@ -121,6 +141,70 @@ const updateAssetById = async (
 
   if (!asset) {
     throw new ApiError(httpStatus.NOT_FOUND, "Asset not found");
+  }
+
+  // Check for uniqueId
+  if (updateBody.uniqueId) {
+    const currentUniqueId = asset.uniqueId;
+    let newUniqueId: string | undefined;
+
+    if (typeof updateBody.uniqueId === "string") {
+      newUniqueId = updateBody.uniqueId;
+    } else if (
+      updateBody.uniqueId &&
+      typeof updateBody.uniqueId === "object" &&
+      "set" in updateBody.uniqueId
+    ) {
+      newUniqueId = updateBody.uniqueId.set;
+    }
+
+    if (newUniqueId && newUniqueId !== currentUniqueId) {
+      const existingAssetWithUniqueId = await db.asset.findFirst({
+        where: {
+          uniqueId: newUniqueId,
+          id: { not: assetId },
+        },
+      });
+
+      if (existingAssetWithUniqueId) {
+        throw new ApiError(
+          httpStatus.CONFLICT,
+          "Asset with this uniqueId already exists"
+        );
+      }
+    }
+  }
+
+  // Check for serialNumber
+  if (updateBody.serialNumber) {
+    const currentSerialNumber = asset.serialNumber;
+    let newSerialNumber: string | undefined;
+
+    if (typeof updateBody.serialNumber === "string") {
+      newSerialNumber = updateBody.serialNumber;
+    } else if (
+      updateBody.serialNumber &&
+      typeof updateBody.serialNumber === "object" &&
+      "set" in updateBody.serialNumber
+    ) {
+      newSerialNumber = updateBody.serialNumber.set;
+    }
+
+    if (newSerialNumber && newSerialNumber !== currentSerialNumber) {
+      const existingAssetWithSerialNumber = await db.asset.findFirst({
+        where: {
+          serialNumber: newSerialNumber,
+          id: { not: assetId },
+        },
+      });
+
+      if (existingAssetWithSerialNumber) {
+        throw new ApiError(
+          httpStatus.CONFLICT,
+          "Asset with this serialNumber already exists"
+        );
+      }
+    }
   }
 
   return await db.asset.update({

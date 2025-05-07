@@ -73,7 +73,7 @@ const UpdateOrganization = ({ onClose }) => {
         },
       };
 
-      await dispatch(updateOrganization(organizationData));
+      await dispatch(updateOrganization(organizationData)).unwrap();
       dispatch(getAllOrganizations());
 
       toast.success(organizationStrings.updateOrganization.toast.success, {
@@ -83,10 +83,20 @@ const UpdateOrganization = ({ onClose }) => {
 
       handleClose();
     } catch (error) {
-      toast.error(organizationStrings.updateOrganization.toast.error, {
-        position: "top-right",
-        autoClose: 1000,
-      });
+      if (error?.status === 409) {
+        setError("organizationName", {
+          type: "manual",
+          message: error.message,
+        });
+        return;
+      }
+      toast.error(
+        error.message || organizationStrings.updateOrganization.toast.error,
+        {
+          position: "top-right",
+          autoClose: 1500,
+        }
+      );
     }
   };
 

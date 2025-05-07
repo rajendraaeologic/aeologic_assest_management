@@ -76,7 +76,7 @@ const UpdateBranch = ({ onClose }) => {
         },
       };
 
-      await dispatch(updateBranch(branchData));
+      await dispatch(updateBranch(branchData)).unwrap();
       dispatch(getAllBranches());
 
       toast.success(branchStrings.updateBranch.toast.success, {
@@ -85,9 +85,16 @@ const UpdateBranch = ({ onClose }) => {
       });
       handleClose();
     } catch (error) {
+      if (error?.status === 409) {
+        setError("branchName", {
+          type: "manual",
+          message: error.message,
+        });
+        return;
+      }
       toast.error(error.message || branchStrings.updateBranch.toast.error, {
         position: "top-right",
-        autoClose: 1000,
+        autoClose: 1500,
       });
     }
   };

@@ -25,7 +25,7 @@ const createUser = async (
   }
 
   const { companyId, branchId, departmentId, plainPassword, ...rest } = user;
-  console.log("snsns", user);
+
   if (!companyId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Company ID is required");
   }
@@ -337,25 +337,66 @@ const updateUserById = async (
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  if (
-    updateBody.email &&
-    (await getUserByEmail(updateBody.email as string, userId))
-  ) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
+  let newEmail: string | undefined;
+  let newPhone: string | undefined;
+
+  // Extract new email value from update body
+  if (updateBody.email) {
+    if (typeof updateBody.email === "string") {
+      newEmail = updateBody.email;
+    } else if (
+      typeof updateBody.email === "object" &&
+      "set" in updateBody.email
+    ) {
+      newEmail = updateBody.email.set;
+    }
   }
 
-  if (
-    updateBody.phone &&
-    (await getUserByPhone(updateBody.phone as string, userId))
-  ) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
+  // Extract new phone value from update body
+  if (updateBody.phone) {
+    if (typeof updateBody.phone === "string") {
+      newPhone = updateBody.phone;
+    } else if (
+      typeof updateBody.phone === "object" &&
+      "set" in updateBody.phone
+    ) {
+      newPhone = updateBody.phone.set;
+    }
+  }
+
+  // Check email uniqueness if changed
+  if (newEmail && newEmail !== user.email) {
+    const existingUserWithEmail = await db.user.findFirst({
+      where: {
+        email: newEmail,
+        id: { not: userId },
+      },
+    });
+
+    if (existingUserWithEmail) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
+    }
+  }
+
+  // Check phone uniqueness if changed
+  if (newPhone && newPhone !== user.phone) {
+    const existingUserWithPhone = await db.user.findFirst({
+      where: {
+        phone: newPhone,
+        id: { not: userId },
+      },
+    });
+
+    if (existingUserWithPhone) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
+    }
   }
 
   const oldEmail = user.email;
   let plainPassword = null;
 
-  // If email is updated, generate a new password
-  if (updateBody.email && oldEmail !== updateBody.email) {
+  // Generate new password only if email is actually changing
+  if (newEmail && newEmail !== oldEmail) {
     plainPassword = generateRandomPassword();
     updateBody.password = await encryptPassword(plainPassword);
   }
@@ -366,24 +407,19 @@ const updateUserById = async (
     select: selectKeys,
   });
 
-  // Send email if email changed
-  if (updateBody.email && oldEmail !== updateBody.email) {
+  // Send email notification if email changed
+  if (newEmail && newEmail !== oldEmail) {
     const emailContent = generateUserEmailUpdateNotification(
       updatedUser.userName,
-      updateBody.email as string,
-      plainPassword || "[unchanged]"
+      newEmail,
+      plainPassword!
     );
 
-    await sendEmail(
-      updateBody.email as string,
-      "Your Email Has Been Updated",
-      emailContent
-    );
+    await sendEmail(newEmail, "Your Email Has Been Updated", emailContent);
   }
 
   return updatedUser;
 };
-
 const deleteUserById = async (
   userId: string
 ): Promise<Omit<User, "password">> => {

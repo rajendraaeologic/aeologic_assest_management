@@ -1,4 +1,3 @@
-// TypeRoles/constants.roles.js
 export const USER_ROLES = {
   USER: "USER",
   ADMIN: "ADMIN",

@@ -7,13 +7,13 @@ import API from "../../App/api/axiosInstance";
 import assignAssetStrings from "../../locales/assignAssetStrings";
 import { updateAssignAsset, getAllAssignAssets } from "../../Features/slices/assignAssetSlice.js";
 
-const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
+const UpdateAssignAsset = ({ onClose }) => {
   const dispatch = useDispatch();
   const firstInputRef = useRef(null);
   const modalRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const selectedAssignment = useSelector((state) =>
-      state.assignAssetData.assignAssets.find(asset => asset.id === assignmentId)
+      state.assignAssetData.selectedAssignAsset
   );
 
   // User dropdown state
@@ -87,6 +87,7 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
       setHasMoreOrgs(page < totalPages);
     } catch (error) {
       toast.error("Error fetching organizations");
+      console.error(error);
     } finally {
       setOrgLoading(false);
     }
@@ -105,6 +106,7 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
       setHasMoreBranches(page < totalPages);
     } catch (error) {
       toast.error("Error fetching branches");
+      console.error(error);
     } finally {
       setLoadingBranches(false);
     }
@@ -123,6 +125,7 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
       setHasMoreDepts(page < totalPages);
     } catch (error) {
       toast.error("Error fetching departments");
+      console.error(error);
     } finally {
       setLoadingDepartments(false);
     }
@@ -141,6 +144,7 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
       setHasMoreUsers(page < totalPages);
     } catch (error) {
       toast.error("Error fetching users");
+      console.error(error);
     } finally {
       setLoadingUsers(false);
     }
@@ -150,15 +154,27 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
     if (!departmentId) return;
     try {
       setLoadingAssets(true);
+      // Modify the API call to include a status parameter or adjust the endpoint to return asset status
       const response = await API.get(
           `/assignAsset/${departmentId}/assets?page=${page}&limit=5&searchTerm=${search}`
       );
       const { data, totalPages } = response.data;
-      setAssets((prev) => (page === 1 ? data : [...prev, ...data]));
+
+      // Ensure the currently selected asset is always included in the list
+      let processedData = data;
+      if (selectedAssignment && selectedAssignment.asset) {
+        const currentAssetExists = data.some(asset => asset.id === selectedAssignment.asset.id);
+        if (!currentAssetExists) {
+          processedData = [...data, selectedAssignment.asset];
+        }
+      }
+
+      setAssets((prev) => (page === 1 ? processedData : [...prev, ...processedData]));
       setAssetPage(page);
       setHasMoreAssets(page < totalPages);
     } catch (error) {
       toast.error("Error fetching assets");
+      console.error(error);
     } finally {
       setLoadingAssets(false);
     }
@@ -377,6 +393,12 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
   };
 
   const handleAssetSelect = (asset) => {
+    // Check if asset is in use and not the currently assigned asset
+    if (asset.status === "IN_USE" && selectedAssignment?.asset?.id !== asset.id) {
+      toast.error("This asset is already in use and cannot be assigned");
+      return;
+    }
+
     setValue("assetId", asset.id);
     setSelectedAsset(asset);
     setShowAssetDropdown(false);
@@ -405,16 +427,31 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
 
   const onSubmit = async (data) => {
     try {
+      // Check if required IDs are available
+      if (!selectedAssignment || !selectedAssignment.id) {
+        toast.error("Selected assignment is missing or invalid");
+        return;
+      }
+
+      if (!data.assetId || !data.userId) {
+        toast.error("Asset and user selection are required");
+        return;
+      }
+
       const payload = {
-        params: { assignmentId: assignmentId },
+        params: { assignmentId: selectedAssignment.id },
         body: {
           assetId: data.assetId,
           userId: data.userId,
-          departmentId: data.departmentId
         },
       };
 
+      console.log("Updating assignment with payload:", payload);
+
+      // Dispatch the update action
       await dispatch(updateAssignAsset(payload)).unwrap();
+
+      // After successful update, refresh the assignments list
       dispatch(getAllAssignAssets());
 
       toast.success(assignAssetStrings.updateAssignAsset.toast.success, {
@@ -423,23 +460,36 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
       });
 
       handleClose();
-      if (onSuccess) onSuccess();
     } catch (error) {
-      const errorMessage = error?.message || "";
+      console.error("Error updating assignment:", error);
 
-      if (errorMessage.includes("Asset is not available for assignment")) {
-        toast.error(errorMessage, {
-          autoClose: 2000,
+      // Handle specific error cases
+      if (error?.message) {
+        // Specifically handle the asset in use error
+        if (error.message.includes("not available for assignment") ||
+            error.message.includes("IN_USE")) {
+          toast.error("The selected asset is already in use and cannot be assigned", {
+            autoClose: 3000,
+          });
+          return;
+        }
+
+        // Display the specific error message from the backend if available
+        toast.error(error.message, {
+          position: "top-right",
+          autoClose: 3000,
         });
         return;
       }
 
+      // Default error message
       toast.error(assignAssetStrings.updateAssignAsset.toast.error, {
         position: "top-right",
         autoClose: 1000,
       });
     }
   };
+
 
   return (
       <div
@@ -456,7 +506,7 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
         >
           <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
             <h2 className="text-[17px] font-semibold text-white">
-              {assignAssetStrings.addAssignAsset.title}
+              {assignAssetStrings.updateAssignAsset.title}
             </h2>
             <button onClick={handleClose} className="text-white rounded-md">
               <IoClose className="h-7 w-7" />
@@ -475,7 +525,7 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
                 {/* Organization Dropdown */}
                 <div className="w-full relative">
                   <label className="block text-sm font-medium text-gray-700">
-                    {assignAssetStrings.addAssignAsset.formLabels.organization}
+                    {assignAssetStrings.updateAssignAsset.formLabels.organization}
                   </label>
                   <div
                       onClick={() => setShowOrgDropdown(!showOrgDropdown)}
@@ -520,7 +570,7 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
                 {/* Branch Dropdown */}
                 <div className="w-full relative">
                   <label className="block text-sm font-medium text-gray-700">
-                    {assignAssetStrings.addAssignAsset.formLabels.branch}
+                    {assignAssetStrings.updateAssignAsset.formLabels.branch}
                   </label>
                   <div
                       onClick={() => {
@@ -569,7 +619,7 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
                 {/* Department Dropdown */}
                 <div className="w-full relative">
                   <label className="block text-sm font-medium text-gray-700">
-                    {assignAssetStrings.addAssignAsset.formLabels.department}
+                    {assignAssetStrings.updateAssignAsset.formLabels.department}
                   </label>
                   <div
                       onClick={() => {
@@ -620,7 +670,7 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
                 {/* Asset Dropdown */}
                 <div className="w-full relative">
                   <label className="block text-sm font-medium text-gray-700">
-                    {assignAssetStrings.addAssignAsset.formLabels.asset}
+                    {assignAssetStrings.updateAssignAsset.formLabels.asset}
                   </label>
                   <div
                       onClick={() => {
@@ -649,29 +699,53 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
                             onScroll={handleAssetScroll}
                             className="max-h-40 overflow-auto"
                         >
-                          {assets.map((asset) => (
-                              <li
-                                  key={asset.id}
-                                  onClick={() => handleAssetSelect(asset)}
-                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                              >
-                                {asset.assetName} ({asset.uniqueId})
-                              </li>
-                          ))}
+                          {assets.map((asset) => {
+                            const isCurrentAsset = selectedAssignment?.asset?.id === asset.id;
+                            const isInUse = asset.status === "IN_USE";
+                            const isDisabled = isInUse && !isCurrentAsset;
+
+                            return (
+                                <li
+                                    key={asset.id}
+                                    onClick={() => !isDisabled && handleAssetSelect(asset)}
+                                    className={`px-4 py-2 hover:bg-gray-100 ${
+                                        isDisabled ? "cursor-not-allowed text-gray-400" : "cursor-pointer"
+                                    }`}
+                                >
+                                  {asset.assetName} ({asset.uniqueId})
+                                  {isInUse && (
+                                      <span className="ml-2 text-sm text-red-500">
+                                    {isCurrentAsset ? "(Current)" : "(In Use)"}
+                                  </span>
+                                  )}
+                                </li>
+                            );
+                          })}
                           {loadingAssets && (
                               <li className="px-4 py-2 text-sm text-gray-500">
                                 Loading...
                               </li>
                           )}
+                          {assets.length === 0 && !loadingAssets && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                No available assets found
+                              </li>
+                          )}
                         </ul>
                       </div>
                   )}
+                  {errors.assetId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.assetId.message}
+                      </p>
+                  )}
                 </div>
+
 
                 {/* User Dropdown */}
                 <div className="w-full relative">
                   <label className="block text-sm font-medium text-gray-700">
-                    {assignAssetStrings.addAssignAsset.formLabels.userName}
+                    {assignAssetStrings.updateAssignAsset.formLabels.userName}
                   </label>
                   <div
                       onClick={() => {
@@ -682,7 +756,7 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
                   >
                     {users.find(u => u.id === watch("userId"))
                         ? `${users.find(u => u.id === watch("userId")).userName} (${users.find(u => u.id === watch("userId")).userName})`
-                        : assignAssetStrings.addAssignAsset.select.userDefault}
+                        : assignAssetStrings.updateAssignAsset.select.userDefault}
                   </div>
                   {errors.userId && (
                       <p className="text-red-500 text-sm mt-1">
@@ -730,7 +804,7 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
                     className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-50"
                     disabled={isSubmitting}
                 >
-                  {assignAssetStrings.addAssignAsset.buttons.close}
+                  {assignAssetStrings.updateAssignAsset.buttons.close}
                 </button>
                 <button
                     type="submit"
@@ -738,8 +812,8 @@ const UpdateAssignAsset = ({ onClose, onSuccess, assignmentId }) => {
                     disabled={isSubmitting}
                 >
                   {isSubmitting
-                      ? assignAssetStrings.addAssignAsset.buttons.updating
-                      : assignAssetStrings.addAssignAsset.buttons.update}
+                      ? assignAssetStrings.updateAssignAsset.buttons.saving
+                      : assignAssetStrings.updateAssignAsset.buttons.save}
                 </button>
               </div>
             </form>

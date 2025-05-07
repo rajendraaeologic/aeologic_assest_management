@@ -2,6 +2,9 @@
     import assignAssetValidation, {getAssetsByDepartmentIdValidation} from "@/validations/assignAsset.validation";
     import assignAssetController from "@/controller/assignAsset.controller";
     import validate from "@/middleware/validation.middleware";
+    import auth from "@/middleware/auth.middleware";
+    import assetValidation from "@/validations/asset.validations";
+    import assetController from "@/controller/asset.controller";
 
     const router = express.Router();
 
@@ -17,12 +20,6 @@
     router
         .route("/assignable-users")
         .get(validate(assignAssetValidation.getUsersForAssignmentValidation), assignAssetController.getUsersForAssignment);
-
-    router
-        .route("/:assignmentId")
-        .get(validate(assignAssetValidation.getAssetAssignmentByIdValidation), assignAssetController.getAssetAssignmentById)
-        .delete(validate(assignAssetValidation.unassignAssetValidation), assignAssetController.unassignAsset);
-
 
     // Get assignments for specific asset
     router
@@ -45,5 +42,18 @@
         validate(assignAssetValidation.getUsersByDepartmentIdValidation),
         assignAssetController.getUsersByDepartmentId
     );
+
+    router
+        .route("/:assignmentId")
+        .get(validate(assignAssetValidation.getAssetAssignmentByIdValidation), assignAssetController.getAssetAssignmentById)
+        .delete(validate(assignAssetValidation.deleteAssignAssetValidation), assignAssetController.deleteAssignment)
+        .put(validate(assignAssetValidation.updateAssetAssignmentValidation), assignAssetController.updateAssetAssignment);
+
+    router
+        .route("/bulk-delete")
+        .post(
+            validate(assignAssetValidation.bulkDeleteAssetsValidation),
+            assignAssetController.bulkDeleteAssignments);
+
 
     export default router;

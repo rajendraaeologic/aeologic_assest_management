@@ -4,6 +4,11 @@
     import pick from "@/lib/pick";
     import { applyDateFilter } from "@/utils/filters.utils";
     import assignAssetService from "@/services/assignAsset.service";
+    import {AssetStatus, PrismaClient} from "@prisma/client";
+    import db from "@/lib/db";
+
+
+    const prisma = new PrismaClient();
 
     const assignAsset = catchAsync(async (req, res) => {
         const { assetId, userId } = req.body;
@@ -15,20 +20,27 @@
             message: "Asset assigned successfully",
             data: result,
         });
-    });
 
-    // const updateAssetAssignment = catchAsync(async (req, res) => {
-    //     const { assignmentId } = req.params;
-    //     const updateData = req.body;
-    //
-    //     const result = await assignAssetService.updateAssetAssignment(assignmentId, updateData);
-    //
-    //     res.status(httpStatus.OK).json({
-    //         success: true,
-    //         message: "Asset assignment updated successfully",
-    //         data: result,
-    //     });
-    // });
+        const isAssetAvailable = await db.asset.findFirst({
+            where: {
+                id: assetId,
+                status: AssetStatus.ACTIVE,
+                assignedToUserId: null,
+                AssetAssignment: {
+                    none: {
+                        status: AssetStatus.IN_USE
+                    }
+                }
+            }
+        });
+
+        if (!isAssetAvailable) {
+            throw new ApiError(
+                httpStatus.CONFLICT,
+                "Asset is no longer available for assignment"
+            );
+        }
+    });
 
     const unassignAsset = catchAsync(async (req, res) => {
         const { assignmentId } = req.params;
@@ -228,9 +240,50 @@
         });
     });
 
+    const updateAssetAssignment = catchAsync(async (req, res) => {
+        const { assignmentId } = req.params;
+        const { assetId, userId} = req.body;
+
+        const result = await assignAssetService.updateAssetAssignment(
+            assignmentId,
+            { assetId, userId }
+        );
+
+        res.status(httpStatus.OK).json({
+            success: true,
+            message: "Asset assignment updated successfully",
+            data: result,
+        });
+    });
+
+
+    const deleteAssignment = catchAsync(async (req, res) => {
+        const assignmentId = req.params.assignmentId;
+
+        const result = await assignAssetService.deleteAssignmentById(assignmentId);
+
+        res.status(httpStatus.NO_CONTENT).json({
+            success: true,
+            message: "Assignment deleted successfully",
+            data: result,
+        });
+    });
+
+    const bulkDeleteAssignments = catchAsync(async (req, res) => {
+        const assignmentIds = req.body.assignmentIds;
+
+        const result = await assignAssetService.deleteAssignmentsByIds(assignmentIds);
+
+        res.status(httpStatus.NO_CONTENT).json({
+            success: true,
+            message: "Assignments deleted successfully",
+            data: result,
+        });
+    });
+
+
     export default {
         assignAsset,
-        // updateAssetAssignment,
         unassignAsset,
         getAssetAssignments,
         getAvailableAssets,
@@ -238,4 +291,7 @@
         getAssetAssignmentById,
         getAssetsByDepartmentId,
         getUsersByDepartmentId,
+        updateAssetAssignment,
+        bulkDeleteAssignments,
+        deleteAssignment,
     };

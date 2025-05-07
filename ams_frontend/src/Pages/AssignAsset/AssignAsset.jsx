@@ -350,47 +350,65 @@ const AssignAsset = () => {
               {/* Table Body */}
               <tbody>
               {currentRows.length > 0 ? (
-                  currentRows.map((asset, index) => (
-                      <tr key={asset.id || index} className={`${index % 2 === 0 ? "bg-gray-50" : "bg-white"} hover:bg-gray-200 divide-y divide-gray-300`}>
-                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word", verticalAlign: "top" }}>
-                          {asset.userName}
+                  currentRows.map((row, index) => (
+                      <tr
+                          key={row.id || index}
+                          className={`${
+                              index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          } hover:bg-gray-200 divide-y divide-gray-300`}
+                      >
+                        {/* Asset Name */}
+                        <td className="px-2 py-2 border border-gray-300">
+                          {row.asset?.assetName ?? "N/A"}
                         </td>
-                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word", verticalAlign: "top" }}>
-                          {asset.assetName}
+
+                        {/* User Name */}
+                        <td className="px-2 py-2 border border-gray-300">
+                          {row.user?.userName ?? "N/A"}
                         </td>
-                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word", verticalAlign: "top" }}>
-                          {asset.organizationName }
+
+                        {/* Organization */}
+                        <td className="px-2 py-2 border border-gray-300">
+                          {row.user?.company?.organizationName ?? "N/A"}
                         </td>
-                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word", verticalAlign: "top" }}>
-                          {asset.branchName}
+
+                        {/* Branch */}
+                        <td className="px-2 py-2 border border-gray-300">
+                          {row.user?.branch?.branchName ?? "N/A"}
                         </td>
-                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "180px", minWidth: "120px", overflowWrap: "break-word", verticalAlign: "top" }}>
-                          {asset.departmentName}
+
+                        {/* Department */}
+                        <td className="px-2 py-2 border border-gray-300">
+                          {row.user?.department?.departmentName ?? "N/A"}
                         </td>
-                        <td className="px-2 py-2 border border-gray-300" style={{ maxWidth: "100px", wordWrap: "break-word" }}>
-                          <div className="flex ">
+
+                        {/* Actions */}
+                        <td className="px-2 py-2 border border-gray-300">
+                          <div className="flex">
                             <button
                                 onClick={() => {
                                   setIsUpdateAssignAsset(true);
-                                  handlerUpdateData(asset);
+                                  handlerUpdateData(row);
                                 }}
-                                className="px-3 py-2 rounded-sm "
+                                className="px-3 py-2 rounded-sm"
                             >
                               <FontAwesomeIcon icon={faPen} />
                             </button>
                             <button
-                                onClick={() => handleDeleteClick(asset)}
-                                className="px-3 py-2 rounded-sm   text-[red]"
+                                onClick={() => handleDeleteClick(row)}
+                                className="px-3 py-2 rounded-sm text-[red]"
                             >
                               <MdDelete className="h-6 w-6" />
                             </button>
                           </div>
                         </td>
-                        <td className="px-2 py-2 border text-center border-gray-300" style={{ maxWidth: "100px", wordWrap: "break-word" }}>
+
+                        {/* Checkbox */}
+                        <td className="px-2 py-2 border text-center border-gray-300">
                           <input
                               type="checkbox"
-                              checked={selectedAssignAssets?.includes(asset.id) ?? false}
-                              onChange={() => handleToggleAssignAssetSelection(asset.id)}
+                              checked={selectedAssignAssets?.includes(row.id) ?? false}
+                              onChange={() => handleToggleAssignAssetSelection(row.id)}
                           />
                         </td>
                       </tr>

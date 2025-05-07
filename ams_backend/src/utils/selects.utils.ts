@@ -252,6 +252,9 @@ export const AssetAssignmentKeys: Prisma.AssetAssignmentSelect = {
       id: true,
       assetName: true,
       uniqueId: true,
+      company: true,
+      branch: true,
+      department: true,
     },
   },
   user: {
@@ -259,6 +262,9 @@ export const AssetAssignmentKeys: Prisma.AssetAssignmentSelect = {
       id: true,
       userName: true,
       email: true,
+      company: true,
+      branch: true,
+      department: true,
     },
   },
 };

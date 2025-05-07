@@ -102,19 +102,19 @@ const deleteOrganizationById = async (
   try {
     await db.$transaction(
       async (tx) => {
+        // 1. Delete Asset Assignments based on asset.branch and asset.department.branch
         await tx.assetAssignment.deleteMany({
           where: {
-            OR: [
-              { user: { branch: { companyId: organizationId } } },
-              {
-                user: {
-                  department: { branch: { companyId: organizationId } },
-                },
-              },
-            ],
+            asset: {
+              OR: [
+                { branch: { companyId: organizationId } },
+                { department: { branch: { companyId: organizationId } } },
+              ],
+            },
           },
         });
 
+        // 2. Delete Asset History based on asset's org via branch or department
         await tx.assetHistory.deleteMany({
           where: {
             asset: {
@@ -126,6 +126,7 @@ const deleteOrganizationById = async (
           },
         });
 
+        // 3. Delete Assets
         await tx.asset.deleteMany({
           where: {
             OR: [
@@ -135,6 +136,7 @@ const deleteOrganizationById = async (
           },
         });
 
+        // 4. Delete Users (direct or via department)
         await tx.user.deleteMany({
           where: {
             OR: [
@@ -144,31 +146,31 @@ const deleteOrganizationById = async (
           },
         });
 
+        // 5. Delete Departments
         await tx.department.deleteMany({
           where: {
             branch: { companyId: organizationId },
           },
         });
 
+        // 6. Delete Branches
         await tx.branch.deleteMany({
           where: { companyId: organizationId },
         });
 
+        // 7. Delete Organization itself
         await tx.organization.delete({
           where: { id: organizationId },
         });
       },
       {
         maxWait: 5000,
-        timeout: 15000,
+        timeout: 20000,
       }
     );
-  } catch (err) {
-    console.error("Error while deleting organization:", err);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to delete organization. Try again later."
-    );
+  } catch (error) {
+    console.error("Error while deleting organization:", error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
 
   return organization;
@@ -194,23 +196,23 @@ const deleteOrganizationsByIds = async (
   try {
     await db.$transaction(
       async (tx) => {
-        // Delete asset assignments
+        // 1. Delete Asset Assignments (related to assets' organization)
         await tx.assetAssignment.deleteMany({
           where: {
-            OR: [
-              { user: { branch: { companyId: { in: organizationIds } } } },
-              {
-                user: {
+            asset: {
+              OR: [
+                { branch: { companyId: { in: organizationIds } } },
+                {
                   department: {
                     branch: { companyId: { in: organizationIds } },
                   },
                 },
-              },
-            ],
+              ],
+            },
           },
         });
 
-        // Delete asset histories
+        // 2. Delete Asset History
         await tx.assetHistory.deleteMany({
           where: {
             asset: {
@@ -226,49 +228,45 @@ const deleteOrganizationsByIds = async (
           },
         });
 
-        // Delete assets
+        // 3. Delete Assets
         await tx.asset.deleteMany({
           where: {
             OR: [
               { branch: { companyId: { in: organizationIds } } },
               {
-                department: {
-                  branch: { companyId: { in: organizationIds } },
-                },
+                department: { branch: { companyId: { in: organizationIds } } },
               },
             ],
           },
         });
 
-        // Delete users
+        // 4. Delete Users (direct or via department)
         await tx.user.deleteMany({
           where: {
             OR: [
               { branch: { companyId: { in: organizationIds } } },
               {
-                department: {
-                  branch: { companyId: { in: organizationIds } },
-                },
+                department: { branch: { companyId: { in: organizationIds } } },
               },
             ],
           },
         });
 
-        // Delete departments
+        // 5. Delete Departments
         await tx.department.deleteMany({
           where: {
             branch: { companyId: { in: organizationIds } },
           },
         });
 
-        // Delete branches
+        // 6. Delete Branches
         await tx.branch.deleteMany({
           where: {
             companyId: { in: organizationIds },
           },
         });
 
-        // Delete organizations
+        // 7. Finally Delete Organizations
         await tx.organization.deleteMany({
           where: {
             id: { in: organizationIds },
@@ -281,11 +279,8 @@ const deleteOrganizationsByIds = async (
       }
     );
   } catch (error) {
-    console.error(" Error deleting organizations:", error);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to delete organizations. Please try again later."
-    );
+    console.error("Error deleting organizations:", error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
 
   return organizations;

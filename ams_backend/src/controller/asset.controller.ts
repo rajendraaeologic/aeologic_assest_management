@@ -95,9 +95,7 @@ const updateAsset = catchAsync(async (req, res) => {
 });
 
 const deleteAsset = catchAsync(async (req, res) => {
-  await prisma.asset.delete({
-    where: { id: req.params.assetId },
-  });
+  await assetService.deleteAssetById(req.params.assetId);
 
   res.status(httpStatus.NO_CONTENT).json({
     success: true,
@@ -106,10 +104,7 @@ const deleteAsset = catchAsync(async (req, res) => {
 });
 
 const bulkDeleteAssets = catchAsync(async (req, res) => {
-  await prisma.asset.deleteMany({
-    where: { id: { in: req.body.assetIds } },
-  });
-
+  await assetService.deleteAssetsByIds(req.body.assetIds);
   res.status(httpStatus.NO_CONTENT).json({
     success: true,
     message: "Assets deleted successfully",

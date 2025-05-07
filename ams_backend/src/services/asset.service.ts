@@ -142,6 +142,13 @@ const deleteAssetById = async (
   try {
     await db.$transaction(
       async (tx) => {
+        await tx.assetHistory.deleteMany({
+          where: { assetId: asset.id },
+        });
+
+        await tx.assetAssignment.deleteMany({
+          where: { assetId: asset.id },
+        });
         await tx.asset.delete({ where: { id: asset.id } });
       },
       {
@@ -151,10 +158,7 @@ const deleteAssetById = async (
     );
   } catch (error) {
     console.error("Error deleting asset:", error);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to delete asset. Please try again later."
-    );
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
 
   return asset;
@@ -180,6 +184,13 @@ const deleteAssetsByIds = async (
   try {
     await db.$transaction(
       async (tx) => {
+        await tx.assetHistory.deleteMany({
+          where: { assetId: { in: assetIds } },
+        });
+
+        await tx.assetAssignment.deleteMany({
+          where: { assetId: { in: assetIds } },
+        });
         await tx.asset.deleteMany({
           where: { id: { in: assetIds } },
         });
@@ -191,10 +202,7 @@ const deleteAssetsByIds = async (
     );
   } catch (error) {
     console.error("Error deleting assets:", error);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to delete assets. Please try again later."
-    );
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
 
   return assets;

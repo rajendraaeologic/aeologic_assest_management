@@ -396,6 +396,8 @@ const deleteUserById = async (
   try {
     await db.$transaction(
       async (tx) => {
+        await tx.assetAssignment.deleteMany({ where: { userId } });
+        await tx.assetHistory.deleteMany({ where: { userId } });
         await tx.user.delete({ where: { id: user.id } });
       },
       {
@@ -405,10 +407,7 @@ const deleteUserById = async (
     );
   } catch (error) {
     console.error("Error deleting user:", error);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to delete user. Please try again later."
-    );
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
 
   return user;
@@ -440,7 +439,14 @@ const deleteUsersByIds = async (
             `Users not found: ${notFoundIds.join(", ")}`
           );
         }
+        await tx.assetAssignment.deleteMany({
+          where: { userId: { in: userIds } },
+        });
 
+        // Delete related asset history
+        await tx.assetHistory.deleteMany({
+          where: { userId: { in: userIds } },
+        });
         await tx.user.deleteMany({
           where: { id: { in: userIds } },
         });
@@ -454,10 +460,7 @@ const deleteUsersByIds = async (
     );
   } catch (error) {
     console.error("Error deleting users:", error);
-    throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Failed to delete users. Please try again later."
-    );
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
 };
 

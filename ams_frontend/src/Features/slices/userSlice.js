@@ -40,7 +40,6 @@ export const getAllUsers = createAsyncThunk(
 export const updateUser = createAsyncThunk(
   "user/update",
   async (data, { rejectWithValue }) => {
-    console.log("data", data);
     try {
       const response = await updateUserService(data);
       return response;
@@ -73,7 +72,6 @@ export const uploadExcel = createAsyncThunk(
     try {
       const response = await uploadExcelService(file);
 
-      console.log(response);
       return response;
     } catch (error) {
       return rejectWithValue(error.response?.data || "Error uploading file");

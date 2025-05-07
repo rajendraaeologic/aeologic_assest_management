@@ -204,10 +204,12 @@ model AssetReport {
 }
 
 model AssetAssignment {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  assetId    String   @db.ObjectId
-  userId     String   @db.ObjectId
-  assignedAt DateTime @default(now())
-  asset      Asset    @relation(fields: [assetId], references: [id])
-  user       User     @relation(fields: [userId], references: [id])
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  assetId     String      @db.ObjectId
+  userId      String      @db.ObjectId
+  assignedAt  DateTime    @default(now())
+  status      AssetStatus @default(ACTIVE)
+  asset       Asset       @relation(fields: [assetId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
 }
+

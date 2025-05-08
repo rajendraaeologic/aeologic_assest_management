@@ -17,11 +17,11 @@ const createUser = async (
   if (!user) return null;
 
   if (await getUserByEmail(user.email)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
+    throw new ApiError(httpStatus.CONFLICT, "Email already taken");
   }
 
   if (await getUserByPhone(user.phone)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
+    throw new ApiError(httpStatus.CONFLICT, "Phone already taken");
   }
 
   const { companyId, branchId, departmentId, plainPassword, ...rest } = user;
@@ -374,7 +374,7 @@ const updateUserById = async (
     });
 
     if (existingUserWithEmail) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
+      throw new ApiError(httpStatus.CONFLICT, "Email already taken");
     }
   }
 
@@ -388,7 +388,7 @@ const updateUserById = async (
     });
 
     if (existingUserWithPhone) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
+      throw new ApiError(httpStatus.CONFLICT, "Phone already taken");
     }
   }
 

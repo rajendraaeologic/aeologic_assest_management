@@ -358,9 +358,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
       onSuccess();
       handleClose();
     } catch (error) {
+      console.log("error", error);
       toast.error(error.message || assetStrings.updateAsset.toast.error, {
         position: "top-right",
-        autoClose: 1000,
+        autoClose: 1500,
       });
     }
   };
@@ -389,11 +390,6 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
 
         <div className="p-5 px-10">
           <form onSubmit={handleSubmit(onSubmit)}>
-            {error && (
-              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
-                {error}
-              </div>
-            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Asset Name */}
               <div className="w-full">

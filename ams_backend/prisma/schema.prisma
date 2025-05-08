@@ -51,15 +51,6 @@ model Token {
   userId      String    @db.ObjectId
 }
 
-model PhoneOtp {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  ISDCode   String   @default("91")
-  phone     String   @unique
-  otp       String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-}
-
 model UserNotification {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   data      Json?
@@ -123,15 +114,15 @@ model User {
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @default(now()) @updatedAt
 
-  branchId         String?            @db.ObjectId
-  branch           Branch?            @relation(fields: [branchId], references: [id])
-  AssetAssignment  AssetAssignment[]
-  AssetHistory     AssetHistory[]
-  departmentId     String?            @db.ObjectId
-  department       Department?        @relation(fields: [departmentId], references: [id])
+  branchId        String?           @db.ObjectId
+  branch          Branch?           @relation(fields: [branchId], references: [id])
+  AssetAssignment AssetAssignment[]
+  AssetHistory    AssetHistory[]
+  departmentId    String?           @db.ObjectId
+  department      Department?       @relation(fields: [departmentId], references: [id])
   //rfidTag          String?            @unique
-  companyId   String
-  company     Organization @relation(fields: [companyId], references: [id])
+  companyId       String
+  company         Organization      @relation(fields: [companyId], references: [id])
 }
 
 model Asset {
@@ -147,7 +138,7 @@ model Asset {
   cost             Float?
   warrantyEndDate  DateTime?
   status           AssetStatus       @default(ACTIVE)
-//locationId       String            @db.ObjectId
+  //locationId       String            @db.ObjectId
   assignedToUserId String?           @db.ObjectId
   assignedUser     User?             @relation(fields: [assignedToUserId], references: [id])
   //category       Category          @relation(fields: [categoryId], references: [id])
@@ -177,7 +168,7 @@ model Location {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   locationName String
   address      String?
- // assets       Asset[]
+  // assets       Asset[]
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
@@ -204,12 +195,11 @@ model AssetReport {
 }
 
 model AssetAssignment {
-  id          String      @id @default(auto()) @map("_id") @db.ObjectId
-  assetId     String      @db.ObjectId
-  userId      String      @db.ObjectId
-  assignedAt  DateTime    @default(now())
-  status      AssetStatus @default(ACTIVE)
-  asset       Asset       @relation(fields: [assetId], references: [id])
-  user        User        @relation(fields: [userId], references: [id])
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
+  assetId    String      @db.ObjectId
+  userId     String      @db.ObjectId
+  assignedAt DateTime    @default(now())
+  status     AssetStatus @default(ACTIVE)
+  asset      Asset       @relation(fields: [assetId], references: [id])
+  user       User        @relation(fields: [userId], references: [id])
 }
-

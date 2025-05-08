@@ -437,7 +437,7 @@ const UpdateAssignAsset = ({ onClose }) => {
 
       toast.success(assignAssetStrings.updateAssignAsset.toast.success, {
         position: "top-right",
-        autoClose: 1000,
+        autoClose: 1500,
       });
 
       handleClose();
@@ -718,7 +718,7 @@ const UpdateAssignAsset = ({ onClose }) => {
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
                 >
                   {selectedAsset
-                    ? `${selectedAsset.assetName} (${selectedAsset.uniqueId})`
+                    ? `${selectedAsset.assetName} `
                     : "Select Asset"}
                 </div>
                 {showAssetDropdown && (
@@ -752,7 +752,7 @@ const UpdateAssignAsset = ({ onClose }) => {
                                 : "cursor-pointer"
                             }`}
                           >
-                            {asset.assetName} ({asset.uniqueId})
+                            {asset.assetName}
                             {isInUse && (
                               <span className="ml-2 text-sm text-red-500">
                                 {isCurrentAsset ? "(Current)" : "(In Use)"}

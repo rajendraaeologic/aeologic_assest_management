@@ -265,7 +265,7 @@ const AssignAsset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {table.headers.userName}
+                    {table.headers.assetName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -275,7 +275,7 @@ const AssignAsset = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {table.headers.assetName}
+                    {table.headers.userName}
                   </th>
                   <th
                     className="px-2 py-4 border border-gray-300"

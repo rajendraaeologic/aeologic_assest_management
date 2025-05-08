@@ -39,7 +39,7 @@ const login = catchAsync(async (req, res) => {
   }
 });
 
-const sendOTP = catchAsync(async (req, res) => {
+/*const sendOTP = catchAsync(async (req, res) => {
   const { phone } = req.body;
   const otp = generateCode();
   let ISDCode = req.body.ISDCode || "971";
@@ -52,9 +52,9 @@ const sendOTP = catchAsync(async (req, res) => {
     });
   }
   res.send(phoneOTP);
-});
+});*/
 
-const verifyOTP = catchAsync(async (req, res) => {
+/*const verifyOTP = catchAsync(async (req, res) => {
   const { phone, otp } = req.body;
   const phoneOTP = await authService.verifyOtp(phone, otp);
   if (!phoneOTP) {
@@ -78,7 +78,7 @@ const verifyOTP = catchAsync(async (req, res) => {
   res
     .status(httpStatus.CREATED)
     .send({ user, isNewUser, tokens, message: "OTP verified successfully." });
-});
+});*/
 
 const logout = catchAsync(async (req, res) => {
   await authService.logout(req.body.refreshToken);
@@ -134,8 +134,8 @@ const verifyEmail = catchAsync(async (req, res) => {
 
 export default {
   login,
-  sendOTP,
-  verifyOTP,
+  //sendOTP,
+  //verifyOTP,
   logout,
   refreshTokens,
   forgotPassword,

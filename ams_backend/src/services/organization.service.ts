@@ -82,6 +82,39 @@ const updateOrganizationById = async (
     throw new ApiError(httpStatus.NOT_FOUND, "Organization not found");
   }
 
+  if (updateBody.organizationName) {
+    const currentName = organization.organizationName;
+    let newName: string | undefined;
+
+    // Extract new name value from update body
+    if (typeof updateBody.organizationName === "string") {
+      newName = updateBody.organizationName;
+    } else if (
+      updateBody.organizationName &&
+      typeof updateBody.organizationName === "object" &&
+      "set" in updateBody.organizationName
+    ) {
+      newName = updateBody.organizationName.set;
+    }
+
+    // Check if name is actually changing
+    if (newName && newName !== currentName) {
+      const existingOrganizationWithName = await db.organization.findFirst({
+        where: {
+          organizationName: newName,
+          id: { not: organizationId },
+        },
+      });
+
+      if (existingOrganizationWithName) {
+        throw new ApiError(
+          httpStatus.CONFLICT,
+          "Organization name already exists"
+        );
+      }
+    }
+  }
+
   return await db.organization.update({
     where: { id: organizationId },
     data: updateBody,

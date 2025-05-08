@@ -342,7 +342,7 @@ const UpdateUserForm = ({ onClose }) => {
 
       toast.error(userStrings.updateUser.toast.error, {
         position: "top-right",
-        autoClose: 1000,
+        autoClose: 1500,
       });
     }
   };

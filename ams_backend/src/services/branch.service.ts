@@ -89,6 +89,37 @@ export const updateBranchById = async (
     throw new ApiError(httpStatus.NOT_FOUND, "Branch not found");
   }
 
+  // Check if branchName is being updated
+  if (updateBody.branchName) {
+    const currentName = branch.branchName;
+    let newName: string | undefined;
+
+    // Extract new name value from update body
+    if (typeof updateBody.branchName === "string") {
+      newName = updateBody.branchName;
+    } else if (
+      updateBody.branchName &&
+      typeof updateBody.branchName === "object" &&
+      "set" in updateBody.branchName
+    ) {
+      newName = updateBody.branchName.set;
+    }
+
+    // Check if name is actually changing
+    if (newName && newName !== currentName) {
+      const existingBranchWithName = await db.branch.findFirst({
+        where: {
+          branchName: newName,
+          id: { not: branchId },
+        },
+      });
+
+      if (existingBranchWithName) {
+        throw new ApiError(httpStatus.CONFLICT, "Branch name already exists");
+      }
+    }
+  }
+
   return await db.branch.update({
     where: { id: branchId },
     data: updateBody,

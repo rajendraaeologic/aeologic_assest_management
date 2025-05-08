@@ -27,7 +27,7 @@ const createDepartment = async (
 
   if (existingDepartment) {
     throw new ApiError(
-      httpStatus.BAD_REQUEST,
+      httpStatus.CONFLICT,
       `Department with name "${department.departmentName}" already exists in this branch.`
     );
   }
@@ -131,6 +131,7 @@ const deleteDepartmentById = async (
   departmentId: string
 ): Promise<Omit<Department, "sensitiveField">> => {
   const department = await getDepartmentById(departmentId);
+
   if (!department) {
     throw new ApiError(httpStatus.NOT_FOUND, "Department not found");
   }
@@ -138,6 +139,30 @@ const deleteDepartmentById = async (
   try {
     await db.$transaction(
       async (tx) => {
+        //  Check if any users or assets are linked to this department
+        const [userCount, assetCount] = await Promise.all([
+          tx.user.count({ where: { departmentId } }),
+          tx.asset.count({ where: { departmentId } }),
+        ]);
+
+        if (userCount > 0) {
+          const message =
+            userCount === 1
+              ? " This department is associated with user and cannot be deleted"
+              : ` This department is associated with ${userCount} users and cannot be deleted`;
+
+          throw new ApiError(httpStatus.BAD_REQUEST, message);
+        }
+        if (assetCount > 0) {
+          const message =
+            assetCount === 1
+              ? " This department is associated with asset and cannot be deleted"
+              : ` This department is associated with ${assetCount} assets and cannot be deleted`;
+
+          throw new ApiError(httpStatus.BAD_REQUEST, message);
+        }
+
+        //  Proceed with deletion
         await tx.assetAssignment.deleteMany({
           where: {
             OR: [{ asset: { departmentId } }, { user: { departmentId } }],
@@ -169,6 +194,9 @@ const deleteDepartmentById = async (
       }
     );
   } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
     console.error("Error while deleting department:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
@@ -193,6 +221,48 @@ const deleteDepartmentsByIds = async (
     );
   }
 
+  //  Check for linked users & assets
+  const [userLinks, assetLinks] = await Promise.all([
+    db.user.findMany({
+      where: { departmentId: { in: departmentIds } },
+      select: { departmentId: true },
+    }),
+    db.asset.findMany({
+      where: { departmentId: { in: departmentIds } },
+      select: { departmentId: true },
+    }),
+  ]);
+
+  const departmentsWithUsers = [
+    ...new Set(userLinks.map((u) => u.departmentId)),
+  ];
+  const departmentsWithAssets = [
+    ...new Set(assetLinks.map((a) => a.departmentId)),
+  ];
+
+  if (departmentsWithUsers.length || departmentsWithAssets.length) {
+    const userDeptNames = departments
+      .filter((d) => departmentsWithUsers.includes(d.id))
+      .map((d) => d.departmentName);
+    const assetDeptNames = departments
+      .filter((d) => departmentsWithAssets.includes(d.id))
+      .map((d) => d.departmentName);
+
+    if (userDeptNames.length) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        " This departments is associated with users and cannot be deleted"
+      );
+    }
+    if (assetDeptNames.length) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        " This departments is associated with assets and cannot be deleted"
+      );
+    }
+  }
+
+  // Proceed with deletion
   try {
     await db.$transaction(
       async (tx) => {

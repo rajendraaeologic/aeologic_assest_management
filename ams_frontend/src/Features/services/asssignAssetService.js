@@ -74,7 +74,6 @@ export const deleteAssignAssetService = async (ids) => {
       };
     }
   } catch (error) {
-    console.error("Delete Error:", error.response?.data);
     const errorMsg =
       error.response?.data?.message || "Error deleting assignment(s)";
     throw new Error(errorMsg);

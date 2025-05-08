@@ -35,7 +35,6 @@ export const deleteBranchService = async (ids) => {
       };
     }
   } catch (error) {
-    console.error("Delete Error:", error.response?.data);
     const errorMsg =
       error.response?.data?.message || "Error deleting branch(s)";
     throw new Error(errorMsg);

@@ -135,7 +135,20 @@ const deleteOrganizationById = async (
   try {
     await db.$transaction(
       async (tx) => {
-        // 1. Delete Asset Assignments based on asset.branch and asset.department.branch
+        // Check for existing branches first
+        const branchCount = await tx.branch.count({
+          where: { companyId: organizationId },
+        });
+
+        if (branchCount > 0) {
+          const message =
+            branchCount === 1
+              ? "This organization is associated with branche and cannot be deleted."
+              : `This organization is associated with ${branchCount} branches and cannot be deleted.`;
+          throw new ApiError(httpStatus.BAD_REQUEST, message);
+        }
+
+        // Proceed with deletions if no branches found
         await tx.assetAssignment.deleteMany({
           where: {
             asset: {
@@ -147,7 +160,6 @@ const deleteOrganizationById = async (
           },
         });
 
-        // 2. Delete Asset History based on asset's org via branch or department
         await tx.assetHistory.deleteMany({
           where: {
             asset: {
@@ -159,7 +171,6 @@ const deleteOrganizationById = async (
           },
         });
 
-        // 3. Delete Assets
         await tx.asset.deleteMany({
           where: {
             OR: [
@@ -169,7 +180,6 @@ const deleteOrganizationById = async (
           },
         });
 
-        // 4. Delete Users (direct or via department)
         await tx.user.deleteMany({
           where: {
             OR: [
@@ -179,19 +189,16 @@ const deleteOrganizationById = async (
           },
         });
 
-        // 5. Delete Departments
         await tx.department.deleteMany({
           where: {
             branch: { companyId: organizationId },
           },
         });
 
-        // 6. Delete Branches
         await tx.branch.deleteMany({
           where: { companyId: organizationId },
         });
 
-        // 7. Delete Organization itself
         await tx.organization.delete({
           where: { id: organizationId },
         });
@@ -202,6 +209,9 @@ const deleteOrganizationById = async (
       }
     );
   } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
     console.error("Error while deleting organization:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
@@ -229,7 +239,34 @@ const deleteOrganizationsByIds = async (
   try {
     await db.$transaction(
       async (tx) => {
-        // 1. Delete Asset Assignments (related to assets' organization)
+        // Check for branches in all organizations first
+        const branches = await tx.branch.findMany({
+          where: {
+            companyId: { in: organizationIds },
+          },
+          select: {
+            companyId: true,
+          },
+        });
+
+        // Group branches by organization
+        const orgsWithBranches = new Set(
+          branches.map((branch) => branch.companyId)
+        );
+
+        // Check each organization for branches
+        const blockedOrgs = organizationIds.filter((id) =>
+          orgsWithBranches.has(id)
+        );
+
+        if (blockedOrgs.length > 0) {
+          throw new ApiError(
+            httpStatus.BAD_REQUEST,
+            "This organizations is associated with branches and cannot be deleted."
+          );
+        }
+
+        // 1. Delete Asset Assignments
         await tx.assetAssignment.deleteMany({
           where: {
             asset: {
@@ -273,7 +310,7 @@ const deleteOrganizationsByIds = async (
           },
         });
 
-        // 4. Delete Users (direct or via department)
+        // 4. Delete Users
         await tx.user.deleteMany({
           where: {
             OR: [
@@ -299,7 +336,7 @@ const deleteOrganizationsByIds = async (
           },
         });
 
-        // 7. Finally Delete Organizations
+        // 7. Delete Organizations
         await tx.organization.deleteMany({
           where: {
             id: { in: organizationIds },
@@ -312,6 +349,9 @@ const deleteOrganizationsByIds = async (
       }
     );
   } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
     console.error("Error deleting organizations:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }

@@ -21,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
 import { getAllDepartments } from "../../Features/slices/departmentSlice";
 import { deleteDepartment } from "../../Features/slices/departmentSlice";
-
+import { toast } from "react-toastify";
 const UserDepartment = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -163,29 +163,45 @@ const UserDepartment = () => {
     setShowDeleteConfirmation(true);
   };
 
-  const confirmDelete = () => {
-    if (departmentToDelete) {
-      dispatch(deleteDepartment([departmentToDelete]));
-      setDeleteMessage(
-        departmentStrings.department.modals.deleteSuccess.single
-      );
-    } else if (selectedDepartments.length > 0) {
-      dispatch(deleteDepartment(selectedDepartments));
-      setDeleteMessage(
-        departmentStrings.department.modals.deleteSuccess.multiple.replace(
-          "{count}",
-          selectedDepartments.length
-        )
-      );
-    }
-    setShowDeleteConfirmation(false);
-    setDepartmentToDelete(null);
-    setShowDeleteSuccessPopup(true);
-    setTimeout(() => {
-      setShowDeleteSuccessPopup(false);
-    }, 2000);
-  };
+  const confirmDelete = async () => {
+    try {
+      if (departmentToDelete) {
+        // Single department delete
+        await dispatch(deleteDepartment([departmentToDelete])).unwrap();
+        setDeleteMessage(
+          departmentStrings.department.modals.deleteSuccess.single
+        );
+      } else if (selectedDepartments.length > 0) {
+        // Multiple departments delete
+        await dispatch(deleteDepartment(selectedDepartments)).unwrap();
+        setDeleteMessage(
+          departmentStrings.department.modals.deleteSuccess.multiple.replace(
+            "{count}",
+            selectedDepartments.length
+          )
+        );
+      }
 
+      setShowDeleteConfirmation(false);
+      setDepartmentToDelete(null);
+      dispatch(deselectAllDepartments());
+      setShowDeleteSuccessPopup(true);
+
+      setTimeout(() => {
+        setShowDeleteSuccessPopup(false);
+      }, 2000);
+    } catch (error) {
+      toast.error(error || "Delete operation failed", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      // Reset states
+      setShowDeleteConfirmation(false);
+      setDepartmentToDelete(null);
+      dispatch(deselectAllDepartments());
+    }
+  };
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);
     setDepartmentToDelete(null);

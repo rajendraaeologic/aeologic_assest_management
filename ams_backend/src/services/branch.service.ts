@@ -140,6 +140,18 @@ const deleteBranchById = async (
   try {
     await db.$transaction(
       async (tx) => {
+        //  Check if any departments are linked to this branch
+        const departmentCount = await db.department.count({
+          where: { branchId },
+        });
+
+        if (departmentCount > 0) {
+          const message =
+            departmentCount === 1
+              ? "This branch is associated with department and cannot be deleted"
+              : `This branch is associated with ${departmentCount} departments and cannot be deleted`;
+          throw new ApiError(httpStatus.BAD_REQUEST, message);
+        }
         await tx.department.deleteMany({ where: { branchId } });
 
         await tx.assetAssignment.deleteMany({
@@ -178,6 +190,9 @@ const deleteBranchById = async (
       }
     );
   } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
     console.error("Error while deleting branch:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
@@ -186,6 +201,7 @@ const deleteBranchById = async (
 };
 
 //deleteBranchesByIds
+
 const deleteBranchesByIds = async (
   branchIds: string[]
 ): Promise<Omit<Branch, "sensitiveField">[]> => {
@@ -205,12 +221,28 @@ const deleteBranchesByIds = async (
   try {
     await db.$transaction(
       async (tx) => {
-        // Delete Departments
-        await tx.department.deleteMany({
+        //  Step 1: Check if any departments are linked to these branches
+        const departments = await tx.department.findMany({
           where: { branchId: { in: branchIds } },
+          select: { branchId: true },
         });
 
-        // Delete Asset Assignments (first)
+        const branchesWithDepartments = new Set(
+          departments.map((d) => d.branchId)
+        );
+
+        const blockedBranches = branchIds.filter((id) =>
+          branchesWithDepartments.has(id)
+        );
+
+        if (blockedBranches.length > 0) {
+          throw new ApiError(
+            httpStatus.BAD_REQUEST,
+            "This branches is associated with departments and cannot be deleted."
+          );
+        }
+
+        //  Step 2: Proceed with deletions only if safe
         await tx.assetAssignment.deleteMany({
           where: {
             asset: {
@@ -222,7 +254,6 @@ const deleteBranchesByIds = async (
           },
         });
 
-        // Delete Asset History (before Asset)
         await tx.assetHistory.deleteMany({
           where: {
             asset: {
@@ -234,7 +265,6 @@ const deleteBranchesByIds = async (
           },
         });
 
-        // Delete Assets
         await tx.asset.deleteMany({
           where: {
             OR: [
@@ -244,7 +274,6 @@ const deleteBranchesByIds = async (
           },
         });
 
-        // Delete Users
         await tx.user.deleteMany({
           where: {
             OR: [
@@ -254,7 +283,6 @@ const deleteBranchesByIds = async (
           },
         });
 
-        // Finally, delete Branches
         await tx.branch.deleteMany({
           where: { id: { in: branchIds } },
         });
@@ -265,6 +293,9 @@ const deleteBranchesByIds = async (
       }
     );
   } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
     console.error("Error deleting branches:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }

@@ -21,6 +21,7 @@ import { MdDelete } from "react-icons/md";
 import { getAllOrganizations } from "../../Features/slices/organizationSlice";
 import { deleteOrganization } from "../../Features/slices/organizationSlice";
 import organizationStrings from "../../locales/organizationStrings";
+import { toast } from "react-toastify";
 
 const Organization = () => {
   const dispatch = useDispatch();
@@ -159,25 +160,42 @@ const Organization = () => {
     setShowDeleteConfirmation(true);
   };
 
-  const confirmDelete = () => {
-    if (organizationToDelete) {
-      dispatch(deleteOrganization([organizationToDelete]));
-      setDeleteMessage(modals.deleteSuccess.single);
-    } else if (selectedOrganizations.length > 0) {
-      dispatch(deleteOrganization(selectedOrganizations));
-      setDeleteMessage(
-        modals.deleteSuccess.multiple.replace(
-          "{count}",
-          selectedOrganizations.length
-        )
-      );
+  const confirmDelete = async () => {
+    try {
+      if (organizationToDelete) {
+        // Single organization delete
+        await dispatch(deleteOrganization([organizationToDelete])).unwrap();
+        setDeleteMessage(modals.deleteSuccess.single);
+      } else if (selectedOrganizations.length > 0) {
+        // Multiple organizations delete
+        await dispatch(deleteOrganization(selectedOrganizations)).unwrap();
+        setDeleteMessage(
+          modals.deleteSuccess.multiple.replace(
+            "{count}",
+            selectedOrganizations.length
+          )
+        );
+      }
+
+      setShowDeleteConfirmation(false);
+      setOrganizationToDelete(null);
+      dispatch(deselectAllOrganizations());
+      setShowDeleteSuccessPopup(true);
+
+      setTimeout(() => {
+        setShowDeleteSuccessPopup(false);
+      }, 2000);
+    } catch (error) {
+      toast.error(error || "Delete operation failed", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      // Reset states
+      setShowDeleteConfirmation(false);
+      setOrganizationToDelete(null);
+      dispatch(deselectAllOrganizations());
     }
-    setShowDeleteConfirmation(false);
-    setOrganizationToDelete(null);
-    setShowDeleteSuccessPopup(true);
-    setTimeout(() => {
-      setShowDeleteSuccessPopup(false);
-    }, 2000);
   };
 
   const cancelDelete = () => {

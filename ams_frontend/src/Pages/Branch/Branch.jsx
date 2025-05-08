@@ -21,7 +21,7 @@ import { getAllBranches } from "../../Features/slices/branchSlice";
 import { deleteBranch } from "../../Features/slices/branchSlice";
 import ChipsList from "../../components/UI/ChipsList";
 import branchStrings from "../../locales/branchStrings";
-
+import { toast } from "react-toastify";
 const Branch = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -170,25 +170,42 @@ const Branch = () => {
     setShowDeleteConfirmation(true);
   };
 
-  const confirmDelete = () => {
-    if (branchToDelete) {
-      dispatch(deleteBranch([branchToDelete]));
-      setDeleteMessage(branchStrings.branch.modals.deleteSuccess.single);
-    } else if (selectedBranches.length > 0) {
-      dispatch(deleteBranch(selectedBranches));
-      setDeleteMessage(
-        branchStrings.branch.modals.deleteSuccess.multiple.replace(
-          "{count}",
-          selectedBranches.length
-        )
-      );
+  const confirmDelete = async () => {
+    try {
+      if (branchToDelete) {
+        // Single branch delete
+        await dispatch(deleteBranch([branchToDelete])).unwrap();
+        setDeleteMessage(branchStrings.branch.modals.deleteSuccess.single);
+      } else if (selectedBranches.length > 0) {
+        // Multiple branches delete
+        await dispatch(deleteBranch(selectedBranches)).unwrap();
+        setDeleteMessage(
+          branchStrings.branch.modals.deleteSuccess.multiple.replace(
+            "{count}",
+            selectedBranches.length
+          )
+        );
+      }
+
+      setShowDeleteConfirmation(false);
+      setBranchToDelete(null);
+      dispatch(deselectAllBranches());
+      setShowDeleteSuccessPopup(true);
+
+      setTimeout(() => {
+        setShowDeleteSuccessPopup(false);
+      }, 2000);
+    } catch (error) {
+      toast.error(error || "Delete operation failed", {
+        position: "top-right",
+        autoClose: 2000,
+      });
+
+      // Reset states
+      setShowDeleteConfirmation(false);
+      setBranchToDelete(null);
+      dispatch(deselectAllBranches());
     }
-    setShowDeleteConfirmation(false);
-    setBranchToDelete(null);
-    setShowDeleteSuccessPopup(true);
-    setTimeout(() => {
-      setShowDeleteSuccessPopup(false);
-    }, 2000);
   };
 
   const cancelDelete = () => {

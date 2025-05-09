@@ -8,7 +8,9 @@ import branchRoutes from "@/routes/branch.routes";
 import assetRoutes from "@/routes/asset.routes";
 import dashboardCountRoutes from "@/routes/dashboard.routes";
 import userDashboardRoutes from "@/routes/userDashboard.routes";
-import assignAssetRoutes from "@/routes/assignasset.routes";
+
+import assignassetRoutes from "@/routes/assignasset.routes";
+import assetHistoryRoutes from "@/routes/assetHistory.routes";
 
 const router = express.Router();
 
@@ -43,7 +45,11 @@ const defaultRoutes = [
   },
   {
     path: "/assignAsset",
-    route: assignAssetRoutes,
+    route: assignassetRoutes,
+  },
+  {
+    path: "/assetHistory",
+    route: assetHistoryRoutes,
   },
   {
     path: "/dashboard",

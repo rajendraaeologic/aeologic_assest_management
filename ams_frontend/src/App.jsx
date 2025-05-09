@@ -32,6 +32,7 @@ import UnauthorizedPage from "./Pages/Unauthorized/Unauthorized";
 // Auth
 import RequireAuth from "./Features/auth/RequireAuth";
 import { ADMIN_ROLES, USER_ROLES } from "./TypeRoles/constants.roles";
+import AssetHistory from "./Pages/AssetHistory/AssetHistory.jsx";
 
 const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
           { path: "department", element: <Department /> },
           { path: "asset", element: <Asset /> },
           { path: "assignAsset", element: <AssignAsset /> },
+          { path: "assetHistory", element: <AssetHistory /> },
           { path: "assigntag", element: <AssignTag /> },
           { path: "outfordelivery", element: <OutForDelivery /> },
           { path: "datewishreport", element: <DateWishReport /> },

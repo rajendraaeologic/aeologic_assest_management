@@ -14,9 +14,11 @@ import {
 } from "react-icons/fa";
 import { GiAudioCassette } from "react-icons/gi";
 import { MdPersonAdd } from "react-icons/md";
+import { MdHistory} from "react-icons/md";
 import { NavLink } from "react-router-dom";
 import SliderContext from "../ContexApi";
-import ReactTooltip from "react-tooltip";
+// import ReactTooltip from "react-tooltip";
+import { Tooltip } from 'react-tooltip';
 
 const Sidebar = () => {
   const { isSidebarOpen } = useContext(SliderContext);
@@ -33,6 +35,7 @@ const Sidebar = () => {
     { name: "Department", icon: <FaBriefcase />, path: "/department" },
     { name: "Add Asset", icon: <GiAudioCassette />, path: "/asset" },
     { name: "Assign Asset", icon: <MdPersonAdd />, path: "/assignAsset" },
+    { name: "Asset History", icon: <MdHistory  />, path: "/assetHistory" },
     { name: "Assign Tag (Coming Soon)", icon: <FaTags />, path: "/assigntag" },
     {
       name: "Out For Delivery (Coming Soon)",
@@ -111,8 +114,8 @@ const Sidebar = () => {
               </NavLink>
 
               {!isSidebarOpen && (
-                <ReactTooltip
-                  id={`tooltip-${index}`}
+                <Tooltip
+                    id={`tooltip-${index}`}
                   place="right"
                   effect="solid"
                   className="!bg-gray-900 !text-white !text-sm !rounded-md !px-2 !py-1"
@@ -145,8 +148,8 @@ const Sidebar = () => {
             </div>
 
             {!isSidebarOpen && (
-              <ReactTooltip
-                id="reports-tooltip"
+              <Tooltip
+                  id="reports-tooltip"
                 place="right"
                 effect="solid"
                 className="!bg-gray-900 !text-white !text-sm !rounded-md !px-2 !py-1"

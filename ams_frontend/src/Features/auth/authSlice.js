@@ -4,22 +4,22 @@ import API from "../../App/api/axiosInstance";
 //loginUser
 
 export const loginUser = createAsyncThunk(
-  "auth/login",
-  async (credentials, { rejectWithValue, dispatch }) => {
-    try {
-      const response = await API.post("/auth/login", credentials);
-      console.log("Login API Response:", response);
+    "auth/login",
+    async (credentials, { rejectWithValue, dispatch }) => {
+      try {
+        const response = await API.post("/auth/login", credentials);
+        console.log("Login API Response:", response);
 
-      if (
-        !response.data ||
-        !response.data.tokens ||
-        !response.data.tokens.access ||
-        !response.data.tokens.refresh
-      ) {
-        return rejectWithValue("Invalid login response");
-      }
+        if (
+            !response.data.data ||
+            !response.data.data.tokens ||
+            !response.data.data.tokens.access ||
+            !response.data.data.tokens.refresh
+        ) {
+          return rejectWithValue("Invalid login response");
+        }
 
-      const { tokens, user } = response.data;
+        const { tokens, user } = response.data.data;
 
       dispatch(
         setCredentials({

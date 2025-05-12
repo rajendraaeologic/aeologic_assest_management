@@ -77,7 +77,7 @@ const createAsset = async (
 };
 
 // queryAssets
-const queryAssets = async (
+export const queryAssets = async (
   filter: object,
   options: {
     limit?: number;
@@ -85,20 +85,25 @@ const queryAssets = async (
     sortBy?: string;
     sortType?: "asc" | "desc";
   }
-): Promise<any[]> => {
+): Promise<{ data: any[]; total: number }> => {
   const page = options.page ?? 1;
   const limit = options.limit ?? 10;
-  const skip = (page - 1) * limit || 0;
-  const sortBy = options.sortBy;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || "createdAt";
   const sortType = options.sortType ?? "desc";
 
-  return await db.asset.findMany({
-    where: { ...filter },
-    select: AssetKeys,
-    skip: skip > 0 ? skip : 0,
-    take: limit,
-    orderBy: sortBy ? { [sortBy]: sortType } : undefined,
-  });
+  const [data, total] = await Promise.all([
+    db.asset.findMany({
+      where: filter,
+      select: AssetKeys,
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortType },
+    }),
+    db.asset.count({ where: filter }),
+  ]);
+
+  return { data, total };
 };
 
 // getAssetById

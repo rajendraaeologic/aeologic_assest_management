@@ -38,6 +38,8 @@ const UpdateUserForm = ({ onClose }) => {
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [selectedDept, setSelectedDept] = useState(null);
 
+  const { currentPage, rowsPerPage } = useSelector((state) => state.usersData);
+
   const {
     register,
     handleSubmit,
@@ -315,7 +317,12 @@ const UpdateUserForm = ({ onClose }) => {
       };
 
       await dispatch(updateUser(userData)).unwrap();
-      dispatch(getAllUsers());
+      dispatch(
+        getAllUsers({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      );
 
       toast.success(userStrings.updateUser.toast.success, {
         position: "top-right",

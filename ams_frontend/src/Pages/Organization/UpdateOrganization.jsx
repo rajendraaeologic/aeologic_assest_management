@@ -15,7 +15,7 @@ const UpdateOrganization = ({ onClose }) => {
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
-
+  const { currentPage, rowsPerPage } = useSelector((state) => state.usersData);
   const selectedOrganization = useSelector(
     (state) => state.organizationData.selectedOrganization
   );
@@ -74,7 +74,12 @@ const UpdateOrganization = ({ onClose }) => {
       };
 
       await dispatch(updateOrganization(organizationData)).unwrap();
-      dispatch(getAllOrganizations());
+      dispatch(
+        getAllOrganizations({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      );
 
       toast.success(organizationStrings.updateOrganization.toast.success, {
         position: "top-right",

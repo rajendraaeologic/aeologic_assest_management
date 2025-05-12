@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useContext,
+  useRef,
+  useCallback,
+} from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -21,9 +27,10 @@ import UpdateUserForm from "./UpdateUserForm";
 import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
 import { getAllUsers, uploadExcel } from "../../Features/slices/userSlice";
-import { deleteUser } from "../../Features/slices/userSlice";
+import { deleteUser, setSearchTerm } from "../../Features/slices/userSlice";
 import userStrings from "../../locales/userStrings";
 import DownloadTemplateButton from "./DownloadTemplateButton";
+import debounce from "lodash.debounce";
 
 const UserRegistration = () => {
   const dispatch = useDispatch();
@@ -31,13 +38,16 @@ const UserRegistration = () => {
   const fileInputRef = useRef();
   const { isSidebarOpen } = useContext(SliderContext);
 
-  const { users, selectedUsers, currentPage, rowsPerPage } = useSelector(
-    (state) => state.usersData
-  );
-
-  useEffect(() => {
-    dispatch(getAllUsers());
-  }, [dispatch, users.length]);
+  const {
+    users,
+    selectedUsers,
+    currentPage,
+    rowsPerPage,
+    totalUsers,
+    totalPages,
+    searchTerm,
+    loading,
+  } = useSelector((state) => state.usersData);
 
   const [isAddUserFormOpen, setIsAddUserFormOpen] = useState(false);
   const [isUpdateUserFormOpen, setIsUpdateUserFormOpen] = useState(false);
@@ -49,20 +59,47 @@ const UserRegistration = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(null);
   const [uploadError, setUploadError] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [isSearching, setIsSearching] = useState(false);
 
   const options = ["5", "10", "25", "50", "100"];
-  const totalPages = Math.ceil(users.length / rowsPerPage);
 
-  const [searchFilters, setSearchFilters] = useState({
-    userName: "",
-    phone: "",
-    email: "",
-    status: "",
-    userRole: "",
-    branchName: "",
-    departmentName: "",
-    organizationName: "",
-  });
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      dispatch(setSearchTerm(value));
+      setIsSearching(false);
+    }, 500),
+    [dispatch]
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    setLocalSearchTerm(searchTerm);
+  }, [searchTerm]);
+
+  // Fetch users when page, limit, or searchTerm changes
+  useEffect(() => {
+    dispatch(
+      getAllUsers({
+        page: currentPage,
+        limit: rowsPerPage,
+        searchTerm: searchTerm.trim(),
+      })
+    );
+  }, [dispatch, currentPage, rowsPerPage, searchTerm]);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setIsSearching(true);
+    setLocalSearchTerm(value);
+    debouncedSearch(value);
+  };
 
   useEffect(() => {
     if (
@@ -80,46 +117,21 @@ const UserRegistration = () => {
     };
   }, [showDeleteConfirmation, showSelectFirstPopup, showDeleteSuccessPopup]);
 
-  const handleSearchChange = (e) => {
-    const { name, value } = e.target;
-    setSearchFilters((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const filteredUsers = users?.filter((user) => {
-    const lowerCase = (str) => (str || "").toLowerCase();
-    return (
-      lowerCase(user.userName).includes(lowerCase(searchFilters.userName)) &&
-      lowerCase(user.phone).includes(lowerCase(searchFilters.phone)) &&
-      lowerCase(user.email).includes(lowerCase(searchFilters.email)) &&
-      lowerCase(user.status).includes(lowerCase(searchFilters.status)) &&
-      lowerCase(user.userRole).includes(lowerCase(searchFilters.userRole)) &&
-      lowerCase(user.branch?.branchName).includes(
-        lowerCase(searchFilters.branchName)
-      ) &&
-      lowerCase(user.department?.departmentName).includes(
-        lowerCase(searchFilters.departmentName)
-      )
-    );
-  });
-
-  const startIndex = currentPage * rowsPerPage;
-  const currentRows = filteredUsers.slice(startIndex, startIndex + rowsPerPage);
-
   const handleNavigate = () => {
     navigate("/dashboard");
   };
 
   const handlePrev = () => {
-    if (currentPage > 0) dispatch(setCurrentPage(currentPage - 1));
+    if (currentPage > 1) {
+      dispatch(setCurrentPage(currentPage - 1));
+    }
   };
 
   const handleNext = () => {
-    if (currentPage < totalPages - 1) dispatch(setCurrentPage(currentPage + 1));
+    if (currentPage < totalPages) {
+      dispatch(setCurrentPage(currentPage + 1));
+    }
   };
-
   const handleDeleteSelectedUsers = () => {
     if (selectedUsers.length === 0) {
       setShowSelectFirstPopup(true);
@@ -149,27 +161,43 @@ const UserRegistration = () => {
     setShowDeleteConfirmation(true);
   };
 
-  const confirmDelete = () => {
-    if (userToDelete) {
-      dispatch(deleteUser([userToDelete]));
-      setDeleteMessage(userStrings.user.modals.deleteSuccess.single);
-    } else if (selectedUsers.length > 0) {
-      dispatch(deleteUser(selectedUsers));
-      setDeleteMessage(
-        userStrings.user.modals.deleteSuccess.multiple.replace(
-          "{count}",
-          selectedUsers.length
-        )
-      );
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+
+    try {
+      if (userToDelete) {
+        await dispatch(deleteUser([userToDelete]));
+        setDeleteMessage(userStrings.user.modals.deleteSuccess.single);
+      } else if (selectedUsers.length > 0) {
+        await dispatch(deleteUser(selectedUsers));
+        setDeleteMessage(
+          userStrings.user.modals.deleteSuccess.multiple.replace(
+            "{count}",
+            selectedUsers.length
+          )
+        );
+      }
+
+      setShowDeleteConfirmation(false);
+      setUserToDelete(null);
+      setShowDeleteSuccessPopup(true);
+      setTimeout(() => {
+        setShowDeleteSuccessPopup(false);
+      }, 2000);
+    } finally {
+      setIsDeleting(false);
     }
-    setShowDeleteConfirmation(false);
-    setUserToDelete(null);
-    setShowDeleteSuccessPopup(true);
-    setTimeout(() => {
-      setShowDeleteSuccessPopup(false);
-    }, 2000);
   };
 
+  // Delete Success  toast
+  useEffect(() => {
+    if (showDeleteSuccessPopup && deleteMessage) {
+      toast.success(deleteMessage, {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  }, [showDeleteSuccessPopup, deleteMessage]);
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);
     setUserToDelete(null);
@@ -272,24 +300,43 @@ const UserRegistration = () => {
         </div>
 
         <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex items-center gap-2 pt-8 ml-3">
-            <p>{userStrings.user.table.showEntries}</p>
-            <div className="border-2 flex justify-evenly">
-              <select
-                value={rowsPerPage}
-                onChange={(e) =>
-                  dispatch(setRowsPerPage(parseInt(e.target.value)))
-                }
-                className="outline-none px-1"
-              >
-                {options.map((option, index) => (
-                  <option key={index} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+          <div className="flex items-center justify-between pt-8 px-6">
+            {/* Left side: Show entries dropdown */}
+            <div className="flex items-center gap-2">
+              <p>{userStrings.user.table.showEntries}</p>
+              <div className="border-2 flex justify-evenly">
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) =>
+                    dispatch(setRowsPerPage(parseInt(e.target.value)))
+                  }
+                  className="outline-none px-1"
+                >
+                  {options.map((option, index) => (
+                    <option key={index} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p>{userStrings.user.table.entries}</p>
             </div>
-            <p>{userStrings.user.table.entries}</p>
+
+            {/* Right side: Search bar */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search"
+                className="border p-2 rounded w-64"
+                value={localSearchTerm}
+                onChange={handleSearchChange}
+              />
+              {isSearching && (
+                <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
+                  Searching...
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
@@ -398,173 +445,6 @@ const UserRegistration = () => {
                     }}
                   >
                     {userStrings.user.table.headers.deleteAll}
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody>
-                <tr className="bg-gray-100">
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="userName"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.userName
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.userName}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="phone"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.phone
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.phone}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="email"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.email
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.email}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="status"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.status
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.status}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="userRole"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.userRole
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.userRole}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="branchName"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders
-                          .organizationName
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.organizationName}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="branchName"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.branchName
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.branchName}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="departmentName"
-                      placeholder={
-                        userStrings.user.table.searchPlaceholders.departmentName
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchFilters.departmentName}
-                      onChange={handleSearchChange}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  ></td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  >
                     <div className="flex justify-center items-center">
                       <div className="">
                         <label className="flex items-center">
@@ -583,13 +463,13 @@ const UserRegistration = () => {
                         <MdDelete className="h-6 w-6 text-[red]" />
                       </button>
                     </div>
-                  </td>
+                  </th>
                 </tr>
-              </tbody>
+              </thead>
 
               <tbody>
-                {currentRows.length > 0 ? (
-                  currentRows.map((user, index) => (
+                {users.length > 0 ? (
+                  users.map((user, index) => (
                     <tr
                       key={user.id || index}
                       className={`${
@@ -739,9 +619,9 @@ const UserRegistration = () => {
             <div className="px-2 py-2 border-2 flex items-center gap-2">
               <button
                 onClick={handlePrev}
-                disabled={currentPage === 0 || totalPages === 0}
-                className={`${
-                  currentPage === 0 || totalPages === 0
+                disabled={currentPage <= 1 || totalPages === 0}
+                className={`px-2 py-1 rounded ${
+                  currentPage <= 1 || totalPages === 0
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:bg-gray-100"
                 }`}
@@ -752,23 +632,11 @@ const UserRegistration = () => {
               <span className="px-2 space-x-1">
                 {totalPages > 0 ? (
                   <>
-                    <span
-                      className={`py-1 px-3 ${
-                        currentPage + 1 < totalPages
-                          ? "bg-[#3bc0c3] text-white"
-                          : "border-2"
-                      }`}
-                    >
-                      {currentPage + 1}
+                    <span className="py-1 px-3 border-2 bg-[#3bc0c3] text-white">
+                      {currentPage}
                     </span>
-                    <span
-                      className={`py-1 px-3 ${
-                        currentPage + 1 === totalPages
-                          ? "bg-[#3bc0c3] text-white"
-                          : "border-2"
-                      }`}
-                    >
-                      {totalPages}
+                    <span className="py-1 px-3 border-2 text-gray-500">
+                      / {totalPages}
                     </span>
                   </>
                 ) : (
@@ -778,9 +646,9 @@ const UserRegistration = () => {
 
               <button
                 onClick={handleNext}
-                disabled={currentPage + 1 >= totalPages || totalPages === 0}
-                className={`${
-                  currentPage + 1 >= totalPages
+                disabled={currentPage >= totalPages || totalPages === 0}
+                className={`px-2 py-1 rounded ${
+                  currentPage >= totalPages || totalPages === 0
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:bg-gray-100"
                 }`}
@@ -875,8 +743,11 @@ const UserRegistration = () => {
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-500 text-white rounded-md"
+                disabled={isDeleting}
               >
-                {userStrings.user.buttons.yes}
+                {isDeleting
+                  ? userStrings.user.buttons.deleting
+                  : userStrings.user.buttons.yes}
               </button>
             </div>
           </div>
@@ -896,13 +767,6 @@ const UserRegistration = () => {
                 {userStrings.user.buttons.ok}
               </button>
             </div>
-          </div>
-        </div>
-      )}
-      {showDeleteSuccessPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">{deleteMessage}</h3>
           </div>
         </div>
       )}

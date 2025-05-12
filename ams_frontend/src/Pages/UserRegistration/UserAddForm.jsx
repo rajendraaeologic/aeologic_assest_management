@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
 import API from "../../App/api/axiosInstance";
@@ -40,6 +40,8 @@ const AddUserForm = ({ onClose }) => {
   const [deptSearchTerm, setDeptSearchTerm] = useState("");
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [selectedDept, setSelectedDept] = useState(null);
+
+  const { currentPage, rowsPerPage } = useSelector((state) => state.usersData);
 
   const {
     register,
@@ -256,7 +258,12 @@ const AddUserForm = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       await dispatch(createUser(data)).unwrap();
-      dispatch(getAllUsers());
+      dispatch(
+        getAllUsers({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      );
       toast.success(userStrings.addUser.toast.success, {
         position: "top-right",
         autoClose: 2000,

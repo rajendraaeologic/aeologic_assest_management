@@ -185,7 +185,35 @@ const unassignAsset = async (
 };
 
 // Get asset assignments with filters
-const getAssetAssignments = async (
+// const getAssetAssignments = async (
+//   filter: Prisma.AssetAssignmentWhereInput = {},
+//   options: {
+//     limit?: number;
+//     page?: number;
+//     sortBy?: string;
+//     sortType?: "asc" | "desc";
+//   } = {}
+// ): Promise<any[]> => {
+//   const {
+//     limit = 10,
+//     page = 1,
+//     sortBy = "assignedAt",
+//     sortType = "desc",
+//   } = options;
+//   const skip = (page - 1) * limit;
+
+//   return await db.assetAssignment.findMany({
+//     where: filter,
+//     include: {
+//       asset: { select: AssetKeys },
+//       user: { select: UserKeys },
+//     },
+//     skip,
+//     take: limit,
+//     orderBy: { [sortBy]: sortType },
+//   });
+// };
+export const getAssetAssignments = async (
   filter: Prisma.AssetAssignmentWhereInput = {},
   options: {
     limit?: number;
@@ -193,7 +221,7 @@ const getAssetAssignments = async (
     sortBy?: string;
     sortType?: "asc" | "desc";
   } = {}
-): Promise<any[]> => {
+): Promise<{ data: any[]; total: number }> => {
   const {
     limit = 10,
     page = 1,
@@ -202,16 +230,21 @@ const getAssetAssignments = async (
   } = options;
   const skip = (page - 1) * limit;
 
-  return await db.assetAssignment.findMany({
-    where: filter,
-    include: {
-      asset: { select: AssetKeys },
-      user: { select: UserKeys },
-    },
-    skip,
-    take: limit,
-    orderBy: { [sortBy]: sortType },
-  });
+  const [data, total] = await Promise.all([
+    db.assetAssignment.findMany({
+      where: filter,
+      include: {
+        asset: { select: AssetKeys },
+        user: { select: UserKeys },
+      },
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortType },
+    }),
+    db.assetAssignment.count({ where: filter }),
+  ]);
+
+  return { data, total };
 };
 
 // Get single assignment by ID

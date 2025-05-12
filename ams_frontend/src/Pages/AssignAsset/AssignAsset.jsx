@@ -21,6 +21,7 @@ import { MdDelete } from "react-icons/md";
 import { getAllAssignAssets } from "../../Features/slices/assignAssetSlice";
 import { deleteAssignAsset } from "../../Features/slices/assignAssetSlice";
 import assignAssetStrings from "../../locales/assignAssetString";
+import { toast } from "react-toastify";
 
 const AssignAsset = () => {
   const dispatch = useDispatch();
@@ -56,7 +57,7 @@ const AssignAsset = () => {
   const [showSelectFirstPopup, setShowSelectFirstPopup] = useState(false);
   const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
-
+  const [isDeleting, setIsDeleting] = useState(false);
   const options = ["5", "10", "25", "50", "100"];
   const totalPages = Math.ceil(assignAssets.length / rowsPerPage);
 
@@ -159,26 +160,43 @@ const AssignAsset = () => {
     setShowDeleteConfirmation(true);
   };
 
-  const confirmDelete = () => {
-    if (assignAssetToDelete) {
-      dispatch(deleteAssignAsset([assignAssetToDelete]));
-      setDeleteMessage(modals.deleteSuccess.single);
-    } else if (selectedAssignAssets.length > 0) {
-      dispatch(deleteAssignAsset(selectedAssignAssets));
-      setDeleteMessage(
-        modals.deleteSuccess.multiple.replace(
-          "{count}",
-          selectedAssignAssets.length
-        )
-      );
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+
+    try {
+      if (assignAssetToDelete) {
+        await dispatch(deleteAssignAsset([assignAssetToDelete]));
+        setDeleteMessage(modals.deleteSuccess.single);
+      } else if (selectedAssignAssets.length > 0) {
+        await dispatch(deleteAssignAsset(selectedAssignAssets));
+        setDeleteMessage(
+          modals.deleteSuccess.multiple.replace(
+            "{count}",
+            selectedAssignAssets.length
+          )
+        );
+      }
+
+      setShowDeleteConfirmation(false);
+      setAssignAssetToDelete(null);
+      setShowDeleteSuccessPopup(true);
+      setTimeout(() => {
+        setShowDeleteSuccessPopup(false);
+      }, 2000);
+    } finally {
+      setIsDeleting(false);
     }
-    setShowDeleteConfirmation(false);
-    setAssignAssetToDelete(null);
-    setShowDeleteSuccessPopup(true);
-    setTimeout(() => {
-      setShowDeleteSuccessPopup(false);
-    }, 2000);
   };
+
+  // Delete Success  toast
+  useEffect(() => {
+    if (showDeleteSuccessPopup && deleteMessage) {
+      toast.success(deleteMessage, {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  }, [showDeleteSuccessPopup, deleteMessage]);
 
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);
@@ -623,8 +641,9 @@ const AssignAsset = () => {
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-500 text-white rounded-md"
+                disabled={isDeleting}
               >
-                {buttons.yes}
+                {isDeleting ? buttons.deleting : buttons.yes}
               </button>
             </div>
           </div>
@@ -644,15 +663,6 @@ const AssignAsset = () => {
                 {buttons.ok}
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Success Popup */}
-      {showDeleteSuccessPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">{deleteMessage}</h3>
           </div>
         </div>
       )}

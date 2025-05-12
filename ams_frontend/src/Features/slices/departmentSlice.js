@@ -22,9 +22,13 @@ export const createDepartment = createAsyncThunk(
 // Get All Departments
 export const getAllDepartments = createAsyncThunk(
   "department/getAll",
-  async (_, { rejectWithValue }) => {
+  async ({ limit = 5, page = 1, searchTerm = "" }, { rejectWithValue }) => {
     try {
-      const response = await getAllDepartmentsService();
+      const response = await getAllDepartmentsService({
+        limit,
+        page,
+        searchTerm,
+      });
       return response.data || [];
     } catch (error) {
       return rejectWithValue(
@@ -76,8 +80,11 @@ const departmentSlice = createSlice({
     error: null,
     selectedDepartment: null,
     selectedDepartments: [],
-    currentPage: 0,
+    currentPage: 1,
     rowsPerPage: 5,
+    totalDepartments: 0,
+    totalPages: 0,
+    searchTerm: "",
   },
   reducers: {
     setSelectedDepartment: (state, action) => {
@@ -86,8 +93,14 @@ const departmentSlice = createSlice({
     setCurrentPage: (state, action) => {
       state.currentPage = action.payload;
     },
+    setSearchTerm: (state, action) => {
+      state.searchTerm = action.payload;
+      state.currentPage = 1;
+    },
+
     setRowsPerPage: (state, action) => {
       state.rowsPerPage = action.payload;
+      state.currentPage = 1;
     },
     toggleSelectDepartment: (state, action) => {
       const id = action.payload;
@@ -130,7 +143,11 @@ const departmentSlice = createSlice({
       })
       .addCase(getAllDepartments.fulfilled, (state, action) => {
         state.loading = false;
-        state.departments = action.payload;
+        state.departments = action.payload.data;
+        state.totalDepartments = action.payload.totalData;
+        state.totalPages = action.payload.totalPages;
+        state.currentPage = action.payload.page;
+        state.rowsPerPage = action.payload.limit;
       })
       .addCase(getAllDepartments.rejected, (state, action) => {
         state.loading = false;
@@ -178,6 +195,7 @@ export const {
   toggleSelectDepartment,
   selectAllDepartments,
   deselectAllDepartments,
+  setSearchTerm,
 } = departmentSlice.actions;
 
 export default departmentSlice.reducer;

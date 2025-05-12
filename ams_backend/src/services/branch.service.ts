@@ -48,20 +48,25 @@ export const queryBranches = async (
     sortBy?: string;
     sortType?: "asc" | "desc";
   }
-): Promise<any[]> => {
+): Promise<{ data: any[]; total: number }> => {
   const page = options.page ?? 1;
   const limit = options.limit ?? 10;
-  const skip = (page - 1) * limit || 0;
-  const sortBy = options.sortBy;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || "createdAt";
   const sortType = options.sortType ?? "desc";
 
-  return await db.branch.findMany({
-    where: { ...filter },
-    select: BranchKeys,
-    skip: skip > 0 ? skip : 0,
-    take: limit,
-    orderBy: sortBy ? { [sortBy]: sortType } : undefined,
-  });
+  const [data, total] = await Promise.all([
+    db.branch.findMany({
+      where: filter,
+      select: BranchKeys,
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortType },
+    }),
+    db.branch.count({ where: filter }),
+  ]);
+
+  return { data, total };
 };
 
 // getBranchById

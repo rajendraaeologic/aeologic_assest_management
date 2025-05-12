@@ -22,9 +22,13 @@ export const createOrganization = createAsyncThunk(
 // Get All Organizations
 export const getAllOrganizations = createAsyncThunk(
   "organization/getAll",
-  async (_, { rejectWithValue }) => {
+  async ({ limit = 5, page = 1, searchTerm = "" }, { rejectWithValue }) => {
     try {
-      const response = await getAllOrganizationsService();
+      const response = await getAllOrganizationsService({
+        limit,
+        page,
+        searchTerm,
+      });
       return response.data || [];
     } catch (error) {
       return rejectWithValue(
@@ -78,19 +82,29 @@ const organizationSlice = createSlice({
     error: null,
     selectedOrganization: null,
     selectedOrganizations: [],
-    currentPage: 0,
+    currentPage: 1,
     rowsPerPage: 5,
+    totalOrganizations: 0,
+    totalPages: 0,
+    searchTerm: "",
   },
 
   reducers: {
     setSelectedOrganization: (state, action) => {
       state.selectedOrganization = action.payload;
     },
+
     setCurrentPage: (state, action) => {
       state.currentPage = action.payload;
     },
+    setSearchTerm: (state, action) => {
+      state.searchTerm = action.payload;
+      state.currentPage = 1;
+    },
+
     setRowsPerPage: (state, action) => {
       state.rowsPerPage = action.payload;
+      state.currentPage = 1;
     },
     toggleSelectOrganization: (state, action) => {
       const id = action.payload;
@@ -131,7 +145,11 @@ const organizationSlice = createSlice({
       })
       .addCase(getAllOrganizations.fulfilled, (state, action) => {
         state.loading = false;
-        state.organizations = action.payload;
+        state.organizations = action.payload.data;
+        state.totalOrganizations = action.payload.totalData;
+        state.totalPages = action.payload.totalPages;
+        state.currentPage = action.payload.page;
+        state.rowsPerPage = action.payload.limit;
       })
 
       .addCase(getAllOrganizations.rejected, (state, action) => {
@@ -180,6 +198,7 @@ export const {
   toggleSelectOrganization,
   selectAllOrganizations,
   deselectAllOrganizations,
+  setSearchTerm,
 } = organizationSlice.actions;
 
 export default organizationSlice.reducer;

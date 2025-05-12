@@ -21,10 +21,11 @@ const getAllDepartmentsValidation = {
     branchId: Joi.string().optional(),
     from_date: Joi.string().optional().isoDate(),
     to_date: Joi.string().optional().isoDate(),
-    sortBy: Joi.string(),
+    sortBy: Joi.string().optional(),
     sortType: Joi.string().valid("asc", "desc").default("desc"),
-    limit: Joi.number().integer(),
-    page: Joi.number().integer(),
+    limit: Joi.number().integer().optional(),
+    page: Joi.number().integer().optional(),
+    searchTerm: Joi.string().trim().optional(),
   }),
 };
 

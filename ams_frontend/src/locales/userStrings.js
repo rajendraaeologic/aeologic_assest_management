@@ -13,11 +13,12 @@ const userStrings = {
       no: "No",
       yes: "Yes",
       ok: "OK",
+      deleting: "Deleting...",
       close: "Close",
     },
     table: {
       showEntries: "Show",
-      entries: "entries",
+      entries: "Entries",
       noData: "No users found",
       headers: {
         userName: "User Name",

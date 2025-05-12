@@ -37,6 +37,9 @@ const getAllBranchesValidation = {
     sortType: Joi.string().valid("asc", "desc").default("desc"),
     limit: Joi.number().integer().optional(),
     page: Joi.number().integer().optional(),
+    searchTerm: Joi.string().trim().optional(),
+    createdAtFrom: Joi.date().iso().optional(),
+    createdAtTo: Joi.date().iso().optional(),
   }),
 };
 

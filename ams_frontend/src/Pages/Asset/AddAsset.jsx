@@ -6,13 +6,16 @@ import API from "../../App/api/axiosInstance";
 import assetStrings from "../../locales/assetStrings";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { getAllAssets } from "../../Features/slices/assetSlice";
 const AddAsset = ({ onClose, onSuccess }) => {
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
   const dispatch = useDispatch();
 
-  const { loading } = useSelector((state) => state.assetUserData);
+  const { loading, currentPage, rowsPerPage } = useSelector(
+    (state) => state.assetUserData
+  );
 
   // Organization dropdown state
   const [organizations, setOrganizations] = useState([]);
@@ -262,6 +265,12 @@ const AddAsset = ({ onClose, onSuccess }) => {
 
     try {
       await dispatch(createAsset(data)).unwrap();
+      dispatch(
+        getAllAssets({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      );
       toast.success(assetStrings.addAsset.toast.success, {
         position: "top-right",
         autoClose: 1000,

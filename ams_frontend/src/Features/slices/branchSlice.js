@@ -22,9 +22,13 @@ export const createBranch = createAsyncThunk(
 // Get All Branches
 export const getAllBranches = createAsyncThunk(
   "branch/getAll",
-  async (_, { rejectWithValue }) => {
+  async ({ limit = 5, page = 1, searchTerm = "" }, { rejectWithValue }) => {
     try {
-      const response = await getAllBranchesService();
+      const response = await getAllBranchesService({
+        limit,
+        page,
+        searchTerm,
+      });
       return response.data || [];
     } catch (error) {
       return rejectWithValue(
@@ -70,11 +74,13 @@ const branchSlice = createSlice({
     branches: [],
     loading: false,
     error: null,
-
     selectedBranch: null,
     selectedBranches: [],
-    currentPage: 0,
+    currentPage: 1,
     rowsPerPage: 5,
+    totalBranches: 0,
+    totalPages: 0,
+    searchTerm: "",
   },
   reducers: {
     setSelectedBranch: (state, action) => {
@@ -83,8 +89,14 @@ const branchSlice = createSlice({
     setCurrentPage: (state, action) => {
       state.currentPage = action.payload;
     },
+    setSearchTerm: (state, action) => {
+      state.searchTerm = action.payload;
+      state.currentPage = 1;
+    },
+
     setRowsPerPage: (state, action) => {
       state.rowsPerPage = action.payload;
+      state.currentPage = 1;
     },
     toggleSelectBranch: (state, action) => {
       const id = action.payload;
@@ -125,8 +137,13 @@ const branchSlice = createSlice({
       })
       .addCase(getAllBranches.fulfilled, (state, action) => {
         state.loading = false;
-        state.branches = action.payload;
+        state.branches = action.payload.data;
+        state.totalBranches = action.payload.totalData;
+        state.totalPages = action.payload.totalPages;
+        state.currentPage = action.payload.page;
+        state.rowsPerPage = action.payload.limit;
       })
+
       .addCase(getAllBranches.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -173,6 +190,7 @@ export const {
   toggleSelectBranch,
   selectAllBranches,
   deselectAllBranches,
+  setSearchTerm,
 } = branchSlice.actions;
 
 export default branchSlice.reducer;

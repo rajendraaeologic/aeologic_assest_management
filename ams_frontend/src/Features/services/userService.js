@@ -5,9 +5,19 @@ export const createUserService = async (data) => {
   return response.data;
 };
 
-export const getAllUsersService = async () => {
-  const response = await API.get("/users/");
-  return response.data;
+export const getAllUsersService = async ({
+  limit = 5,
+  page = 1,
+  searchTerm = "",
+}) => {
+  const response = await API.get("/users", {
+    params: {
+      limit,
+      page,
+      searchTerm: searchTerm.trim(),
+    },
+  });
+  return response;
 };
 
 export const updateUserService = async (data) => {

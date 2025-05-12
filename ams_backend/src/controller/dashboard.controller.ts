@@ -13,7 +13,7 @@ const getDashboardCounts = catchAsync(async (req, res) => {
   }
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK.toString(),
+    status: httpStatus.OK,
     message: "Dashboard counts fetched successfully",
     data: counts,
   });

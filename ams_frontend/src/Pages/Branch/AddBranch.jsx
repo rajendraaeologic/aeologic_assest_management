@@ -9,7 +9,7 @@ import {
   createBranch,
   getAllBranches,
 } from "../../Features/slices/branchSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const AddBranch = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -23,6 +23,8 @@ const AddBranch = ({ onClose }) => {
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const { currentPage, rowsPerPage } = useSelector((state) => state.branchData);
 
   const {
     register,
@@ -103,7 +105,12 @@ const AddBranch = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       await dispatch(createBranch(data)).unwrap();
-      dispatch(getAllBranches());
+      dispatch(
+        getAllBranches({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      );
       toast.success(branchStrings.addBranch.toast.success, {
         position: "top-right",
         autoClose: 1000,

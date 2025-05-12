@@ -20,6 +20,9 @@ const UpdateDepartment = ({ onClose }) => {
   const selectedDepartment = useSelector(
     (state) => state.departmentData.selectedDepartment
   );
+  const { currentPage, rowsPerPage } = useSelector(
+    (state) => state.departmentData
+  );
 
   const {
     register,
@@ -78,7 +81,12 @@ const UpdateDepartment = ({ onClose }) => {
       };
 
       await dispatch(updateDepartment(departmentData)).unwrap();
-      dispatch(getAllDepartments());
+      dispatch(
+        getAllDepartments({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      );
 
       toast.success(departmentStrings.updateDepartment.toast.success, {
         position: "top-right",

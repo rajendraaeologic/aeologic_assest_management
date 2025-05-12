@@ -21,13 +21,13 @@ export const createUser = createAsyncThunk(
 );
 
 // Get All Users
+
 export const getAllUsers = createAsyncThunk(
   "user/getAll",
-  async (_, { rejectWithValue }) => {
+  async ({ limit = 5, page = 1, searchTerm = "" }, { rejectWithValue }) => {
     try {
-      const response = await getAllUsersService();
-
-      return response || [];
+      const response = await getAllUsersService({ limit, page, searchTerm });
+      return response.data;
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch users"
@@ -87,8 +87,11 @@ const userSlice = createSlice({
     error: null,
     selectedUser: null,
     selectedUsers: [],
-    currentPage: 0,
+    currentPage: 1,
     rowsPerPage: 5,
+    totalUsers: 0,
+    totalPages: 0,
+    searchTerm: "",
   },
   reducers: {
     setSelectedUser: (state, action) => {
@@ -97,8 +100,14 @@ const userSlice = createSlice({
     setCurrentPage: (state, action) => {
       state.currentPage = action.payload;
     },
+    setSearchTerm: (state, action) => {
+      state.searchTerm = action.payload;
+      state.currentPage = 1;
+    },
+
     setRowsPerPage: (state, action) => {
       state.rowsPerPage = action.payload;
+      state.currentPage = 1;
     },
     toggleSelectUser: (state, action) => {
       const id = action.payload;
@@ -156,8 +165,13 @@ const userSlice = createSlice({
       })
       .addCase(getAllUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload;
+        state.users = action.payload.data;
+        state.totalUsers = action.payload.totalData;
+        state.totalPages = action.payload.totalPages;
+        state.currentPage = action.payload.page;
+        state.rowsPerPage = action.payload.limit;
       })
+
       .addCase(getAllUsers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -204,6 +218,7 @@ export const {
   toggleSelectUser,
   selectAllUsers,
   deselectAllUsers,
+  setSearchTerm,
 } = userSlice.actions;
 
 export default userSlice.reducer;

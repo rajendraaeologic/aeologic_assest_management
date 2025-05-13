@@ -15,7 +15,6 @@ const createBranch = catchAsync(async (req, res) => {
     } as Branch);
 
     res.status(httpStatus.CREATED).send({
-      status: 201,
       branch,
       message: "Branch Created Successfully.",
     });

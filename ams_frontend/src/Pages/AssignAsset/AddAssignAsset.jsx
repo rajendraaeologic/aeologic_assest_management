@@ -55,7 +55,9 @@ const AddAssignAsset = ({ onClose }) => {
   const [deptSearchTerm, setDeptSearchTerm] = useState("");
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [selectedDept, setSelectedDept] = useState(null);
-
+  const { currentPage, rowsPerPage } = useSelector(
+    (state) => state.assignAssetData
+  );
   const {
     register,
     handleSubmit,
@@ -390,7 +392,12 @@ const AddAssignAsset = ({ onClose }) => {
       };
 
       await dispatch(createAssignAsset(payload)).unwrap();
-      dispatch(getAllAssignAssets());
+      await dispatch(
+        getAllAssignAssets({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
 
       // Refresh available assets
       if (departmentId) {

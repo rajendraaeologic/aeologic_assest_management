@@ -74,12 +74,12 @@ const UpdateOrganization = ({ onClose }) => {
       };
 
       await dispatch(updateOrganization(organizationData)).unwrap();
-      dispatch(
+      await dispatch(
         getAllOrganizations({
           page: currentPage,
           limit: rowsPerPage,
         })
-      );
+      ).unwrap();
 
       toast.success(organizationStrings.updateOrganization.toast.success, {
         position: "top-right",

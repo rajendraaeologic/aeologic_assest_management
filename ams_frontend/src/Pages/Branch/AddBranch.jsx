@@ -105,12 +105,12 @@ const AddBranch = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       await dispatch(createBranch(data)).unwrap();
-      dispatch(
+      await dispatch(
         getAllBranches({
           page: currentPage,
           limit: rowsPerPage,
         })
-      );
+      ).unwrap();
       toast.success(branchStrings.addBranch.toast.success, {
         position: "top-right",
         autoClose: 1000,

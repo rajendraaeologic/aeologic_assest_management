@@ -18,7 +18,9 @@ const UpdateAssignAsset = ({ onClose }) => {
   const selectedAssignment = useSelector(
     (state) => state.assignAssetData.selectedAssignAsset
   );
-
+  const { currentPage, rowsPerPage } = useSelector(
+    (state) => state.assignAssetData
+  );
   // User dropdown state
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -433,7 +435,12 @@ const UpdateAssignAsset = ({ onClose }) => {
       await dispatch(updateAssignAsset(payload)).unwrap();
 
       // After successful update, refresh the assignments list
-      dispatch(getAllAssignAssets());
+      await dispatch(
+        getAllAssignAssets({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
 
       toast.success(assignAssetStrings.updateAssignAsset.toast.success, {
         position: "top-right",

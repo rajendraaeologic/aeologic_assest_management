@@ -15,7 +15,6 @@ const assignAsset = catchAsync(async (req, res) => {
   const result = await assignAssetService.assignAsset(assetId, userId);
 
   res.status(httpStatus.CREATED).json({
-    status: 201,
     success: true,
     message: "Asset assigned successfully",
     data: result,
@@ -55,36 +54,6 @@ const unassignAsset = catchAsync(async (req, res) => {
   });
 });
 
-// const getAssetAssignments = catchAsync(async (req, res) => {
-//   const filter = pick(req.query, ["assetId", "userId", "status"]);
-//   const options = pick(req.query, ["from_date", "to_date"]);
-
-//   applyDateFilter(filter);
-
-//   const assignments = await assignAssetService.getAssetAssignments(filter, {
-//     limit: parseInt(req.query.limit as string) || 10,
-//     page: parseInt(req.query.page as string) || 1,
-//     sortBy: req.query.sortBy as string,
-//     sortType: req.query.sortType as "asc" | "desc",
-//   });
-
-//   if (assignments.length === 0) {
-//     res.status(httpStatus.OK).json({
-//       status: 404,
-//       success: false,
-//       message: "No assignments found",
-//       data: [],
-//     });
-//     return;
-//   }
-
-//   res.status(httpStatus.OK).json({
-//     status: 200,
-//     success: true,
-//     message: "Assignments fetched successfully",
-//     data: assignments,
-//   });
-// });
 export const getAssetAssignments = catchAsync(async (req, res) => {
   const rawFilters = pick(req.query, [
     "assetId",

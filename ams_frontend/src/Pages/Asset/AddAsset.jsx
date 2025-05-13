@@ -265,12 +265,12 @@ const AddAsset = ({ onClose, onSuccess }) => {
 
     try {
       await dispatch(createAsset(data)).unwrap();
-      dispatch(
+      await dispatch(
         getAllAssets({
           page: currentPage,
           limit: rowsPerPage,
         })
-      );
+      ).unwrap();
       toast.success(assetStrings.addAsset.toast.success, {
         position: "top-right",
         autoClose: 1000,

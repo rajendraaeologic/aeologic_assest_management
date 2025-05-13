@@ -185,34 +185,7 @@ const unassignAsset = async (
 };
 
 // Get asset assignments with filters
-// const getAssetAssignments = async (
-//   filter: Prisma.AssetAssignmentWhereInput = {},
-//   options: {
-//     limit?: number;
-//     page?: number;
-//     sortBy?: string;
-//     sortType?: "asc" | "desc";
-//   } = {}
-// ): Promise<any[]> => {
-//   const {
-//     limit = 10,
-//     page = 1,
-//     sortBy = "assignedAt",
-//     sortType = "desc",
-//   } = options;
-//   const skip = (page - 1) * limit;
 
-//   return await db.assetAssignment.findMany({
-//     where: filter,
-//     include: {
-//       asset: { select: AssetKeys },
-//       user: { select: UserKeys },
-//     },
-//     skip,
-//     take: limit,
-//     orderBy: { [sortBy]: sortType },
-//   });
-// };
 export const getAssetAssignments = async (
   filter: Prisma.AssetAssignmentWhereInput = {},
   options: {

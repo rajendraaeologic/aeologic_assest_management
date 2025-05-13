@@ -302,49 +302,28 @@ const UserDepartment = () => {
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {departmentStrings.department.table.headers.departmentName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {departmentStrings.department.table.headers.branchName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {departmentStrings.department.table.headers.branchLocation}
-                  </th>
+                  {[
+                    departmentStrings.department.table.headers.departmentName,
+                    departmentStrings.department.table.headers.branchName,
+                    departmentStrings.department.table.headers.branchLocation,
+                    departmentStrings.department.table.headers.action,
+                  ].map((header, idx) => (
+                    <th
+                      key={idx}
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: idx >= 3 ? "100px" : "180px",
+                        minWidth: idx >= 3 ? "100px" : "120px",
+                        overflowWrap: "break-word",
+                      }}
+                    >
+                      {header}
+                    </th>
+                  ))}
 
+                  {/* Delete All Column */}
                   <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {departmentStrings.department.table.headers.action}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
+                    className="px-2 py-2 border border-gray-300"
                     style={{
                       maxWidth: "100px",
                       minWidth: "100px",
@@ -352,22 +331,20 @@ const UserDepartment = () => {
                     }}
                   >
                     {departmentStrings.department.table.headers.deleteAll}
-                    <div className="flex justify-center items-center">
-                      <div className="">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedDepartments.length ===
-                                departments.length && departments.length > 0
-                            }
-                            onChange={handleSelectAllDepartments}
-                            className="mr-2"
-                          />
-                        </label>
-                      </div>
+                    <div className="flex justify-center items-center gap-1">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedDepartments.length === departments.length &&
+                            departments.length > 0
+                          }
+                          onChange={handleSelectAllDepartments}
+                          className="mr-2"
+                        />
+                      </label>
                       <button onClick={handleDeleteSelectedDepartments}>
-                        <MdDelete className="h-6 w-6 text-[red]" />
+                        <MdDelete className="h-5 w-5 text-[red]" />
                       </button>
                     </div>
                   </th>

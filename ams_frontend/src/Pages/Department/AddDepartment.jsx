@@ -202,12 +202,12 @@ const AddDepartment = ({ onClose }) => {
         })
       ).unwrap();
 
-      dispatch(
+      await dispatch(
         getAllDepartments({
           page: currentPage,
           limit: rowsPerPage,
         })
-      );
+      ).unwrap();
       toast.success(departmentStrings.addDepartment.toast.success, {
         position: "top-right",
         autoClose: 1000,

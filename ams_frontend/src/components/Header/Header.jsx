@@ -46,7 +46,7 @@ const Header = () => {
     <div
       className={`flex w-full bg-white py-4 justify-between items-center fixed top-0 pr-7 z-20 transition-all duration-300 ${sidebarClass}`}
     >
-      <div className="flex items-center ml-5">
+      <div className="flex items-center ">
         {currentUser?.userRole === "USER" ? (
           <span className="text-xl font-bold pl-8">User Dashboard</span>
         ) : isAllowed ? (

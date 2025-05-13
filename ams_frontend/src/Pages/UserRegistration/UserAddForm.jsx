@@ -258,12 +258,12 @@ const AddUserForm = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       await dispatch(createUser(data)).unwrap();
-      dispatch(
+      await dispatch(
         getAllUsers({
           page: currentPage,
           limit: rowsPerPage,
         })
-      );
+      ).unwrap();
       toast.success(userStrings.addUser.toast.success, {
         position: "top-right",
         autoClose: 2000,

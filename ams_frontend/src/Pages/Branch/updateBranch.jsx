@@ -79,12 +79,12 @@ const UpdateBranch = ({ onClose }) => {
       };
 
       await dispatch(updateBranch(branchData)).unwrap();
-      dispatch(
+      await dispatch(
         getAllBranches({
           page: currentPage,
           limit: rowsPerPage,
         })
-      );
+      ).unwrap();
 
       toast.success(branchStrings.updateBranch.toast.success, {
         position: "top-right",

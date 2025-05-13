@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -18,37 +18,32 @@ import AddAssignAsset from "./AddAssignAsset";
 import UpdateAssignAsset from "./UpdateAssignAsset";
 import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
-import { getAllAssignAssets } from "../../Features/slices/assignAssetSlice";
+import {
+  getAllAssignAssets,
+  setSearchTerm,
+} from "../../Features/slices/assignAssetSlice";
 import { deleteAssignAsset } from "../../Features/slices/assignAssetSlice";
 import assignAssetStrings from "../../locales/assignAssetString";
 import { toast } from "react-toastify";
-
+import debounce from "lodash.debounce";
 const AssignAsset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isSidebarOpen } = useContext(SliderContext);
 
-  const { title, breadcrumb, buttons, table, modals, chipsList } =
+  const { title, breadcrumb, buttons, table, modals } =
     assignAssetStrings.assignAsset;
 
-  const { assignAssets, selectedAssignAssets, currentPage, rowsPerPage } =
-    useSelector((state) => state.assignAssetData);
-
-  useEffect(() => {
-    const fetchAssignments = async () => {
-      try {
-        await dispatch(
-          getAllAssignAssets({
-            status: "IN_USE",
-          })
-        );
-      } catch (error) {
-        console.error("Error fetching assignments:", error);
-      }
-    };
-
-    fetchAssignments();
-  }, [dispatch, assignAssets.length]);
+  const {
+    assignAssets,
+    selectedAssignAssets,
+    currentPage,
+    rowsPerPage,
+    totalAssignPages,
+    totalAssignAssets,
+    searchTerm,
+    loading,
+  } = useSelector((state) => state.assignAssetData);
 
   const [isAddAssignAsset, setIsAddAssignAsset] = useState(false);
   const [isUpdateAssignAsset, setIsUpdateAssignAsset] = useState(false);
@@ -58,17 +53,46 @@ const AssignAsset = () => {
   const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [isSearching, setIsSearching] = useState(false);
   const options = ["5", "10", "25", "50", "100"];
-  const totalPages = Math.ceil(assignAssets.length / rowsPerPage);
 
-  const [searchAssignAsset, setSearchAssignAsset] = useState({
-    userName: "",
-    assetName: "",
-    organizationName: "",
-    branchName: "",
-    departmentName: "",
-  });
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      dispatch(setSearchTerm(value));
+      setIsSearching(false);
+    }, 500),
+    [dispatch]
+  );
 
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    setLocalSearchTerm(searchTerm);
+  }, [searchTerm]);
+
+  // Fetch users when page, limit, or searchTerm changes
+  useEffect(() => {
+    dispatch(
+      getAllAssignAssets({
+        page: currentPage,
+        limit: rowsPerPage,
+        status: "IN_USE",
+        searchTerm: searchTerm.trim(),
+      })
+    );
+  }, [dispatch, currentPage, rowsPerPage, searchTerm]);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setIsSearching(true);
+    setLocalSearchTerm(value);
+    debouncedSearch(value);
+  };
   useEffect(() => {
     if (
       showDeleteConfirmation ||
@@ -85,50 +109,20 @@ const AssignAsset = () => {
     };
   }, [showDeleteConfirmation, showSelectFirstPopup, showDeleteSuccessPopup]);
 
-  const handleSearchChange = (e) => {
-    const { name, value } = e.target;
-    setSearchAssignAsset((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const filteredAssignAssets = assignAssets?.filter((asset) => {
-    const lowerCase = (str) => (str || "").toLowerCase();
-    return (
-      lowerCase(asset.userName).includes(
-        lowerCase(searchAssignAsset.userName)
-      ) &&
-      lowerCase(asset.assetName).includes(
-        lowerCase(searchAssignAsset.assetName)
-      ) &&
-      lowerCase(asset.organizationName).includes(
-        lowerCase(searchAssignAsset.organizationName)
-      ) &&
-      lowerCase(asset.branchName).includes(
-        lowerCase(searchAssignAsset.branchName)
-      ) &&
-      lowerCase(asset.departmentName).includes(
-        lowerCase(searchAssignAsset.departmentName)
-      )
-    );
-  });
-  const startIndex = currentPage * rowsPerPage;
-  const currentRows = filteredAssignAssets.slice(
-    startIndex,
-    startIndex + rowsPerPage
-  );
-
   const handleNavigate = () => {
     navigate("/dashboard");
   };
 
   const handlePrev = () => {
-    if (currentPage > 0) dispatch(setCurrentPage(currentPage - 1));
+    if (currentPage > 1) {
+      dispatch(setCurrentPage(currentPage - 1));
+    }
   };
 
   const handleNext = () => {
-    if (currentPage < totalPages - 1) dispatch(setCurrentPage(currentPage + 1));
+    if (currentPage < totalPages) {
+      dispatch(setCurrentPage(currentPage + 1));
+    }
   };
 
   const handleDeleteSelectedAssignAssets = () => {
@@ -165,10 +159,10 @@ const AssignAsset = () => {
 
     try {
       if (assignAssetToDelete) {
-        await dispatch(deleteAssignAsset([assignAssetToDelete]));
+        await dispatch(deleteAssignAsset([assignAssetToDelete])).unwrap();
         setDeleteMessage(modals.deleteSuccess.single);
       } else if (selectedAssignAssets.length > 0) {
-        await dispatch(deleteAssignAsset(selectedAssignAssets));
+        await dispatch(deleteAssignAsset(selectedAssignAssets)).unwrap();
         setDeleteMessage(
           modals.deleteSuccess.multiple.replace(
             "{count}",
@@ -247,25 +241,44 @@ const AssignAsset = () => {
           </div>
         </div>
 
-        <div className=" min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex Users-center gap-2 pt-8 ml-3">
-            <p>{table.showEntries}</p>
-            <div className="border-2 flex justify-evenly">
-              <select
-                value={rowsPerPage}
-                onChange={(e) =>
-                  dispatch(setRowsPerPage(parseInt(e.target.value)))
-                }
-                className="outline-none px-1"
-              >
-                {options.map((option, index) => (
-                  <option key={index} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+        <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
+          <div className="flex items-center justify-between pt-8 px-6">
+            {/* Left side: Show entries dropdown */}
+            <div className="flex items-center gap-2">
+              <p>{assignAssetStrings.assignAsset.table.showEntries}</p>
+              <div className="border-2 flex justify-evenly">
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) =>
+                    dispatch(setRowsPerPage(parseInt(e.target.value)))
+                  }
+                  className="outline-none px-1"
+                >
+                  {options.map((option, index) => (
+                    <option key={index} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p>{assignAssetStrings.assignAsset.table.entries}</p>
             </div>
-            <p>{table.entries}</p>
+
+            {/* Right side: Search bar */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search"
+                className="border p-2 rounded w-64"
+                value={localSearchTerm}
+                onChange={handleSearchChange}
+              />
+              {isSearching && (
+                <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
+                  Searching...
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
@@ -275,68 +288,30 @@ const AssignAsset = () => {
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
+                  {[
+                    table.headers.assetName,
+                    table.headers.userName,
+                    table.headers.organizationName,
+                    table.headers.branchName,
+                    table.headers.departmentName,
+                    table.headers.action,
+                  ].map((header, idx) => (
+                    <th
+                      key={idx}
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: idx >= 5 ? "100px" : "180px",
+                        minWidth: idx >= 5 ? "100px" : "120px",
+                        overflowWrap: "break-word",
+                      }}
+                    >
+                      {header}
+                    </th>
+                  ))}
+
+                  {/* Delete All Column */}
                   <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.assetName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.userName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.organizationName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.branchName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.departmentName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.action}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
+                    className="px-2 py-2 border border-gray-300"
                     style={{
                       maxWidth: "100px",
                       minWidth: "100px",
@@ -344,136 +319,30 @@ const AssignAsset = () => {
                     }}
                   >
                     {table.headers.deleteAll}
+                    <div className="flex justify-center items-center gap-1">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedAssignAssets.length ===
+                              assignAssets.length && assignAssets.length > 0
+                          }
+                          onChange={handleSelectAllAssignAssets}
+                          className="mr-2"
+                        />
+                      </label>
+                      <button onClick={handleDeleteSelectedAssignAssets}>
+                        <MdDelete className="h-5 w-5 text-[red]" />
+                      </button>
+                    </div>
                   </th>
                 </tr>
               </thead>
-              {/* Search Row */}
-              <tbody>
-                <tr className="bg-gray-100">
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="userName"
-                      placeholder={table.searchPlaceholders.userName}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAssignAsset.userName}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="assetName"
-                      placeholder={table.searchPlaceholders.assetName}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAssignAsset.assetName}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="organizationName"
-                      placeholder={table.searchPlaceholders.organizationName}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAssignAsset.organizationName}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="branchName"
-                      placeholder={table.searchPlaceholders.branchName}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAssignAsset.branchName}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="departmentName"
-                      placeholder={table.searchPlaceholders.departmentName}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAssignAsset.departmentName}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  ></td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      <div className="">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedAssignAssets.length ===
-                                assignAssets.length && assignAssets.length > 0
-                            }
-                            onChange={handleSelectAllAssignAssets}
-                            className="mr-2"
-                          />
-                        </label>
-                      </div>
-                      <button onClick={handleDeleteSelectedAssignAssets}>
-                        <MdDelete className="h-6 w-6  text-[red]" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
 
               {/* Table Body */}
               <tbody>
-                {currentRows.length > 0 ? (
-                  currentRows.map((row, index) => (
+                {assignAssets.length > 0 ? (
+                  assignAssets.map((row, index) => (
                     <tr
                       key={row.id || index}
                       className={`${
@@ -557,11 +426,12 @@ const AssignAsset = () => {
           {/* Pagination Controls */}
           <div className="flex justify-end mr-4">
             <div className="px-2 py-2 border-2 flex items-center gap-2">
+              {/* Previous Button */}
               <button
                 onClick={handlePrev}
-                disabled={currentPage === 0 || totalPages === 0}
-                className={`${
-                  currentPage === 0 || totalPages === 0
+                disabled={currentPage <= 1 || totalAssignPages === 0}
+                className={`px-2 py-1 rounded ${
+                  currentPage <= 1 || totalAssignPages === 0
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:bg-gray-100"
                 }`}
@@ -569,26 +439,15 @@ const AssignAsset = () => {
                 {assignAssetStrings.assignAsset.buttons.previous}
               </button>
 
+              {/* Page Info */}
               <span className="px-2 space-x-1">
-                {totalPages > 0 ? (
+                {totalAssignPages > 0 ? (
                   <>
-                    <span
-                      className={`py-1 px-3 ${
-                        currentPage + 1 < totalPages
-                          ? "bg-[#3bc0c3] text-white"
-                          : "border-2"
-                      }`}
-                    >
-                      {currentPage + 1}
+                    <span className="py-1 px-3 border-2 bg-[#3bc0c3] text-white">
+                      {currentPage}
                     </span>
-                    <span
-                      className={`py-1 px-3 ${
-                        currentPage + 1 === totalPages
-                          ? "bg-[#3bc0c3] text-white"
-                          : "border-2"
-                      }`}
-                    >
-                      {totalPages}
+                    <span className="py-1 px-3 border-2 text-gray-500">
+                      / {totalAssignPages}
                     </span>
                   </>
                 ) : (
@@ -596,11 +455,14 @@ const AssignAsset = () => {
                 )}
               </span>
 
+              {/* Next Button */}
               <button
                 onClick={handleNext}
-                disabled={currentPage + 1 >= totalPages || totalPages === 0}
-                className={`${
-                  currentPage + 1 >= totalPages
+                disabled={
+                  currentPage >= totalAssignPages || totalAssignPages === 0
+                }
+                className={`px-2 py-1 rounded ${
+                  currentPage >= totalAssignPages || totalAssignPages === 0
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:bg-gray-100"
                 }`}

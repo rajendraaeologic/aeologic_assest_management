@@ -385,12 +385,12 @@ export const getUsersByDepartmentId = async (
 };
 
 const updateAssetAssignment = async (
-  assignmentId: string,
-  updateData: {
-    assetId?: string;
-    userId?: string;
-    departmentId?: string;
-  }
+    assignmentId: string,
+    updateData: {
+      assetId?: string;
+      userId?: string;
+      departmentId?: string;
+    }
 ): Promise<{
   assignment: any;
   asset: Asset;
@@ -421,111 +421,60 @@ const updateAssetAssignment = async (
 
     if (newAsset.status !== AssetStatus.ACTIVE) {
       throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        `New asset is not available for assignment (current status: ${newAsset.status})`
+          httpStatus.BAD_REQUEST,
+          `New asset is not available for assignment (current status: ${newAsset.status})`
       );
     }
+  }
 
-    // Check if new asset is already assigned to someone else
-    const existingAssignmentForNewAsset = await db.assetAssignment.findFirst({
-      where: {
-        assetId: updateData.assetId,
+  // Update the assignment record
+  const updatedAssignment = await db.assetAssignment.update({
+    where: { id: assignmentId },
+    data: {
+      assetId: updateData.assetId,
+      userId: updateData.userId,
+    },
+    include: {
+      asset: { select: AssetKeys },
+      user: { select: UserKeys },
+    },
+  });
+
+  // Update asset status if needed
+  if (updateData.assetId && updateData.assetId !== existingAssignment.assetId) {
+    await db.asset.update({
+      where: { id: existingAssignment.assetId },
+      data: {
+        status: AssetStatus.ACTIVE,
+        assignedToUserId: null,
+      },
+    });
+
+    await db.asset.update({
+      where: { id: updateData.assetId },
+      data: {
         status: AssetStatus.IN_USE,
-        id: { not: assignmentId },
+        assignedToUserId: updateData.userId,
       },
     });
-
-    if (existingAssignmentForNewAsset) {
-      throw new ApiError(
-        httpStatus.CONFLICT,
-        `New asset is already assigned to another user`
-      );
-    }
   }
 
-  // Check if new user exists (if being changed)
-  if (updateData.userId && updateData.userId !== existingAssignment.userId) {
-    const newUser = await db.user.findUnique({
-      where: { id: updateData.userId },
-    });
-
-    if (!newUser) {
-      throw new ApiError(httpStatus.NOT_FOUND, "New user not found");
-    }
-  }
-  // Start transaction
-  const [updatedAssignment, updatedAsset, oldAsset] = await db.$transaction(
-    async (prisma) => {
-      // Update the assignment
-      const updatedAssignment = await prisma.assetAssignment.update({
-        where: { id: assignmentId },
-        data: {
-          assetId: updateData.assetId,
-          userId: updateData.userId,
-        },
-        include: {
-          asset: { select: AssetKeys },
-          user: { select: UserKeys },
-        },
-      });
-
-      // Update the new asset (if changed)
-      const updatedAsset =
-        updateData.assetId && updateData.assetId !== existingAssignment.assetId
-          ? await prisma.asset.update({
-              where: { id: updateData.assetId },
-              data: {
-                status: AssetStatus.IN_USE,
-                assignedToUserId:
-                  updateData.userId || existingAssignment.userId,
-              },
-            })
-          : existingAssignment.asset;
-
-      // Update the old asset (if asset was changed)
-      const oldAsset =
-        updateData.assetId && updateData.assetId !== existingAssignment.assetId
-          ? await prisma.asset.update({
-              where: { id: existingAssignment.assetId },
-              data: {
-                status: AssetStatus.ACTIVE,
-                assignedToUserId: null,
-              },
-            })
-          : null;
-
-      return [updatedAssignment, updatedAsset, oldAsset];
-    }
-  );
-
-  // Create asset history records
-  await db.assetHistory.createMany({
-    data: [
-      {
-        assetId: updateData.assetId || existingAssignment.assetId,
-        userId: updateData.userId || existingAssignment.userId,
-        action: "ASSIGNMENT_UPDATED",
-      },
-      ...(updateData.assetId &&
-      updateData.assetId !== existingAssignment.assetId
-        ? [
-            {
-              assetId: existingAssignment.assetId,
-              userId: existingAssignment.userId,
-              action: "UNASSIGNED",
-            },
-          ]
-        : []),
-    ],
+  // Create asset history record
+  await db.assetHistory.create({
+    data: {
+      assetId: updateData.assetId || existingAssignment.assetId,
+      userId: updateData.userId || existingAssignment.userId,
+      action: "UPDATED",
+    },
   });
 
   return {
     assignment: updatedAssignment,
-    asset: updatedAsset,
+    asset: updatedAssignment.asset,
     user: updatedAssignment.user,
-    ...(oldAsset ? { oldAsset } : {}),
   };
 };
+
 // Delete single assignment by ID
 const deleteAssignmentById = async (
   assignmentId: string

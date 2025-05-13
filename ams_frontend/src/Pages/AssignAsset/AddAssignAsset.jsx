@@ -55,9 +55,28 @@ const AddAssignAsset = ({ onClose }) => {
   const [deptSearchTerm, setDeptSearchTerm] = useState("");
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [selectedDept, setSelectedDept] = useState(null);
-  const { currentPage, rowsPerPage } = useSelector(
-    (state) => state.assignAssetData
-  );
+
+  // Defined constants for asset statuses
+  const ASSET_STATUSES = {
+    IN_USE: "IN_USE",
+    ACTIVE: "ACTIVE",
+    UNDER_MAINTENANCE: "UNDER_MAINTENANCE",
+    RETIRED: "RETIRED"
+  };
+
+  // Status display configuration
+  const STATUS_DISPLAY = {
+    [ASSET_STATUSES.IN_USE]: { label: "In Use", color: "text-yellow-500" },
+    [ASSET_STATUSES.ACTIVE]: { label: "Available", color: "text-green-500" },
+    [ASSET_STATUSES.UNDER_MAINTENANCE]: { label: "Under Maintenance", color: "text-blue-500" },
+    [ASSET_STATUSES.RETIRED]: { label: "Retired", color: "text-red-500" }
+  };
+
+  // Function to check if an asset can be assigned
+  const isAssetAssignable = (status) => {
+    return status === ASSET_STATUSES.ACTIVE;
+  };
+
   const {
     register,
     handleSubmit,
@@ -258,6 +277,15 @@ const AddAssignAsset = ({ onClose }) => {
   };
 
   const handleAssetSelect = (asset) => {
+    if (!isAssetAssignable(asset.status)) {
+      const statusMessage = STATUS_DISPLAY[asset.status]?.label || asset.status;
+      toast.warning(`Cannot assign asset with status: ${statusMessage}`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
     setValue("assetId", asset.id, { shouldValidate: true });
     setShowAssetDropdown(false);
   };
@@ -376,6 +404,20 @@ const AddAssignAsset = ({ onClose }) => {
     });
   }, [register]);
 
+  // Function to get error message based on status
+  const getErrorMessageByStatus = (status) => {
+    switch (status) {
+      case ASSET_STATUSES.IN_USE:
+        return "The selected asset is already in use and cannot be assigned";
+      case ASSET_STATUSES.UNDER_MAINTENANCE:
+        return "Cannot assign an asset that is under maintenance";
+      case ASSET_STATUSES.RETIRED:
+        return "Cannot assign a retired asset";
+      default:
+        return `Asset is not available for assignment (current status: ${status})`;
+    }
+  };
+
   const onSubmit = async (data) => {
     if (!data.companyId) {
       toast.error("Please select a valid organization", {
@@ -392,12 +434,7 @@ const AddAssignAsset = ({ onClose }) => {
       };
 
       await dispatch(createAssignAsset(payload)).unwrap();
-      await dispatch(
-        getAllAssignAssets({
-          page: currentPage,
-          limit: rowsPerPage,
-        })
-      ).unwrap();
+      dispatch(getAllAssignAssets());
 
       // Refresh available assets
       if (departmentId) {
@@ -415,33 +452,42 @@ const AddAssignAsset = ({ onClose }) => {
     } catch (error) {
       const errorMessage = error?.message || "";
 
-      if (
-        errorMessage.includes("Asset is not available for assignment") ||
-        errorMessage.includes("IN_USE")
-      ) {
-        toast.error(
-          "The selected asset is already in use and cannot be assigned",
-          {
-            position: "top-right",
-            autoClose: 5000,
-          }
-        );
-        return setError("assetId", {
-          type: "manual",
-          message: "This asset is already in use",
-        });
+      // Extract status from the error message if available
+      let status = null;
+      const statusMatch = errorMessage.match(/\(current status: (\w+)\)/);
+      if (statusMatch && statusMatch[1]) {
+        status = statusMatch[1];
+      } else if (errorMessage.includes("IN_USE")) {
+        status = ASSET_STATUSES.IN_USE;
       }
 
-      // Handle other errors
-      toast.error(
-        errorMessage || assignAssetStrings.addAssignAsset.toast.error,
-        {
-          position: "top-right",
-          autoClose: 5000,
-        }
-      );
+      // Set appropriate error message based on status
+      const displayError = status
+          ? getErrorMessageByStatus(status)
+          : errorMessage || assignAssetStrings.addAssignAsset.toast.error;
+
+      toast.error(displayError, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+
+      setError("assetId", {
+        type: "manual",
+        message: status ? `This asset cannot be assigned (${STATUS_DISPLAY[status]?.label || status})` : "Asset assignment error"
+      });
     }
   };
+
+  // Render status badge for assets
+  const renderStatusBadge = (status) => {
+    const statusInfo = STATUS_DISPLAY[status] || { label: status, color: "text-gray-500" };
+    return (
+        <span className={`ml-2 text-sm ${statusInfo.color}`}>
+        ({statusInfo.label})
+      </span>
+    );
+  };
+
   return (
     <div
       className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${
@@ -627,75 +673,72 @@ const AddAssignAsset = ({ onClose }) => {
                 )}
               </div>
 
-              {/* Asset Select */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assignAssetStrings.addAssignAsset.formLabels.asset}
-                </label>
-                <div
-                  onClick={() => {
-                    if (!departmentId) return;
-                    setShowAssetDropdown(!showAssetDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
-                >
-                  {assets.find((a) => a.id === assetId)
-                    ? `${assets.find((a) => a.id === assetId).assetName} `
-                    : assignAssetStrings.addAssignAsset.select.assetDefault}
-                </div>
-                {errors.assetId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.assetId.message}
-                  </p>
-                )}
-                {showAssetDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search asset..."
-                      value={assetSearchTerm}
-                      onChange={handleAssetSearch}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleAssetScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {assets.map((asset) => {
-                        const isInUse = asset.status === "IN_USE";
-                        return (
-                          <li
-                            key={asset.id}
-                            onClick={() => !isInUse && handleAssetSelect(asset)}
-                            className={`px-4 py-2 hover:bg-gray-100 ${
-                              isInUse
-                                ? "cursor-not-allowed text-gray-400"
-                                : "cursor-pointer"
-                            }`}
-                          >
-                            {asset.assetName}
-                            {isInUse && (
-                              <span className="ml-2 text-sm text-red-500">
-                                (In Use)
-                              </span>
-                            )}
-                          </li>
-                        );
-                      })}
-                      {loadingAssets && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {assets.length === 0 && !loadingAssets && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          No available assets found
-                        </li>
-                      )}
-                    </ul>
+                {/* Asset Select */}
+                <div className="w-full relative">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {assignAssetStrings.addAssignAsset.formLabels.asset}
+                  </label>
+                  <div
+                      onClick={() => {
+                        if (!departmentId) return;
+                        setShowAssetDropdown(!showAssetDropdown);
+                      }}
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  >
+                    {assets.find((a) => a.id === assetId)
+                        ? `${assets.find((a) => a.id === assetId).assetName} `
+                        : assignAssetStrings.addAssignAsset.select.assetDefault}
                   </div>
-                )}
-              </div>
+                  {errors.assetId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.assetId.message}
+                      </p>
+                  )}
+                  {showAssetDropdown && (
+                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                        <input
+                            type="text"
+                            placeholder="Search asset..."
+                            value={assetSearchTerm}
+                            onChange={handleAssetSearch}
+                            className="p-2 w-full border-b outline-none"
+                        />
+                        <ul
+                            onScroll={handleAssetScroll}
+                            className="max-h-40 overflow-auto"
+                        >
+                          {assets.map((asset) => {
+                            const canAssign = isAssetAssignable(asset.status);
+                            return (
+                                <li
+                                    key={asset.id}
+                                    onClick={() => canAssign && handleAssetSelect(asset)}
+                                    className={`px-4 py-2 hover:bg-gray-100 ${
+                                        canAssign
+                                            ? "cursor-pointer"
+                                            : "cursor-not-allowed text-gray-500"
+                                    }`}
+                                >
+                                  {asset.assetName}
+                                  {renderStatusBadge(asset.status)}
+                                </li>
+                            );
+                          })}
+                          {loadingAssets && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                Loading...
+                              </li>
+                          )}
+                          {assets.length === 0 && !loadingAssets && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                No available assets found
+                              </li>
+                          )}
+                        </ul>
+                      </div>
+                  )}
+                </div>
+
 
               {/* User Select */}
               <div className="w-full relative">

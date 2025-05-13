@@ -66,6 +66,38 @@ const UpdateAssignAsset = ({ onClose }) => {
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [selectedDept, setSelectedDept] = useState(null);
 
+  // Define asset status constants and display configuration
+  const ASSET_STATUSES = {
+    IN_USE: "IN_USE",
+    ACTIVE: "ACTIVE",
+    UNDER_MAINTENANCE: "UNDER_MAINTENANCE",
+    RETIRED: "RETIRED"
+  };
+
+  const STATUS_DISPLAY = {
+    [ASSET_STATUSES.IN_USE]: { label: "In Use", color: "text-yellow-500" },
+    [ASSET_STATUSES.ACTIVE]: { label: "Available", color: "text-green-500" },
+    [ASSET_STATUSES.UNDER_MAINTENANCE]: { label: "Under Maintenance", color: "text-blue-500" },
+    [ASSET_STATUSES.RETIRED]: { label: "Retired", color: "text-red-500" }
+  };
+
+  // Function to check if an asset can be assigned
+  const isAssetAssignable = (status, isCurrentAsset) => {
+    // Allow assignment if it's the current asset (even if status is IN_USE)
+    // or if the status is ACTIVE
+    return isCurrentAsset || status === ASSET_STATUSES.ACTIVE;
+  };
+
+  // Function to render status badge
+  const renderStatusBadge = (status) => {
+    const statusInfo = STATUS_DISPLAY[status] || { label: status, color: "text-gray-500" };
+    return (
+        <span className={`ml-2 text-sm ${statusInfo.color}`}>
+        ({statusInfo.label})
+      </span>
+    );
+  };
+
   const {
     register,
     handleSubmit,
@@ -212,9 +244,9 @@ const UpdateAssignAsset = ({ onClose }) => {
       if (selectedAssignment.user?.company) {
         setSelectedOrg(selectedAssignment.user.company);
         setOrganizations((prev) =>
-          prev.some((org) => org.id === selectedAssignment.user.company.id)
-            ? prev
-            : [...prev, selectedAssignment.user.company]
+            prev.some((org) => org.id === selectedAssignment.user.company.id)
+                ? prev
+                : [...prev, selectedAssignment.user.company]
         );
       }
 
@@ -222,9 +254,9 @@ const UpdateAssignAsset = ({ onClose }) => {
       if (selectedAssignment.user?.branch) {
         setSelectedBranch(selectedAssignment.user.branch);
         setBranches((prev) =>
-          prev.some((b) => b.id === selectedAssignment.user.branch.id)
-            ? prev
-            : [...prev, selectedAssignment.user.branch]
+            prev.some((b) => b.id === selectedAssignment.user.branch.id)
+                ? prev
+                : [...prev, selectedAssignment.user.branch]
         );
       }
 
@@ -232,9 +264,9 @@ const UpdateAssignAsset = ({ onClose }) => {
       if (selectedAssignment.user?.department) {
         setSelectedDept(selectedAssignment.user.department);
         setDepartments((prev) =>
-          prev.some((d) => d.id === selectedAssignment.user.department.id)
-            ? prev
-            : [...prev, selectedAssignment.user.department]
+            prev.some((d) => d.id === selectedAssignment.user.department.id)
+                ? prev
+                : [...prev, selectedAssignment.user.department]
         );
       }
 
@@ -242,9 +274,9 @@ const UpdateAssignAsset = ({ onClose }) => {
       if (selectedAssignment.asset) {
         setSelectedAsset(selectedAssignment.asset);
         setAssets((prev) =>
-          prev.some((a) => a.id === selectedAssignment.asset.id)
-            ? prev
-            : [...prev, selectedAssignment.asset]
+            prev.some((a) => a.id === selectedAssignment.asset.id)
+                ? prev
+                : [...prev, selectedAssignment.asset]
         );
       }
 
@@ -252,9 +284,9 @@ const UpdateAssignAsset = ({ onClose }) => {
       if (selectedAssignment.user) {
         setSelectedUser(selectedAssignment.user);
         setUsers((prev) =>
-          prev.some((u) => u.id === selectedAssignment.user.id)
-            ? prev
-            : [...prev, selectedAssignment.user]
+            prev.some((u) => u.id === selectedAssignment.user.id)
+                ? prev
+                : [...prev, selectedAssignment.user]
         );
       }
     }
@@ -274,102 +306,102 @@ const UpdateAssignAsset = ({ onClose }) => {
   };
 
   // Organization handlers
-  const handleOrgScroll = (e) => {
-    const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
-    if (bottomReached && !orgLoading && hasMoreOrgs) {
-      fetchOrganizations(orgPage + 1, searchTerm);
-    }
-  };
-
-  const handleOrgSearch = (e) => {
-    const search = e.target.value;
-    setSearchTerm(search);
-    fetchOrganizations(1, search);
-  };
-
-  const handleOrgSelect = (org) => {
-    setSelectedOrg(org);
-    setValue("companyId", org.id, { shouldValidate: true });
-    setShowOrgDropdown(false);
-    setSearchTerm("");
-    setValue("branchId", "");
-    setValue("departmentId", "");
-    setValue("assetId", "");
-    setValue("userId", "");
-    setBranches([]);
-    setDepartments([]);
-    setAssets([]);
-    setUsers([]);
-    setSelectedBranch(null);
-    setSelectedDept(null);
-    setSelectedAsset(null);
-    setSelectedUser(null);
-  };
-
-  // Branch handlers
-  const handleBranchScroll = (e) => {
-    const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
-    if (bottomReached && !loadingBranches && hasMoreBranches) {
-      fetchBranches(branchPage + 1, branchSearchTerm);
-    }
-  };
-
-  const handleBranchSearch = (e) => {
-    const search = e.target.value;
-    setBranchSearchTerm(search);
-    fetchBranches(1, search);
-  };
-
-  const handleBranchSelect = (branch) => {
-    setValue("branchId", branch.id, { shouldValidate: true });
-    setSelectedBranch(branch);
-    setShowBranchDropdown(false);
-    setValue("departmentId", "");
-    setValue("assetId", "");
-    setValue("userId", "");
-    setDepartments([]);
-    setAssets([]);
-    setUsers([]);
-    setSelectedDept(null);
-    setSelectedAsset(null);
-    setSelectedUser(null);
-    setDeptSearchTerm("");
-    setDepartmentPage(1);
-  };
-
-  // Department handlers
-  const handleDeptScroll = (e) => {
-    const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
-    if (bottomReached && !loadingDepartments && hasMoreDepts) {
-      fetchDepartments(departmentPage + 1, deptSearchTerm);
-    }
-  };
-
-  const handleDeptSearch = (e) => {
-    const search = e.target.value;
-    setDeptSearchTerm(search);
-    fetchDepartments(1, search);
-  };
-
-  const handleDeptSelect = (dept) => {
-    setValue("departmentId", dept.id, { shouldValidate: true });
-    setSelectedDept(dept);
-    setShowDeptDropdown(false);
-    setValue("assetId", "");
-    setValue("userId", "");
-    setAssets([]);
-    setUsers([]);
-    setSelectedAsset(null);
-    setSelectedUser(null);
-  };
+  // const handleOrgScroll = (e) => {
+  //   const bottomReached =
+  //       e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+  //   if (bottomReached && !orgLoading && hasMoreOrgs) {
+  //     fetchOrganizations(orgPage + 1, searchTerm);
+  //   }
+  // };
+  //
+  // const handleOrgSearch = (e) => {
+  //   const search = e.target.value;
+  //   setSearchTerm(search);
+  //   fetchOrganizations(1, search);
+  // };
+  //
+  // const handleOrgSelect = (org) => {
+  //   setSelectedOrg(org);
+  //   setValue("companyId", org.id, { shouldValidate: true });
+  //   setShowOrgDropdown(false);
+  //   setSearchTerm("");
+  //   setValue("branchId", "");
+  //   setValue("departmentId", "");
+  //   setValue("assetId", "");
+  //   setValue("userId", "");
+  //   setBranches([]);
+  //   setDepartments([]);
+  //   setAssets([]);
+  //   setUsers([]);
+  //   setSelectedBranch(null);
+  //   setSelectedDept(null);
+  //   setSelectedAsset(null);
+  //   setSelectedUser(null);
+  // };
+  //
+  // // Branch handlers
+  // const handleBranchScroll = (e) => {
+  //   const bottomReached =
+  //       e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+  //   if (bottomReached && !loadingBranches && hasMoreBranches) {
+  //     fetchBranches(branchPage + 1, branchSearchTerm);
+  //   }
+  // };
+  //
+  // const handleBranchSearch = (e) => {
+  //   const search = e.target.value;
+  //   setBranchSearchTerm(search);
+  //   fetchBranches(1, search);
+  // };
+  //
+  // const handleBranchSelect = (branch) => {
+  //   setValue("branchId", branch.id, { shouldValidate: true });
+  //   setSelectedBranch(branch);
+  //   setShowBranchDropdown(false);
+  //   setValue("departmentId", "");
+  //   setValue("assetId", "");
+  //   setValue("userId", "");
+  //   setDepartments([]);
+  //   setAssets([]);
+  //   setUsers([]);
+  //   setSelectedDept(null);
+  //   setSelectedAsset(null);
+  //   setSelectedUser(null);
+  //   setDeptSearchTerm("");
+  //   setDepartmentPage(1);
+  // };
+  //
+  // // Department handlers
+  // const handleDeptScroll = (e) => {
+  //   const bottomReached =
+  //       e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+  //   if (bottomReached && !loadingDepartments && hasMoreDepts) {
+  //     fetchDepartments(departmentPage + 1, deptSearchTerm);
+  //   }
+  // };
+  //
+  // const handleDeptSearch = (e) => {
+  //   const search = e.target.value;
+  //   setDeptSearchTerm(search);
+  //   fetchDepartments(1, search);
+  // };
+  //
+  // const handleDeptSelect = (dept) => {
+  //   setValue("departmentId", dept.id, { shouldValidate: true });
+  //   setSelectedDept(dept);
+  //   setShowDeptDropdown(false);
+  //   setValue("assetId", "");
+  //   setValue("userId", "");
+  //   setAssets([]);
+  //   setUsers([]);
+  //   setSelectedAsset(null);
+  //   setSelectedUser(null);
+  // };
 
   // Asset handlers
   const handleAssetScroll = (e) => {
     const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+        e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
     if (bottomReached && !loadingAssets && hasMoreAssets) {
       fetchAssetsByDepartmentId(assetPage + 1, assetSearchTerm);
     }
@@ -382,6 +414,17 @@ const UpdateAssignAsset = ({ onClose }) => {
   };
 
   const handleAssetSelect = (asset) => {
+    const isCurrentAsset = selectedAssignment?.asset?.id === asset.id;
+
+    if (!isAssetAssignable(asset.status, isCurrentAsset)) {
+      const statusMessage = STATUS_DISPLAY[asset.status]?.label || asset.status;
+      toast.warning(`Cannot assign asset with status: ${statusMessage}`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
     setValue("assetId", asset.id, { shouldValidate: true });
     setSelectedAsset(asset);
     setShowAssetDropdown(false);
@@ -406,6 +449,20 @@ const UpdateAssignAsset = ({ onClose }) => {
     setValue("userId", user.id, { shouldValidate: true });
     setSelectedUser(user);
     setShowUserDropdown(false);
+  };
+
+  // Function to get error message based on status
+  const getErrorMessageByStatus = (status) => {
+    switch (status) {
+      case ASSET_STATUSES.IN_USE:
+        return "The selected asset is already in use and cannot be assigned";
+      case ASSET_STATUSES.UNDER_MAINTENANCE:
+        return "Cannot assign an asset that is under maintenance";
+      case ASSET_STATUSES.RETIRED:
+        return "Cannot assign a retired asset";
+      default:
+        return `Asset is not available for assignment (current status: ${status})`;
+    }
   };
 
   const onSubmit = async (data) => {
@@ -453,24 +510,27 @@ const UpdateAssignAsset = ({ onClose }) => {
 
       // Handle specific error cases
       if (error?.message) {
-        // Specifically handle the asset in use error
-        if (
-          error.message.includes("not available for assignment") ||
-          error.message.includes("IN_USE")
-        ) {
-          toast.error(
-            "The selected asset is already in use and cannot be assigned",
-            {
-              autoClose: 3000,
-            }
-          );
-          return;
+        // Extract status from the error message if available
+        let status = null;
+        const statusMatch = error.message.match(/\(current status: (\w+)\)/);
+        if (statusMatch && statusMatch[1]) {
+          status = statusMatch[1];
+        } else if (error.message.includes("IN_USE")) {
+          status = ASSET_STATUSES.IN_USE;
+        } else if (error.message.includes("UNDER_MAINTENANCE")) {
+          status = ASSET_STATUSES.UNDER_MAINTENANCE;
+        } else if (error.message.includes("RETIRED")) {
+          status = ASSET_STATUSES.RETIRED;
         }
 
-        // Display the specific error message from the backend if available
-        toast.error(error.message, {
+        // Set appropriate error message based on status
+        const displayError = status
+            ? getErrorMessageByStatus(status)
+            : error.message || "Failed to update asset assignment";
+
+        toast.error(displayError, {
           position: "top-right",
-          autoClose: 3000,
+          autoClose: 5000,
         });
         return;
       }
@@ -505,288 +565,155 @@ const UpdateAssignAsset = ({ onClose }) => {
           </button>
         </div>
 
-        <div className="p-4">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            {/* Hidden Inputs with Validation */}
-            <input
-              type="hidden"
-              {...register("companyId", {
-                required:
-                  assignAssetStrings.updateAssignAsset.validation
-                    .organizationRequired,
-              })}
-            />
-            <input
-              type="hidden"
-              {...register("branchId", {
-                required:
-                  assignAssetStrings.updateAssignAsset.validation
-                    .branchRequired,
-              })}
-            />
-            <input
-              type="hidden"
-              {...register("departmentId", {
-                required:
-                  assignAssetStrings.updateAssignAsset.validation
-                    .departmentRequired,
-              })}
-            />
-            <input
-              type="hidden"
-              {...register("assetId", {
-                required:
-                  assignAssetStrings.updateAssignAsset.validation.assetRequired,
-              })}
-            />
-            <input
-              type="hidden"
-              {...register("userId", {
-                required:
-                  assignAssetStrings.updateAssignAsset.validation
-                    .userNameRequired,
-              })}
-            />
+          <div className="p-4">
+            <form onSubmit={handleSubmit(onSubmit)}>
+              {/* Hidden Inputs with Validation */}
+              <input
+                  type="hidden"
+                  {...register("companyId", {
+                    required:
+                    assignAssetStrings.updateAssignAsset.validation
+                        .organizationRequired,
+                  })}
+              />
+              <input
+                  type="hidden"
+                  {...register("branchId", {
+                    required:
+                    assignAssetStrings.updateAssignAsset.validation
+                        .branchRequired,
+                  })}
+              />
+              <input
+                  type="hidden"
+                  {...register("departmentId", {
+                    required:
+                    assignAssetStrings.updateAssignAsset.validation
+                        .departmentRequired,
+                  })}
+              />
+              <input
+                  type="hidden"
+                  {...register("assetId", {
+                    required:
+                    assignAssetStrings.updateAssignAsset.validation.assetRequired,
+                  })}
+              />
+              <input
+                  type="hidden"
+                  {...register("userId", {
+                    required:
+                    assignAssetStrings.updateAssignAsset.validation
+                        .userNameRequired,
+                  })}
+              />
 
-            <div className="grid grid-cols-1 gap-4">
-              {/* Organization Dropdown */}
+            <div className="grid grid-cols-1 gap-4" >
+
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {assignAssetStrings.updateAssignAsset.formLabels.organization}
                 </label>
-                <div
-                  onClick={() => setShowOrgDropdown(!showOrgDropdown)}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis"
-                >
-                  {selectedOrg
-                    ? selectedOrg.organizationName
-                    : "Select Organization"}
+                <div className="mt-1 p-2 w-full border border-gray-300 rounded-md bg-gray-100">
+                  {selectedOrg ? selectedOrg.organizationName : "N/A"}
                 </div>
-                {errors.companyId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.companyId.message}
-                  </p>
-                )}
-                {showOrgDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search organization..."
-                      value={searchTerm}
-                      onChange={handleOrgSearch}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleOrgScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {organizations.map((org) => (
-                        <li
-                          key={org.id}
-                          onClick={() => handleOrgSelect(org)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {org.organizationName}
-                        </li>
-                      ))}
-                      {orgLoading && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
               </div>
 
-              {/* Branch Dropdown */}
+
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {assignAssetStrings.updateAssignAsset.formLabels.branch}
                 </label>
-                <div
-                  onClick={() => {
-                    if (!selectedOrgId) {
-                      toast.error("Please select an organization first");
-                      return;
-                    }
-                    setShowBranchDropdown(!showBranchDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
-                >
-                  {selectedBranch ? selectedBranch.branchName : "Select Branch"}
+                <div className="mt-1 p-2 w-full border border-gray-300 rounded-md bg-gray-100">
+                  {selectedBranch ? selectedBranch.branchName : "N/A"}
                 </div>
-                {errors.branchId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.branchId.message}
-                  </p>
-                )}
-                {showBranchDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search branch..."
-                      value={branchSearchTerm}
-                      onChange={handleBranchSearch}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleBranchScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {branches.map((branch) => (
-                        <li
-                          key={branch.id}
-                          onClick={() => handleBranchSelect(branch)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {branch.branchName}
-                        </li>
-                      ))}
-                      {loadingBranches && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
               </div>
 
-              {/* Department Dropdown */}
+
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {assignAssetStrings.updateAssignAsset.formLabels.department}
                 </label>
-                <div
-                  onClick={() => {
-                    if (!branchId) {
-                      toast.error("Please select a branch first");
-                      return;
-                    }
-                    setShowDeptDropdown(!showDeptDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
-                >
-                  {selectedDept
-                    ? selectedDept.departmentName
-                    : "Select Department"}
+                <div className="mt-1 p-2 w-full border border-gray-300 rounded-md bg-gray-100">
+                  {selectedDept ? selectedDept.departmentName : "N/A"}
                 </div>
-                {errors.departmentId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.departmentId.message}
-                  </p>
-                )}
-                {showDeptDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search department..."
-                      value={deptSearchTerm}
-                      onChange={handleDeptSearch}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleDeptScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {departments.map((dept) => (
-                        <li
-                          key={dept.id}
-                          onClick={() => handleDeptSelect(dept)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              </div>
+
+                {/* Asset Dropdown */}
+                <div className="w-full relative">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {assignAssetStrings.updateAssignAsset.formLabels.asset}
+                  </label>
+                  <div
+                      onClick={() => {
+                        if (!departmentId) {
+                          toast.error("Please select a department first");
+                          return;
+                        }
+                        setShowAssetDropdown(!showAssetDropdown);
+                      }}
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  >
+                    {selectedAsset
+                        ? `${selectedAsset.assetName} `
+                        : "Select Asset"}
+                  </div>
+                  {showAssetDropdown && (
+                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                        <input
+                            type="text"
+                            placeholder="Search asset..."
+                            value={assetSearchTerm}
+                            onChange={handleAssetSearch}
+                            className="p-2 w-full border-b outline-none"
+                        />
+                        <ul
+                            onScroll={handleAssetScroll}
+                            className="max-h-40 overflow-auto"
                         >
-                          {dept.departmentName}
-                        </li>
-                      ))}
-                      {loadingDepartments && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-              </div>
+                          {assets.map((asset) => {
+                            const isCurrentAsset = selectedAssignment?.asset?.id === asset.id;
+                            const canAssign = isAssetAssignable(asset.status, isCurrentAsset);
 
-              {/* Asset Dropdown */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assignAssetStrings.updateAssignAsset.formLabels.asset}
-                </label>
-                <div
-                  onClick={() => {
-                    if (!departmentId) {
-                      toast.error("Please select a department first");
-                      return;
-                    }
-                    setShowAssetDropdown(!showAssetDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
-                >
-                  {selectedAsset
-                    ? `${selectedAsset.assetName} `
-                    : "Select Asset"}
-                </div>
-                {showAssetDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search asset..."
-                      value={assetSearchTerm}
-                      onChange={handleAssetSearch}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleAssetScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {assets.map((asset) => {
-                        const isCurrentAsset =
-                          selectedAssignment?.asset?.id === asset.id;
-                        const isInUse = asset.status === "IN_USE";
-                        const isDisabled = isInUse && !isCurrentAsset;
-
-                        return (
-                          <li
-                            key={asset.id}
-                            onClick={() =>
-                              !isDisabled && handleAssetSelect(asset)
-                            }
-                            className={`px-4 py-2 hover:bg-gray-100 ${
-                              isDisabled
-                                ? "cursor-not-allowed text-gray-400"
-                                : "cursor-pointer"
-                            }`}
-                          >
-                            {asset.assetName}
-                            {isInUse && (
-                              <span className="ml-2 text-sm text-red-500">
-                                {isCurrentAsset ? "(Current)" : "(In Use)"}
+                            return (
+                                <li
+                                    key={asset.id}
+                                    onClick={() => canAssign && handleAssetSelect(asset)}
+                                    className={`px-4 py-2 hover:bg-gray-100 ${
+                                        canAssign
+                                            ? "cursor-pointer"
+                                            : "cursor-not-allowed text-gray-500"
+                                    }`}
+                                >
+                                  {asset.assetName}
+                                  {renderStatusBadge(asset.status)}
+                                  {isCurrentAsset && (
+                                      <span className="ml-2 text-sm text-gray-500">
+                                (Current)
                               </span>
-                            )}
-                          </li>
-                        );
-                      })}
-                      {loadingAssets && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {assets.length === 0 && !loadingAssets && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          No available assets found
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-                {errors.assetId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.assetId.message}
-                  </p>
-                )}
-              </div>
+                                  )}
+                                </li>
+                            );
+                          })}
+                          {loadingAssets && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                Loading...
+                              </li>
+                          )}
+                          {assets.length === 0 && !loadingAssets && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                No available assets found
+                              </li>
+                          )}
+                        </ul>
+                      </div>
+                  )}
+                  {errors.assetId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.assetId.message}
+                      </p>
+                  )}
+                </div>
 
               {/* User Dropdown */}
               <div className="w-full relative">

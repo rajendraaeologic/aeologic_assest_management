@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -19,29 +19,48 @@ import AddDepartment from "./AddDepartment";
 import UpdateDepartment from "./UpdateDepartment";
 import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
-import {
-  getAllDepartments,
-  setSearchTerm,
-} from "../../Features/slices/departmentSlice";
+import { getAllDepartments } from "../../Features/slices/departmentSlice";
 import { deleteDepartment } from "../../Features/slices/departmentSlice";
 import { toast } from "react-toastify";
-import debounce from "lodash.debounce";
+
+const SkeletonLoader = () => {
+  return (
+      <>
+        {[...Array(5)].map((_, rowIndex) => (
+            <tr key={rowIndex} className="animate-pulse">
+              {[...Array(5)].map((_, cellIndex) => (
+                  <td
+                      key={cellIndex}
+                      className="px-2 py-4 border border-gray-300"
+                      style={{
+                        maxWidth: cellIndex === 3 ? "100px" : "180px",
+                        minWidth: cellIndex === 3 ? "100px" : "120px",
+                        overflowWrap: "break-word",
+                      }}
+                  >
+                    <div className="h-4 bg-gray-300 rounded"></div>
+                  </td>
+              ))}
+            </tr>
+        ))}
+      </>
+  );
+};
+
+
 const UserDepartment = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isSidebarOpen } = useContext(SliderContext);
 
-  const {
-    departments,
-    selectedDepartments,
-    currentPage,
-    rowsPerPage,
-    totalPages,
-    totalDepartments,
-    searchTerm,
-    loading,
-  } = useSelector((state) => state.departmentData);
+  const { departments, selectedDepartments, currentPage, rowsPerPage } =
+    useSelector((state) => state.departmentData);
 
+  useEffect(() => {
+    dispatch(getAllDepartments());
+  }, [dispatch, departments.length]);
+
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddDepartment, setIsAddDepartment] = useState(false);
   const [isUpdateDepartment, setIsUpdateDepartment] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -49,46 +68,30 @@ const UserDepartment = () => {
   const [showSelectFirstPopup, setShowSelectFirstPopup] = useState(false);
   const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
-  const [isSearching, setIsSearching] = useState(false);
+
   const options = ["5", "10", "25", "50", "100"];
+  const totalPages = Math.ceil(departments.length / rowsPerPage);
 
-  const debouncedSearch = useCallback(
-    debounce((value) => {
-      dispatch(setSearchTerm(value));
-      setIsSearching(false);
-    }, 500),
-    [dispatch]
-  );
+  const [searchDepartment, setSearchDepartment] = useState({
+    departmentName: "",
+    branchName: "",
+    branchLocation: "",
+    // userName: "",
+    // assetName: "",
+    // status: "",
+  });
 
   useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
+    const fetchDepartments = async () => {
+      setIsLoading(true);
+      try {
+        await dispatch(getAllDepartments());
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [debouncedSearch]);
-
-  useEffect(() => {
-    setLocalSearchTerm(searchTerm);
-  }, [searchTerm]);
-
-  // Fetch users when page, limit, or searchTerm changes
-  useEffect(() => {
-    dispatch(
-      getAllDepartments({
-        page: currentPage,
-        limit: rowsPerPage,
-        searchTerm: searchTerm.trim(),
-      })
-    );
-  }, [dispatch, currentPage, rowsPerPage, searchTerm]);
-
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setIsSearching(true);
-    setLocalSearchTerm(value);
-    debouncedSearch(value);
-  };
+    fetchDepartments();
+  }, [dispatch, departments.length]);
 
   useEffect(() => {
     if (
@@ -106,21 +109,70 @@ const UserDepartment = () => {
     };
   }, [showDeleteConfirmation, showSelectFirstPopup, showDeleteSuccessPopup]);
 
+  const handleSearchChange = (e) => {
+    const { name, value } = e.target;
+    setSearchDepartment((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const filteredDepartments = departments?.filter((department) => {
+    return (
+      (searchDepartment.departmentName === "" ||
+        (department.departmentName || "")
+          .toLowerCase()
+          .includes(searchDepartment.departmentName.toLowerCase())) &&
+      (searchDepartment.branchName === "" ||
+        (department.branch?.branchName || "")
+          .toLowerCase()
+          .includes(searchDepartment.branchName.toLowerCase())) &&
+      (searchDepartment.branchLocation === "" ||
+        (department.branch?.branchLocation || "")
+          .toLowerCase()
+          .includes(searchDepartment.branchLocation.toLowerCase()))
+      // &(searchDepartment.userName === "" ||
+      //   department.users?.some((user) =>
+      //     user.userName
+      //       .toLowerCase()
+      //       .includes(searchDepartment.userName.toLowerCase())
+      //   ) ||
+      //   false) &&
+      // (searchDepartment.assetName === "" ||
+      //   department.assets?.some((asset) =>
+      //     asset.assetName
+      //       .toLowerCase()
+      //       .includes(searchDepartment.assetName.toLowerCase())
+      //   ) ||
+      //   false) &&
+      // (searchDepartment.status === "" ||
+      //   department.assets?.some((asset) =>
+      //     asset.status
+      //       .toLowerCase()
+      //       .includes(searchDepartment.status.toLowerCase())
+      //   ) ||
+      //   false)
+    );
+  });
+
+  const startIndex = currentPage * rowsPerPage;
+  const currentRows = filteredDepartments.slice(
+    startIndex,
+    startIndex + rowsPerPage
+  );
+
   const handleNavigate = () => {
     navigate("/dashboard");
   };
 
   const handlePrev = () => {
-    if (currentPage > 1) {
-      dispatch(setCurrentPage(currentPage - 1));
-    }
+    if (currentPage > 0) dispatch(setCurrentPage(currentPage - 1));
   };
 
   const handleNext = () => {
-    if (currentPage < totalPages) {
-      dispatch(setCurrentPage(currentPage + 1));
-    }
+    if (currentPage < totalPages - 1) dispatch(setCurrentPage(currentPage + 1));
   };
+
   const handleDeleteSelectedDepartments = () => {
     if (selectedDepartments.length === 0) {
       setShowSelectFirstPopup(true);
@@ -152,7 +204,6 @@ const UserDepartment = () => {
 
   const confirmDelete = async () => {
     try {
-      setIsDeleting(true);
       if (departmentToDelete) {
         // Single department delete
         await dispatch(deleteDepartment([departmentToDelete])).unwrap();
@@ -188,20 +239,8 @@ const UserDepartment = () => {
       setShowDeleteConfirmation(false);
       setDepartmentToDelete(null);
       dispatch(deselectAllDepartments());
-    } finally {
-      setIsDeleting(false);
     }
   };
-
-  // Delete Success  toast
-  useEffect(() => {
-    if (showDeleteSuccessPopup && deleteMessage) {
-      toast.success(deleteMessage, {
-        position: "top-right",
-        autoClose: 2000,
-      });
-    }
-  }, [showDeleteSuccessPopup, deleteMessage]);
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);
     setDepartmentToDelete(null);
@@ -256,43 +295,24 @@ const UserDepartment = () => {
         </div>
 
         <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex items-center justify-between pt-8 px-6">
-            {/* Left side: Show entries dropdown */}
-            <div className="flex items-center gap-2">
-              <p>{departmentStrings.department.table.showEntries}</p>
-              <div className="border-2 flex justify-evenly">
-                <select
-                  value={rowsPerPage}
-                  onChange={(e) =>
-                    dispatch(setRowsPerPage(parseInt(e.target.value)))
-                  }
-                  className="outline-none px-1"
-                >
-                  {options.map((option, index) => (
-                    <option key={index} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <p>{departmentStrings.department.table.entries}</p>
+          <div className="flex items-center gap-2 pt-8 ml-3">
+            <p>{departmentStrings.department.table.showEntries}</p>
+            <div className="border-2 flex justify-evenly">
+              <select
+                value={rowsPerPage}
+                onChange={(e) =>
+                  dispatch(setRowsPerPage(parseInt(e.target.value)))
+                }
+                className="outline-none px-1"
+              >
+                {options.map((option, index) => (
+                  <option key={index} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
             </div>
-
-            {/* Right side: Search bar */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search"
-                className="border p-2 rounded w-64"
-                value={localSearchTerm}
-                onChange={handleSearchChange}
-              />
-              {isSearching && (
-                <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
-                  Searching...
-                </span>
-              )}
-            </div>
+            <p>{departmentStrings.department.table.entries}</p>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
@@ -302,28 +322,78 @@ const UserDepartment = () => {
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
-                  {[
-                    departmentStrings.department.table.headers.departmentName,
-                    departmentStrings.department.table.headers.branchName,
-                    departmentStrings.department.table.headers.branchLocation,
-                    departmentStrings.department.table.headers.action,
-                  ].map((header, idx) => (
-                    <th
-                      key={idx}
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: idx >= 3 ? "100px" : "180px",
-                        minWidth: idx >= 3 ? "100px" : "120px",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {header}
-                    </th>
-                  ))}
-
-                  {/* Delete All Column */}
                   <th
-                    className="px-2 py-2 border border-gray-300"
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {departmentStrings.department.table.headers.departmentName}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {departmentStrings.department.table.headers.branchName}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {departmentStrings.department.table.headers.branchLocation}
+                  </th>
+                  {/* <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {departmentStrings.department.table.headers.userName}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {departmentStrings.department.table.headers.assetName}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {departmentStrings.department.table.headers.assetStatus}
+                  </th> */}
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "100px",
+                      minWidth: "100px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {departmentStrings.department.table.headers.action}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
                     style={{
                       maxWidth: "100px",
                       minWidth: "100px",
@@ -331,30 +401,175 @@ const UserDepartment = () => {
                     }}
                   >
                     {departmentStrings.department.table.headers.deleteAll}
-                    <div className="flex justify-center items-center gap-1">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={
-                            selectedDepartments.length === departments.length &&
-                            departments.length > 0
-                          }
-                          onChange={handleSelectAllDepartments}
-                          className="mr-2"
-                        />
-                      </label>
-                      <button onClick={handleDeleteSelectedDepartments}>
-                        <MdDelete className="h-5 w-5 text-[red]" />
-                      </button>
-                    </div>
                   </th>
                 </tr>
               </thead>
 
+              {/* Search Row */}
+              <tbody>
+                <tr className="bg-gray-100">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="departmentName"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .departmentName
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchDepartment.departmentName}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="branchName"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .branchName
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchDepartment.branchName}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="branchLocation"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .branchLocation
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchDepartment.branchLocation}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </td>
+                  {/* <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="userName"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .userName
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchDepartment.userName}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="assetName"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .assetName
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchDepartment.assetName}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="status"
+                      placeholder={
+                        departmentStrings.department.table.searchPlaceholders
+                          .status
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchDepartment.status}
+                      onChange={handleSearchChange}
+                      style={{ maxWidth: "100%" }}
+                    />
+                  </td> */}
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                  ></td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      <div className="">
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedDepartments.length ===
+                                departments.length && departments.length > 0
+                            }
+                            onChange={handleSelectAllDepartments}
+                            className="mr-2"
+                          />
+                        </label>
+                      </div>
+                      <button onClick={handleDeleteSelectedDepartments}>
+                        <MdDelete className="h-6 w-6 text-[red]" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+
               {/* Table Body */}
               <tbody>
-                {departments.length > 0 ? (
-                  departments.map((department, index) => (
+              {isLoading ? (
+                  <SkeletonLoader />
+              ) : currentRows.length > 0 ? (
+                  currentRows.map((department, index) => (
                     <tr
                       key={department.id || index}
                       className={`${
@@ -396,10 +611,9 @@ const UserDepartment = () => {
                         {department.branch?.branchLocation ||
                           departmentStrings.department.notAvailable.emptyText}
                       </td>
-
                       <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                          className="px-2 py-2 border border-gray-300"
+                          style={{ maxWidth: "100px", wordWrap: "break-word" }}
                       >
                         <div className="flex ">
                           <button
@@ -412,8 +626,8 @@ const UserDepartment = () => {
                             <FontAwesomeIcon icon={faPen} />
                           </button>
                           <button
-                            onClick={() => handleDeleteClick(department)}
-                            className="px-3 py-2 rounded-sm   text-[red]"
+                              onClick={() => handleDeleteClick(department)}
+                              className="px-3 py-2 rounded-sm  text-[red]"
                           >
                             <MdDelete className="h-6 w-6" />
                           </button>
@@ -436,16 +650,16 @@ const UserDepartment = () => {
                       </td>
                     </tr>
                   ))
-                ) : (
+              ) : (
                   <tr>
                     <td
-                      colSpan="8"
-                      className="px-2 py-4 text-center border border-gray-300"
+                        colSpan="6"
+                        className="px-4 py-4 text-center text-black"
                     >
                       {departmentStrings.department.table.noData}
                     </td>
                   </tr>
-                )}
+              )}
               </tbody>
             </table>
           </div>
@@ -453,12 +667,11 @@ const UserDepartment = () => {
           {/* Pagination Controls */}
           <div className="flex justify-end mr-4">
             <div className="px-2 py-2 border-2 flex items-center gap-2">
-              {/* Previous Button */}
               <button
                 onClick={handlePrev}
-                disabled={currentPage <= 1 || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage <= 1 || totalPages === 0
+                disabled={currentPage === 0 || totalPages === 0}
+                className={`${
+                  currentPage === 0 || totalPages === 0
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:bg-gray-100"
                 }`}
@@ -466,15 +679,26 @@ const UserDepartment = () => {
                 {departmentStrings.department.buttons.previous}
               </button>
 
-              {/* Page Info */}
               <span className="px-2 space-x-1">
                 {totalPages > 0 ? (
                   <>
-                    <span className="py-1 px-3 border-2 bg-[#3bc0c3] text-white">
-                      {currentPage}
+                    <span
+                      className={`py-1 px-3 ${
+                        currentPage + 1 < totalPages
+                          ? "bg-[#3bc0c3] text-white"
+                          : "border-2"
+                      }`}
+                    >
+                      {currentPage + 1}
                     </span>
-                    <span className="py-1 px-3 border-2 text-gray-500">
-                      / {totalPages}
+                    <span
+                      className={`py-1 px-3 ${
+                        currentPage + 1 === totalPages
+                          ? "bg-[#3bc0c3] text-white"
+                          : "border-2"
+                      }`}
+                    >
+                      {totalPages}
                     </span>
                   </>
                 ) : (
@@ -482,12 +706,11 @@ const UserDepartment = () => {
                 )}
               </span>
 
-              {/* Next Button */}
               <button
                 onClick={handleNext}
-                disabled={currentPage >= totalPages || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage >= totalPages || totalPages === 0
+                disabled={currentPage + 1 >= totalPages || totalPages === 0}
+                className={`${
+                  currentPage + 1 >= totalPages
                     ? "opacity-50 cursor-not-allowed"
                     : "hover:bg-gray-100"
                 }`}
@@ -529,12 +752,8 @@ const UserDepartment = () => {
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-500 text-white rounded-md"
-                disabled={isDeleting}
               >
-                {/* {departmentStrings.department.buttons.yes} */}
-                {isDeleting
-                  ? departmentStrings.department.buttons.deleting
-                  : departmentStrings.department.buttons.yes}
+                {departmentStrings.department.buttons.yes}
               </button>
             </div>
           </div>
@@ -556,6 +775,15 @@ const UserDepartment = () => {
                 {departmentStrings.department.buttons.ok}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Success Popup */}
+      {showDeleteSuccessPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">{deleteMessage}</h3>
           </div>
         </div>
       )}

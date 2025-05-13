@@ -1,15 +1,8 @@
-import React, {
-  useState,
-  useEffect,
-  useContext,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
-import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import {
@@ -27,10 +20,39 @@ import UpdateUserForm from "./UpdateUserForm";
 import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
 import { getAllUsers, uploadExcel } from "../../Features/slices/userSlice";
-import { deleteUser, setSearchTerm } from "../../Features/slices/userSlice";
+import { deleteUser } from "../../Features/slices/userSlice";
 import userStrings from "../../locales/userStrings";
 import DownloadTemplateButton from "./DownloadTemplateButton";
-import debounce from "lodash.debounce";
+
+const SkeletonLoader = () => {
+  return (
+      <>
+        {[...Array(5)].map((_, rowIndex) => (
+            <tr key={rowIndex} className="animate-pulse">
+              {[...Array(9)].map((_, cellIndex) => (
+                  <td
+                      key={cellIndex}
+                      className="px-2 py-4 border border-gray-300"
+                      style={{
+                        maxWidth: "180px",
+                        minWidth: "120px",
+                        overflowWrap: "break-word",
+                      }}
+                  >
+                    <div className="h-4 bg-gray-300 rounded"></div>
+                  </td>
+              ))}
+              <td
+                  className="px-2 py-4 border border-gray-300"
+                  style={{ maxWidth: "100px", wordWrap: "break-word" }}
+              >
+                <div className="h-4 bg-gray-300 rounded"></div>
+              </td>
+            </tr>
+        ))}
+      </>
+  );
+};
 
 const UserRegistration = () => {
   const dispatch = useDispatch();
@@ -38,17 +60,11 @@ const UserRegistration = () => {
   const fileInputRef = useRef();
   const { isSidebarOpen } = useContext(SliderContext);
 
-  const {
-    users,
-    selectedUsers,
-    currentPage,
-    rowsPerPage,
-    totalUsers,
-    totalPages,
-    searchTerm,
-    loading,
-  } = useSelector((state) => state.usersData);
+  const { users, selectedUsers, currentPage, rowsPerPage } = useSelector(
+    (state) => state.usersData
+  );
 
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddUserFormOpen, setIsAddUserFormOpen] = useState(false);
   const [isUpdateUserFormOpen, setIsUpdateUserFormOpen] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -59,47 +75,32 @@ const UserRegistration = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadSuccess, setUploadSuccess] = useState(null);
   const [uploadError, setUploadError] = useState(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
-  const [isSearching, setIsSearching] = useState(false);
 
   const options = ["5", "10", "25", "50", "100"];
+  const totalPages = Math.ceil(users.length / rowsPerPage);
 
-  const debouncedSearch = useCallback(
-    debounce((value) => {
-      dispatch(setSearchTerm(value));
-      setIsSearching(false);
-    }, 500),
-    [dispatch]
-  );
+  const [searchFilters, setSearchFilters] = useState({
+    userName: "",
+    phone: "",
+    email: "",
+    status: "",
+    userRole: "",
+    branchName: "",
+    departmentName: "",
+    organizationName: "",
+  });
 
   useEffect(() => {
-    return () => {
-      debouncedSearch.cancel();
+    const fetchUsers = async () => {
+      setIsLoading(true);
+      try {
+        await dispatch(getAllUsers());
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [debouncedSearch]);
-
-  useEffect(() => {
-    setLocalSearchTerm(searchTerm);
-  }, [searchTerm]);
-
-  // Fetch users when page, limit, or searchTerm changes
-  useEffect(() => {
-    dispatch(
-      getAllUsers({
-        page: currentPage,
-        limit: rowsPerPage,
-        searchTerm: searchTerm.trim(),
-      })
-    );
-  }, [dispatch, currentPage, rowsPerPage, searchTerm]);
-
-  const handleSearchChange = (e) => {
-    const value = e.target.value;
-    setIsSearching(true);
-    setLocalSearchTerm(value);
-    debouncedSearch(value);
-  };
+    fetchUsers();
+  }, [dispatch, users.length]);
 
   useEffect(() => {
     if (
@@ -117,21 +118,50 @@ const UserRegistration = () => {
     };
   }, [showDeleteConfirmation, showSelectFirstPopup, showDeleteSuccessPopup]);
 
+  const handleSearchChange = (e) => {
+    const { name, value } = e.target;
+    setSearchFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const filteredUsers = users?.filter((user) => {
+    const lowerCase = (str) => (str || "").toLowerCase();
+    return (
+      lowerCase(user.userName).includes(lowerCase(searchFilters.userName)) &&
+      lowerCase(user.phone).includes(lowerCase(searchFilters.phone)) &&
+      lowerCase(user.email).includes(lowerCase(searchFilters.email)) &&
+      lowerCase(user.status).includes(lowerCase(searchFilters.status)) &&
+      lowerCase(user.userRole).includes(lowerCase(searchFilters.userRole)) &&
+      lowerCase(user.branch?.branchName).includes(
+        lowerCase(searchFilters.branchName)
+      ) &&
+      lowerCase(user.department?.departmentName).includes(
+        lowerCase(searchFilters.departmentName)
+      )
+    );
+  });
+
+  const startIndex = currentPage * rowsPerPage;
+  const currentRows = filteredUsers.slice(startIndex, startIndex + rowsPerPage);
+
   const handleNavigate = () => {
     navigate("/dashboard");
   };
 
   const handlePrev = () => {
-    if (currentPage > 1) {
-      dispatch(setCurrentPage(currentPage - 1));
-    }
+    if (currentPage > 0) dispatch(setCurrentPage(currentPage - 1));
   };
 
   const handleNext = () => {
-    if (currentPage < totalPages) {
-      dispatch(setCurrentPage(currentPage + 1));
-    }
+    if (currentPage < totalPages - 1) dispatch(setCurrentPage(currentPage + 1));
   };
+
+  // const handlePageChange = (page) => {
+  //   dispatch(setCurrentPage(page));
+  // };
+
   const handleDeleteSelectedUsers = () => {
     if (selectedUsers.length === 0) {
       setShowSelectFirstPopup(true);
@@ -161,43 +191,27 @@ const UserRegistration = () => {
     setShowDeleteConfirmation(true);
   };
 
-  const confirmDelete = async () => {
-    setIsDeleting(true);
-
-    try {
-      if (userToDelete) {
-        await dispatch(deleteUser([userToDelete])).unwrap();
-        setDeleteMessage(userStrings.user.modals.deleteSuccess.single);
-      } else if (selectedUsers.length > 0) {
-        await dispatch(deleteUser(selectedUsers)).unwrap();
-        setDeleteMessage(
-          userStrings.user.modals.deleteSuccess.multiple.replace(
-            "{count}",
-            selectedUsers.length
-          )
-        );
-      }
-
-      setShowDeleteConfirmation(false);
-      setUserToDelete(null);
-      setShowDeleteSuccessPopup(true);
-      setTimeout(() => {
-        setShowDeleteSuccessPopup(false);
-      }, 2000);
-    } finally {
-      setIsDeleting(false);
+  const confirmDelete = () => {
+    if (userToDelete) {
+      dispatch(deleteUser([userToDelete]));
+      setDeleteMessage(userStrings.user.modals.deleteSuccess.single);
+    } else if (selectedUsers.length > 0) {
+      dispatch(deleteUser(selectedUsers));
+      setDeleteMessage(
+        userStrings.user.modals.deleteSuccess.multiple.replace(
+          "{count}",
+          selectedUsers.length
+        )
+      );
     }
+    setShowDeleteConfirmation(false);
+    setUserToDelete(null);
+    setShowDeleteSuccessPopup(true);
+    setTimeout(() => {
+      setShowDeleteSuccessPopup(false);
+    }, 2000);
   };
 
-  // Delete Success  toast
-  useEffect(() => {
-    if (showDeleteSuccessPopup && deleteMessage) {
-      toast.success(deleteMessage, {
-        position: "top-right",
-        autoClose: 2000,
-      });
-    }
-  }, [showDeleteSuccessPopup, deleteMessage]);
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);
     setUserToDelete(null);
@@ -239,6 +253,54 @@ const UserRegistration = () => {
     setUploadSuccess(null);
     setUploadError(null);
   };
+
+  // Generate page numbers for pagination
+  // const getPageNumbers = () => {
+  //   const pages = [];
+  //   const maxVisiblePages = 5;
+  //
+  //   if (totalPages <= maxVisiblePages) {
+  //     for (let i = 0; i < totalPages; i++) {
+  //       pages.push(i);
+  //     }
+  //   } else {
+  //     const half = Math.floor(maxVisiblePages / 2);
+  //     let start = currentPage - half;
+  //     let end = currentPage + half;
+  //
+  //     if (start < 0) {
+  //       start = 0;
+  //       end = maxVisiblePages - 1;
+  //     }
+  //
+  //     if (end >= totalPages) {
+  //       end = totalPages - 1;
+  //       start = end - maxVisiblePages + 1;
+  //     }
+  //
+  //     if (start > 0) {
+  //       pages.push(0);
+  //       if (start > 1) {
+  //         pages.push("ellipsis-start");
+  //       }
+  //     }
+  //
+  //     for (let i = start; i <= end; i++) {
+  //       if (i >= 0 && i < totalPages) {
+  //         pages.push(i);
+  //       }
+  //     }
+  //
+  //     if (end < totalPages - 1) {
+  //       if (end < totalPages - 2) {
+  //         pages.push("ellipsis-end");
+  //       }
+  //       pages.push(totalPages - 1);
+  //     }
+  //   }
+  //
+  //   return pages;
+  // };
 
   return (
     <div
@@ -300,43 +362,24 @@ const UserRegistration = () => {
         </div>
 
         <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex items-center justify-between pt-8 px-6">
-            {/* Left side: Show entries dropdown */}
-            <div className="flex items-center gap-2">
-              <p>{userStrings.user.table.showEntries}</p>
-              <div className="border-2 flex justify-evenly">
-                <select
-                  value={rowsPerPage}
-                  onChange={(e) =>
-                    dispatch(setRowsPerPage(parseInt(e.target.value)))
-                  }
-                  className="outline-none px-1"
-                >
-                  {options.map((option, index) => (
-                    <option key={index} value={option}>
-                      {option}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <p>{userStrings.user.table.entries}</p>
+          <div className="flex items-center gap-2 pt-8 ml-3">
+            <p>{userStrings.user.table.showEntries}</p>
+            <div className="border-2 flex justify-evenly">
+              <select
+                value={rowsPerPage}
+                onChange={(e) =>
+                  dispatch(setRowsPerPage(parseInt(e.target.value)))
+                }
+                className="outline-none px-1"
+              >
+                {options.map((option, index) => (
+                  <option key={index} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
             </div>
-
-            {/* Right side: Search bar */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search"
-                className="border p-2 rounded w-64"
-                value={localSearchTerm}
-                onChange={handleSearchChange}
-              />
-              {isSearching && (
-                <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
-                  Searching...
-                </span>
-              )}
-            </div>
+            <p>{userStrings.user.table.entries}</p>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
@@ -346,31 +389,98 @@ const UserRegistration = () => {
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
-                  {[
-                    userStrings.user.table.headers.userName,
-                    userStrings.user.table.headers.phone,
-                    userStrings.user.table.headers.email,
-                    userStrings.user.table.headers.status,
-                    userStrings.user.table.headers.userRole,
-                    userStrings.user.table.headers.organizationName,
-                    userStrings.user.table.headers.branchName,
-                    userStrings.user.table.headers.departmentName,
-                    userStrings.user.table.headers.action,
-                  ].map((header, idx) => (
-                    <th
-                      key={idx}
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
-                        overflowWrap: "break-word",
-                      }}
-                    >
-                      {header}
-                    </th>
-                  ))}
                   <th
-                    className="px-2 py-2 border border-gray-300"
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {userStrings.user.table.headers.userName}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {userStrings.user.table.headers.phone}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {userStrings.user.table.headers.email}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {userStrings.user.table.headers.status}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {userStrings.user.table.headers.userRole}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {userStrings.user.table.headers.organizationName}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {userStrings.user.table.headers.branchName}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {userStrings.user.table.headers.departmentName}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
+                    style={{
+                      maxWidth: "100px",
+                      minWidth: "100px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {userStrings.user.table.headers.action}
+                  </th>
+                  <th
+                    className="px-2 py-4 border border-gray-300"
                     style={{
                       maxWidth: "100px",
                       minWidth: "100px",
@@ -378,35 +488,206 @@ const UserRegistration = () => {
                     }}
                   >
                     {userStrings.user.table.headers.deleteAll}
-                    <div className="flex justify-center items-center gap-1">
-                      <label className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={
-                            selectedUsers.length === users.length &&
-                            users.length > 0
-                          }
-                          onChange={handleSelectAllUsers}
-                          className="mr-2"
-                        />
-                      </label>
-                      <button onClick={handleDeleteSelectedUsers}>
-                        <MdDelete className="h-5 w-5 text-[red]" />
-                      </button>
-                    </div>
                   </th>
                 </tr>
               </thead>
 
               <tbody>
-                {users.length > 0 ? (
-                  users.map((user, index) => (
-                    <tr
-                      key={user.id || index}
-                      className={`${
-                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-gray-200 divide-y divide-gray-300`}
-                    >
+                <tr className="bg-gray-100">
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="userName"
+                      placeholder={
+                        userStrings.user.table.searchPlaceholders.userName
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchFilters.userName}
+                      onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="phone"
+                      placeholder={
+                        userStrings.user.table.searchPlaceholders.phone
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchFilters.phone}
+                      onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="email"
+                      placeholder={
+                        userStrings.user.table.searchPlaceholders.email
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchFilters.email}
+                      onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="status"
+                      placeholder={
+                        userStrings.user.table.searchPlaceholders.status
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchFilters.status}
+                      onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="userRole"
+                      placeholder={
+                        userStrings.user.table.searchPlaceholders.userRole
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchFilters.userRole}
+                      onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="branchName"
+                      placeholder={
+                        userStrings.user.table.searchPlaceholders
+                          .organizationName
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchFilters.organizationName}
+                      onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="branchName"
+                      placeholder={
+                        userStrings.user.table.searchPlaceholders.branchName
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchFilters.branchName}
+                      onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{
+                      maxWidth: "180px",
+                      minWidth: "120px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    <input
+                      type="text"
+                      name="departmentName"
+                      placeholder={
+                        userStrings.user.table.searchPlaceholders.departmentName
+                      }
+                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
+                      value={searchFilters.departmentName}
+                      onChange={handleSearchChange}
+                    />
+                  </td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                  ></td>
+                  <td
+                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
+                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
+                  >
+                    <div className="flex justify-center items-center">
+                      <div className="">
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedUsers.length === users.length &&
+                              users.length > 0
+                            }
+                            onChange={handleSelectAllUsers}
+                            className="mr-2"
+                          />
+                        </label>
+                      </div>
+                      <button onClick={handleDeleteSelectedUsers}>
+                        <MdDelete className="h-6 w-6 text-[red]" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+
+              <tbody>
+              {isLoading ? (
+                  <SkeletonLoader />
+              ) : currentRows.length > 0 ? (
+                  currentRows.map((user, index) => (
+                      <tr
+                          key={user.id || index}
+                          className={`${
+                              index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          } hover:bg-gray-200 divide-y divide-gray-300`}
+                      >
                       <td
                         className="px-2 py-2 border border-gray-300"
                         style={{
@@ -546,42 +827,36 @@ const UserRegistration = () => {
             </table>
           </div>
 
-          <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2 flex items-center gap-2">
-              <button
-                onClick={handlePrev}
-                disabled={currentPage <= 1 || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage <= 1 || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {userStrings.user.buttons.previous}
-              </button>
+            {/* Updated Pagination UI */}
+            <div className="flex justify-between items-center mt-4 mx-4">
+              <div className="text-sm text-gray-600">
+                Showing {startIndex + 1} to {Math.min(startIndex + rowsPerPage, filteredUsers.length)} of {filteredUsers.length} entries
+              </div>
 
-              <span className="px-2 space-x-1">
-                {totalPages > 0 ? (
-                  <>
-                    <span className="py-1 px-3 border-2 bg-[#3bc0c3] text-white">
-                      {currentPage}
-                    </span>
-                    <span className="py-1 px-3 border-2 text-gray-500">
-                      / {totalPages}
-                    </span>
-                  </>
-                ) : (
-                  <span className="py-1 px-3">0 / 0</span>
-                )}
-              </span>
+              <div className="flex items-center gap-2 border border-gray-300 rounded-lg overflow-hidden">
+                <button
+                    onClick={handlePrev}
+                    disabled={currentPage === 0 || totalPages === 0}
+                    className={`px-4 py-2 border-r border-gray-300 ${
+                        currentPage === 0 || totalPages === 0
+                            ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                            : "hover:bg-gray-100"
+                    }`}
+                >
+                  {userStrings.user.buttons.previous}
+                </button>
+
+                <div className="px-4 py-2">
+                  {`${startIndex + 1}–${Math.min(startIndex + rowsPerPage, filteredUsers.length)} of ${filteredUsers.length}`}
+                </div>
 
               <button
                 onClick={handleNext}
-                disabled={currentPage >= totalPages || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage >= totalPages || totalPages === 0
+                disabled={currentPage + 1 >= totalPages || totalPages === 0}
+                className={`${
+                  currentPage + 1 >= totalPages
                     ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
+                    : "hover:bg-gray-100 margin-right:1rem"
                 }`}
               >
                 {userStrings.user.buttons.next}
@@ -674,11 +949,8 @@ const UserRegistration = () => {
               <button
                 onClick={confirmDelete}
                 className="px-4 py-2 bg-red-500 text-white rounded-md"
-                disabled={isDeleting}
               >
-                {isDeleting
-                  ? userStrings.user.buttons.deleting
-                  : userStrings.user.buttons.yes}
+                {userStrings.user.buttons.yes}
               </button>
             </div>
           </div>
@@ -698,6 +970,13 @@ const UserRegistration = () => {
                 {userStrings.user.buttons.ok}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {showDeleteSuccessPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">{deleteMessage}</h3>
           </div>
         </div>
       )}

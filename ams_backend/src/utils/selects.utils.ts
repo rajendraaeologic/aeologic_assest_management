@@ -298,6 +298,9 @@ export const AssetHistoryKeys = {
       id: true,
       assetName: true,
       uniqueId: true,
+      brand: true,
+      model: true,
+      serialNumber: true,
       status: true,
       company: {
         select: {

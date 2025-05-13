@@ -56,6 +56,27 @@ const AddAssignAsset = ({ onClose }) => {
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [selectedDept, setSelectedDept] = useState(null);
 
+  // Defined constants for asset statuses
+  const ASSET_STATUSES = {
+    IN_USE: "IN_USE",
+    ACTIVE: "ACTIVE",
+    UNDER_MAINTENANCE: "UNDER_MAINTENANCE",
+    RETIRED: "RETIRED"
+  };
+
+  // Status display configuration
+  const STATUS_DISPLAY = {
+    [ASSET_STATUSES.IN_USE]: { label: "In Use", color: "text-yellow-500" },
+    [ASSET_STATUSES.ACTIVE]: { label: "Available", color: "text-green-500" },
+    [ASSET_STATUSES.UNDER_MAINTENANCE]: { label: "Under Maintenance", color: "text-blue-500" },
+    [ASSET_STATUSES.RETIRED]: { label: "Retired", color: "text-red-500" }
+  };
+
+  // Function to check if an asset can be assigned
+  const isAssetAssignable = (status) => {
+    return status === ASSET_STATUSES.ACTIVE;
+  };
+
   const {
     register,
     handleSubmit,
@@ -85,7 +106,7 @@ const AddAssignAsset = ({ onClose }) => {
     try {
       setLoadingUsers(true);
       const response = await API.get(
-        `/assignAsset/${departmentId}/users?page=${page}&limit=5&searchTerm=${search}`
+          `/assignAsset/${departmentId}/users?page=${page}&limit=5&searchTerm=${search}`
       );
       const { data, totalPages } = response.data;
       setUsers((prev) => (page === 1 ? data : [...prev, ...data]));
@@ -115,7 +136,7 @@ const AddAssignAsset = ({ onClose }) => {
     try {
       setLoadingAssets(true);
       const response = await API.get(
-        `/assignAsset/${departmentId}/assets?page=${page}&limit=5&searchTerm=${search}`
+          `/assignAsset/${departmentId}/assets?page=${page}&limit=5&searchTerm=${search}`
       );
       const { data, totalPages } = response.data;
       setAssets((prev) => (page === 1 ? data : [...prev, ...data]));
@@ -144,7 +165,7 @@ const AddAssignAsset = ({ onClose }) => {
     try {
       setOrgLoading(true);
       const response = await API.get(
-        `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
+          `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
       );
       const { data, totalPages } = response.data;
       setOrganizations((prev) => (page === 1 ? data : [...prev, ...data]));
@@ -174,7 +195,7 @@ const AddAssignAsset = ({ onClose }) => {
     try {
       setLoadingBranches(true);
       const response = await API.get(
-        `/branch/${selectedOrgId}/branches?limit=5&page=${page}&searchTerm=${search}`
+          `/branch/${selectedOrgId}/branches?limit=5&page=${page}&searchTerm=${search}`
       );
       const { data, totalPages } = response.data;
       setBranches((prev) => (page === 1 ? data : [...prev, ...data]));
@@ -193,7 +214,7 @@ const AddAssignAsset = ({ onClose }) => {
     try {
       setLoadingDepartments(true);
       const response = await API.get(
-        `/department/${branchId}/departments?page=${page}&limit=5&searchTerm=${search}`
+          `/department/${branchId}/departments?page=${page}&limit=5&searchTerm=${search}`
       );
       const { data, totalPages } = response.data;
       setDepartments((prev) => (page === 1 ? data : [...prev, ...data]));
@@ -223,7 +244,7 @@ const AddAssignAsset = ({ onClose }) => {
   // User dropdown handlers
   const handleUserScroll = (e) => {
     const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+        e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
     if (bottomReached && !loadingUsers && hasMoreUsers) {
       fetchUsersByDepartmentId(userPage + 1, userSearchTerm);
     }
@@ -243,7 +264,7 @@ const AddAssignAsset = ({ onClose }) => {
   // Asset dropdown handlers
   const handleAssetScroll = (e) => {
     const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+        e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
     if (bottomReached && !loadingAssets && hasMoreAssets) {
       fetchAssetsByDepartmentId(assetPage + 1, assetSearchTerm);
     }
@@ -256,6 +277,15 @@ const AddAssignAsset = ({ onClose }) => {
   };
 
   const handleAssetSelect = (asset) => {
+    if (!isAssetAssignable(asset.status)) {
+      const statusMessage = STATUS_DISPLAY[asset.status]?.label || asset.status;
+      toast.warning(`Cannot assign asset with status: ${statusMessage}`, {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
     setValue("assetId", asset.id, { shouldValidate: true });
     setShowAssetDropdown(false);
   };
@@ -263,7 +293,7 @@ const AddAssignAsset = ({ onClose }) => {
   // Organization handlers
   const handleOrgScroll = (e) => {
     const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+        e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
     if (bottomReached && !orgLoading && hasMoreOrgs) {
       fetchOrganizations(orgPage + 1, searchTerm);
     }
@@ -294,7 +324,7 @@ const AddAssignAsset = ({ onClose }) => {
   // Branch handlers
   const handleBranchScroll = (e) => {
     const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+        e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
     if (bottomReached && !loadingBranches && hasMoreBranches) {
       fetchBranches(branchPage + 1, branchSearchTerm);
     }
@@ -322,7 +352,7 @@ const AddAssignAsset = ({ onClose }) => {
   // Department handlers
   const handleDeptScroll = (e) => {
     const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
+        e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
     if (bottomReached && !loadingDepartments && hasMoreDepts) {
       fetchDepartments(departmentPage + 1, deptSearchTerm);
     }
@@ -358,7 +388,7 @@ const AddAssignAsset = ({ onClose }) => {
   useEffect(() => {
     register("companyId", {
       required:
-        assignAssetStrings.addAssignAsset.validation.organizationRequired,
+      assignAssetStrings.addAssignAsset.validation.organizationRequired,
     });
     register("branchId", {
       required: assignAssetStrings.addAssignAsset.validation.branchRequired,
@@ -373,6 +403,20 @@ const AddAssignAsset = ({ onClose }) => {
       required: assignAssetStrings.addAssignAsset.validation.userNameRequired,
     });
   }, [register]);
+
+  // Function to get error message based on status
+  const getErrorMessageByStatus = (status) => {
+    switch (status) {
+      case ASSET_STATUSES.IN_USE:
+        return "The selected asset is already in use and cannot be assigned";
+      case ASSET_STATUSES.UNDER_MAINTENANCE:
+        return "Cannot assign an asset that is under maintenance";
+      case ASSET_STATUSES.RETIRED:
+        return "Cannot assign a retired asset";
+      default:
+        return `Asset is not available for assignment (current status: ${status})`;
+    }
+  };
 
   const onSubmit = async (data) => {
     if (!data.companyId) {
@@ -408,365 +452,371 @@ const AddAssignAsset = ({ onClose }) => {
     } catch (error) {
       const errorMessage = error?.message || "";
 
-      if (
-        errorMessage.includes("Asset is not available for assignment") ||
-        errorMessage.includes("IN_USE")
-      ) {
-        toast.error(
-          "The selected asset is already in use and cannot be assigned",
-          {
-            position: "top-right",
-            autoClose: 5000,
-          }
-        );
-        return setError("assetId", {
-          type: "manual",
-          message: "This asset is already in use",
-        });
+      // Extract status from the error message if available
+      let status = null;
+      const statusMatch = errorMessage.match(/\(current status: (\w+)\)/);
+      if (statusMatch && statusMatch[1]) {
+        status = statusMatch[1];
+      } else if (errorMessage.includes("IN_USE")) {
+        status = ASSET_STATUSES.IN_USE;
       }
 
-      // Handle other errors
-      toast.error(
-        errorMessage || assignAssetStrings.addAssignAsset.toast.error,
-        {
-          position: "top-right",
-          autoClose: 5000,
-        }
-      );
+      // Set appropriate error message based on status
+      const displayError = status
+          ? getErrorMessageByStatus(status)
+          : errorMessage || assignAssetStrings.addAssignAsset.toast.error;
+
+      toast.error(displayError, {
+        position: "top-right",
+        autoClose: 5000,
+      });
+
+      setError("assetId", {
+        type: "manual",
+        message: status ? `This asset cannot be assigned (${STATUS_DISPLAY[status]?.label || status})` : "Asset assignment error"
+      });
     }
   };
+
+  // Render status badge for assets
+  const renderStatusBadge = (status) => {
+    const statusInfo = STATUS_DISPLAY[status] || { label: status, color: "text-gray-500" };
+    return (
+        <span className={`ml-2 text-sm ${statusInfo.color}`}>
+        ({statusInfo.label})
+      </span>
+    );
+  };
+
   return (
-    <div
-      className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${
-        isVisible ? "opacity-100" : "opacity-0"
-      }`}
-      onClick={handleOutsideClick}
-    >
       <div
-        ref={modalRef}
-        className={`mt-[20px] w-[500px] min-h-96 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
-          isVisible ? "scale-100" : "scale-95"
-        }`}
+          className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${
+              isVisible ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={handleOutsideClick}
       >
-        <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
-          <h2 className="text-[17px] font-semibold text-white">
-            {assignAssetStrings.addAssignAsset.title}
-          </h2>
-          <button onClick={handleClose} className="text-white rounded-md">
-            <IoClose className="h-7 w-7" />
-          </button>
-        </div>
+        <div
+            ref={modalRef}
+            className={`mt-[20px] w-[500px] min-h-96 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+                isVisible ? "scale-100" : "scale-95"
+            }`}
+        >
+          <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
+            <h2 className="text-[17px] font-semibold text-white">
+              {assignAssetStrings.addAssignAsset.title}
+            </h2>
+            <button onClick={handleClose} className="text-white rounded-md">
+              <IoClose className="h-7 w-7" />
+            </button>
+          </div>
 
-        <div className="p-4">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-              {/* Organization Dropdown */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assignAssetStrings.addAssignAsset.formLabels.organization}
-                </label>
-                <div
-                  onClick={() => setShowOrgDropdown(!showOrgDropdown)}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
-                >
-                  {selectedOrg
-                    ? selectedOrg.organizationName
-                    : assignAssetStrings.addAssignAsset.select
-                        .organizationDefault}
-                </div>
-                {errors.companyId && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.companyId.message}
-                  </p>
-                )}
-                {showOrgDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder={
-                        assignAssetStrings.addAssignAsset.select
-                          .organizationDefault
-                      }
-                      value={searchTerm}
-                      onChange={handleOrgSearch}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleOrgScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {organizations.map((org) => (
-                        <li
-                          key={org.id}
-                          onClick={() => handleOrgSelect(org)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {org.organizationName}
-                        </li>
-                      ))}
-                      {orgLoading && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          {
-                            assignAssetStrings.addAssignAsset.select
-                              .loadingBranches
-                          }
-                        </li>
-                      )}
-                    </ul>
+          <div className="p-4">
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                {/* Organization Dropdown */}
+                <div className="w-full relative">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {assignAssetStrings.addAssignAsset.formLabels.organization}
+                  </label>
+                  <div
+                      onClick={() => setShowOrgDropdown(!showOrgDropdown)}
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  >
+                    {selectedOrg
+                        ? selectedOrg.organizationName
+                        : assignAssetStrings.addAssignAsset.select
+                            .organizationDefault}
                   </div>
-                )}
-              </div>
-              {/* Branch Dropdown */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  Branch
-                </label>
-                <div
-                  onClick={() => {
-                    if (!selectedOrgId) return;
-                    setShowBranchDropdown(!showBranchDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
-                >
-                  {selectedBranch ? selectedBranch.branchName : "Select Branch"}
-                </div>
-                {errors.branchId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.branchId.message}
-                  </p>
-                )}
-                {showBranchDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search branch..."
-                      value={branchSearchTerm}
-                      onChange={handleBranchSearch}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleBranchScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {branches.map((branch) => (
-                        <li
-                          key={branch.id}
-                          onClick={() => handleBranchSelect(branch)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  {errors.companyId && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.companyId.message}
+                      </p>
+                  )}
+                  {showOrgDropdown && (
+                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                        <input
+                            type="text"
+                            placeholder={
+                              assignAssetStrings.addAssignAsset.select
+                                  .organizationDefault
+                            }
+                            value={searchTerm}
+                            onChange={handleOrgSearch}
+                            className="p-2 w-full border-b outline-none"
+                        />
+                        <ul
+                            onScroll={handleOrgScroll}
+                            className="max-h-40 overflow-auto"
                         >
-                          {branch.branchName}
-                        </li>
-                      ))}
-                      {loadingBranches && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                    </ul>
+                          {organizations.map((org) => (
+                              <li
+                                  key={org.id}
+                                  onClick={() => handleOrgSelect(org)}
+                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              >
+                                {org.organizationName}
+                              </li>
+                          ))}
+                          {orgLoading && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                {
+                                  assignAssetStrings.addAssignAsset.select
+                                      .loadingBranches
+                                }
+                              </li>
+                          )}
+                        </ul>
+                      </div>
+                  )}
+                </div>
+                {/* Branch Dropdown */}
+                <div className="w-full relative">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Branch
+                  </label>
+                  <div
+                      onClick={() => {
+                        if (!selectedOrgId) return;
+                        setShowBranchDropdown(!showBranchDropdown);
+                      }}
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  >
+                    {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                   </div>
-                )}
-              </div>
+                  {errors.branchId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.branchId.message}
+                      </p>
+                  )}
+                  {showBranchDropdown && (
+                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                        <input
+                            type="text"
+                            placeholder="Search branch..."
+                            value={branchSearchTerm}
+                            onChange={handleBranchSearch}
+                            className="p-2 w-full border-b outline-none"
+                        />
+                        <ul
+                            onScroll={handleBranchScroll}
+                            className="max-h-40 overflow-auto"
+                        >
+                          {branches.map((branch) => (
+                              <li
+                                  key={branch.id}
+                                  onClick={() => handleBranchSelect(branch)}
+                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              >
+                                {branch.branchName}
+                              </li>
+                          ))}
+                          {loadingBranches && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                Loading...
+                              </li>
+                          )}
+                        </ul>
+                      </div>
+                  )}
+                </div>
 
-              {/* Department Dropdown */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  Department
-                </label>
-                <div
-                  onClick={() => {
-                    if (!branchId) return;
-                    setShowDeptDropdown(!showDeptDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
-                >
-                  {selectedDept
-                    ? selectedDept.departmentName
-                    : "Select Department"}
-                </div>
-                {errors.departmentId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.departmentId.message}
-                  </p>
-                )}
-                {showDeptDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search department..."
-                      value={deptSearchTerm}
-                      onChange={handleDeptSearch}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleDeptScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {departments.map((dept) => (
-                        <li
-                          key={dept.id}
-                          onClick={() => handleDeptSelect(dept)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                {/* Department Dropdown */}
+                <div className="w-full relative">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Department
+                  </label>
+                  <div
+                      onClick={() => {
+                        if (!branchId) return;
+                        setShowDeptDropdown(!showDeptDropdown);
+                      }}
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  >
+                    {selectedDept
+                        ? selectedDept.departmentName
+                        : "Select Department"}
+                  </div>
+                  {errors.departmentId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.departmentId.message}
+                      </p>
+                  )}
+                  {showDeptDropdown && (
+                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                        <input
+                            type="text"
+                            placeholder="Search department..."
+                            value={deptSearchTerm}
+                            onChange={handleDeptSearch}
+                            className="p-2 w-full border-b outline-none"
+                        />
+                        <ul
+                            onScroll={handleDeptScroll}
+                            className="max-h-40 overflow-auto"
                         >
-                          {dept.departmentName}
-                        </li>
-                      ))}
-                      {loadingDepartments && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-              </div>
-
-              {/* Asset Select */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assignAssetStrings.addAssignAsset.formLabels.asset}
-                </label>
-                <div
-                  onClick={() => {
-                    if (!departmentId) return;
-                    setShowAssetDropdown(!showAssetDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
-                >
-                  {assets.find((a) => a.id === assetId)
-                    ? `${assets.find((a) => a.id === assetId).assetName} `
-                    : assignAssetStrings.addAssignAsset.select.assetDefault}
+                          {departments.map((dept) => (
+                              <li
+                                  key={dept.id}
+                                  onClick={() => handleDeptSelect(dept)}
+                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              >
+                                {dept.departmentName}
+                              </li>
+                          ))}
+                          {loadingDepartments && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                Loading...
+                              </li>
+                          )}
+                        </ul>
+                      </div>
+                  )}
                 </div>
-                {errors.assetId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.assetId.message}
-                  </p>
-                )}
-                {showAssetDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search asset..."
-                      value={assetSearchTerm}
-                      onChange={handleAssetSearch}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleAssetScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {assets.map((asset) => {
-                        const isInUse = asset.status === "IN_USE";
-                        return (
-                          <li
-                            key={asset.id}
-                            onClick={() => !isInUse && handleAssetSelect(asset)}
-                            className={`px-4 py-2 hover:bg-gray-100 ${
-                              isInUse
-                                ? "cursor-not-allowed text-gray-400"
-                                : "cursor-pointer"
-                            }`}
-                          >
-                            {asset.assetName}
-                            {isInUse && (
-                              <span className="ml-2 text-sm text-red-500">
-                                (In Use)
-                              </span>
-                            )}
-                          </li>
-                        );
-                      })}
-                      {loadingAssets && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {assets.length === 0 && !loadingAssets && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          No available assets found
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-              </div>
 
-              {/* User Select */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assignAssetStrings.addAssignAsset.formLabels.userName}
-                </label>
-                <div
-                  onClick={() => {
-                    if (!departmentId) return;
-                    setShowUserDropdown(!showUserDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
-                >
-                  {users.find((u) => u.id === watch("userId"))
-                    ? `${users.find((u) => u.id === watch("userId")).userName}`
-                    : assignAssetStrings.addAssignAsset.select.userDefault}
-                </div>
-                {errors.userId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.userId.message}
-                  </p>
-                )}
-                {showUserDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search user..."
-                      value={userSearchTerm}
-                      onChange={handleUserSearch}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleUserScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {users.map((user) => (
-                        <li
-                          key={user.id}
-                          onClick={() => handleUserSelect(user)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                {/* Asset Select */}
+                <div className="w-full relative">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {assignAssetStrings.addAssignAsset.formLabels.asset}
+                  </label>
+                  <div
+                      onClick={() => {
+                        if (!departmentId) return;
+                        setShowAssetDropdown(!showAssetDropdown);
+                      }}
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  >
+                    {assets.find((a) => a.id === assetId)
+                        ? `${assets.find((a) => a.id === assetId).assetName} `
+                        : assignAssetStrings.addAssignAsset.select.assetDefault}
+                  </div>
+                  {errors.assetId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.assetId.message}
+                      </p>
+                  )}
+                  {showAssetDropdown && (
+                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                        <input
+                            type="text"
+                            placeholder="Search asset..."
+                            value={assetSearchTerm}
+                            onChange={handleAssetSearch}
+                            className="p-2 w-full border-b outline-none"
+                        />
+                        <ul
+                            onScroll={handleAssetScroll}
+                            className="max-h-40 overflow-auto"
                         >
-                          {user.userName}
-                        </li>
-                      ))}
-                      {loadingUsers && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                    </ul>
+                          {assets.map((asset) => {
+                            const canAssign = isAssetAssignable(asset.status);
+                            return (
+                                <li
+                                    key={asset.id}
+                                    onClick={() => canAssign && handleAssetSelect(asset)}
+                                    className={`px-4 py-2 hover:bg-gray-100 ${
+                                        canAssign
+                                            ? "cursor-pointer"
+                                            : "cursor-not-allowed text-gray-500"
+                                    }`}
+                                >
+                                  {asset.assetName}
+                                  {renderStatusBadge(asset.status)}
+                                </li>
+                            );
+                          })}
+                          {loadingAssets && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                Loading...
+                              </li>
+                          )}
+                          {assets.length === 0 && !loadingAssets && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                No available assets found
+                              </li>
+                          )}
+                        </ul>
+                      </div>
+                  )}
+                </div>
+
+
+                {/* User Select */}
+                <div className="w-full relative">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {assignAssetStrings.addAssignAsset.formLabels.userName}
+                  </label>
+                  <div
+                      onClick={() => {
+                        if (!departmentId) return;
+                        setShowUserDropdown(!showUserDropdown);
+                      }}
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  >
+                    {users.find((u) => u.id === watch("userId"))
+                        ? `${users.find((u) => u.id === watch("userId")).userName}`
+                        : assignAssetStrings.addAssignAsset.select.userDefault}
                   </div>
-                )}
+                  {errors.userId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.userId.message}
+                      </p>
+                  )}
+                  {showUserDropdown && (
+                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                        <input
+                            type="text"
+                            placeholder="Search user..."
+                            value={userSearchTerm}
+                            onChange={handleUserSearch}
+                            className="p-2 w-full border-b outline-none"
+                        />
+                        <ul
+                            onScroll={handleUserScroll}
+                            className="max-h-40 overflow-auto"
+                        >
+                          {users.map((user) => (
+                              <li
+                                  key={user.id}
+                                  onClick={() => handleUserSelect(user)}
+                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              >
+                                {user.userName}
+                              </li>
+                          ))}
+                          {loadingUsers && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                Loading...
+                              </li>
+                          )}
+                        </ul>
+                      </div>
+                  )}
+                </div>
               </div>
-            </div>
-            <hr className="mt-4" />
-            <div className="flex justify-end gap-4 mt-6">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-50"
-                disabled={isSubmitting}
-              >
-                {assignAssetStrings.addAssignAsset.buttons.close}
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
-                disabled={isSubmitting}
-              >
-                {isSubmitting
-                  ? assignAssetStrings.addAssignAsset.buttons.saving
-                  : assignAssetStrings.addAssignAsset.buttons.save}
-              </button>
-            </div>
-          </form>
+              <hr className="mt-4" />
+              <div className="flex justify-end gap-4 mt-6">
+                <button
+                    type="button"
+                    onClick={handleClose}
+                    className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-50"
+                    disabled={isSubmitting}
+                >
+                  {assignAssetStrings.addAssignAsset.buttons.close}
+                </button>
+                <button
+                    type="submit"
+                    className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
+                    disabled={isSubmitting}
+                >
+                  {isSubmitting
+                      ? assignAssetStrings.addAssignAsset.buttons.saving
+                      : assignAssetStrings.addAssignAsset.buttons.save}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
   );
 };
 

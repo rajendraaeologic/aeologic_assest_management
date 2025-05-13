@@ -20,6 +20,33 @@ import { MdDelete } from "react-icons/md";
 import { getAllAssets } from "../../Features/slices/assetSlice";
 import { deleteAsset } from "../../Features/slices/assetSlice";
 import assetStrings from "../../locales/assetStrings";
+import {getAllBranches} from "../../Features/slices/branchSlice.js";
+
+// Skeleton Loader Component
+const SkeletonLoader = () => {
+  return (
+      <>
+        {[...Array(5)].map((_, rowIndex) => (
+            <tr key={rowIndex} className="animate-pulse">
+              {[...Array(11)].map((_, cellIndex) => (
+                  <td
+                      key={cellIndex}
+                      className="px-2 py-4 border border-gray-300"
+                      style={{
+                        maxWidth: cellIndex === 4 || cellIndex === 5 ? "100px" : "180px",
+                        minWidth: cellIndex === 4 || cellIndex === 5 ? "100px" : "120px",
+                        overflowWrap: "break-word",
+                      }}
+                  >
+                    <div className="h-4 bg-gray-300 rounded"></div>
+                  </td>
+              ))}
+            </tr>
+        ))}
+      </>
+  );
+};
+
 
 const Asset = () => {
   const dispatch = useDispatch();
@@ -32,9 +59,19 @@ const Asset = () => {
   );
 
   useEffect(() => {
-    dispatch(getAllAssets());
-  }, [dispatch]);
+    const fetchAssets = async () => {
+      setIsLoading(true);
+      try {
+        await dispatch(getAllAssets());
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchAssets();
+  }, [dispatch, Asset.length]);
 
+
+  const [isLoading, setIsLoading] = useState(true);
   const [isAddAsset, setIsAddAsset] = useState(false);
   const [isUpdateAsset, setIsUpdateAsset] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -43,8 +80,6 @@ const Asset = () => {
   const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
 
-  const options = ["5", "10", "25", "50", "100"];
-  const totalPages = Math.ceil(assets.length / rowsPerPage);
 
   const [searchAsset, setSearchAsset] = useState({
     assetName: "",
@@ -102,11 +137,10 @@ const Asset = () => {
     });
   });
 
+  const options = ["5", "10", "25", "50", "100"];
   const startIndex = currentPage * rowsPerPage;
-  const currentRows = filteredAssets.slice(
-    startIndex,
-    startIndex + rowsPerPage
-  );
+  const currentRows = filteredAssets.slice(startIndex, startIndex + rowsPerPage);
+  const totalPages = Math.ceil(filteredAssets.length / rowsPerPage);
 
   const handleNavigate = () => {
     navigate("/dashboard");
@@ -566,9 +600,11 @@ const Asset = () => {
 
               {/* Table Body */}
               <tbody>
-                {currentRows.length > 0 ? (
+              {isLoading ? (
+                  <SkeletonLoader />
+              ) : currentRows.length > 0 ? (
                   currentRows.map((asset, index) => (
-                    <tr
+                      <tr
                       key={asset.id || index}
                       className={`${
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
@@ -713,55 +749,37 @@ const Asset = () => {
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2 flex items-center gap-2">
+          {/* Pagination Controls */}
+          <div className="flex justify-between items-center mt-4 mx-4">
+            <div className="text-sm text-gray-600">
+              Showing {startIndex + 1} to {Math.min(startIndex + rowsPerPage, filteredAssets.length)} of {filteredAssets.length} entries
+            </div>
+
+            <div className="flex items-center gap-2 border border-gray-300 rounded-lg overflow-hidden">
               <button
-                onClick={handlePrev}
-                disabled={currentPage === 0 || totalPages === 0}
-                className={`${
-                  currentPage === 0 || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
+                  onClick={handlePrev}
+                  disabled={currentPage === 0 || totalPages === 0}
+                  className={`px-4 py-2 border-r border-gray-300 ${
+                      currentPage === 0 || totalPages === 0
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "hover:bg-gray-100"
+                  }`}
               >
                 {assetStrings.asset.buttons.previous}
               </button>
 
-              <span className="px-2 space-x-1">
-                {totalPages > 0 ? (
-                  <>
-                    <span
-                      className={`py-1 px-3 ${
-                        currentPage + 1 < totalPages
-                          ? "bg-[#3bc0c3] text-white"
-                          : "border-2"
-                      }`}
-                    >
-                      {currentPage + 1}
-                    </span>
-                    <span
-                      className={`py-1 px-3 ${
-                        currentPage + 1 === totalPages
-                          ? "bg-[#3bc0c3] text-white"
-                          : "border-2"
-                      }`}
-                    >
-                      {totalPages}
-                    </span>
-                  </>
-                ) : (
-                  <span className="py-1 px-3">0 / 0</span>
-                )}
-              </span>
+              <div className="px-4 py-2">
+                {`${startIndex + 1}–${Math.min(startIndex + rowsPerPage, filteredAssets.length)} of ${filteredAssets.length}`}
+              </div>
 
               <button
-                onClick={handleNext}
-                disabled={currentPage + 1 >= totalPages || totalPages === 0}
-                className={`${
-                  currentPage + 1 >= totalPages
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
+                  onClick={handleNext}
+                  disabled={currentPage + 1 >= totalPages || totalPages === 0}
+                  className={`px-4 py-2 border-l border-gray-300 ${
+                      currentPage + 1 >= totalPages
+                          ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                          : "hover:bg-gray-100"
+                  }`}
               >
                 {assetStrings.asset.buttons.next}
               </button>

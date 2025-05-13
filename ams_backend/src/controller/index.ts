@@ -6,3 +6,4 @@ export { default as branchController } from "./branch.controller";
 export { default as assetController } from "./asset.controller";
 export { default as dashboardController } from "./dashboard.controller";
 export { default as userDashboardController } from "./userDashboard.controller";
+export { default as assetHistoryController } from "./assetHistory.controller";

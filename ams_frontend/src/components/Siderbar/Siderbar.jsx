@@ -16,7 +16,9 @@ import { GiAudioCassette } from "react-icons/gi";
 import { MdPersonAdd } from "react-icons/md";
 import { NavLink } from "react-router-dom";
 import SliderContext from "../ContexApi";
-import ReactTooltip from "react-tooltip";
+// import ReactTooltip from "react-tooltip";
+import { Tooltip as ReactTooltip } from "react-tooltip";
+
 
 const Sidebar = () => {
   const { isSidebarOpen } = useContext(SliderContext);
@@ -33,6 +35,7 @@ const Sidebar = () => {
     { name: "Department", icon: <FaBriefcase />, path: "/department" },
     { name: "Add Asset", icon: <GiAudioCassette />, path: "/asset" },
     { name: "Assign Asset", icon: <MdPersonAdd />, path: "/assignAsset" },
+    { name: "Asset History", icon: <MdPersonAdd />, path: "/assetHistory" },
     { name: "Assign Tag (Coming Soon)", icon: <FaTags />, path: "/assigntag" },
     {
       name: "Out For Delivery (Coming Soon)",

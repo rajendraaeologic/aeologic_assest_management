@@ -179,7 +179,7 @@ model AssetHistory {
   action    String
   userId    String   @db.ObjectId
   timestamp DateTime @default(now())
-  asset     Asset    @relation(fields: [assetId], references: [id])
+  asset     Asset?   @relation(fields: [assetId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
 }
 

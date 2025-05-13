@@ -28,6 +28,7 @@ import AssignAsset from "./Pages/AssignAsset/AssignAsset";
 import Login from "./Pages/LoginUser/LoginUser";
 import UserDashboard from "./Pages/UserDashboard/UserDashboard";
 import UnauthorizedPage from "./Pages/Unauthorized/Unauthorized";
+import AssetHistory from "./Pages/AssetHistory/AssetHistory";
 
 // Auth
 import RequireAuth from "./Features/auth/RequireAuth";
@@ -52,6 +53,7 @@ const router = createBrowserRouter([
           { path: "department", element: <Department /> },
           { path: "asset", element: <Asset /> },
           { path: "assignAsset", element: <AssignAsset /> },
+          { path: "assetHistory", element: <AssetHistory /> },
           { path: "assigntag", element: <AssignTag /> },
           { path: "outfordelivery", element: <OutForDelivery /> },
           { path: "datewishreport", element: <DateWishReport /> },

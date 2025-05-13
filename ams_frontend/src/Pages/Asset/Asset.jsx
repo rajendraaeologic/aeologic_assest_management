@@ -281,7 +281,7 @@ const Asset = () => {
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
             <table
               className="table-auto min-w-full text-left border-collapse"
-              // style={{ tableLayout: "fixed" }}
+              style={{ tableLayout: "fixed" }}
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>

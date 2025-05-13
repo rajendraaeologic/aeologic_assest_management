@@ -271,19 +271,51 @@ export const AssetAssignmentKeys: Prisma.AssetAssignmentSelect = {
 
 export const AssetHistoryKeys: Prisma.AssetHistorySelect = {
   id: true,
+  assetId: true,
   action: true,
+  userId: true,
   timestamp: true,
   asset: {
     select: {
       id: true,
       assetName: true,
       uniqueId: true,
+      brand: true,
+      model: true,
+      serialNumber: true,
+      status: true,
+      company: {
+        select: {
+          id: true,
+          organizationName: true,
+        },
+      },
+      branch: {
+        select: {
+          id: true,
+          branchName: true,
+          branchLocation: true,
+        },
+      },
+      department: {
+        select: {
+          id: true,
+          departmentName: true,
+        },
+      },
     },
   },
   user: {
     select: {
       id: true,
       userName: true,
+      email: true,
+      department: {
+        select: {
+          id: true,
+          departmentName: true,
+        },
+      },
     },
   },
 };

@@ -26,6 +26,7 @@ import {
 import { deleteDepartment } from "../../Features/slices/departmentSlice";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
+import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
 const UserDepartment = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ const UserDepartment = () => {
     totalDepartments,
     searchTerm,
     loading,
+    error,
   } = useSelector((state) => state.departmentData);
 
   const [isAddDepartment, setIsAddDepartment] = useState(false);
@@ -312,8 +314,8 @@ const UserDepartment = () => {
                       key={idx}
                       className="px-2 py-2 border border-gray-300"
                       style={{
-                        maxWidth: idx >= 3 ? "100px" : "180px",
-                        minWidth: idx >= 3 ? "100px" : "120px",
+                        maxWidth: idx === 3 ? "100px" : "auto",
+                        minWidth: idx === 3 ? "100px" : "160px",
                         overflowWrap: "break-word",
                       }}
                     >
@@ -353,7 +355,18 @@ const UserDepartment = () => {
 
               {/* Table Body */}
               <tbody>
-                {departments.length > 0 ? (
+                {loading ? (
+                  <SkeletonLoader rows={5} columns={5} />
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan="10"
+                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                    >
+                      {error}
+                    </td>
+                  </tr>
+                ) : departments.length > 0 ? (
                   departments.map((department, index) => (
                     <tr
                       key={department.id || index}

@@ -27,6 +27,7 @@ import { deleteOrganization } from "../../Features/slices/organizationSlice";
 import organizationStrings from "../../locales/organizationStrings";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
+import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
 
 const Organization = () => {
   const dispatch = useDispatch();
@@ -46,6 +47,7 @@ const Organization = () => {
     totalOrganizations,
     searchTerm,
     loading,
+    error,
   } = useSelector((state) => state.organizationData);
 
   const [isAddOrganization, setIsAddOrganization] = useState(false);
@@ -300,103 +302,23 @@ const Organization = () => {
               className="table-auto min-w-full text-left border-collapse"
               style={{ tableLayout: "fixed" }}
             >
-              {/* <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
-                <tr>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.orgName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.branchName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.branchLocation}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.departmentName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.action}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.deleteAll}
-                    <div className="flex justify-center items-center">
-                      <div className="">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedOrganizations.length ===
-                                organizations.length && organizations.length > 0
-                            }
-                            onChange={handleSelectAllOrganizations}
-                            className="mr-2"
-                          />
-                        </label>
-                      </div>
-                      <button onClick={handleDeleteSelectedOrganizations}>
-                        <MdDelete className="h-6 w-6  text-[red]" />
-                      </button>
-                    </div>
-                  </th>
-                </tr>
-              </thead> */}
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
                   {[
-                    table.headers.orgName,
-                    table.headers.branchName,
-                    table.headers.branchLocation,
-                    table.headers.departmentName,
-                    table.headers.action,
+                    organizationStrings.organization.table.headers.orgName,
+                    organizationStrings.organization.table.headers.branchName,
+                    organizationStrings.organization.table.headers
+                      .branchLocation,
+                    organizationStrings.organization.table.headers
+                      .departmentName,
+                    organizationStrings.organization.table.headers.action,
                   ].map((header, idx) => (
                     <th
                       key={idx}
                       className="px-2 py-2 border border-gray-300"
                       style={{
-                        maxWidth: idx >= 4 ? "100px" : "180px",
-                        minWidth: idx >= 4 ? "100px" : "120px",
+                        maxWidth: idx === 4 ? "100px" : "auto",
+                        minWidth: idx === 4 ? "100px" : "160px",
                         overflowWrap: "break-word",
                       }}
                     >
@@ -412,7 +334,7 @@ const Organization = () => {
                       overflowWrap: "break-word",
                     }}
                   >
-                    {table.headers.deleteAll}
+                    {organizationStrings.organization.table.headers.deleteAll}
                     <div className="flex justify-center items-center gap-1">
                       <label className="flex items-center">
                         <input
@@ -435,7 +357,18 @@ const Organization = () => {
 
               {/* Table Body */}
               <tbody>
-                {organizations.length > 0 ? (
+                {loading ? (
+                  <SkeletonLoader rows={5} columns={6} />
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan="10"
+                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                    >
+                      {error}
+                    </td>
+                  </tr>
+                ) : organizations.length > 0 ? (
                   organizations.map((org, index) => (
                     <tr
                       key={org.id || index}
@@ -545,7 +478,7 @@ const Organization = () => {
                   <tr>
                     <td
                       colSpan="6"
-                      className="px-4 py-4 text-center text-black"
+                      className="px-2 py-4 text-center border border-gray-300"
                     >
                       {table.noData}
                     </td>

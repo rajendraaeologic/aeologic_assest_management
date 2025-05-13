@@ -22,6 +22,7 @@ import { deleteAsset } from "../../Features/slices/assetSlice";
 import assetStrings from "../../locales/assetStrings";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
+import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
 const Asset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ const Asset = () => {
     totalAssets,
     searchTerm,
     loading,
+    error,
   } = useSelector((state) => state.assetUserData);
 
   const [isAddAsset, setIsAddAsset] = useState(false);
@@ -278,8 +280,8 @@ const Asset = () => {
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
             <table
-              className="table-auto min-w-max text-left border-collapse"
-              style={{ tableLayout: "fixed" }}
+              className="table-auto min-w-full text-left border-collapse"
+              // style={{ tableLayout: "fixed" }}
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
@@ -299,8 +301,8 @@ const Asset = () => {
                       key={idx}
                       className="px-2 py-2 border border-gray-300"
                       style={{
-                        maxWidth: idx >= 9 ? "100px" : "180px",
-                        minWidth: idx >= 9 ? "100px" : "120px",
+                        maxWidth: idx === 9 || idx === 10 ? "100px" : "auto",
+                        minWidth: idx === 9 || idx === 10 ? "100px" : "165px",
                         overflowWrap: "break-word",
                       }}
                     >
@@ -339,7 +341,18 @@ const Asset = () => {
 
               {/* Table Body */}
               <tbody>
-                {assets.length > 0 ? (
+                {loading ? (
+                  <SkeletonLoader rows={5} columns={11} />
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan="10"
+                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                    >
+                      {error}
+                    </td>
+                  </tr>
+                ) : assets.length > 0 ? (
                   assets.map((asset, index) => (
                     <tr
                       key={asset.id || index}

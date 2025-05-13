@@ -11,6 +11,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
 
 import {
   setCurrentPage,
@@ -47,6 +48,7 @@ const UserRegistration = () => {
     totalPages,
     searchTerm,
     loading,
+    error,
   } = useSelector((state) => state.usersData);
 
   const [isAddUserFormOpen, setIsAddUserFormOpen] = useState(false);
@@ -83,7 +85,6 @@ const UserRegistration = () => {
     setLocalSearchTerm(searchTerm);
   }, [searchTerm]);
 
-  // Fetch users when page, limit, or searchTerm changes
   useEffect(() => {
     dispatch(
       getAllUsers({
@@ -341,7 +342,7 @@ const UserRegistration = () => {
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
             <table
-              className="table-auto min-w-max text-left border-collapse"
+              className="table-auto min-w-full text-left border-collapse"
               style={{ tableLayout: "fixed" }}
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
@@ -361,8 +362,8 @@ const UserRegistration = () => {
                       key={idx}
                       className="px-2 py-2 border border-gray-300"
                       style={{
-                        maxWidth: "180px",
-                        minWidth: "120px",
+                        maxWidth: idx === 8 || idx === 9 ? "100px" : "auto",
+                        minWidth: idx === 8 || idx === 9 ? "100px" : "165px",
                         overflowWrap: "break-word",
                       }}
                     >
@@ -399,7 +400,18 @@ const UserRegistration = () => {
               </thead>
 
               <tbody>
-                {users.length > 0 ? (
+                {loading ? (
+                  <SkeletonLoader rows={5} columns={10} />
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan="10"
+                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                    >
+                      {error}
+                    </td>
+                  </tr>
+                ) : users.length > 0 ? (
                   users.map((user, index) => (
                     <tr
                       key={user.id || index}
@@ -502,19 +514,19 @@ const UserRegistration = () => {
                         className="px-2 py-2 border border-gray-300"
                         style={{ maxWidth: "100px", wordWrap: "break-word" }}
                       >
-                        <div className="flex ">
+                        <div className="flex">
                           <button
                             onClick={() => {
                               setIsUpdateUserFormOpen(true);
                               handlerUpdateData(user);
                             }}
-                            className="px-3 py-2 rounded-sm "
+                            className="px-3 py-2 rounded-sm"
                           >
                             <FontAwesomeIcon icon={faPen} />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(user)}
-                            className="px-3 py-2 rounded-sm   text-[red]"
+                            className="px-3 py-2 rounded-sm text-[red]"
                           >
                             <MdDelete className="h-6 w-6" />
                           </button>
@@ -535,7 +547,7 @@ const UserRegistration = () => {
                 ) : (
                   <tr>
                     <td
-                      colSpan="9"
+                      colSpan="10"
                       className="px-2 py-4 text-center border border-gray-300"
                     >
                       {userStrings.user.table.noData}

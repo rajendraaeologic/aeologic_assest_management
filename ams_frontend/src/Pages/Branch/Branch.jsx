@@ -26,6 +26,7 @@ import ChipsList from "../../components/UI/ChipsList";
 import branchStrings from "../../locales/branchStrings";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
+import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
 const Branch = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ const Branch = () => {
     totalBranches,
     searchTerm,
     loading,
+    error,
   } = useSelector((state) => state.branchData);
 
   const [isAddBranch, setIsAddBranch] = useState(false);
@@ -312,8 +314,8 @@ const Branch = () => {
                       key={idx}
                       className="px-2 py-2 border border-gray-300"
                       style={{
-                        maxWidth: idx >= 4 ? "100px" : "180px",
-                        minWidth: idx >= 4 ? "100px" : "120px",
+                        maxWidth: idx === 4 ? "100px" : "auto",
+                        minWidth: idx === 4 ? "100px" : "160px",
                         overflowWrap: "break-word",
                       }}
                     >
@@ -352,7 +354,18 @@ const Branch = () => {
 
               {/* Table Body */}
               <tbody>
-                {branches.length > 0 ? (
+                {loading ? (
+                  <SkeletonLoader rows={5} columns={6} />
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan="10"
+                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                    >
+                      {error}
+                    </td>
+                  </tr>
+                ) : branches.length > 0 ? (
                   branches.map((branch, index) => (
                     <tr
                       key={branch.id || index}

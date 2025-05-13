@@ -13,6 +13,7 @@ const branchStrings = {
       yes: "Yes",
       no: "No",
       ok: "OK",
+      deleting: "Deleting...",
     },
     table: {
       headers: {

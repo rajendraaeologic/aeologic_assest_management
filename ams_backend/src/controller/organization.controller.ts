@@ -13,9 +13,10 @@ const createOrganization = catchAsync(async (req, res) => {
       organizationName: req.body.organizationName,
     } as Organization);
 
-    res
-      .status(httpStatus.CREATED)
-      .send({ organization, message: "Organization Created Successfully." });
+    res.status(httpStatus.CREATED).send({
+      message: "Organization Created Successfully.",
+      organization,
+    });
   } catch (error) {
     throw new ApiError(httpStatus.CONFLICT, error.message);
   }
@@ -57,7 +58,7 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
 
   const searchTerm = (rawFilters.searchTerm as string)?.trim();
 
-  // ✅ Apply special logic if searchTerm is present
+  // Apply special logic if searchTerm is present
   const isSearchMode = !!searchTerm;
   if (isSearchMode) {
     limit = 5;
@@ -72,66 +73,6 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
             organizationName: {
               contains: searchTerm,
               mode: "insensitive",
-            },
-          },
-          {
-            branches: {
-              some: {
-                OR: [
-                  {
-                    branchName: {
-                      contains: searchTerm,
-                      mode: "insensitive",
-                    },
-                  },
-                  {
-                    branchLocation: {
-                      contains: searchTerm,
-                      mode: "insensitive",
-                    },
-                  },
-                  {
-                    departments: {
-                      some: {
-                        departmentName: {
-                          contains: searchTerm,
-                          mode: "insensitive",
-                        },
-                      },
-                    },
-                  },
-                  {
-                    users: {
-                      some: {
-                        OR: [
-                          {
-                            userName: {
-                              contains: searchTerm,
-                              mode: "insensitive",
-                            },
-                          },
-                          {
-                            email: {
-                              contains: searchTerm,
-                              mode: "insensitive",
-                            },
-                          },
-                        ],
-                      },
-                    },
-                  },
-                  {
-                    assets: {
-                      some: {
-                        assetName: {
-                          contains: searchTerm,
-                          mode: "insensitive",
-                        },
-                      },
-                    },
-                  },
-                ],
-              },
             },
           },
         ],
@@ -153,9 +94,9 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
   const result = await organizationService.queryOrganizations(where, options);
 
   if (!result || result.data.length === 0) {
-    res.status(200).json({
+    res.status(httpStatus.OK).json({
       success: false,
-      status: "404",
+      status: 404,
       message: "No organizations found",
       data: [],
       totalData: 0,
@@ -166,7 +107,8 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
     });
   }
 
-  res.status(200).json({
+  res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: "Organizations fetched successfully",
     data: result.data,
@@ -185,14 +127,15 @@ const getOrganizationById = catchAsync(async (req, res) => {
   );
 
   if (!result) {
-    res.status(200).json({
-      status: "404",
+    res.status(httpStatus.OK).json({
+      status: 404,
       message: "No organization found",
       data: [],
     });
     return;
   }
-  res.status(200).json({
+  res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: "Organization fetched successfully",
     data: result,
@@ -205,7 +148,8 @@ const updateOrganization = catchAsync(async (req, res) => {
       req.params.organizationId,
       req.body
     );
-    res.status(200).json({
+    res.status(httpStatus.OK).json({
+      status: 200,
       success: true,
       message: "Organization update successfully",
       data: result,

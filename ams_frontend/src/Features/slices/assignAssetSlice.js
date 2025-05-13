@@ -22,9 +22,17 @@ export const createAssignAsset = createAsyncThunk(
 // Get All AssignAssets
 export const getAllAssignAssets = createAsyncThunk(
   "assignAsset/getAll",
-  async (params, { rejectWithValue }) => {
+  async (
+    { limit = 5, page = 1, searchTerm = "", status = "IN_USE" } = {},
+    { rejectWithValue }
+  ) => {
     try {
-      const response = await getAllAssignAssetsService(params);
+      const response = await getAllAssignAssetsService({
+        limit,
+        page,
+        searchTerm,
+        status,
+      });
       return response.data || [];
     } catch (error) {
       return rejectWithValue(
@@ -78,8 +86,11 @@ const assignAssetSlice = createSlice({
     error: null,
     selectedAssignAsset: null,
     selectedAssignAssets: [],
-    currentPage: 0,
+    currentPage: 1,
     rowsPerPage: 5,
+    totalAssignAssets: 0,
+    totalAssignPages: 0,
+    searchTerm: "",
   },
   reducers: {
     setSelectedAssignAsset: (state, action) => {
@@ -88,8 +99,14 @@ const assignAssetSlice = createSlice({
     setCurrentPage: (state, action) => {
       state.currentPage = action.payload;
     },
+    setSearchTerm: (state, action) => {
+      state.searchTerm = action.payload;
+      state.currentPage = 1;
+    },
+
     setRowsPerPage: (state, action) => {
       state.rowsPerPage = action.payload;
+      state.currentPage = 1;
     },
     toggleSelectAssignAsset: (state, action) => {
       const id = action.payload;
@@ -132,8 +149,13 @@ const assignAssetSlice = createSlice({
       })
       .addCase(getAllAssignAssets.fulfilled, (state, action) => {
         state.loading = false;
-        state.assignAssets = action.payload;
+        state.assignAssets = action.payload.data;
+        state.totalAssignAssets = action.payload.totalData;
+        state.totalAssignPages = action.payload.totalPages;
+        state.currentAssignPage = action.payload.page;
+        state.assignRowsPerPage = action.payload.limit;
       })
+
       .addCase(getAllAssignAssets.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
@@ -180,6 +202,7 @@ export const {
   toggleSelectAssignAsset,
   selectAllAssignAssets,
   deselectAllAssignAssets,
+  setSearchTerm,
 } = assignAssetSlice.actions;
 
 export default assignAssetSlice.reducer;

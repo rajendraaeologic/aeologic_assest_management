@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useForm } from "react-hook-form";
@@ -15,6 +15,7 @@ const AddOrganization = ({ onClose }) => {
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
+  const { currentPage, rowsPerPage } = useSelector((state) => state.usersData);
 
   const {
     register,
@@ -54,7 +55,12 @@ const AddOrganization = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       await dispatch(createOrganization(data)).unwrap();
-      dispatch(getAllOrganizations());
+      await dispatch(
+        getAllOrganizations({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
 
       toast.success(organizationStrings.addOrganization.toast.success, {
         position: "top-right",

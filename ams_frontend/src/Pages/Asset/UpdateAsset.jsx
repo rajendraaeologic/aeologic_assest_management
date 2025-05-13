@@ -6,6 +6,7 @@ import API from "../../App/api/axiosInstance";
 import assetStrings from "../../locales/assetStrings";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { getAllAssets } from "../../Features/slices/assetSlice";
 
 const UpdateAsset = ({ onClose, onSuccess }) => {
   const dispatch = useDispatch();
@@ -15,6 +16,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
   const { error } = useSelector((state) => state.assetUserData);
   const selectedAsset = useSelector(
     (state) => state.assetUserData.selectedAsset
+  );
+  const { currentPage, rowsPerPage } = useSelector(
+    (state) => state.assetUserData
   );
 
   // Organization dropdown state
@@ -351,6 +355,12 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
       };
 
       await dispatch(updateAsset(updateData)).unwrap();
+      await dispatch(
+        getAllAssets({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
       toast.success(assetStrings.updateAsset.toast.success, {
         position: "top-right",
         autoClose: 1000,

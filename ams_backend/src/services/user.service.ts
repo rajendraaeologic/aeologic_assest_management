@@ -256,24 +256,28 @@ const queryUsers = async (
     sortType?: "asc" | "desc";
   },
   selectKeys: Prisma.UserSelect = UserKeys
-): Promise<User[]> => {
+): Promise<{ data: User[]; total: number }> => {
   const page = options.page ?? 1;
-  const limit = options.limit ?? 20;
-  const skip = (page - 1) * limit || 0;
-  const sortBy = options.sortBy;
+  const limit = options.limit ?? 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || "createdAt";
   const sortType = options.sortType ?? "desc";
-  return db.user.findMany({
-    where: {
-      ...filter,
-      NOT: {
-        userRole: "SUPERADMIN",
+
+  const [data, total] = await Promise.all([
+    db.user.findMany({
+      where: filter,
+      select: {
+        ...selectKeys,
+        updatedAt: true,
       },
-    },
-    select: selectKeys,
-    skip: skip > 0 ? skip : 0,
-    take: limit,
-    orderBy: sortBy ? { [sortBy]: sortType } : undefined,
-  });
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortType },
+    }),
+    db.user.count({ where: filter }),
+  ]);
+
+  return { data, total };
 };
 
 const getUserById = async (

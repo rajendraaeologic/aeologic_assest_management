@@ -38,7 +38,43 @@ const unassignAssetValidation = {
   }),
 };
 
-const getAssetAssignmentsValidation = {
+// const getAssetAssignmentsValidation = {
+//   query: Joi.object().keys({
+//     assetId: Joi.string()
+//       .optional()
+//       .custom(isValidMongoDBObjectId)
+//       .messages(isValidMongoDBObjectIdCustomMessages),
+//     userId: Joi.string()
+//       .optional()
+//       .custom(isValidMongoDBObjectId)
+//       .messages(isValidMongoDBObjectIdCustomMessages),
+//     status: Joi.string()
+//       .valid("ACTIVE", "IN_USE", "UNDER_MAINTENANCE", "RETIRED")
+//       .optional(),
+//     from_date: Joi.date().iso().optional(),
+//     to_date: Joi.date()
+//       .iso()
+//       .optional()
+//       .custom((value, helpers) => {
+//         if (
+//           helpers.state.ancestors[0].from_date &&
+//           value < helpers.state.ancestors[0].from_date
+//         ) {
+//           return helpers.error("date.to_date.lessThanFromDate");
+//         }
+//         return value;
+//       })
+//       .messages({
+//         "date.to_date.lessThanFromDate":
+//           '"to_date" must be greater than "from_date"',
+//       }),
+//     sortBy: Joi.string().valid("assignedAt", "status").optional(),
+//     sortType: Joi.string().valid("asc", "desc").optional(),
+//     limit: Joi.number().integer().min(1).optional(),
+//     page: Joi.number().integer().min(1).optional(),
+//   }),
+// };
+export const getAssetAssignmentsValidation = {
   query: Joi.object().keys({
     assetId: Joi.string()
       .optional()
@@ -68,6 +104,7 @@ const getAssetAssignmentsValidation = {
         "date.to_date.lessThanFromDate":
           '"to_date" must be greater than "from_date"',
       }),
+    searchTerm: Joi.string().trim().optional(),
     sortBy: Joi.string().valid("assignedAt", "status").optional(),
     sortType: Joi.string().valid("asc", "desc").optional(),
     limit: Joi.number().integer().min(1).optional(),

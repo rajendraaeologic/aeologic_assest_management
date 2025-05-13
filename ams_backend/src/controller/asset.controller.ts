@@ -38,26 +38,110 @@ const createAsset = catchAsync(async (req, res) => {
   }
 });
 
-const getAllAssets = catchAsync(async (req, res) => {
-  const filter = pick(req.query, [
+export const getAllAssets = catchAsync(async (req, res) => {
+  const rawFilters = pick(req.query, [
     "assetName",
     "status",
     "branchId",
     "departmentId",
     "from_date",
     "to_date",
+    "searchTerm",
   ]);
-  const options = pick(req.query, ["sortBy", "sortType", "limit", "page"]);
 
-  applyDateFilter(filter);
+  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+  const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+  let sortBy = (req.query.sortBy as string) || "createdAt";
+  let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  const result = await assetService.queryAssets(filter, options);
+  applyDateFilter(rawFilters);
 
-  res.status(200).json({
+  const filters: any = {};
+
+  if (rawFilters.from_date || rawFilters.to_date) {
+    filters.createdAt = {};
+    if (rawFilters.from_date) filters.createdAt.gte = rawFilters.from_date;
+    if (rawFilters.to_date) filters.createdAt.lte = rawFilters.to_date;
+  }
+
+  if (rawFilters.assetName) {
+    filters.assetName = {
+      contains: rawFilters.assetName,
+      mode: "insensitive",
+    };
+    limit = 1;
+    sortBy = "createdAt";
+    sortType = "desc";
+  }
+
+  if (rawFilters.branchId) filters.branchId = rawFilters.branchId;
+  if (rawFilters.departmentId) filters.departmentId = rawFilters.departmentId;
+  if (rawFilters.status) filters.status = rawFilters.status;
+
+  const searchTerm = (rawFilters.searchTerm as string)?.trim();
+  const isSearchMode = !!searchTerm;
+
+  if (isSearchMode) {
+    limit = 5;
+    sortBy = "createdAt";
+    sortType = "desc";
+  }
+
+  const searchConditions = searchTerm
+    ? {
+        OR: [
+          {
+            assetName: { contains: searchTerm, mode: "insensitive" },
+          },
+          {
+            serialNumber: { contains: searchTerm, mode: "insensitive" },
+          },
+          {
+            uniqueId: { contains: searchTerm, mode: "insensitive" },
+          },
+        ],
+      }
+    : {};
+
+  const where = {
+    ...filters,
+    ...searchConditions,
+  };
+
+  const options = {
+    limit,
+    page,
+    sortBy,
+    sortType,
+  };
+
+  const result = await assetService.queryAssets(where, options);
+
+  if (!result || result.data.length === 0) {
+    res.status(httpStatus.OK).json({
+      success: false,
+      status: 404,
+      message: "No assets found",
+      data: [],
+      totalData: 0,
+      page,
+      limit,
+      totalPages: 0,
+      mode: isSearchMode ? "search" : "pagination",
+    });
+    return;
+  }
+
+  res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
-    message:
-      result.length > 0 ? "Assets fetched successfully" : "No Assets found",
-    data: result,
+    message: "Assets fetched successfully",
+    data: result.data,
+    totalData: result.total,
+    page,
+    limit,
+    totalPages: Math.ceil(result.total / limit),
+    mode: isSearchMode ? "search" : "pagination",
   });
 });
 
@@ -71,7 +155,8 @@ const getAssetById = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Asset not found");
   }
 
-  res.status(200).json({
+  res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: "Asset fetched successfully",
     data: asset,

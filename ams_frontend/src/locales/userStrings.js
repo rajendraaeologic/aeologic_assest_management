@@ -26,7 +26,7 @@ const userStrings = {
         email: "Email",
         status: "Status",
         userRole: "User Role",
-        organizationName: "OrganizationName",
+        organizationName: "Organization Name",
         branchName: "Branch Name",
         departmentName: "Department Name",
         action: "Action",

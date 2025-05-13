@@ -26,6 +26,7 @@ import { deleteAssignAsset } from "../../Features/slices/assignAssetSlice";
 import assignAssetStrings from "../../locales/assignAssetString";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
+import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
 const AssignAsset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -43,6 +44,7 @@ const AssignAsset = () => {
     totalAssignAssets,
     searchTerm,
     loading,
+    error,
   } = useSelector((state) => state.assignAssetData);
 
   const [isAddAssignAsset, setIsAddAssignAsset] = useState(false);
@@ -300,8 +302,8 @@ const AssignAsset = () => {
                       key={idx}
                       className="px-2 py-2 border border-gray-300"
                       style={{
-                        maxWidth: idx >= 5 ? "100px" : "180px",
-                        minWidth: idx >= 5 ? "100px" : "120px",
+                        maxWidth: idx === 5 || idx === 6 ? "100px" : "auto",
+                        minWidth: idx === 5 || idx === 6 ? "100px" : "120px",
                         overflowWrap: "break-word",
                       }}
                     >
@@ -341,7 +343,18 @@ const AssignAsset = () => {
 
               {/* Table Body */}
               <tbody>
-                {assignAssets.length > 0 ? (
+                {loading ? (
+                  <SkeletonLoader rows={5} columns={7} />
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan="10"
+                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                    >
+                      {error}
+                    </td>
+                  </tr>
+                ) : assignAssets.length > 0 ? (
                   assignAssets.map((row, index) => (
                     <tr
                       key={row.id || index}

@@ -29,7 +29,6 @@ const createAsset = catchAsync(async (req, res) => {
     });
 
     res.status(httpStatus.CREATED).json({
-      status: 201,
       success: true,
       message: "Asset Created Successfully",
       data: asset,

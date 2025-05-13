@@ -301,59 +301,28 @@ const Branch = () => {
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {branchStrings.branch.table.headers.branchName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {branchStrings.branch.table.headers.branchLocation}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {branchStrings.branch.table.headers.organizationName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {branchStrings.branch.table.headers.departmentName}
-                  </th>
+                  {[
+                    branchStrings.branch.table.headers.branchName,
+                    branchStrings.branch.table.headers.branchLocation,
+                    branchStrings.branch.table.headers.organizationName,
+                    branchStrings.branch.table.headers.departmentName,
+                    branchStrings.branch.table.headers.action,
+                  ].map((header, idx) => (
+                    <th
+                      key={idx}
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: idx >= 4 ? "100px" : "180px",
+                        minWidth: idx >= 4 ? "100px" : "120px",
+                        overflowWrap: "break-word",
+                      }}
+                    >
+                      {header}
+                    </th>
+                  ))}
 
                   <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {branchStrings.branch.table.headers.action}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
+                    className="px-2 py-2 border border-gray-300"
                     style={{
                       maxWidth: "100px",
                       minWidth: "100px",
@@ -361,22 +330,20 @@ const Branch = () => {
                     }}
                   >
                     {branchStrings.branch.table.headers.deleteAll}
-                    <div className="flex justify-center items-center">
-                      <div className="">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedBranches.length === branches.length &&
-                              branches.length > 0
-                            }
-                            onChange={handleSelectAllBranches}
-                            className="mr-2"
-                          />
-                        </label>
-                      </div>
+                    <div className="flex justify-center items-center gap-1">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedBranches.length === branches.length &&
+                            branches.length > 0
+                          }
+                          onChange={handleSelectAllBranches}
+                          className="mr-2"
+                        />
+                      </label>
                       <button onClick={handleDeleteSelectedBranches}>
-                        <MdDelete className="h-6 w-6  text-[red]" />
+                        <MdDelete className="h-5 w-5 text-[red]" />
                       </button>
                     </div>
                   </th>

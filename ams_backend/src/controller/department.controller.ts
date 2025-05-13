@@ -15,7 +15,7 @@ const createDepartment = catchAsync(async (req, res) => {
 
     res.status(httpStatus.CREATED).send({
       department,
-      status: 201,
+
       message: "Department Created Successfully.",
     });
   } catch (error) {

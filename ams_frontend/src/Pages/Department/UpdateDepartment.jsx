@@ -81,12 +81,12 @@ const UpdateDepartment = ({ onClose }) => {
       };
 
       await dispatch(updateDepartment(departmentData)).unwrap();
-      dispatch(
+      await dispatch(
         getAllDepartments({
           page: currentPage,
           limit: rowsPerPage,
         })
-      );
+      ).unwrap();
 
       toast.success(departmentStrings.updateDepartment.toast.success, {
         position: "top-right",

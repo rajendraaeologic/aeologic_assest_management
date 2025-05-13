@@ -55,12 +55,12 @@ const AddOrganization = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       await dispatch(createOrganization(data)).unwrap();
-      dispatch(
+      await dispatch(
         getAllOrganizations({
           page: currentPage,
           limit: rowsPerPage,
         })
-      );
+      ).unwrap();
 
       toast.success(organizationStrings.addOrganization.toast.success, {
         position: "top-right",

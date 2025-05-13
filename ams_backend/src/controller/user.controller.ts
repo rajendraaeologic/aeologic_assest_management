@@ -29,7 +29,6 @@ const createUser = catchAsync(async (req, res) => {
     } as User & { plainPassword: string });
 
     res.status(httpStatus.CREATED).send({
-      status: 201,
       message: "User Created Successfully.",
       user,
     });

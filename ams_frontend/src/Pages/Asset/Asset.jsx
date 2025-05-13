@@ -153,10 +153,10 @@ const Asset = () => {
 
     try {
       if (assetToDelete) {
-        await dispatch(deleteAsset([assetToDelete]));
+        await dispatch(deleteAsset([assetToDelete])).unwrap();
         setDeleteMessage(strings.modals.deleteSuccess.single);
       } else if (selectedAssets.length > 0) {
-        await dispatch(deleteAsset(selectedAssets));
+        await dispatch(deleteAsset(selectedAssets)).unwrap();
         setDeleteMessage(
           strings.modals.deleteSuccess.multiple.replace(
             "{count}",
@@ -283,109 +283,33 @@ const Asset = () => {
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.assetName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.uniqueId}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.brand}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.model}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.serialNumber}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.status}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.organizationName}
-                  </th>
+                  {[
+                    strings.table.headers.assetName,
+                    strings.table.headers.uniqueId,
+                    strings.table.headers.brand,
+                    strings.table.headers.model,
+                    strings.table.headers.serialNumber,
+                    strings.table.headers.status,
+                    strings.table.headers.organizationName,
+                    strings.table.headers.branch,
+                    strings.table.headers.department,
+                    strings.table.headers.action,
+                  ].map((header, idx) => (
+                    <th
+                      key={idx}
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: idx >= 9 ? "100px" : "180px",
+                        minWidth: idx >= 9 ? "100px" : "120px",
+                        overflowWrap: "break-word",
+                      }}
+                    >
+                      {header}
+                    </th>
+                  ))}
 
                   <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.branch}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.department}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.action}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
+                    className="px-2 py-2 border border-gray-300"
                     style={{
                       maxWidth: "100px",
                       minWidth: "100px",
@@ -393,22 +317,20 @@ const Asset = () => {
                     }}
                   >
                     {strings.table.headers.deleteAll}
-                    <div className="flex justify-center items-center">
-                      <div className="">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedAssets.length === assets.length &&
-                              assets.length > 0
-                            }
-                            onChange={handleSelectAllAssets}
-                            className="mr-2"
-                          />
-                        </label>
-                      </div>
+                    <div className="flex justify-center items-center gap-1">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedAssets.length === assets.length &&
+                            assets.length > 0
+                          }
+                          onChange={handleSelectAllAssets}
+                          className="mr-2"
+                        />
+                      </label>
                       <button onClick={handleDeleteSelectedAssets}>
-                        <MdDelete className="h-6 w-6 text-[red]" />
+                        <MdDelete className="h-5 w-5 text-[red]" />
                       </button>
                     </div>
                   </th>
@@ -433,7 +355,7 @@ const Asset = () => {
                           overflowWrap: "break-word",
                         }}
                       >
-                        {asset.assetName}
+                        {asset.assetName || strings.table.notAvailable}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -443,7 +365,7 @@ const Asset = () => {
                           overflowWrap: "break-word",
                         }}
                       >
-                        {asset.uniqueId}
+                        {asset.uniqueId || strings.table.notAvailable}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -453,7 +375,7 @@ const Asset = () => {
                           overflowWrap: "break-word",
                         }}
                       >
-                        {asset.brand}
+                        {asset.brand || strings.table.notAvailable}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -463,7 +385,7 @@ const Asset = () => {
                           overflowWrap: "break-word",
                         }}
                       >
-                        {asset.model}
+                        {asset.model || strings.table.notAvailable}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -473,7 +395,7 @@ const Asset = () => {
                           overflowWrap: "break-word",
                         }}
                       >
-                        {asset.serialNumber}
+                        {asset.serialNumber || strings.table.notAvailable}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"
@@ -483,7 +405,7 @@ const Asset = () => {
                           overflowWrap: "break-word",
                         }}
                       >
-                        {asset.status}
+                        {asset.status || strings.table.notAvailable}
                       </td>
                       <td
                         className="px-2 py-2 border border-gray-300"

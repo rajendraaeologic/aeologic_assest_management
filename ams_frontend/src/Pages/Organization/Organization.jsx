@@ -300,7 +300,7 @@ const Organization = () => {
               className="table-auto min-w-full text-left border-collapse"
               style={{ tableLayout: "fixed" }}
             >
-              <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
+              {/* <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
                   <th
                     className="px-2 py-4 border border-gray-300"
@@ -377,6 +377,56 @@ const Organization = () => {
                       </div>
                       <button onClick={handleDeleteSelectedOrganizations}>
                         <MdDelete className="h-6 w-6  text-[red]" />
+                      </button>
+                    </div>
+                  </th>
+                </tr>
+              </thead> */}
+              <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
+                <tr>
+                  {[
+                    table.headers.orgName,
+                    table.headers.branchName,
+                    table.headers.branchLocation,
+                    table.headers.departmentName,
+                    table.headers.action,
+                  ].map((header, idx) => (
+                    <th
+                      key={idx}
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: idx >= 4 ? "100px" : "180px",
+                        minWidth: idx >= 4 ? "100px" : "120px",
+                        overflowWrap: "break-word",
+                      }}
+                    >
+                      {header}
+                    </th>
+                  ))}
+
+                  <th
+                    className="px-2 py-2 border border-gray-300"
+                    style={{
+                      maxWidth: "100px",
+                      minWidth: "100px",
+                      overflowWrap: "break-word",
+                    }}
+                  >
+                    {table.headers.deleteAll}
+                    <div className="flex justify-center items-center gap-1">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedOrganizations.length ===
+                              organizations.length && organizations.length > 0
+                          }
+                          onChange={handleSelectAllOrganizations}
+                          className="mr-2"
+                        />
+                      </label>
+                      <button onClick={handleDeleteSelectedOrganizations}>
+                        <MdDelete className="h-5 w-5 text-[red]" />
                       </button>
                     </div>
                   </th>

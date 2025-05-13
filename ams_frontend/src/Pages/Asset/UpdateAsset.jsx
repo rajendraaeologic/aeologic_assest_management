@@ -355,12 +355,12 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
       };
 
       await dispatch(updateAsset(updateData)).unwrap();
-      dispatch(
+      await dispatch(
         getAllAssets({
           page: currentPage,
           limit: rowsPerPage,
         })
-      );
+      ).unwrap();
       toast.success(assetStrings.updateAsset.toast.success, {
         position: "top-right",
         autoClose: 1000,

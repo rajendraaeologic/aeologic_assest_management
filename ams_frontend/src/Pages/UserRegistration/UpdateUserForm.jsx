@@ -317,12 +317,12 @@ const UpdateUserForm = ({ onClose }) => {
       };
 
       await dispatch(updateUser(userData)).unwrap();
-      dispatch(
+      await dispatch(
         getAllUsers({
           page: currentPage,
           limit: rowsPerPage,
         })
-      );
+      ).unwrap();
 
       toast.success(userStrings.updateUser.toast.success, {
         position: "top-right",

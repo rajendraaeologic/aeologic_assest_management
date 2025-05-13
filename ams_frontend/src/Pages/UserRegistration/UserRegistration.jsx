@@ -166,10 +166,10 @@ const UserRegistration = () => {
 
     try {
       if (userToDelete) {
-        await dispatch(deleteUser([userToDelete]));
+        await dispatch(deleteUser([userToDelete])).unwrap();
         setDeleteMessage(userStrings.user.modals.deleteSuccess.single);
       } else if (selectedUsers.length > 0) {
-        await dispatch(deleteUser(selectedUsers));
+        await dispatch(deleteUser(selectedUsers)).unwrap();
         setDeleteMessage(
           userStrings.user.modals.deleteSuccess.multiple.replace(
             "{count}",
@@ -346,98 +346,31 @@ const UserRegistration = () => {
             >
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
+                  {[
+                    userStrings.user.table.headers.userName,
+                    userStrings.user.table.headers.phone,
+                    userStrings.user.table.headers.email,
+                    userStrings.user.table.headers.status,
+                    userStrings.user.table.headers.userRole,
+                    userStrings.user.table.headers.organizationName,
+                    userStrings.user.table.headers.branchName,
+                    userStrings.user.table.headers.departmentName,
+                    userStrings.user.table.headers.action,
+                  ].map((header, idx) => (
+                    <th
+                      key={idx}
+                      className="px-2 py-2 border border-gray-300"
+                      style={{
+                        maxWidth: "180px",
+                        minWidth: "120px",
+                        overflowWrap: "break-word",
+                      }}
+                    >
+                      {header}
+                    </th>
+                  ))}
                   <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.userName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.phone}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.email}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.status}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.userRole}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.organizationName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.branchName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.departmentName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {userStrings.user.table.headers.action}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
+                    className="px-2 py-2 border border-gray-300"
                     style={{
                       maxWidth: "100px",
                       minWidth: "100px",
@@ -445,22 +378,20 @@ const UserRegistration = () => {
                     }}
                   >
                     {userStrings.user.table.headers.deleteAll}
-                    <div className="flex justify-center items-center">
-                      <div className="">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedUsers.length === users.length &&
-                              users.length > 0
-                            }
-                            onChange={handleSelectAllUsers}
-                            className="mr-2"
-                          />
-                        </label>
-                      </div>
+                    <div className="flex justify-center items-center gap-1">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedUsers.length === users.length &&
+                            users.length > 0
+                          }
+                          onChange={handleSelectAllUsers}
+                          className="mr-2"
+                        />
+                      </label>
                       <button onClick={handleDeleteSelectedUsers}>
-                        <MdDelete className="h-6 w-6 text-[red]" />
+                        <MdDelete className="h-5 w-5 text-[red]" />
                       </button>
                     </div>
                   </th>

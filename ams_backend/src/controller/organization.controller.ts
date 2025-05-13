@@ -14,7 +14,6 @@ const createOrganization = catchAsync(async (req, res) => {
     } as Organization);
 
     res.status(httpStatus.CREATED).send({
-      status: 201,
       message: "Organization Created Successfully.",
       organization,
     });

@@ -22,7 +22,10 @@ import { deleteAsset } from "../../Features/slices/assetSlice";
 import assetStrings from "../../locales/assetStrings";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
-import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
+import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader";
+import PaginationControls from "../../components/common/PaginationControls";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
+import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 const Asset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -156,9 +159,21 @@ const Asset = () => {
     try {
       if (assetToDelete) {
         await dispatch(deleteAsset([assetToDelete])).unwrap();
+        dispatch(
+          getAllAssets({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(strings.modals.deleteSuccess.single);
       } else if (selectedAssets.length > 0) {
         await dispatch(deleteAsset(selectedAssets)).unwrap();
+        dispatch(
+          getAllAssets({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(
           strings.modals.deleteSuccess.multiple.replace(
             "{count}",
@@ -279,10 +294,7 @@ const Asset = () => {
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
-            <table
-              className="table-auto min-w-full text-left border-collapse"
-              style={{ tableLayout: "fixed" }}
-            >
+            <table className="table-auto w-full text-left border-collapse">
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
                   {[
@@ -299,27 +311,16 @@ const Asset = () => {
                   ].map((header, idx) => (
                     <th
                       key={idx}
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: idx === 9 || idx === 10 ? "100px" : "auto",
-                        minWidth: idx === 9 || idx === 10 ? "100px" : "165px",
-                        overflowWrap: "break-word",
-                      }}
+                      className="px-2 py-2 border border-gray-300 whitespace-nowrap"
                     >
                       {header}
                     </th>
                   ))}
 
-                  <th
-                    className="px-2 py-2 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
+                  {/* Delete All Checkbox Header */}
+                  <th className="px-2 py-2 border border-gray-300 min-w-[100px] max-w-[100px] whitespace-nowrap">
                     {strings.table.headers.deleteAll}
-                    <div className="flex justify-center items-center gap-1">
+                    <div className="flex justify-center items-center gap-1 mt-1">
                       <label className="flex items-center">
                         <input
                           type="checkbox"
@@ -339,20 +340,19 @@ const Asset = () => {
                 </tr>
               </thead>
 
-              {/* Table Body */}
               <tbody>
                 {loading ? (
                   <SkeletonLoader rows={5} columns={11} />
-                ) : error ? (
+                ) : assets.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="10"
-                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                      colSpan="12"
+                      className="px-2 py-4 text-center border border-gray-300"
                     >
-                      {error}
+                      {strings.table.noData}
                     </td>
                   </tr>
-                ) : assets.length > 0 ? (
+                ) : (
                   assets.map((asset, index) => (
                     <tr
                       key={asset.id || index}
@@ -360,107 +360,32 @@ const Asset = () => {
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.assetName || strings.table.notAvailable}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.uniqueId || strings.table.notAvailable}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.brand || strings.table.notAvailable}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.model || strings.table.notAvailable}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.serialNumber || strings.table.notAvailable}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.status || strings.table.notAvailable}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.company?.organizationName ||
-                          strings.table.notAvailable}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.branch?.branchName || strings.table.notAvailable}
-                      </td>
+                      {/* Asset Columns */}
+                      {[
+                        asset.assetName,
+                        asset.uniqueId,
+                        asset.brand,
+                        asset.model,
+                        asset.serialNumber,
+                        asset.status,
+                        asset.company?.organizationName,
+                        asset.branch?.branchName,
+                        asset.department?.departmentName,
+                      ].map((field, i) => (
+                        <td
+                          key={i}
+                          className="px-2 py-2 border border-gray-300 break-words align-top"
+                        >
+                          {field || strings.notAvailable.emptyText}
+                        </td>
+                      ))}
 
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.department?.departmentName ||
-                          strings.table.notAvailable}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
-                        <div className="flex ">
+                      {/* Action Buttons */}
+                      <td className="px-2 py-2 border border-gray-300 text-center">
+                        <div className="flex justify-center gap-2">
                           <button
                             onClick={() => handleEditAsset(asset)}
-                            className="px-3 py-2 rounded-sm "
+                            className="px-3 py-2 rounded-sm"
                           >
                             <FontAwesomeIcon icon={faPen} />
                           </button>
@@ -472,78 +397,33 @@ const Asset = () => {
                           </button>
                         </div>
                       </td>
-                      <td
-                        className="px-2 py-2 border text-center border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
+
+                      {/* Checkbox Selection */}
+                      <td className="px-2 py-2 border text-center">
                         <input
                           type="checkbox"
-                          checked={selectedAssets?.includes(asset.id) ?? false}
+                          checked={selectedAssets.includes(asset.id)}
                           onChange={() => handleToggleAssetSelection(asset.id)}
                         />
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="12"
-                      className="px-2 py-4 text-center border border-gray-300"
-                    >
-                      {strings.table.noData}
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2 flex items-center gap-2">
-              {/* Previous Button */}
-              <button
-                onClick={handlePrev}
-                disabled={currentPage <= 1 || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage <= 1 || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {assetStrings.asset.buttons.previous}
-              </button>
-
-              {/* Page Info */}
-              <span className="px-2 space-x-1">
-                {totalPages > 0 ? (
-                  <>
-                    <span className="py-1 px-3 border-2 bg-[#3bc0c3] text-white">
-                      {currentPage}
-                    </span>
-                    <span className="py-1 px-3 border-2 text-gray-500">
-                      / {totalPages}
-                    </span>
-                  </>
-                ) : (
-                  <span className="py-1 px-3">0 / 0</span>
-                )}
-              </span>
-
-              {/* Next Button */}
-              <button
-                onClick={handleNext}
-                disabled={currentPage >= totalPages || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage >= totalPages || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {assetStrings.asset.buttons.next}
-              </button>
-            </div>
-          </div>
+          <PaginationControls
+            currentPage={currentPage}
+            rowsPerPage={rowsPerPage}
+            totalItems={totalAssets}
+            totalPages={totalPages}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            previousLabel={strings.buttons.previous}
+            nextLabel={strings.buttons.next}
+          />
         </div>
       </div>
       {/* Modals */}
@@ -561,55 +441,21 @@ const Asset = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {assetToDelete
-                ? strings.modals.deleteConfirmation.single
-                : strings.modals.deleteConfirmation.multiple.replace(
-                    "{count}",
-                    selectedAssets.length
-                  )}
-            </h3>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-300 rounded-md"
-              >
-                {strings.buttons.no}
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-md"
-                disabled={isDeleting}
-              >
-                {/* {strings.buttons.yes} */}
-                {isDeleting ? strings.buttons.deleting : strings.buttons.yes}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <DeleteConfirmationModal
+        show={showDeleteConfirmation}
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        isSingle={!!assetToDelete}
+        count={selectedAssets.length}
+        strings={assetStrings.asset}
+      />
       {/* Select First Popup */}
-      {showSelectFirstPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {strings.modals.selectFirst}
-            </h3>
-            <div className="flex justify-end">
-              <button
-                onClick={closeSelectFirstPopup}
-                className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
-              >
-                {strings.buttons.ok}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SelectFirstPopup
+        show={showSelectFirstPopup}
+        onClose={closeSelectFirstPopup}
+        strings={assetStrings.asset}
+      />
     </div>
   );
 };

@@ -26,13 +26,16 @@ import { deleteAssignAsset } from "../../Features/slices/assignAssetSlice";
 import assignAssetStrings from "../../locales/assignAssetString";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
-import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
+import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader";
+import PaginationControls from "../../components/common/PaginationControls";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
+import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 const AssignAsset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isSidebarOpen } = useContext(SliderContext);
 
-  const { title, breadcrumb, buttons, table, modals } =
+  const { title, breadcrumb, buttons, table, modals, notAvailable } =
     assignAssetStrings.assignAsset;
 
   const {
@@ -162,9 +165,23 @@ const AssignAsset = () => {
     try {
       if (assignAssetToDelete) {
         await dispatch(deleteAssignAsset([assignAssetToDelete])).unwrap();
+        dispatch(
+          getAllAssignAssets({
+            page: currentPage,
+            limit: rowsPerPage,
+            status: "IN_USE",
+          })
+        );
         setDeleteMessage(modals.deleteSuccess.single);
       } else if (selectedAssignAssets.length > 0) {
         await dispatch(deleteAssignAsset(selectedAssignAssets)).unwrap();
+        dispatch(
+          getAllAssignAssets({
+            page: currentPage,
+            limit: rowsPerPage,
+            status: "IN_USE",
+          })
+        );
         setDeleteMessage(
           modals.deleteSuccess.multiple.replace(
             "{count}",
@@ -284,10 +301,7 @@ const AssignAsset = () => {
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
-            <table
-              className="table-auto min-w-full text-left border-collapse"
-              style={{ tableLayout: "fixed" }}
-            >
+            <table className="table-auto w-full text-left border-collapse">
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
                   {[
@@ -300,28 +314,16 @@ const AssignAsset = () => {
                   ].map((header, idx) => (
                     <th
                       key={idx}
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: idx === 5 || idx === 6 ? "100px" : "auto",
-                        minWidth: idx === 5 || idx === 6 ? "100px" : "120px",
-                        overflowWrap: "break-word",
-                      }}
+                      className="px-2 py-2 border border-gray-300 whitespace-nowrap"
                     >
                       {header}
                     </th>
                   ))}
 
-                  {/* Delete All Column */}
-                  <th
-                    className="px-2 py-2 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
+                  {/* Delete All Checkbox Header */}
+                  <th className="px-2 py-2 border border-gray-300 min-w-[100px] max-w-[100px] whitespace-nowrap">
                     {table.headers.deleteAll}
-                    <div className="flex justify-center items-center gap-1">
+                    <div className="flex justify-center items-center gap-1 mt-1">
                       <label className="flex items-center">
                         <input
                           type="checkbox"
@@ -341,20 +343,19 @@ const AssignAsset = () => {
                 </tr>
               </thead>
 
-              {/* Table Body */}
               <tbody>
                 {loading ? (
                   <SkeletonLoader rows={5} columns={7} />
-                ) : error ? (
+                ) : assignAssets.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="10"
-                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                      colSpan="7"
+                      className="px-2 py-4 text-center border border-gray-300"
                     >
-                      {error}
+                      {table.noData}
                     </td>
                   </tr>
-                ) : assignAssets.length > 0 ? (
+                ) : (
                   assignAssets.map((row, index) => (
                     <tr
                       key={row.id || index}
@@ -362,34 +363,25 @@ const AssignAsset = () => {
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      {/* Asset Name */}
-                      <td className="px-2 py-2 border border-gray-300">
-                        {row.asset?.assetName ?? "N/A"}
-                      </td>
+                      {/* Main Data Columns */}
+                      {[
+                        row.asset?.assetName,
+                        row.user?.userName,
+                        row.user?.company?.organizationName,
+                        row.user?.branch?.branchName,
+                        row.user?.department?.departmentName,
+                      ].map((field, i) => (
+                        <td
+                          key={i}
+                          className="px-2 py-2 border border-gray-300 break-words align-top"
+                        >
+                          {field || notAvailable.emptyText}
+                        </td>
+                      ))}
 
-                      {/* User Name */}
-                      <td className="px-2 py-2 border border-gray-300">
-                        {row.user?.userName ?? "N/A"}
-                      </td>
-
-                      {/* Organization */}
-                      <td className="px-2 py-2 border border-gray-300">
-                        {row.user?.company?.organizationName ?? "N/A"}
-                      </td>
-
-                      {/* Branch */}
-                      <td className="px-2 py-2 border border-gray-300">
-                        {row.user?.branch?.branchName ?? "N/A"}
-                      </td>
-
-                      {/* Department */}
-                      <td className="px-2 py-2 border border-gray-300">
-                        {row.user?.department?.departmentName ?? "N/A"}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-2 py-2 border border-gray-300">
-                        <div className="flex">
+                      {/* Action Buttons */}
+                      <td className="px-2 py-2 border border-gray-300 text-center">
+                        <div className="flex justify-center gap-2">
                           <button
                             onClick={() => {
                               setIsUpdateAssignAsset(true);
@@ -408,13 +400,11 @@ const AssignAsset = () => {
                         </div>
                       </td>
 
-                      {/* Checkbox */}
-                      <td className="px-2 py-2 border text-center border-gray-300">
+                      {/* Checkbox Selection */}
+                      <td className="px-2 py-2 border border-gray-300 text-center">
                         <input
                           type="checkbox"
-                          checked={
-                            selectedAssignAssets?.includes(row.id) ?? false
-                          }
+                          checked={selectedAssignAssets.includes(row.id)}
                           onChange={() =>
                             handleToggleAssignAssetSelection(row.id)
                           }
@@ -422,68 +412,22 @@ const AssignAsset = () => {
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="9"
-                      className="px-4 py-4 text-center text-black"
-                    >
-                      {table.noData}
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2 flex items-center gap-2">
-              {/* Previous Button */}
-              <button
-                onClick={handlePrev}
-                disabled={currentPage <= 1 || totalAssignPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage <= 1 || totalAssignPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {assignAssetStrings.assignAsset.buttons.previous}
-              </button>
-
-              {/* Page Info */}
-              <span className="px-2 space-x-1">
-                {totalAssignPages > 0 ? (
-                  <>
-                    <span className="py-1 px-3 border-2 bg-[#3bc0c3] text-white">
-                      {currentPage}
-                    </span>
-                    <span className="py-1 px-3 border-2 text-gray-500">
-                      / {totalAssignPages}
-                    </span>
-                  </>
-                ) : (
-                  <span className="py-1 px-3">0 / 0</span>
-                )}
-              </span>
-
-              {/* Next Button */}
-              <button
-                onClick={handleNext}
-                disabled={
-                  currentPage >= totalAssignPages || totalAssignPages === 0
-                }
-                className={`px-2 py-1 rounded ${
-                  currentPage >= totalAssignPages || totalAssignPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {assignAssetStrings.assignAsset.buttons.next}
-              </button>
-            </div>
-          </div>
+          <PaginationControls
+            currentPage={currentPage}
+            rowsPerPage={rowsPerPage}
+            totalItems={totalAssignAssets}
+            totalPages={totalAssignPages}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            previousLabel={buttons.previous}
+            nextLabel={buttons.next}
+          />
         </div>
       </div>
       {/* Modals */}
@@ -495,52 +439,21 @@ const AssignAsset = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {assignAssetToDelete
-                ? modals.deleteConfirmation.single
-                : modals.deleteConfirmation.multiple.replace(
-                    "{count}",
-                    selectedAssignAssets.length
-                  )}
-            </h3>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-300 rounded-md"
-              >
-                {buttons.no}
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-md"
-                disabled={isDeleting}
-              >
-                {isDeleting ? buttons.deleting : buttons.yes}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <DeleteConfirmationModal
+        show={showDeleteConfirmation}
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        isSingle={!!assignAssetToDelete}
+        count={selectedAssignAssets.length}
+        strings={assignAssetStrings.assignAsset}
+      />
       {/* Select First Popup */}
-      {showSelectFirstPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">{modals.selectFirst}</h3>
-            <div className="flex justify-end">
-              <button
-                onClick={closeSelectFirstPopup}
-                className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
-              >
-                {buttons.ok}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SelectFirstPopup
+        show={showSelectFirstPopup}
+        onClose={closeSelectFirstPopup}
+        strings={assignAssetStrings.assignAsset}
+      />
     </div>
   );
 };

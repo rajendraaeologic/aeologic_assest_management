@@ -11,7 +11,10 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
+import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader";
+import PaginationControls from "../../components/common/PaginationControls";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
+import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 
 import {
   setCurrentPage,
@@ -168,9 +171,21 @@ const UserRegistration = () => {
     try {
       if (userToDelete) {
         await dispatch(deleteUser([userToDelete])).unwrap();
+        dispatch(
+          getAllUsers({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(userStrings.user.modals.deleteSuccess.single);
       } else if (selectedUsers.length > 0) {
         await dispatch(deleteUser(selectedUsers)).unwrap();
+        dispatch(
+          getAllUsers({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(
           userStrings.user.modals.deleteSuccess.multiple.replace(
             "{count}",
@@ -341,10 +356,7 @@ const UserRegistration = () => {
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
-            <table
-              className="table-auto min-w-full text-left border-collapse"
-              style={{ tableLayout: "fixed" }}
-            >
+            <table className="table-auto w-full text-left border-collapse">
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
                   {[
@@ -360,26 +372,15 @@ const UserRegistration = () => {
                   ].map((header, idx) => (
                     <th
                       key={idx}
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: idx === 8 || idx === 9 ? "100px" : "auto",
-                        minWidth: idx === 8 || idx === 9 ? "100px" : "165px",
-                        overflowWrap: "break-word",
-                      }}
+                      className="px-2 py-2 border border-gray-300 whitespace-nowrap"
                     >
                       {header}
                     </th>
                   ))}
-                  <th
-                    className="px-2 py-2 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
+
+                  <th className="px-2 py-2 border border-gray-300 min-w-[100px] max-w-[100px] whitespace-nowrap">
                     {userStrings.user.table.headers.deleteAll}
-                    <div className="flex justify-center items-center gap-1">
+                    <div className="flex justify-center items-center gap-1 mt-1">
                       <label className="flex items-center">
                         <input
                           type="checkbox"
@@ -402,16 +403,16 @@ const UserRegistration = () => {
               <tbody>
                 {loading ? (
                   <SkeletonLoader rows={5} columns={10} />
-                ) : error ? (
+                ) : users.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="10"
-                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                      colSpan="11"
+                      className="px-2 py-4 text-center border border-gray-300"
                     >
-                      {error}
+                      {userStrings.user.table.noData}
                     </td>
                   </tr>
-                ) : users.length > 0 ? (
+                ) : (
                   users.map((user, index) => (
                     <tr
                       key={user.id || index}
@@ -419,102 +420,28 @@ const UserRegistration = () => {
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {user.userName}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {user.phone}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {user.email}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {user.status}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {user.userRole}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {user.company?.organizationName ||
-                          userStrings.user.notAvailable.emptyText}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {user.branch?.branchName ||
-                          userStrings.user.notAvailable.emptyText}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {user.department?.departmentName ||
-                          userStrings.user.notAvailable.emptyText}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
-                        <div className="flex">
+                      {/* User Data Columns */}
+                      {[
+                        user.userName,
+                        user.phone,
+                        user.email,
+                        user.status,
+                        user.userRole,
+                        user.company?.organizationName,
+                        user.branch?.branchName,
+                        user.department?.departmentName,
+                      ].map((field, i) => (
+                        <td
+                          key={i}
+                          className="px-2 py-2 border border-gray-300 break-words align-top"
+                        >
+                          {field || userStrings.user.notAvailable.emptyText}
+                        </td>
+                      ))}
+
+                      {/* Action Buttons */}
+                      <td className="px-2 py-2 border border-gray-300 text-center align-top">
+                        <div className="flex justify-center gap-2">
                           <button
                             onClick={() => {
                               setIsUpdateUserFormOpen(true);
@@ -532,10 +459,9 @@ const UserRegistration = () => {
                           </button>
                         </div>
                       </td>
-                      <td
-                        className="px-2 py-2 text-center border border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
+
+                      {/* Checkbox Selection */}
+                      <td className="px-2 py-2 border border-gray-300 text-center align-top">
                         <input
                           type="checkbox"
                           checked={selectedUsers.includes(user.id)}
@@ -544,62 +470,22 @@ const UserRegistration = () => {
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="10"
-                      className="px-2 py-4 text-center border border-gray-300"
-                    >
-                      {userStrings.user.table.noData}
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>
           </div>
 
-          <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2 flex items-center gap-2">
-              <button
-                onClick={handlePrev}
-                disabled={currentPage <= 1 || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage <= 1 || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {userStrings.user.buttons.previous}
-              </button>
-
-              <span className="px-2 space-x-1">
-                {totalPages > 0 ? (
-                  <>
-                    <span className="py-1 px-3 border-2 bg-[#3bc0c3] text-white">
-                      {currentPage}
-                    </span>
-                    <span className="py-1 px-3 border-2 text-gray-500">
-                      / {totalPages}
-                    </span>
-                  </>
-                ) : (
-                  <span className="py-1 px-3">0 / 0</span>
-                )}
-              </span>
-
-              <button
-                onClick={handleNext}
-                disabled={currentPage >= totalPages || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage >= totalPages || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {userStrings.user.buttons.next}
-              </button>
-            </div>
-          </div>
+          {/* Pagination */}
+          <PaginationControls
+            currentPage={currentPage}
+            rowsPerPage={rowsPerPage}
+            totalItems={totalUsers}
+            totalPages={totalPages}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            previousLabel={userStrings.user.buttons.previous}
+            nextLabel={userStrings.user.buttons.next}
+          />
         </div>
       </div>
       {isAddUserFormOpen && (
@@ -665,54 +551,21 @@ const UserRegistration = () => {
         </div>
       )}
 
-      {showDeleteConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {userToDelete
-                ? userStrings.user.modals.deleteConfirmation.single
-                : userStrings.user.modals.deleteConfirmation.multiple.replace(
-                    "{count}",
-                    selectedUsers.length
-                  )}
-            </h3>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-300 rounded-md"
-              >
-                {userStrings.user.buttons.no}
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-md"
-                disabled={isDeleting}
-              >
-                {isDeleting
-                  ? userStrings.user.buttons.deleting
-                  : userStrings.user.buttons.yes}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-      {showSelectFirstPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {userStrings.user.modals.selectFirst}
-            </h3>
-            <div className="flex justify-end">
-              <button
-                onClick={closeSelectFirstPopup}
-                className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
-              >
-                {userStrings.user.buttons.ok}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteConfirmationModal
+        show={showDeleteConfirmation}
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        isSingle={!!userToDelete}
+        count={selectedUsers.length}
+        strings={userStrings.user}
+      />
+      {/* Select First Popup */}
+      <SelectFirstPopup
+        show={showSelectFirstPopup}
+        onClose={closeSelectFirstPopup}
+        strings={userStrings.user}
+      />
     </div>
   );
 };

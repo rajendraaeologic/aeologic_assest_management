@@ -22,11 +22,14 @@ import {
   setSearchTerm,
 } from "../../Features/slices/branchSlice";
 import { deleteBranch } from "../../Features/slices/branchSlice";
-import ChipsList from "../../components/UI/ChipsList";
+import ChipsList from "../../components/common/UI/ChipsList";
 import branchStrings from "../../locales/branchStrings";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
-import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
+import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader";
+import PaginationControls from "../../components/common/PaginationControls";
+import SelectFirstPopup from "../../components/common/SelectFirstPopup";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 const Branch = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -160,10 +163,22 @@ const Branch = () => {
       if (branchToDelete) {
         // Single branch delete
         await dispatch(deleteBranch([branchToDelete])).unwrap();
+        dispatch(
+          getAllBranches({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(branchStrings.branch.modals.deleteSuccess.single);
       } else if (selectedBranches.length > 0) {
         // Multiple branches delete
         await dispatch(deleteBranch(selectedBranches)).unwrap();
+        dispatch(
+          getAllBranches({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(
           branchStrings.branch.modals.deleteSuccess.multiple.replace(
             "{count}",
@@ -297,10 +312,7 @@ const Branch = () => {
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
-            <table
-              className="table-auto min-w-full text-left border-collapse"
-              style={{ tableLayout: "fixed" }}
-            >
+            <table className="table-auto w-full text-left border-collapse">
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
                   {[
@@ -312,27 +324,16 @@ const Branch = () => {
                   ].map((header, idx) => (
                     <th
                       key={idx}
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: idx === 4 ? "100px" : "auto",
-                        minWidth: idx === 4 ? "100px" : "160px",
-                        overflowWrap: "break-word",
-                      }}
+                      className="px-2 py-2 border border-gray-300 whitespace-nowrap"
                     >
                       {header}
                     </th>
                   ))}
 
-                  <th
-                    className="px-2 py-2 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
+                  {/* Delete All Checkbox Header */}
+                  <th className="px-2 py-2 border border-gray-300 min-w-[100px] max-w-[100px] whitespace-nowrap">
                     {branchStrings.branch.table.headers.deleteAll}
-                    <div className="flex justify-center items-center gap-1">
+                    <div className="flex justify-center items-center gap-1 mt-1">
                       <label className="flex items-center">
                         <input
                           type="checkbox"
@@ -352,20 +353,19 @@ const Branch = () => {
                 </tr>
               </thead>
 
-              {/* Table Body */}
               <tbody>
                 {loading ? (
                   <SkeletonLoader rows={5} columns={6} />
-                ) : error ? (
+                ) : branches.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="10"
-                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                      colSpan="6"
+                      className="px-2 py-4 text-center border border-gray-300"
                     >
-                      {error}
+                      {branchStrings.branch.table.noData}
                     </td>
                   </tr>
-                ) : branches.length > 0 ? (
+                ) : (
                   branches.map((branch, index) => (
                     <tr
                       key={branch.id || index}
@@ -373,49 +373,22 @@ const Branch = () => {
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {branch.branchName}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {branch.branchLocation}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {branch.company?.organizationName ||
-                          branchStrings.branch.notAvailable.emptyText}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
+                      {/* Main Data Columns */}
+                      {[
+                        branch.branchName,
+                        branch.branchLocation,
+                        branch.company?.organizationName,
+                      ].map((field, i) => (
+                        <td
+                          key={i}
+                          className="px-2 py-2 border border-gray-300 break-words align-top"
+                        >
+                          {field || branchStrings.branch.notAvailable.emptyText}
+                        </td>
+                      ))}
+
+                      {/* Departments Chip List */}
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
                         <ChipsList
                           items={branch.departments || []}
                           labelKey="departmentName"
@@ -425,37 +398,32 @@ const Branch = () => {
                         />
                       </td>
 
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
-                        <div className="flex ">
+                      {/* Action Buttons */}
+                      <td className="px-2 py-2 border border-gray-300 text-center">
+                        <div className="flex justify-center gap-2">
                           <button
                             onClick={() => {
                               setIsUpdateBranch(true);
                               handlerUpdateData(branch);
                             }}
-                            className="px-3 py-2 rounded-sm text-black"
+                            className="px-3 py-2 rounded-sm"
                           >
                             <FontAwesomeIcon icon={faPen} />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(branch)}
-                            className="px-3 py-2 rounded-sm  text-[red]"
+                            className="px-3 py-2 rounded-sm text-[red]"
                           >
                             <MdDelete className="h-6 w-6" />
                           </button>
                         </div>
                       </td>
-                      <td
-                        className="px-2 py-2 border text-center border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
+
+                      {/* Checkbox Selection */}
+                      <td className="px-2 py-2 border border-gray-300 text-center">
                         <input
                           type="checkbox"
-                          checked={
-                            selectedBranches?.includes(branch.id) ?? false
-                          }
+                          checked={selectedBranches.includes(branch.id)}
                           onChange={() =>
                             handleToggleBranchSelection(branch.id)
                           }
@@ -463,63 +431,22 @@ const Branch = () => {
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td colSpan="9" className="text-center py-4">
-                      {branchStrings.branch.table.noData}
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2 flex items-center gap-2">
-              {/* Previous Button */}
-              <button
-                onClick={handlePrev}
-                disabled={currentPage <= 1 || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage <= 1 || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {branchStrings.branch.buttons.previous}
-              </button>
-
-              {/* Page Info */}
-              <span className="px-2 space-x-1">
-                {totalPages > 0 ? (
-                  <>
-                    <span className="py-1 px-3 border-2 bg-[#3bc0c3] text-white">
-                      {currentPage}
-                    </span>
-                    <span className="py-1 px-3 border-2 text-gray-500">
-                      / {totalPages}
-                    </span>
-                  </>
-                ) : (
-                  <span className="py-1 px-3">0 / 0</span>
-                )}
-              </span>
-
-              {/* Next Button */}
-              <button
-                onClick={handleNext}
-                disabled={currentPage >= totalPages || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage >= totalPages || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {branchStrings.branch.buttons.next}
-              </button>
-            </div>
-          </div>
+          <PaginationControls
+            currentPage={currentPage}
+            rowsPerPage={rowsPerPage}
+            totalItems={totalBranches}
+            totalPages={totalPages}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            previousLabel={branchStrings.branch.buttons.previous}
+            nextLabel={branchStrings.branch.buttons.next}
+          />
         </div>
       </div>
 
@@ -528,58 +455,22 @@ const Branch = () => {
       {isUpdateBranch && (
         <UpdateBranch onClose={() => setIsUpdateBranch(false)} />
       )}
-
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {branchToDelete
-                ? branchStrings.branch.modals.deleteConfirmation.single
-                : branchStrings.branch.modals.deleteConfirmation.multiple.replace(
-                    "{count}",
-                    selectedBranches.length
-                  )}
-            </h3>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-300 rounded-md"
-              >
-                {branchStrings.branch.buttons.no}
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-md"
-                disabled={isDeleting}
-              >
-                {isDeleting
-                  ? branchStrings.branch.buttons.deleting
-                  : branchStrings.branch.buttons.yes}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <DeleteConfirmationModal
+        show={showDeleteConfirmation}
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        isSingle={!!branchToDelete}
+        count={selectedBranches.length}
+        strings={branchStrings.branch}
+      />
       {/* Select First Popup */}
-      {showSelectFirstPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {branchStrings.branch.modals.selectFirst}
-            </h3>
-            <div className="flex justify-end">
-              <button
-                onClick={closeSelectFirstPopup}
-                className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
-              >
-                {branchStrings.branch.buttons.ok}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SelectFirstPopup
+        show={showSelectFirstPopup}
+        onClose={closeSelectFirstPopup}
+        strings={branchStrings.branch}
+      />
     </div>
   );
 };

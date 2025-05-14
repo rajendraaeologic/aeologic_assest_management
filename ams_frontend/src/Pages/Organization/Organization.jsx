@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
-import ChipsList from "../../components/UI/ChipsList";
+import ChipsList from "../../components/common/UI/ChipsList";
 import {
   setCurrentPage,
   setRowsPerPage,
@@ -27,7 +27,10 @@ import { deleteOrganization } from "../../Features/slices/organizationSlice";
 import organizationStrings from "../../locales/organizationStrings";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
-import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
+import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader";
+import PaginationControls from "../../components/common/PaginationControls";
+import SelectFirstPopup from "../../components/common/SelectFirstPopup";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 
 const Organization = () => {
   const dispatch = useDispatch();
@@ -49,6 +52,9 @@ const Organization = () => {
     loading,
     error,
   } = useSelector((state) => state.organizationData);
+
+  // const startRow = (currentPage - 1) * rowsPerPage + 1;
+  // const endRow = Math.min(currentPage * rowsPerPage, totalOrganizations);
 
   const [isAddOrganization, setIsAddOrganization] = useState(false);
   const [isUpdateOrganization, setIsUpdateOrganization] = useState(false);
@@ -164,10 +170,22 @@ const Organization = () => {
       if (organizationToDelete) {
         // Single organization delete
         await dispatch(deleteOrganization([organizationToDelete])).unwrap();
+        dispatch(
+          getAllOrganizations({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(modals.deleteSuccess.single);
       } else if (selectedOrganizations.length > 0) {
         // Multiple organizations delete
         await dispatch(deleteOrganization(selectedOrganizations)).unwrap();
+        dispatch(
+          getAllOrganizations({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(
           modals.deleteSuccess.multiple.replace(
             "{count}",
@@ -261,7 +279,7 @@ const Organization = () => {
           <div className="flex items-center justify-between pt-8 px-6">
             {/* Left side: Show entries dropdown */}
             <div className="flex items-center gap-2">
-              <p>{organizationStrings.organization.table.showEntries}</p>
+              <p>{table.showEntries}</p>
               <div className="border-2 flex justify-evenly">
                 <select
                   value={rowsPerPage}
@@ -277,7 +295,7 @@ const Organization = () => {
                   ))}
                 </select>
               </div>
-              <p>{organizationStrings.organization.table.entries}</p>
+              <p>{table.entries}</p>
             </div>
 
             {/* Right side: Search bar */}
@@ -298,44 +316,27 @@ const Organization = () => {
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
-            <table
-              className="table-auto min-w-full text-left border-collapse"
-              style={{ tableLayout: "fixed" }}
-            >
+            <table className="table-auto w-full text-left border-collapse">
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
                   {[
-                    organizationStrings.organization.table.headers.orgName,
-                    organizationStrings.organization.table.headers.branchName,
-                    organizationStrings.organization.table.headers
-                      .branchLocation,
-                    organizationStrings.organization.table.headers
-                      .departmentName,
-                    organizationStrings.organization.table.headers.action,
+                    table.headers.orgName,
+                    table.headers.branchName,
+                    table.headers.branchLocation,
+                    table.headers.departmentName,
+                    table.headers.action,
                   ].map((header, idx) => (
                     <th
                       key={idx}
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: idx === 4 ? "100px" : "auto",
-                        minWidth: idx === 4 ? "100px" : "160px",
-                        overflowWrap: "break-word",
-                      }}
+                      className="px-2 py-2 border border-gray-300 whitespace-nowrap"
                     >
                       {header}
                     </th>
                   ))}
 
-                  <th
-                    className="px-2 py-2 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {organizationStrings.organization.table.headers.deleteAll}
-                    <div className="flex justify-center items-center gap-1">
+                  <th className="px-2 py-2 border border-gray-300 min-w-[100px] max-w-[100px] whitespace-nowrap">
+                    {table.headers.deleteAll}
+                    <div className="flex justify-center items-center gap-1 mt-1">
                       <label className="flex items-center">
                         <input
                           type="checkbox"
@@ -355,20 +356,19 @@ const Organization = () => {
                 </tr>
               </thead>
 
-              {/* Table Body */}
               <tbody>
                 {loading ? (
                   <SkeletonLoader rows={5} columns={6} />
-                ) : error ? (
+                ) : organizations.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="10"
-                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                      colSpan="6"
+                      className="px-2 py-4 text-center border border-gray-300"
                     >
-                      {error}
+                      {table.noData}
                     </td>
                   </tr>
-                ) : organizations.length > 0 ? (
+                ) : (
                   organizations.map((org, index) => (
                     <tr
                       key={org.id || index}
@@ -376,56 +376,31 @@ const Organization = () => {
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {org.organizationName}
+                      {/* Organization Name */}
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                        {org.organizationName || notAvailable.emptyText}
                       </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
+
+                      {/* Branches Chip List */}
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
                         <ChipsList
                           items={org.branches}
                           labelKey="branchName"
                           emptyText={notAvailable.emptyText}
                         />
                       </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
+
+                      {/* Branch Locations Chip List */}
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
                         <ChipsList
                           items={org.branches}
                           labelKey="branchLocation"
                           emptyText={notAvailable.emptyText}
                         />
                       </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
+
+                      {/* Departments Chip List */}
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
                         <ChipsList
                           items={
                             org.branches?.flatMap(
@@ -436,37 +411,33 @@ const Organization = () => {
                           emptyText={notAvailable.emptyText}
                         />
                       </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
-                        <div className="flex ">
+
+                      {/* Action Buttons */}
+                      <td className="px-2 py-2 border border-gray-300 text-center align-top">
+                        <div className="flex justify-center gap-2">
                           <button
                             onClick={() => {
                               setIsUpdateOrganization(true);
                               handlerUpdateData(org);
                             }}
-                            className="px-3 py-2 rounded-sm "
+                            className="px-3 py-2 rounded-sm"
                           >
                             <FontAwesomeIcon icon={faPen} />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(org)}
-                            className="px-3 py-2 rounded-sm   text-[red]"
+                            className="px-3 py-2 rounded-sm text-[red]"
                           >
                             <MdDelete className="h-6 w-6" />
                           </button>
                         </div>
                       </td>
-                      <td
-                        className="px-2 py-2 border text-center border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
+
+                      {/* Checkbox Selection */}
+                      <td className="px-2 py-2 border border-gray-300 text-center align-top">
                         <input
                           type="checkbox"
-                          checked={
-                            selectedOrganizations?.includes(org.id) ?? false
-                          }
+                          checked={selectedOrganizations.includes(org.id)}
                           onChange={() =>
                             handleToggleOrganizationSelection(org.id)
                           }
@@ -474,63 +445,22 @@ const Organization = () => {
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="px-2 py-4 text-center border border-gray-300"
-                    >
-                      {table.noData}
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2 flex items-center gap-2">
-              <button
-                onClick={handlePrev}
-                disabled={currentPage <= 1 || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage <= 1 || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {organizationStrings.organization.buttons.previous}
-              </button>
-
-              <span className="px-2 space-x-1">
-                {totalPages > 0 ? (
-                  <>
-                    <span className="py-1 px-3 border-2 bg-[#3bc0c3] text-white">
-                      {currentPage}
-                    </span>
-                    <span className="py-1 px-3 border-2 text-gray-500">
-                      / {totalPages}
-                    </span>
-                  </>
-                ) : (
-                  <span className="py-1 px-3">0 / 0</span>
-                )}
-              </span>
-
-              <button
-                onClick={handleNext}
-                disabled={currentPage >= totalPages || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage >= totalPages || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {organizationStrings.organization.buttons.next}
-              </button>
-            </div>
-          </div>
+          <PaginationControls
+            currentPage={currentPage}
+            rowsPerPage={rowsPerPage}
+            totalItems={totalOrganizations}
+            totalPages={totalPages}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            previousLabel={buttons.previous}
+            nextLabel={buttons.next}
+          />
         </div>
       </div>
       {/* Modals */}
@@ -542,52 +472,22 @@ const Organization = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {organizationToDelete
-                ? modals.deleteConfirmation.single
-                : modals.deleteConfirmation.multiple.replace(
-                    "{count}",
-                    selectedOrganizations.length
-                  )}
-            </h3>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-300 rounded-md"
-              >
-                {buttons.no}
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-md"
-                disabled={isDeleting}
-              >
-                {isDeleting ? buttons.deleting : buttons.yes}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
+      <DeleteConfirmationModal
+        show={showDeleteConfirmation}
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        isSingle={!!organizationToDelete}
+        count={selectedOrganizations.length}
+        strings={organizationStrings.organization}
+      />
       {/* Select First Popup */}
-      {showSelectFirstPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">{modals.selectFirst}</h3>
-            <div className="flex justify-end">
-              <button
-                onClick={closeSelectFirstPopup}
-                className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
-              >
-                {buttons.ok}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SelectFirstPopup
+        show={showSelectFirstPopup}
+        onClose={closeSelectFirstPopup}
+        strings={organizationStrings.organization}
+      />
     </div>
   );
 };

@@ -17,8 +17,7 @@ import { MdPersonAdd } from "react-icons/md";
 import { MdHistory } from "react-icons/md";
 import { NavLink } from "react-router-dom";
 import SliderContext from "../ContexApi";
-// import ReactTooltip from "react-tooltip";
-import { Tooltip } from "react-tooltip";
+import ReactTooltip from "react-tooltip";
 
 const Sidebar = () => {
   const { isSidebarOpen } = useContext(SliderContext);
@@ -114,7 +113,7 @@ const Sidebar = () => {
               </NavLink>
 
               {!isSidebarOpen && (
-                <Tooltip
+                <ReactTooltip
                   id={`tooltip-${index}`}
                   place="right"
                   effect="solid"
@@ -148,7 +147,7 @@ const Sidebar = () => {
             </div>
 
             {!isSidebarOpen && (
-              <Tooltip
+              <ReactTooltip
                 id="reports-tooltip"
                 place="right"
                 effect="solid"

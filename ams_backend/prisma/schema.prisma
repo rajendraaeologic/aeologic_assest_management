@@ -63,13 +63,15 @@ model UserNotification {
 }
 
 model Organization {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
   organizationName String
   branches         Branch[]
   users            User[]
   assets           Asset[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @default(now()) @updatedAt
+  deleted          Boolean   @default(false)
+  deletedAt        DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
 }
 
 model Branch {
@@ -80,20 +82,23 @@ model Branch {
   company        Organization @relation(fields: [companyId], references: [id])
   assets         Asset[]
   users          User[]
+  deleted        Boolean      @default(false)
+  deletedAt      DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @default(now()) @updatedAt
   departments    Department[]
 }
 
 model Department {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
   departmentName String
-  //location       String
-  branchId       String   @db.ObjectId
-  branch         Branch   @relation(fields: [branchId], references: [id])
-  users          User[] // Relationship to users within the department
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @default(now()) @updatedAt
+  branchId       String    @db.ObjectId
+  branch         Branch    @relation(fields: [branchId], references: [id])
+  users          User[]
+  deleted        Boolean   @default(false)
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
   Asset          Asset[]
 }
 
@@ -110,19 +115,19 @@ model User {
   isEmailVerified  Boolean            @default(false)
   Token            Token[]
   assignedAssets   Asset[]
+  deleted          Boolean            @default(false)
+  deletedAt        DateTime?
   UserNotification UserNotification[]
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @default(now()) @updatedAt
-
-  branchId        String?           @db.ObjectId
-  branch          Branch?           @relation(fields: [branchId], references: [id])
-  AssetAssignment AssetAssignment[]
-  AssetHistory    AssetHistory[]
-  departmentId    String?           @db.ObjectId
-  department      Department?       @relation(fields: [departmentId], references: [id])
-  //rfidTag          String?            @unique
-  companyId       String
-  company         Organization      @relation(fields: [companyId], references: [id])
+  branchId         String?            @db.ObjectId
+  branch           Branch?            @relation(fields: [branchId], references: [id])
+  AssetAssignment  AssetAssignment[]
+  AssetHistory     AssetHistory[]
+  departmentId     String?            @db.ObjectId
+  department       Department?        @relation(fields: [departmentId], references: [id])
+  companyId        String             @db.ObjectId
+  company          Organization       @relation(fields: [companyId], references: [id])
 }
 
 model Asset {
@@ -130,7 +135,6 @@ model Asset {
   assetName        String
   description      String?
   uniqueId         String            @unique
-  //categoryId       String            @db.ObjectId
   brand            String?
   model            String?
   serialNumber     String?
@@ -138,11 +142,8 @@ model Asset {
   cost             Float?
   warrantyEndDate  DateTime?
   status           AssetStatus       @default(ACTIVE)
-  //locationId       String            @db.ObjectId
   assignedToUserId String?           @db.ObjectId
   assignedUser     User?             @relation(fields: [assignedToUserId], references: [id])
-  //category       Category          @relation(fields: [categoryId], references: [id])
-  // assetLocation    Location          @relation(fields: [locationId], references: [id])
   assetHistory     AssetHistory[]
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
@@ -150,54 +151,42 @@ model Asset {
   branchId         String?           @db.ObjectId
   branch           Branch?           @relation(fields: [branchId], references: [id])
   departmentId     String?           @db.ObjectId
+  deleted          Boolean           @default(false)
+  deletedAt        DateTime?
   department       Department?       @relation(fields: [departmentId], references: [id])
-  companyId        String
+  companyId        String            @db.ObjectId
   company          Organization      @relation(fields: [companyId], references: [id])
 }
 
-// model Category {
-//   id          String        @id @default(auto()) @map("_id") @db.ObjectId
-//   name        String
-//   assets      Asset[]
-//   createdAt   DateTime      @default(now())
-//   updatedAt   DateTime      @updatedAt
-//   AssetReport AssetReport[]
-// }
-
-model Location {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  locationName String
-  address      String?
-  // assets       Asset[]
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
 model AssetHistory {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  assetId   String   @db.ObjectId
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  assetId   String    @db.ObjectId
   action    String
-  userId    String   @db.ObjectId
-  timestamp DateTime @default(now())
+  deleted   Boolean   @default(false)
+  deletedAt DateTime?
+  userId    String    @db.ObjectId
+  timestamp DateTime  @default(now())
   asset     Asset?    @relation(fields: [assetId], references: [id])
-  user      User     @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
 }
 
 model AssetReport {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
   totalAssets Int
   totalValue  Float
-  reportDate  DateTime @default(now())
-  categoryId  String   @db.ObjectId
-  //category    Category @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  reportDate  DateTime  @default(now())
+  deleted     Boolean   @default(false)
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
 
 model AssetAssignment {
   id         String      @id @default(auto()) @map("_id") @db.ObjectId
   assetId    String      @db.ObjectId
   userId     String      @db.ObjectId
+  deleted    Boolean     @default(false)
+  deletedAt  DateTime?
   assignedAt DateTime    @default(now())
   status     AssetStatus @default(ACTIVE)
   asset      Asset       @relation(fields: [assetId], references: [id])

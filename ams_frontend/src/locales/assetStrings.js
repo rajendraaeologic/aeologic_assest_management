@@ -70,6 +70,9 @@ const assetStrings = {
       maintenance: "Maintenance",
       retired: "Retired",
     },
+    notAvailable: {
+      emptyText: "N/A",
+    },
   },
   addAsset: {
     title: "Add Asset",

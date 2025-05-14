@@ -26,7 +26,10 @@ import {
 import { deleteDepartment } from "../../Features/slices/departmentSlice";
 import { toast } from "react-toastify";
 import debounce from "lodash.debounce";
-import SkeletonLoader from "../../components/SkeletonLoader/SkeletonLoader";
+import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader";
+import PaginationControls from "../../components/common/PaginationControls";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
+import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 const UserDepartment = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -158,12 +161,24 @@ const UserDepartment = () => {
       if (departmentToDelete) {
         // Single department delete
         await dispatch(deleteDepartment([departmentToDelete])).unwrap();
+        dispatch(
+          getAllDepartments({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(
           departmentStrings.department.modals.deleteSuccess.single
         );
       } else if (selectedDepartments.length > 0) {
         // Multiple departments delete
         await dispatch(deleteDepartment(selectedDepartments)).unwrap();
+        dispatch(
+          getAllDepartments({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(
           departmentStrings.department.modals.deleteSuccess.multiple.replace(
             "{count}",
@@ -298,10 +313,7 @@ const UserDepartment = () => {
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
-            <table
-              className="table-auto min-w-full text-left border-collapse"
-              style={{ tableLayout: "fixed" }}
-            >
+            <table className="table-auto w-full text-left border-collapse">
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
                   {[
@@ -312,28 +324,16 @@ const UserDepartment = () => {
                   ].map((header, idx) => (
                     <th
                       key={idx}
-                      className="px-2 py-2 border border-gray-300"
-                      style={{
-                        maxWidth: idx === 3 ? "100px" : "auto",
-                        minWidth: idx === 3 ? "100px" : "160px",
-                        overflowWrap: "break-word",
-                      }}
+                      className="px-2 py-2 border border-gray-300 whitespace-nowrap"
                     >
                       {header}
                     </th>
                   ))}
 
-                  {/* Delete All Column */}
-                  <th
-                    className="px-2 py-2 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
+                  {/* Delete All Checkbox Header */}
+                  <th className="px-2 py-2 border border-gray-300 min-w-[100px] max-w-[100px] whitespace-nowrap">
                     {departmentStrings.department.table.headers.deleteAll}
-                    <div className="flex justify-center items-center gap-1">
+                    <div className="flex justify-center items-center gap-1 mt-1">
                       <label className="flex items-center">
                         <input
                           type="checkbox"
@@ -353,20 +353,19 @@ const UserDepartment = () => {
                 </tr>
               </thead>
 
-              {/* Table Body */}
               <tbody>
                 {loading ? (
                   <SkeletonLoader rows={5} columns={5} />
-                ) : error ? (
+                ) : departments.length === 0 ? (
                   <tr>
                     <td
-                      colSpan="10"
-                      className="px-2 py-4 text-center text-red-500 border border-gray-300"
+                      colSpan="5"
+                      className="px-2 py-4 text-center border border-gray-300"
                     >
-                      {error}
+                      {departmentStrings.department.table.noData}
                     </td>
                   </tr>
-                ) : departments.length > 0 ? (
+                ) : (
                   departments.map((department, index) => (
                     <tr
                       key={department.id || index}
@@ -374,74 +373,47 @@ const UserDepartment = () => {
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {department.departmentName}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {department.branch?.branchName ||
-                          departmentStrings.department.notAvailable.emptyText}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {department.branch?.branchLocation ||
-                          departmentStrings.department.notAvailable.emptyText}
-                      </td>
+                      {/* Main Data Columns */}
+                      {[
+                        department.departmentName,
+                        department.branch?.branchName,
+                        department.branch?.branchLocation,
+                      ].map((field, i) => (
+                        <td
+                          key={i}
+                          className="px-2 py-2 border border-gray-300 break-words align-top"
+                        >
+                          {field ||
+                            departmentStrings.department.notAvailable.emptyText}
+                        </td>
+                      ))}
 
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
-                        <div className="flex ">
+                      {/* Action Buttons */}
+                      <td className="px-2 py-2 border border-gray-300 text-center">
+                        <div className="flex justify-center gap-2">
                           <button
                             onClick={() => {
                               setIsUpdateDepartment(true);
                               handlerUpdateData(department);
                             }}
-                            className="px-3 py-2 rounded-sm "
+                            className="px-3 py-2 rounded-sm"
                           >
                             <FontAwesomeIcon icon={faPen} />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(department)}
-                            className="px-3 py-2 rounded-sm   text-[red]"
+                            className="px-3 py-2 rounded-sm text-[red]"
                           >
                             <MdDelete className="h-6 w-6" />
                           </button>
                         </div>
                       </td>
-                      <td
-                        className="px-2 py-2 text-center border border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
+
+                      {/* Checkbox Selection */}
+                      <td className="px-2 py-2 border border-gray-300 text-center">
                         <input
                           type="checkbox"
-                          checked={
-                            selectedDepartments?.includes(department.id) ??
-                            false
-                          }
+                          checked={selectedDepartments.includes(department.id)}
                           onChange={() =>
                             handleToggleDepartmentSelection(department.id)
                           }
@@ -449,66 +421,22 @@ const UserDepartment = () => {
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="8"
-                      className="px-2 py-4 text-center border border-gray-300"
-                    >
-                      {departmentStrings.department.table.noData}
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2 flex items-center gap-2">
-              {/* Previous Button */}
-              <button
-                onClick={handlePrev}
-                disabled={currentPage <= 1 || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage <= 1 || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {departmentStrings.department.buttons.previous}
-              </button>
-
-              {/* Page Info */}
-              <span className="px-2 space-x-1">
-                {totalPages > 0 ? (
-                  <>
-                    <span className="py-1 px-3 border-2 bg-[#3bc0c3] text-white">
-                      {currentPage}
-                    </span>
-                    <span className="py-1 px-3 border-2 text-gray-500">
-                      / {totalPages}
-                    </span>
-                  </>
-                ) : (
-                  <span className="py-1 px-3">0 / 0</span>
-                )}
-              </span>
-
-              {/* Next Button */}
-              <button
-                onClick={handleNext}
-                disabled={currentPage >= totalPages || totalPages === 0}
-                className={`px-2 py-1 rounded ${
-                  currentPage >= totalPages || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {departmentStrings.department.buttons.next}
-              </button>
-            </div>
-          </div>
+          <PaginationControls
+            currentPage={currentPage}
+            rowsPerPage={rowsPerPage}
+            totalItems={totalDepartments}
+            totalPages={totalPages}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            previousLabel={departmentStrings.department.buttons.previous}
+            nextLabel={departmentStrings.department.buttons.next}
+          />
         </div>
       </div>
 
@@ -519,59 +447,22 @@ const UserDepartment = () => {
       {isUpdateDepartment && (
         <UpdateDepartment onClose={() => setIsUpdateDepartment(false)} />
       )}
-
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {departmentToDelete
-                ? departmentStrings.department.modals.deleteConfirmation.single
-                : departmentStrings.department.modals.deleteConfirmation.multiple.replace(
-                    "{count}",
-                    selectedDepartments.length
-                  )}
-            </h3>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-300 rounded-md"
-              >
-                {departmentStrings.department.buttons.no}
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-md"
-                disabled={isDeleting}
-              >
-                {/* {departmentStrings.department.buttons.yes} */}
-                {isDeleting
-                  ? departmentStrings.department.buttons.deleting
-                  : departmentStrings.department.buttons.yes}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <DeleteConfirmationModal
+        show={showDeleteConfirmation}
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        isSingle={!!departmentToDelete}
+        count={selectedDepartments.length}
+        strings={departmentStrings.department}
+      />
       {/* Select First Popup */}
-      {showSelectFirstPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {departmentStrings.department.modals.selectFirst}
-            </h3>
-            <div className="flex justify-end">
-              <button
-                onClick={closeSelectFirstPopup}
-                className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
-              >
-                {departmentStrings.department.buttons.ok}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <SelectFirstPopup
+        show={showSelectFirstPopup}
+        onClose={closeSelectFirstPopup}
+        strings={departmentStrings.department}
+      />
     </div>
   );
 };

@@ -49,7 +49,7 @@ const assignAssetStrings = {
         multiple: "{count} assignAssets deleted successfully!",
       },
     },
-    chipsList: {
+    notAvailable: {
       emptyText: "N/A",
     },
   },

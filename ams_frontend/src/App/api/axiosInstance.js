@@ -8,7 +8,8 @@ export const injectStore = (store) => {
 };
 
 const API = axios.create({
-  baseURL: "http://localhost:3000/api/v1",
+  // baseURL: "http://localhost:3000/api/v1",
+  baseURL: "http://ec2-3-93-185-33.compute-1.amazonaws.com:3000/api/v1",
 });
 
 API.interceptors.request.use(
@@ -35,8 +36,12 @@ API.interceptors.response.use(
     if (error.response?.status === 403 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
+        // const refreshResponse = await axios.get(
+        //   "http://localhost:3000/api/v1/auth/refresh",
+        //   { withCredentials: true }
+        // );
         const refreshResponse = await axios.get(
-          "http://localhost:3000/api/v1/auth/refresh",
+          "http://ec2-3-93-185-33.compute-1.amazonaws.com:3000/api/v1/auth/refresh",
           { withCredentials: true }
         );
 

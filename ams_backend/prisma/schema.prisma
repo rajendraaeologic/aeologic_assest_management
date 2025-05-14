@@ -21,10 +21,15 @@ enum UserStatus {
 }
 
 enum AssetStatus {
-  ACTIVE
+  UNASSIGNED
+  ASSIGNED
   IN_USE
+  LOST
+  DAMAGED
+  IN_REPAIR
   UNDER_MAINTENANCE
   RETIRED
+  DISPOSED
 }
 
 enum TokenType {

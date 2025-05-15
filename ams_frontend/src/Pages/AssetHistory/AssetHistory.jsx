@@ -62,7 +62,26 @@ const statusConfig = {
     color: "bg-rose-500",
     icon: <FiAlertCircle className="text-rose-600" />,
   },
-  DEFAULT: { color: "bg-gray-400", icon: <FiInfo className="text-gray-600" /> },
+  LOST: {
+    color: "bg-orange-500",
+    icon: <FiAlertCircle className="text-orange-600" />,
+  },
+  DAMAGED: {
+    color: "bg-red-500",
+    icon: <FiAlertCircle className="text-red-600" />,
+  },
+  IN_REPAIR: {
+    color: "bg-amber-500",
+    icon: <FiSettings className="text-amber-600" />,
+  },
+  DISPOSED: {
+    color: "bg-gray-700",
+    icon: <FiAlertCircle className="text-gray-800" />,
+  },
+  DEFAULT: {
+    color: "bg-gray-400",
+    icon: <FiInfo className="text-gray-600" />,
+  },
 };
 
 const DetailItem = ({ label, value, icon }) => (
@@ -339,6 +358,16 @@ const AssetHistory = () => {
         return "Asset details updated";
       case "DELETED":
         return "Asset deleted";
+      case "LOST":
+        return "Asset marked as lost";
+      case "DAMAGED":
+        return "Asset marked as damaged";
+      case "IN_REPAIR":
+        return "Asset under repair";
+      case "DISPOSED":
+        return "Asset disposed";
+      case "UNDER_MAINTENANCE":
+        return "Asset marked as under_maintenance";
       default:
         return latestHistory.action.toLowerCase();
     }

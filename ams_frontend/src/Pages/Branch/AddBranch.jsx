@@ -198,6 +198,11 @@ const AddBranch = ({ onClose }) => {
                       message:
                         branchStrings.addBranch.validation.branchNameMaxLength,
                     },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message:
+                        branchStrings.addBranch.validation.branchNamePattern,
+                    },
                   })}
                   type="text"
                   id="branchName"

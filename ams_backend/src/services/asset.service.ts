@@ -36,6 +36,12 @@ const createAsset = async (
       db.branch.findUnique({ where: { id: asset.branchId } }),
       db.department.findUnique({ where: { id: asset.departmentId } }),
       db.asset.findFirst({ where: { uniqueId: asset.uniqueId } }),
+      db.asset.findFirst({
+        where: {
+          uniqueId: asset.uniqueId,
+          deleted: false,
+        },
+      }),
     ]);
 
   if (!companyExists) {
@@ -92,15 +98,20 @@ export const queryAssets = async (
   const sortBy = options.sortBy || "createdAt";
   const sortType = options.sortType ?? "desc";
 
+  const finalFilter = {
+    ...filter,
+    deleted: false,
+  };
+
   const [data, total] = await Promise.all([
     db.asset.findMany({
-      where: filter,
+      where: finalFilter,
       select: AssetKeys,
       skip,
       take: limit,
       orderBy: { [sortBy]: sortType },
     }),
-    db.asset.count({ where: filter }),
+    db.asset.count({ where: finalFilter }),
   ]);
 
   return { data, total };
@@ -109,39 +120,19 @@ export const queryAssets = async (
 // getAssetById
 const getAssetById = async (assetId: string) => {
   return await db.asset.findUnique({
-    where: { id: assetId },
+    where: { id: assetId, deleted: false },
     select: AssetKeys,
   });
 };
 
 // updateAssetById
-// const updateAssetById = async (
-//   assetId: string,
-//   updateBody: Prisma.AssetUpdateInput,
-//   selectKeys: Prisma.AssetSelect = AssetKeys
-// ): Promise<any | null> => {
-//   const asset = await db.asset.findUnique({
-//     where: { id: assetId },
-//   });
-
-//   if (!asset) {
-//     throw new ApiError(httpStatus.NOT_FOUND, "Asset not found");
-//   }
-
-//   return await db.asset.update({
-//     where: { id: assetId },
-//     data: updateBody,
-//     select: selectKeys,
-//   });
-// };
-
 const updateAssetById = async (
   assetId: string,
   updateBody: Prisma.AssetUpdateInput,
   selectKeys: Prisma.AssetSelect = AssetKeys
 ): Promise<any | null> => {
   const asset = await db.asset.findUnique({
-    where: { id: assetId },
+    where: { id: assetId, deleted: false },
   });
 
   if (!asset) {
@@ -168,6 +159,7 @@ const updateAssetById = async (
         where: {
           uniqueId: newUniqueId,
           id: { not: assetId },
+          deleted: false,
         },
       });
 
@@ -200,6 +192,7 @@ const updateAssetById = async (
         where: {
           serialNumber: newSerialNumber,
           id: { not: assetId },
+          deleted: false,
         },
       });
 
@@ -223,78 +216,126 @@ const updateAssetById = async (
 const deleteAssetById = async (
   assetId: string
 ): Promise<Omit<Asset, "sensitiveField">> => {
-  const asset = await getAssetById(assetId);
+  // Step 1: Fetch asset including soft-deleted
+  const asset = await db.asset.findUnique({
+    where: { id: assetId },
+  });
+
+  // Step 2: Check if asset exists
   if (!asset) {
     throw new ApiError(httpStatus.NOT_FOUND, "Asset not found");
   }
 
-  try {
-    await db.$transaction(
-      async (tx) => {
-        await tx.assetHistory.deleteMany({
-          where: { assetId: asset.id },
-        });
-
-        await tx.assetAssignment.deleteMany({
-          where: { assetId: asset.id },
-        });
-        await tx.asset.delete({ where: { id: asset.id } });
-      },
-      {
-        maxWait: 5000,
-        timeout: 10000,
-      }
-    );
-  } catch (error) {
-    console.error("Error deleting asset:", error);
-    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
+  // Step 3: Check if asset is already soft-deleted
+  if (asset.deleted) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Asset is already deleted");
   }
 
-  return asset;
+  try {
+    const updatedAsset = await db.$transaction(
+      async (tx) => {
+        // 1. Soft-delete Asset Assignments
+        await tx.assetAssignment.updateMany({
+          where: { assetId: asset.id },
+          data: { deleted: true },
+        });
+
+        // 2. Soft-delete Asset Histories
+        await tx.assetHistory.updateMany({
+          where: { assetId: asset.id },
+          data: { deleted: true },
+        });
+
+        // 3. Soft-delete Asset
+        await tx.asset.update({
+          where: { id: asset.id },
+          data: { deleted: true },
+        });
+
+        // Return the updated (soft-deleted) asset
+        return tx.asset.findUnique({
+          where: { id: asset.id },
+        });
+      },
+      { maxWait: 5000, timeout: 10000 }
+    );
+
+    return updatedAsset!;
+  } catch (error) {
+    console.error("Soft-delete error for asset:", error);
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
+  }
 };
 
 // deleteAssetsByIds
 const deleteAssetsByIds = async (
   assetIds: string[]
 ): Promise<Omit<Asset, "sensitiveField">[]> => {
+  // Fetch all assets (including soft-deleted)
   const assets = await db.asset.findMany({
     where: { id: { in: assetIds } },
   });
 
-  if (assets.length !== assetIds.length) {
-    const foundIds = assets.map((a) => a.id);
-    const missingIds = assetIds.filter((id) => !foundIds.includes(id));
+  // Check for missing IDs
+  const foundIds = assets.map((a) => a.id);
+  const missingIds = assetIds.filter((id) => !foundIds.includes(id));
+  if (missingIds.length > 0) {
     throw new ApiError(
       httpStatus.NOT_FOUND,
       `Assets not found: ${missingIds.join(", ")}`
     );
   }
 
+  // Check if any assets are already soft-deleted
+  const alreadyDeleted = assets.filter((a) => a.deleted);
+  if (alreadyDeleted.length > 0) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Assets already deleted: ${alreadyDeleted.map((a) => a.id).join(", ")}`
+    );
+  }
+
   try {
-    await db.$transaction(
+    const updatedAssets = await db.$transaction(
       async (tx) => {
-        await tx.assetHistory.deleteMany({
-          where: { assetId: { in: assetIds } },
+        // 1. Soft delete asset assignments
+        await tx.assetAssignment.updateMany({
+          where: {
+            assetId: { in: assetIds },
+          },
+          data: { deleted: true },
         });
 
-        await tx.assetAssignment.deleteMany({
-          where: { assetId: { in: assetIds } },
+        // 2. Soft delete asset history
+        await tx.assetHistory.updateMany({
+          where: {
+            assetId: { in: assetIds },
+          },
+          data: { deleted: true },
         });
-        await tx.asset.deleteMany({
+
+        // 3. Soft delete assets
+        await tx.asset.updateMany({
+          where: { id: { in: assetIds } },
+          data: { deleted: true },
+        });
+
+        return tx.asset.findMany({
           where: { id: { in: assetIds } },
         });
       },
       {
         maxWait: 5000,
-        timeout: 10000,
+        timeout: 20000,
       }
     );
+
+    return updatedAssets;
   } catch (error) {
-    console.error("Error deleting assets:", error);
+    if (error instanceof ApiError) throw error;
+    console.error("Bulk asset soft-delete error:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
-
-  return assets;
 };
 
 export default {

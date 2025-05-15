@@ -158,6 +158,12 @@ const UpdateOrganization = ({ onClose }) => {
                       organizationStrings.addOrganization.validation
                         .organizationNameMaxLength,
                   },
+                  pattern: {
+                    value: /^[a-zA-Z0-9]+$/,
+                    message:
+                      organizationStrings.addOrganization.validation
+                        .orgNamePattern,
+                  },
                 })}
                 type="text"
                 id="organizationName"

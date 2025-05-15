@@ -127,7 +127,6 @@ export const getAllBranches = catchAsync(async (req, res) => {
 });
 
 // getBranchById
-
 const getBranchById = catchAsync(async (req, res) => {
   const branch = await branchService.getBranchById(req.params.branchId);
 
@@ -168,7 +167,7 @@ const deleteBranch = catchAsync(async (req, res) => {
   try {
     await branchService.deleteBranchById(req.params.branchId);
     res.status(httpStatus.NO_CONTENT);
-    res.send({ message: "Branch deleted successfully" });
+    res.send({ message: "Branch soft-deleted successfully" });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }

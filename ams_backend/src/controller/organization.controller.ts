@@ -80,6 +80,7 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
     : {};
 
   const where = {
+    deleted: false,
     ...filters,
     ...searchConditions,
   };
@@ -164,7 +165,7 @@ const deleteOrganization = catchAsync(async (req, res) => {
   try {
     await organizationService.deleteOrganizationById(req.params.organizationId);
     res.status(httpStatus.NO_CONTENT);
-    res.send({ message: "Organization deleted successfully" });
+    res.send({ message: "Organization soft-deleted successfully" });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
@@ -178,7 +179,7 @@ const bulkDeleteOrganizations = catchAsync(async (req, res) => {
       req.body.organizationIds
     );
     res.status(httpStatus.NO_CONTENT);
-    res.send({ message: "Organizations deleted successfully" });
+    res.send({ message: "Organizations soft-deleted successfully" });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }

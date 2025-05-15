@@ -61,7 +61,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
       brand: "",
       model: "",
       serialNumber: "",
-      status: "ACTIVE",
+      status: "UNASSIGNED",
       branchId: "",
       departmentId: "",
       companyId: "",
@@ -169,6 +169,10 @@ const AddAsset = ({ onClose, onSuccess }) => {
     setSearchTerm(search);
     fetchOrganizations(1, search);
   };
+  const handleOrgClick = async () => {
+    setShowOrgDropdown((prev) => !prev);
+    if (searchTerm.trim() === "") await fetchOrganizations(1, "");
+  };
 
   const handleOrgSelect = (org) => {
     setSelectedOrg(org);
@@ -199,6 +203,16 @@ const AddAsset = ({ onClose, onSuccess }) => {
     fetchBranches(1, search);
   };
 
+  const handleBranchClick = async () => {
+    setShowBranchDropdown((prev) => !prev);
+    if (!showBranchDropdown) {
+      setBranchSearchTerm("");
+      setBranchPage(1);
+      setBranches([]);
+      await fetchBranches(1, "");
+    }
+  };
+
   const handleBranchSelect = (branch) => {
     setValue("branchId", branch.id, { shouldValidate: true });
     setSelectedBranch(branch);
@@ -223,6 +237,16 @@ const AddAsset = ({ onClose, onSuccess }) => {
     const search = e.target.value;
     setDeptSearchTerm(search);
     fetchDepartments(1, search);
+  };
+
+  const handleDeptClick = async () => {
+    setShowDeptDropdown((prev) => !prev);
+    if (!showDeptDropdown) {
+      setDeptSearchTerm("");
+      setDepartmentPage(1);
+      setDepartments([]);
+      await fetchDepartments(1, "");
+    }
   };
 
   const handleDeptSelect = (dept) => {
@@ -355,6 +379,11 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       value: 25,
                       message:
                         assetStrings.addAsset.validation.assetNameMaxLength,
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message:
+                        assetStrings.addAsset.validation.assetNamePattern,
                     },
                   })}
                 />
@@ -543,17 +572,33 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     required: assetStrings.addAsset.validation.statusRequired,
                   })}
                 >
-                  <option value="ACTIVE">
-                    {assetStrings.addAsset.statusOptions.ACTIVE}
+                  <option value="UNASSIGNED">
+                    {assetStrings.addAsset.statusOptions.unassigned}
+                  </option>
+                  <option value="ASSIGNED">
+                    {assetStrings.addAsset.statusOptions.assigned}
+                  </option>
+
+                  <option value="LOST">
+                    {assetStrings.addAsset.statusOptions.lost}
+                  </option>
+                  <option value="DAMAGED">
+                    {assetStrings.addAsset.statusOptions.damaged}
+                  </option>
+                  <option value="IN_REPAIR">
+                    {assetStrings.addAsset.statusOptions.in_REPAIR}
+                  </option>
+                  <option value="DISPOSED">
+                    {assetStrings.addAsset.statusOptions.disposed}
                   </option>
                   <option value="IN_USE">
-                    {assetStrings.addAsset.statusOptions.IN_USE}
+                    {assetStrings.addAsset.statusOptions.in_use}
                   </option>
                   <option value="UNDER_MAINTENANCE">
-                    {assetStrings.addAsset.statusOptions.UNDER_MAINTENANCE}
+                    {assetStrings.addAsset.statusOptions.maintenance}
                   </option>
                   <option value="RETIRED">
-                    {assetStrings.addAsset.statusOptions.RETIRED}
+                    {assetStrings.addAsset.statusOptions.retired}
                   </option>
                 </select>
                 {errors.status && (
@@ -612,7 +657,12 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <div
-                  onClick={() => setShowOrgDropdown(!showOrgDropdown)}
+                  onClick={() => {
+                    {
+                      handleOrgClick();
+                    }
+                    setShowOrgDropdown(!showOrgDropdown);
+                  }}
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis"
                 >
                   {selectedOrg
@@ -664,7 +714,11 @@ const AddAsset = ({ onClose, onSuccess }) => {
                 </label>
                 <div
                   onClick={() => {
-                    if (!selectedOrgId) return;
+                    handleBranchClick();
+                    if (!selectedOrgId) {
+                      toast.error("Please select an organization first");
+                      return;
+                    }
                     setShowBranchDropdown(!showBranchDropdown);
                   }}
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
@@ -716,7 +770,11 @@ const AddAsset = ({ onClose, onSuccess }) => {
                 </label>
                 <div
                   onClick={() => {
-                    if (!branchId) return;
+                    handleDeptClick();
+                    if (!branchId) {
+                      toast.error("Please select a branch first");
+                      return;
+                    }
                     setShowDeptDropdown(!showDeptDropdown);
                   }}
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"

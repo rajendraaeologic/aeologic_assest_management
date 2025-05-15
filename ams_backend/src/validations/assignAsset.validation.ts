@@ -85,7 +85,18 @@ export const getAssetAssignmentsValidation = {
       .custom(isValidMongoDBObjectId)
       .messages(isValidMongoDBObjectIdCustomMessages),
     status: Joi.string()
-      .valid("ACTIVE", "IN_USE", "UNDER_MAINTENANCE", "RETIRED")
+      .valid(
+        "IN_USE",
+        "UNASSIGNED",
+        "ASSIGNED",
+        "MAINTENANCE",
+        "RETIRED",
+        "ASSIGNED",
+        "LOST",
+        "DAMAGED",
+        "IN_REPAIR",
+        "DISPOSED"
+      )
       .optional(),
     from_date: Joi.date().iso().optional(),
     to_date: Joi.date()

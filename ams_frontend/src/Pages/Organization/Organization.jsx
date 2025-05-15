@@ -472,7 +472,6 @@ const Organization = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-
       <DeleteConfirmationModal
         show={showDeleteConfirmation}
         onCancel={cancelDelete}

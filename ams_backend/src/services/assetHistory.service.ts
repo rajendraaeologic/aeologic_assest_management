@@ -21,15 +21,20 @@ const queryAssetHistories = async (
   } = options;
   const skip = (page - 1) * limit;
 
+  const finalFilter = {
+    ...filter,
+    deleted: false,
+  };
+
   const [data, total] = await Promise.all([
     db.assetHistory.findMany({
-      where: filter,
+      where: finalFilter,
       select: AssetHistoryKeys,
       skip,
       take: limit,
       orderBy: { [sortBy]: sortType },
     }),
-    db.assetHistory.count({ where: filter }),
+    db.assetHistory.count({ where: finalFilter }),
   ]);
 
   return { data, total };
@@ -37,7 +42,7 @@ const queryAssetHistories = async (
 
 const getAssetHistoryById = async (historyId: string) => {
   return await db.assetHistory.findUnique({
-    where: { id: historyId },
+    where: { id: historyId, deleted: false },
     select: AssetHistoryKeys,
   });
 };
@@ -60,7 +65,7 @@ const getAssetHistoriesByAssetId = async (
   } = options;
   const skip = (page - 1) * limit;
 
-  const where = { ...filter, assetId };
+  const where = { ...filter, assetId, deleted: false };
 
   const [data, total] = await Promise.all([
     db.assetHistory.findMany({

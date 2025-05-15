@@ -105,6 +105,7 @@ const userStrings = {
       departmentRequired: "Please select a department",
       roleRequired: "Please select a role",
       statusRequired: "Status is required",
+      userNamePattern: "Username must contain only alphanumeric characters",
     },
     select: {
       organizationDefault: "Select Organization",
@@ -159,6 +160,7 @@ const userStrings = {
       branchRequired: "Branch selection is required",
       departmentRequired: "Department selection is required",
       statusRequired: "Please select a status",
+      userNamePattern: "Username must contain only alphanumeric characters",
     },
     select: {
       organizationDefault: "Select organization",

@@ -179,12 +179,18 @@ const AddDepartment = ({ onClose }) => {
     fetchBranches(1, search);
   };
 
-  const handleBranchClick = () => {
+  const handleBranchClick = async () => {
     if (!organizationId) {
       toast.error("Please select an organization first");
       return;
     }
-    setShowBranchDropdown(!showBranchDropdown);
+    setShowBranchDropdown((prev) => !prev);
+    if (!showBranchDropdown) {
+      setBranchSearchTerm("");
+      setBranchPage(1);
+      setBranches([]);
+      await fetchBranches(1, "");
+    }
   };
 
   const handleBranchSelect = (branch) => {
@@ -282,6 +288,12 @@ const AddDepartment = ({ onClose }) => {
                       message:
                         departmentStrings.addDepartment.validation
                           .departmentNameMaxLength,
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message:
+                        departmentStrings.addDepartment.validation
+                          .deptNamePattern,
                     },
                   })}
                   type="text"

@@ -4,23 +4,33 @@ const getDashboardCounts = async () => {
   const [
     userCount,
     organizationsCount,
-    branchsCount,
+    branchesCount,
     departmentsCount,
-    assetsCounts,
+    assetsCount,
   ] = await Promise.all([
-    db.user.count(),
-    db.organization.count(),
-    db.branch.count(),
-    db.department.count(),
-    db.asset.count(),
+    db.user.count({
+      where: { deleted: false },
+    }),
+    db.organization.count({
+      where: { deleted: false },
+    }),
+    db.branch.count({
+      where: { deleted: false },
+    }),
+    db.department.count({
+      where: { deleted: false },
+    }),
+    db.asset.count({
+      where: { deleted: false },
+    }),
   ]);
 
   return {
     users: userCount,
     organizations: organizationsCount,
-    branches: branchsCount,
+    branches: branchesCount,
     departments: departmentsCount,
-    assets: assetsCounts,
+    assets: assetsCount,
   };
 };
 

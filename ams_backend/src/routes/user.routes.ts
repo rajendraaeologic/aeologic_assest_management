@@ -32,11 +32,6 @@ router.post(
   validate(userValidation.uploadUsers),
   userController.uploadUsersFromExcel
 );
-router.get(
-  "/download-excel-template",
-  auth("manageUsers"),
-  userController.downloadUserExcelTemplate
-);
 
 /*router
     .route('/notification')

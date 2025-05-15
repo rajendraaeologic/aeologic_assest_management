@@ -165,6 +165,12 @@ const UpdateDepartment = ({ onClose }) => {
                         departmentStrings.updateDepartment.validation
                           .departmentNameMaxLength,
                     },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message:
+                        departmentStrings.updateDepartment.validation
+                          .deptNamePattern,
+                    },
                   })}
                   type="text"
                   maxLength={25}

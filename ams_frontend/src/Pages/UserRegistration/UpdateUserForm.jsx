@@ -13,7 +13,9 @@ const UpdateUserForm = ({ onClose }) => {
   const modalRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const selectedUser = useSelector((state) => state.usersData.selectedUser);
+  const { currentPage, rowsPerPage } = useSelector((state) => state.usersData);
 
+  // Organization dropdown state
   const [organizations, setOrganizations] = useState([]);
   const [orgLoading, setOrgLoading] = useState(false);
   const [orgPage, setOrgPage] = useState(1);
@@ -22,6 +24,7 @@ const UpdateUserForm = ({ onClose }) => {
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // Branch dropdown state
   const [branches, setBranches] = useState([]);
   const [branchPage, setBranchPage] = useState(1);
   const [hasMoreBranches, setHasMoreBranches] = useState(true);
@@ -29,7 +32,9 @@ const UpdateUserForm = ({ onClose }) => {
   const [branchSearchTerm, setBranchSearchTerm] = useState("");
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
+  const [selectedOrgId, setSelectedOrgId] = useState("");
 
+  // Department dropdown state
   const [departments, setDepartments] = useState([]);
   const [departmentPage, setDepartmentPage] = useState(1);
   const [hasMoreDepts, setHasMoreDepts] = useState(true);
@@ -38,29 +43,36 @@ const UpdateUserForm = ({ onClose }) => {
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [selectedDept, setSelectedDept] = useState(null);
 
-  const { currentPage, rowsPerPage } = useSelector((state) => state.usersData);
-
   const {
     register,
     handleSubmit,
-
-    reset,
-    setValue,
-    watch,
     formState: { errors, isSubmitting },
+    watch,
+    setValue,
+    reset,
   } = useForm({
     defaultValues: {
       userName: "",
       phone: "",
+      email: "",
+      userRole: "",
+      status: "ACTIVE",
+      branchId: "",
+      departmentId: "",
+      companyId: "",
     },
     mode: "onChange",
   });
+
   const userName = watch("userName");
   const phone = watch("phone");
-
+  const email = watch("email");
+  const userRole = watch("userRole");
+  const status = watch("status");
   const branchId = watch("branchId");
-  const selectedOrgId = watch("companyId");
+  const departmentId = watch("departmentId");
 
+  // Fetch organizations
   const fetchOrganizations = async (page, search = "") => {
     try {
       setOrgLoading(true);
@@ -78,6 +90,7 @@ const UpdateUserForm = ({ onClose }) => {
     }
   };
 
+  // Fetch branches
   const fetchBranches = async (page, search = "") => {
     if (!selectedOrgId) return;
     try {
@@ -96,6 +109,7 @@ const UpdateUserForm = ({ onClose }) => {
     }
   };
 
+  // Fetch departments
   const fetchDepartments = async (page, search = "") => {
     if (!branchId) return;
     try {
@@ -115,35 +129,11 @@ const UpdateUserForm = ({ onClose }) => {
   };
 
   useEffect(() => {
-    if (selectedOrg) {
-      setValue("branchId", "");
-      setValue("departmentId", "");
-    }
-  }, [selectedOrg]);
-
-  useEffect(() => {
-    if (branchId) {
-      setValue("departmentId", "");
-    }
-  }, [branchId]);
-
-  useEffect(() => {
-    if (selectedOrgId) {
-      fetchBranches(1, branchSearchTerm);
-    }
-  }, [selectedOrgId, branchSearchTerm]);
-
-  useEffect(() => {
-    if (branchId) {
-      fetchDepartments(1, deptSearchTerm);
-    }
-  }, [branchId, deptSearchTerm]);
-
-  useEffect(() => {
     fetchOrganizations(1, "");
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
+
     return () => {
       document.body.style.overflow = "auto";
     };
@@ -151,62 +141,53 @@ const UpdateUserForm = ({ onClose }) => {
 
   useEffect(() => {
     if (selectedUser) {
-      reset({
-        userName: selectedUser.userName,
-        phone: selectedUser.phone,
-        email: selectedUser.email,
-        userRole: selectedUser.userRole,
-        status: selectedUser.status,
-        companyId: selectedUser.company?.id,
-        branchId: selectedUser.branch?.id,
-        departmentId: selectedUser.department?.id,
-      });
-
+      // Set organization
       if (selectedUser.company) {
         setSelectedOrg(selectedUser.company);
-
-        setOrganizations((prev) =>
-          prev.some((org) => org.id === selectedUser.company.id)
-            ? prev
-            : [...prev, selectedUser.company]
-        );
+        setSelectedOrgId(selectedUser.company.id);
+        setValue("companyId", selectedUser.company.id);
       }
 
+      // Set branch
       if (selectedUser.branch) {
         setSelectedBranch(selectedUser.branch);
-
-        setBranches((prev) =>
-          prev.some((b) => b.id === selectedUser.branch.id)
-            ? prev
-            : [...prev, selectedUser.branch]
-        );
+        setValue("branchId", selectedUser.branch.id);
       }
 
+      // Set department
       if (selectedUser.department) {
         setSelectedDept(selectedUser.department);
-
-        setDepartments((prev) =>
-          prev.some((d) => d.id === selectedUser.department.id)
-            ? prev
-            : [...prev, selectedUser.department]
-        );
+        setValue("departmentId", selectedUser.department.id);
       }
+
+      reset({
+        userName: selectedUser.userName || "",
+        phone: selectedUser.phone || "",
+        email: selectedUser.email || "",
+        userRole: selectedUser.userRole || "",
+        status: selectedUser.status || "ACTIVE",
+        companyId: selectedUser.company?.id || "",
+        branchId: selectedUser.branch?.id || "",
+        departmentId: selectedUser.department?.id || "",
+      });
     }
-  }, [selectedUser, branchId, reset]);
+  }, [selectedUser, reset, setValue]);
 
-  const handleClose = () => {
-    setIsVisible(false);
-    setTimeout(() => {
-      onClose();
-    }, 300);
-  };
-
-  const handleOutsideClick = (event) => {
-    if (modalRef.current && !modalRef.current.contains(event.target)) {
-      handleClose();
+  useEffect(() => {
+    if (selectedOrgId) {
+      setBranchSearchTerm("");
+      setBranchPage(1);
+      fetchBranches(1, "");
     }
-  };
+  }, [selectedOrgId]);
 
+  useEffect(() => {
+    if (branchId) {
+      fetchDepartments(1, deptSearchTerm);
+    }
+  }, [branchId, deptSearchTerm]);
+
+  // Organization dropdown handlers
   const handleOrgScroll = (e) => {
     const bottomReached =
       e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
@@ -223,14 +204,15 @@ const UpdateUserForm = ({ onClose }) => {
 
   const handleOrgClick = () => {
     setShowOrgDropdown(!showOrgDropdown);
-    if (!showOrgDropdown) {
-      fetchOrganizations(1, searchTerm);
+    if (!showOrgDropdown && searchTerm === "") {
+      fetchOrganizations(1, "");
     }
   };
 
   const handleOrgSelect = (org) => {
     setSelectedOrg(org);
-    setValue("companyId", org.id);
+    setSelectedOrgId(org.id);
+    setValue("companyId", org.id, { shouldValidate: true });
     setShowOrgDropdown(false);
     setSearchTerm("");
     setValue("branchId", "");
@@ -241,6 +223,7 @@ const UpdateUserForm = ({ onClose }) => {
     setSelectedDept(null);
   };
 
+  // Branch dropdown handlers
   const handleBranchScroll = (e) => {
     const bottomReached =
       e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
@@ -255,19 +238,22 @@ const UpdateUserForm = ({ onClose }) => {
     fetchBranches(1, search);
   };
 
-  const handleBranchClick = () => {
+  const handleBranchClick = async () => {
     if (!selectedOrgId) {
       toast.error("Please select an organization first");
       return;
     }
-    setShowBranchDropdown(!showBranchDropdown);
+    setShowBranchDropdown((prev) => !prev);
     if (!showBranchDropdown) {
-      fetchBranches(1, branchSearchTerm);
+      setBranchSearchTerm("");
+      setBranchPage(1);
+      setBranches([]);
+      await fetchBranches(1, "");
     }
   };
 
   const handleBranchSelect = (branch) => {
-    setValue("branchId", branch.id);
+    setValue("branchId", branch.id, { shouldValidate: true });
     setSelectedBranch(branch);
     setShowBranchDropdown(false);
     setValue("departmentId", "");
@@ -277,6 +263,7 @@ const UpdateUserForm = ({ onClose }) => {
     setDepartmentPage(1);
   };
 
+  // Department dropdown handlers
   const handleDeptScroll = (e) => {
     const bottomReached =
       e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
@@ -290,17 +277,67 @@ const UpdateUserForm = ({ onClose }) => {
     setDeptSearchTerm(search);
     fetchDepartments(1, search);
   };
-  const handleDeptClick = () => {
+
+  const handleDeptClick = async () => {
     if (!branchId) {
       toast.error("Please select a branch first");
       return;
     }
-    setShowDeptDropdown(!showDeptDropdown);
+    setShowDeptDropdown((prev) => !prev);
     if (!showDeptDropdown) {
-      fetchDepartments(1, deptSearchTerm);
+      setDeptSearchTerm("");
+      setDepartmentPage(1);
+      setDepartments([]);
+      await fetchDepartments(1, "");
     }
   };
+
+  const handleDeptSelect = (dept) => {
+    setValue("departmentId", dept.id, { shouldValidate: true });
+    setSelectedDept(dept);
+    setShowDeptDropdown(false);
+  };
+
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => {
+      onClose();
+      reset();
+    }, 300);
+  };
+
+  const handleOutsideClick = (event) => {
+    if (modalRef.current && !modalRef.current.contains(event.target)) {
+      handleClose();
+    }
+  };
+
+  useEffect(() => {
+    register("branchId", {
+      required: userStrings.updateUser.validation.branchRequired,
+    });
+    register("departmentId", {
+      required: userStrings.updateUser.validation.departmentRequired,
+    });
+    register("companyId", {
+      required: userStrings.updateUser.validation.organizationRequired,
+    });
+  }, [register]);
+
   const onSubmit = async (data) => {
+    if (!selectedOrg) {
+      toast.error("Please select an organization");
+      return;
+    }
+    if (!data.branchId) {
+      toast.error("Please select a branch");
+      return;
+    }
+    if (!data.departmentId) {
+      toast.error("Please select a department");
+      return;
+    }
+
     try {
       const userData = {
         params: { userId: selectedUser.id },
@@ -309,10 +346,10 @@ const UpdateUserForm = ({ onClose }) => {
           phone: data.phone,
           email: data.email,
           userRole: data.userRole,
+          status: data.status,
           branchId: data.branchId,
           departmentId: data.departmentId,
-          companyId: data.companyId,
-          status: data.status,
+          companyId: selectedOrg.id,
         },
       };
 
@@ -332,22 +369,15 @@ const UpdateUserForm = ({ onClose }) => {
       handleClose();
     } catch (error) {
       const errorMessage = error?.message || "";
-
       if (errorMessage.includes("Email already taken")) {
-        toast.error(userStrings.updateUser.toast.emailTaken, {
-          autoClose: 2000,
-        });
+        toast.error(userStrings.updateUser.toast.emailTaken);
         return;
       }
-
       if (errorMessage.includes("Phone already taken")) {
-        toast.error(userStrings.updateUser.toast.phoneTaken, {
-          autoClose: 2000,
-        });
+        toast.error(userStrings.updateUser.toast.phoneTaken);
         return;
       }
-
-      toast.error(userStrings.updateUser.toast.error, {
+      toast.error(errorMessage || userStrings.updateUser.toast.error, {
         position: "top-right",
         autoClose: 1500,
       });
@@ -378,9 +408,6 @@ const UpdateUserForm = ({ onClose }) => {
 
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <input type="hidden" {...register("companyId")} />
-            <input type="hidden" {...register("branchId")} />
-            <input type="hidden" {...register("departmentId")} />
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* User Name */}
               <div className="w-full">
@@ -389,9 +416,16 @@ const UpdateUserForm = ({ onClose }) => {
                   className="block text-sm font-medium text-gray-700"
                 >
                   {userStrings.updateUser.formLabels.userName}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
                   ref={firstInputRef}
+                  maxLength={25}
+                  id="userName"
+                  type="text"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.userName ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
                   {...register("userName", {
                     required:
                       userStrings.updateUser.validation.userNameRequired,
@@ -405,65 +439,52 @@ const UpdateUserForm = ({ onClose }) => {
                       message:
                         userStrings.updateUser.validation.userNameMaxLength,
                     },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message:
+                        userStrings.updateUser.validation.userNamePattern,
+                    },
                   })}
-                  type="text"
-                  maxLength={25}
-                  id="userName"
-                  className={`mt-1 p-2 w-full border ${
-                    errors.userName ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
                 />
                 {errors.userName && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.userName.message}
                   </p>
                 )}
-                {userName.length === 25 && (
-                  <p className="text-red-500  text-sm mt-1">
+                {userName?.length === 25 && (
+                  <p className="text-red-500 text-sm mt-1">
                     Maximum 25 characters allowed
                   </p>
                 )}
               </div>
 
-              {/* Phone Number */}
+              {/* Phone */}
               <div className="w-full">
                 <label
-                  htmlFor="phoneNumber"
+                  htmlFor="phone"
                   className="block text-sm font-medium text-gray-700"
                 >
                   {userStrings.updateUser.formLabels.phone}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
+                  type="tel"
+                  maxLength={10}
+                  id="phone"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.phone ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
                   {...register("phone", {
                     required: userStrings.updateUser.validation.phoneRequired,
-                    minLength: {
-                      value: 7,
-                      message: userStrings.updateUser.validation.phoneMinLength,
-                    },
-                    maxLength: {
-                      value: 10,
-                      message: userStrings.updateUser.validation.phoneMaxLength,
-                    },
                     pattern: {
                       value: /^[0-9]{10}$/,
                       message: userStrings.updateUser.validation.phoneInvalid,
                     },
                   })}
-                  type="tel"
-                  id="phoneNumber"
-                  maxLength={10}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.phone ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
                 />
                 {errors.phone && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.phone.message}
-                  </p>
-                )}
-                {phone.length === 25 && (
-                  <p className="text-red-500  text-sm mt-1">
-                    Maximum 10 Numbers allowed
                   </p>
                 )}
               </div>
@@ -475,8 +496,14 @@ const UpdateUserForm = ({ onClose }) => {
                   className="block text-sm font-medium text-gray-700"
                 >
                   {userStrings.updateUser.formLabels.email}
+                  <span className="text-red-500">*</span>
                 </label>
                 <input
+                  type="email"
+                  id="email"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.email ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
                   {...register("email", {
                     required: userStrings.updateUser.validation.emailRequired,
                     pattern: {
@@ -484,11 +511,6 @@ const UpdateUserForm = ({ onClose }) => {
                       message: userStrings.updateUser.validation.emailInvalid,
                     },
                   })}
-                  type="email"
-                  id="email"
-                  className={`mt-1 p-2 w-full border ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
                 />
                 {errors.email && (
                   <p className="text-red-500 text-sm mt-1">
@@ -497,18 +519,25 @@ const UpdateUserForm = ({ onClose }) => {
                 )}
               </div>
 
+              {/* Organization Dropdown */}
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.updateUser.formLabels.organization}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div
                   onClick={handleOrgClick}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.companyId ? "border-red-500" : "border-gray-300"
+                  } rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis`}
                 >
-                  {selectedOrg
-                    ? selectedOrg.organizationName
-                    : "Select Organization"}
+                  {selectedOrg?.organizationName || "Select Organization"}
                 </div>
+                {errors.companyId && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.companyId.message}
+                  </p>
+                )}
                 {showOrgDropdown && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
@@ -541,16 +570,25 @@ const UpdateUserForm = ({ onClose }) => {
                 )}
               </div>
 
+              {/* Branch Dropdown */}
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.updateUser.formLabels.branch}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div
                   onClick={handleBranchClick}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.branchId ? "border-red-500" : "border-gray-300"
+                  } rounded-md cursor-pointer bg-white`}
                 >
-                  {selectedBranch ? selectedBranch.branchName : "Select Branch"}
+                  {selectedBranch?.branchName || "Select Branch"}
                 </div>
+                {errors.branchId && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.branchId.message}
+                  </p>
+                )}
                 {showBranchDropdown && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
@@ -581,25 +619,27 @@ const UpdateUserForm = ({ onClose }) => {
                     </ul>
                   </div>
                 )}
-                {errors.branchId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.branchId.message}
-                  </p>
-                )}
               </div>
 
+              {/* Department Dropdown */}
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.updateUser.formLabels.department}
+                  <span className="text-red-500">*</span>
                 </label>
                 <div
                   onClick={handleDeptClick}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  className={`mt-1 p-2 w-full border ${
+                    errors.departmentId ? "border-red-500" : "border-gray-300"
+                  } rounded-md cursor-pointer bg-white`}
                 >
-                  {selectedDept
-                    ? selectedDept.departmentName
-                    : "Select Department"}
+                  {selectedDept?.departmentName || "Select Department"}
                 </div>
+                {errors.departmentId && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.departmentId.message}
+                  </p>
+                )}
                 {showDeptDropdown && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
@@ -616,11 +656,7 @@ const UpdateUserForm = ({ onClose }) => {
                       {departments.map((dept) => (
                         <li
                           key={dept.id}
-                          onClick={() => {
-                            setValue("departmentId", dept.id);
-                            setSelectedDept(dept);
-                            setShowDeptDropdown(false);
-                          }}
+                          onClick={() => handleDeptSelect(dept)}
                           className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                         >
                           {dept.departmentName}
@@ -634,29 +670,24 @@ const UpdateUserForm = ({ onClose }) => {
                     </ul>
                   </div>
                 )}
-                {errors.departmentId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.departmentId.message}
-                  </p>
-                )}
               </div>
 
+              {/* User Role */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.updateUser.formLabels.userRole}
+                  <span className="text-red-500">*</span>
                 </label>
                 <select
+                  className={`mt-1 p-2 w-full border ${
+                    errors.userRole ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md`}
                   {...register("userRole", {
                     required:
                       userStrings.updateUser.validation.userRoleRequired,
                   })}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.userRole ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
                 >
-                  <option value="">
-                    {userStrings.updateUser.select.roleDefault}
-                  </option>
+                  <option value="">Select Role</option>
                   <option value="ADMIN">ADMIN</option>
                   <option value="MANAGER">MANAGER</option>
                   <option value="USER">USER</option>
@@ -668,24 +699,22 @@ const UpdateUserForm = ({ onClose }) => {
                 )}
               </div>
 
+              {/* Status */}
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.updateUser.formLabels.status}
+                  <span className="text-red-500">*</span>
                 </label>
                 <select
-                  {...register("status", {
-                    required: userStrings.updateUser.validation.statusRequired,
-                  })}
                   className={`mt-1 p-2 w-full border ${
                     errors.status ? "border-red-500" : "border-gray-300"
                   } outline-none rounded-md`}
+                  {...register("status", {
+                    required: userStrings.updateUser.validation.statusRequired,
+                  })}
                 >
-                  <option value="ACTIVE">
-                    {userStrings.updateUser.select.statusActive}
-                  </option>
-                  <option value="IN_ACTIVE">
-                    {userStrings.updateUser.select.statusInactive}
-                  </option>
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="IN_ACTIVE">IN_ACTIVE</option>
                 </select>
                 {errors.status && (
                   <p className="text-red-500 text-sm mt-1">
@@ -694,7 +723,8 @@ const UpdateUserForm = ({ onClose }) => {
                 )}
               </div>
             </div>
-            <hr className="mt-4"></hr>
+
+            <hr className="mt-4" />
             <div className="flex justify-end gap-4 mt-4">
               <button
                 type="button"

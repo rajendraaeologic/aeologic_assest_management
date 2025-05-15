@@ -54,7 +54,20 @@ const createAssetValidation = {
 export const getAllAssetsValidation = {
   query: Joi.object().keys({
     assetName: Joi.string().optional(),
-    status: Joi.string().valid("ACTIVE", "INACTIVE", "UNDER_REPAIR").optional(),
+    status: Joi.string()
+      .valid(
+        "IN_USE",
+        "UNASSIGNED",
+        "ASSIGNED",
+        "MAINTENANCE",
+        "RETIRED",
+        "ASSIGNED",
+        "LOST",
+        "DAMAGED",
+        "IN_REPAIR",
+        "DISPOSED"
+      )
+      .optional(),
     branchId: Joi.string()
       .allow(null)
       .optional()

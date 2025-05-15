@@ -23,7 +23,7 @@ const assignAsset = catchAsync(async (req, res) => {
   const isAssetAvailable = await db.asset.findFirst({
     where: {
       id: assetId,
-      status: AssetStatus.ACTIVE,
+      status: AssetStatus.UNASSIGNED,
       assignedToUserId: null,
       AssetAssignment: {
         none: {

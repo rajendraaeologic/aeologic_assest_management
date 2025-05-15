@@ -1,4 +1,11 @@
-import { Asset, AssetStatus, Prisma, User, UserStatus } from "@prisma/client";
+import {
+  Asset,
+  AssetStatus,
+  Prisma,
+  User,
+  UserStatus,
+  AssetAssignment,
+} from "@prisma/client";
 import db from "@/lib/db";
 import httpStatus from "http-status";
 import ApiError from "@/lib/ApiError";
@@ -9,8 +16,9 @@ const getAvailableAssets = async (
   departmentId?: string
 ): Promise<Asset[]> => {
   const where: Prisma.AssetWhereInput = {
-    status: AssetStatus.ACTIVE,
+    status: AssetStatus.UNASSIGNED,
     assignedToUserId: null,
+    deleted: false,
     AssetAssignment: {
       none: {
         status: AssetStatus.IN_USE,
@@ -33,6 +41,7 @@ const getUsersForAssignment = async (
 ): Promise<Partial<User>[]> => {
   const where: Prisma.UserWhereInput = {
     status: "ACTIVE",
+    deleted: false,
   };
 
   if (branchId) where.branchId = branchId;
@@ -54,14 +63,14 @@ const assignAsset = async (
   user: Partial<User>;
 }> => {
   const asset = await db.asset.findUnique({
-    where: { id: assetId },
+    where: { id: assetId, deleted: false },
   });
 
   if (!asset) {
     throw new ApiError(httpStatus.NOT_FOUND, "Asset not found");
   }
 
-  if (asset.status !== AssetStatus.ACTIVE) {
+  if (asset.status !== AssetStatus.UNASSIGNED) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       `Asset is not available for assignment (current status: ${asset.status})`
@@ -70,7 +79,7 @@ const assignAsset = async (
 
   // Check if user exists
   const user = await db.user.findUnique({
-    where: { id: userId },
+    where: { id: userId, deleted: false },
   });
 
   if (!user) {
@@ -81,7 +90,8 @@ const assignAsset = async (
   const existingAssignment = await db.assetAssignment.findFirst({
     where: {
       assetId,
-      status: AssetStatus.ACTIVE,
+      status: AssetStatus.UNASSIGNED,
+      deleted: false,
     },
   });
 
@@ -138,14 +148,14 @@ const unassignAsset = async (
   asset: Asset;
 }> => {
   const assignment = await db.assetAssignment.findUnique({
-    where: { id: assignmentId },
+    where: { id: assignmentId, deleted: false },
   });
 
   if (!assignment) {
     throw new ApiError(httpStatus.NOT_FOUND, "Assignment not found");
   }
 
-  if (assignment.status !== AssetStatus.ACTIVE) {
+  if (assignment.status !== AssetStatus.UNASSIGNED) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       `Assignment is not active (current status: ${assignment.status})`
@@ -163,7 +173,7 @@ const unassignAsset = async (
     db.asset.update({
       where: { id: assignment.assetId },
       data: {
-        status: AssetStatus.ACTIVE,
+        status: AssetStatus.UNASSIGNED,
         assignedToUserId: null,
       },
     }),
@@ -202,10 +212,14 @@ export const getAssetAssignments = async (
     sortType = "desc",
   } = options;
   const skip = (page - 1) * limit;
+  const finalFilter = {
+    ...filter,
+    deleted: false,
+  };
 
   const [data, total] = await Promise.all([
     db.assetAssignment.findMany({
-      where: filter,
+      where: finalFilter,
       include: {
         asset: { select: AssetKeys },
         user: { select: UserKeys },
@@ -214,7 +228,7 @@ export const getAssetAssignments = async (
       take: limit,
       orderBy: { [sortBy]: sortType },
     }),
-    db.assetAssignment.count({ where: filter }),
+    db.assetAssignment.count({ where: finalFilter }),
   ]);
 
   return { data, total };
@@ -223,7 +237,7 @@ export const getAssetAssignments = async (
 // Get single assignment by ID
 const getAssetAssignmentById = async (assignmentId: string) => {
   return await db.assetAssignment.findUnique({
-    where: { id: assignmentId },
+    where: { id: assignmentId, deleted: false },
     include: {
       asset: { select: AssetKeys },
       user: { select: UserKeys },
@@ -252,6 +266,7 @@ export const getAssetsByDepartmentId = async (
 
   const filters: any = {
     departmentId,
+    deleted: false,
   };
 
   if (options.status) filters.status = options.status;
@@ -332,7 +347,8 @@ export const getUsersByDepartmentId = async (
   // Use proper Prisma types for the filters
   const filters: Prisma.UserWhereInput = {
     departmentId,
-    status: (options.status as UserStatus) || "ACTIVE", // Cast to UserStatus enum
+    deleted: false,
+    status: (options.status as UserStatus) || "ACTIVE",
   };
 
   if (options.createdAtFrom || options.createdAtTo) {
@@ -395,10 +411,14 @@ const updateAssetAssignment = async (
   assignment: any;
   asset: Asset;
   user: Partial<User>;
+  oldAsset?: Asset;
 }> => {
   // Find the existing assignment
-  const existingAssignment = await db.assetAssignment.findUnique({
-    where: { id: assignmentId },
+  const existingAssignment = await db.assetAssignment.findFirst({
+    where: {
+      id: assignmentId,
+      deleted: false, // Ensure assignment is not soft-deleted (if applicable)
+    },
     include: {
       asset: true,
       user: true,
@@ -411,27 +431,30 @@ const updateAssetAssignment = async (
 
   // Check if the new asset is available (if being changed)
   if (updateData.assetId && updateData.assetId !== existingAssignment.assetId) {
-    const newAsset = await db.asset.findUnique({
-      where: { id: updateData.assetId },
+    const newAsset = await db.asset.findFirst({
+      where: {
+        id: updateData.assetId,
+        deleted: false, // Only consider non-deleted assets
+      },
     });
 
     if (!newAsset) {
       throw new ApiError(httpStatus.NOT_FOUND, "New asset not found");
     }
 
-    if (newAsset.status !== AssetStatus.ACTIVE) {
+    if (newAsset.status !== AssetStatus.UNASSIGNED) {
       throw new ApiError(
         httpStatus.BAD_REQUEST,
         `New asset is not available for assignment (current status: ${newAsset.status})`
       );
     }
 
-    // Check if new asset is already assigned to someone else
     const existingAssignmentForNewAsset = await db.assetAssignment.findFirst({
       where: {
         assetId: updateData.assetId,
         status: AssetStatus.IN_USE,
         id: { not: assignmentId },
+        deleted: false, // if soft-delete is supported
       },
     });
 
@@ -445,14 +468,18 @@ const updateAssetAssignment = async (
 
   // Check if new user exists (if being changed)
   if (updateData.userId && updateData.userId !== existingAssignment.userId) {
-    const newUser = await db.user.findUnique({
-      where: { id: updateData.userId },
+    const newUser = await db.user.findFirst({
+      where: {
+        id: updateData.userId,
+        deleted: false, // Only non-deleted users allowed
+      },
     });
 
     if (!newUser) {
       throw new ApiError(httpStatus.NOT_FOUND, "New user not found");
     }
   }
+
   // Start transaction
   const [updatedAssignment, updatedAsset, oldAsset] = await db.$transaction(
     async (prisma) => {
@@ -488,7 +515,7 @@ const updateAssetAssignment = async (
           ? await prisma.asset.update({
               where: { id: existingAssignment.assetId },
               data: {
-                status: AssetStatus.ACTIVE,
+                status: AssetStatus.UNASSIGNED,
                 assignedToUserId: null,
               },
             })
@@ -526,14 +553,15 @@ const updateAssetAssignment = async (
     ...(oldAsset ? { oldAsset } : {}),
   };
 };
+
 // Delete single assignment by ID
 const deleteAssignmentById = async (
   assignmentId: string
 ): Promise<{
-  assignment: any;
+  assignment: Omit<AssetAssignment, "sensitiveField">;
   asset: Asset;
 }> => {
-  // First find the assignment to verify it exists
+  // Step 1: Fetch assignment (even if soft-deleted)
   const assignment = await db.assetAssignment.findUnique({
     where: { id: assignmentId },
     include: {
@@ -545,36 +573,52 @@ const deleteAssignmentById = async (
     throw new ApiError(httpStatus.NOT_FOUND, "Assignment not found");
   }
 
+  if (assignment.deleted) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Assignment already deleted");
+  }
+
   try {
-    // Use transaction to ensure data consistency
-    const [deletedAssignment, updatedAsset] = await db.$transaction([
-      db.assetAssignment.delete({
-        where: { id: assignmentId },
-      }),
-      db.asset.update({
-        where: { id: assignment.assetId },
-        data: {
-          assignedToUserId: null,
-          status: AssetStatus.ACTIVE,
-        },
-      }),
-    ]);
+    const result = await db.$transaction(
+      async (tx) => {
+        // Step 2: Soft-delete assignment
+        const softDeletedAssignment = await tx.assetAssignment.update({
+          where: { id: assignmentId },
+          data: { deleted: true },
+        });
 
-    // Create history record
-    await db.assetHistory.create({
-      data: {
-        assetId: assignment.assetId,
-        userId: assignment.userId,
-        action: "ASSIGNMENT_DELETED",
+        // Step 3: Update asset - clear assignment
+        const updatedAsset = await tx.asset.update({
+          where: { id: assignment.assetId },
+          data: {
+            assignedToUserId: null,
+            status: AssetStatus.UNASSIGNED,
+          },
+        });
+
+        // Step 4: Log action in asset history
+        await tx.assetHistory.create({
+          data: {
+            assetId: assignment.assetId,
+            userId: assignment.userId,
+            action: "ASSIGNMENT_SOFT_DELETED",
+          },
+        });
+
+        return {
+          assignment: softDeletedAssignment,
+          asset: updatedAsset,
+        };
       },
-    });
+      {
+        maxWait: 5000,
+        timeout: 15000,
+      }
+    );
 
-    return {
-      assignment: deletedAssignment,
-      asset: updatedAsset,
-    };
+    return result;
   } catch (error) {
-    console.error("Error deleting assignment:", error);
+    if (error instanceof ApiError) throw error;
+    console.error("Assignment soft delete failed:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
 };
@@ -583,10 +627,10 @@ const deleteAssignmentById = async (
 const deleteAssignmentsByIds = async (
   assignmentIds: string[]
 ): Promise<{
-  deletedCount: number;
-  affectedAssets: Asset[];
+  assignments: Omit<AssetAssignment, "sensitiveField">[];
+  updatedAssets: Asset[];
 }> => {
-  // First verify all assignments exist
+  // Step 1: Fetch assignments (including soft-deleted)
   const assignments = await db.assetAssignment.findMany({
     where: { id: { in: assignmentIds } },
     include: {
@@ -594,65 +638,84 @@ const deleteAssignmentsByIds = async (
     },
   });
 
-  if (assignments.length !== assignmentIds.length) {
-    const foundIds = assignments.map((a) => a.id);
-    const missingIds = assignmentIds.filter((id) => !foundIds.includes(id));
+  const foundIds = assignments.map((a) => a.id);
+  const missingIds = assignmentIds.filter((id) => !foundIds.includes(id));
+
+  if (missingIds.length > 0) {
     throw new ApiError(
       httpStatus.NOT_FOUND,
       `Assignments not found: ${missingIds.join(", ")}`
     );
   }
 
-  try {
-    // Get unique asset IDs that will be affected
-    const assetIds = [...new Set(assignments.map((a) => a.assetId))];
+  const alreadyDeleted = assignments.filter((a) => a.deleted);
+  if (alreadyDeleted.length > 0) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Assignments already deleted: ${alreadyDeleted
+        .map((a) => a.id)
+        .join(", ")}`
+    );
+  }
 
-    // Use transaction for atomic operations
-    const result = await db.$transaction(async (prisma) => {
-      // Delete the assignments
-      const { count: deletedCount } = await prisma.assetAssignment.deleteMany({
+  try {
+    const result = await db.$transaction(async (tx) => {
+      // Step 2: Soft-delete assignments
+      await tx.assetAssignment.updateMany({
         where: { id: { in: assignmentIds } },
+        data: { deleted: true },
       });
 
-      // For each affected asset, check if it still has assignments
-      const assetUpdates = await Promise.all(
-        assetIds.map(async (assetId) => {
-          const remainingAssignments = await prisma.assetAssignment.count({
-            where: { assetId },
+      // Step 3: Update affected assets (if no active assignments remain)
+      const affectedAssetIds = [...new Set(assignments.map((a) => a.assetId))];
+
+      const updatedAssets: Asset[] = [];
+
+      for (const assetId of affectedAssetIds) {
+        const remainingAssignments = await tx.assetAssignment.count({
+          where: {
+            assetId,
+            deleted: false,
+          },
+        });
+
+        if (remainingAssignments === 0) {
+          const updatedAsset = await tx.asset.update({
+            where: { id: assetId },
+            data: {
+              assignedToUserId: null,
+              status: AssetStatus.UNASSIGNED,
+            },
           });
 
-          // If no assignments left, update asset status
-          if (remainingAssignments === 0) {
-            return prisma.asset.update({
-              where: { id: assetId },
-              data: {
-                assignedToUserId: null,
-                status: AssetStatus.ACTIVE,
-              },
-            });
-          }
-          return null;
-        })
-      );
+          updatedAssets.push(updatedAsset);
+        }
+      }
 
-      // Create history records for each deleted assignment
-      await prisma.assetHistory.createMany({
-        data: assignments.map((assignment) => ({
-          assetId: assignment.assetId,
-          userId: assignment.userId,
-          action: "ASSIGNMENT_DELETED",
+      // Step 4: Log asset history
+      await tx.assetHistory.createMany({
+        data: assignments.map((a) => ({
+          assetId: a.assetId,
+          userId: a.userId,
+          action: "ASSIGNMENT_SOFT_DELETED",
         })),
       });
 
+      // Step 5: Return updated records
+      const softDeletedAssignments = await tx.assetAssignment.findMany({
+        where: { id: { in: assignmentIds } },
+      });
+
       return {
-        deletedCount,
-        affectedAssets: assetUpdates.filter(Boolean) as Asset[],
+        assignments: softDeletedAssignments,
+        updatedAssets,
       };
     });
 
     return result;
   } catch (error) {
-    console.error("Error bulk deleting assignments:", error);
+    if (error instanceof ApiError) throw error;
+    console.error("Bulk assignment soft delete failed:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
 };

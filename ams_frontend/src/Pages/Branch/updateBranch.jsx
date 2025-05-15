@@ -156,6 +156,11 @@ const UpdateBranch = ({ onClose }) => {
                         branchStrings.updateBranch.validation
                           .branchNameMaxLength,
                     },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message:
+                        branchStrings.updateBranch.validation.branchNamePattern,
+                    },
                   })}
                   type="text"
                   maxLength={25}

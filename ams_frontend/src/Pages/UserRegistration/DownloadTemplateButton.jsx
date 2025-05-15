@@ -1,9 +1,10 @@
 import React from "react";
+import {API_URL} from "../../App/api/config.js";
 
 const DownloadTemplateButton = () => {
   const handleDownload = async () => {
     const response = await fetch(
-      "http://localhost:3000/api/v1/users/download-excel-template"
+      `${API_URL}/users/download-excel-template`
     );
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);

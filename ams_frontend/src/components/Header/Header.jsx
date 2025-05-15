@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import  { useContext, useState } from "react";
 import SliderContext from "../ContexApi";
 import { FaBars } from "react-icons/fa";
 import { TfiArrowCircleUp } from "react-icons/tfi";

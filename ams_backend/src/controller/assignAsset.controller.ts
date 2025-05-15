@@ -3,7 +3,7 @@ import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
 import pick from "@/lib/pick";
 import { applyDateFilter } from "@/utils/filters.utils";
-import assignAssetService from "@/services/assignasset.service";
+import assignAssetService from "@/services/assignAsset.service";
 import { AssetStatus, PrismaClient } from "@prisma/client";
 import db from "@/lib/db";
 
@@ -23,7 +23,7 @@ const assignAsset = catchAsync(async (req, res) => {
   const isAssetAvailable = await db.asset.findFirst({
     where: {
       id: assetId,
-      status: AssetStatus.ACTIVE,
+      status: AssetStatus.UNASSIGNED,
       assignedToUserId: null,
       AssetAssignment: {
         none: {
@@ -47,31 +47,99 @@ const unassignAsset = catchAsync(async (req, res) => {
   const result = await assignAssetService.unassignAsset(assignmentId);
 
   res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: "Asset unassigned successfully",
     data: result,
   });
 });
 
-const getAssetAssignments = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ["assetId", "userId", "status"]);
-  const options = pick(req.query, ["from_date", "to_date"]);
+export const getAssetAssignments = catchAsync(async (req, res) => {
+  const rawFilters = pick(req.query, [
+    "assetId",
+    "userId",
+    "status",
+    "from_date",
+    "to_date",
+    "searchTerm",
+  ]);
 
-  applyDateFilter(filter);
+  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+  const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+  let sortBy = (req.query.sortBy as string) || "assignedAt";
+  let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  const assignments = await assignAssetService.getAssetAssignments(filter, {
-    limit: parseInt(req.query.limit as string) || 10,
-    page: parseInt(req.query.page as string) || 1,
-    sortBy: req.query.sortBy as string,
-    sortType: req.query.sortType as "asc" | "desc",
+  applyDateFilter(rawFilters);
+
+  const filters: any = {};
+
+  if (rawFilters.from_date || rawFilters.to_date) {
+    filters.assignedAt = {};
+    if (rawFilters.from_date) filters.assignedAt.gte = rawFilters.from_date;
+    if (rawFilters.to_date) filters.assignedAt.lte = rawFilters.to_date;
+  }
+
+  if (rawFilters.assetId) filters.assetId = rawFilters.assetId;
+  if (rawFilters.userId) filters.userId = rawFilters.userId;
+  if (rawFilters.status) filters.status = rawFilters.status;
+
+  const searchTerm = (rawFilters.searchTerm as string)?.trim();
+  const isSearchMode = !!searchTerm;
+
+  if (isSearchMode) {
+    limit = 5;
+    sortBy = "assignedAt";
+    sortType = "desc";
+  }
+
+  const searchConditions = isSearchMode
+    ? {
+        asset: {
+          assetName: {
+            contains: searchTerm,
+            mode: "insensitive",
+          },
+        },
+      }
+    : {};
+
+  const where = {
+    ...filters,
+    ...searchConditions,
+  };
+
+  const result = await assignAssetService.getAssetAssignments(where, {
+    limit,
+    page,
+    sortBy,
+    sortType,
   });
 
+  if (!result || result.data.length === 0) {
+    res.status(httpStatus.OK).json({
+      success: false,
+      status: 404,
+      message: "No asset assignments found",
+      data: [],
+      totalData: 0,
+      page,
+      limit,
+      totalPages: 0,
+      mode: isSearchMode ? "search" : "pagination",
+    });
+    return;
+  }
+
   res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
-    message: assignments.length
-      ? "Assignments fetched successfully"
-      : "No assignments found",
-    data: assignments,
+    message: "Asset assignments fetched successfully",
+    data: result.data,
+    totalData: result.total,
+    page,
+    limit,
+    totalPages: Math.ceil(result.total / limit),
+    mode: isSearchMode ? "search" : "pagination",
   });
 });
 
@@ -81,11 +149,20 @@ const getAvailableAssets = catchAsync(async (req, res) => {
     req.query.departmentId as string
   );
 
+  if (assets.length === 0) {
+    res.status(httpStatus.OK).json({
+      status: 404,
+      success: false,
+      message: "No available assets found",
+      data: [],
+    });
+    return;
+  }
+
   res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
-    message: assets.length
-      ? "Available assets fetched successfully"
-      : "No available assets found",
+    message: "Available assets fetched successfully",
     data: assets,
   });
 });
@@ -97,6 +174,7 @@ const getUsersForAssignment = catchAsync(async (req, res) => {
   );
 
   res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: users.length ? "Users fetched successfully" : "No users found",
     data: users,
@@ -113,6 +191,7 @@ const getAssetAssignmentById = catchAsync(async (req, res) => {
   }
 
   res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: "Assignment fetched successfully",
     data: assignment,
@@ -158,8 +237,8 @@ export const getAssetsByDepartmentId = catchAsync(async (req, res) => {
   );
 
   if (!result || result.data.length === 0) {
-    res.status(200).json({
-      status: "404",
+    res.status(httpStatus.OK).json({
+      status: 404,
       message: "No assets found for this department",
       data: [],
       totalData: result?.total || 0,
@@ -170,7 +249,8 @@ export const getAssetsByDepartmentId = catchAsync(async (req, res) => {
     return;
   }
 
-  res.status(200).json({
+  res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: "Assets fetched successfully",
     data: result.data,
@@ -220,8 +300,8 @@ export const getUsersByDepartmentId = catchAsync(async (req, res) => {
   );
 
   if (!result || result.data.length === 0) {
-    res.status(200).json({
-      status: "404",
+    res.status(httpStatus.OK).json({
+      status: 404,
       message: "No users found for this department",
       data: [],
       totalData: result?.total || 0,
@@ -232,7 +312,8 @@ export const getUsersByDepartmentId = catchAsync(async (req, res) => {
     return;
   }
 
-  res.status(200).json({
+  res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: "Users fetched successfully",
     data: result.data,
@@ -253,6 +334,7 @@ const updateAssetAssignment = catchAsync(async (req, res) => {
   });
 
   res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: "Asset assignment updated successfully",
     data: result,

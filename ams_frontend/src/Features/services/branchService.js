@@ -5,9 +5,19 @@ export const createBranchService = async (data) => {
   return response.data;
 };
 
-export const getAllBranchesService = async () => {
-  const response = await API.get("/branch/getAllBranches");
-  return response.data;
+export const getAllBranchesService = async ({
+  limit = 5,
+  page = 1,
+  searchTerm = "",
+}) => {
+  const response = await API.get("/branch/getAllBranches", {
+    params: {
+      limit,
+      page,
+      searchTerm: searchTerm.trim(),
+    },
+  });
+  return response;
 };
 
 export const updateBranchService = async (data) => {
@@ -35,7 +45,6 @@ export const deleteBranchService = async (ids) => {
       };
     }
   } catch (error) {
-    console.error("Delete Error:", error.response?.data);
     const errorMsg =
       error.response?.data?.message || "Error deleting branch(s)";
     throw new Error(errorMsg);

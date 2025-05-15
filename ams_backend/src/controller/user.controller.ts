@@ -29,8 +29,8 @@ const createUser = catchAsync(async (req, res) => {
     } as User & { plainPassword: string });
 
     res.status(httpStatus.CREATED).send({
-      user,
       message: "User Created Successfully.",
+      user,
     });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
@@ -59,7 +59,6 @@ const uploadUsersFromExcel = catchAsync(async (req, res) => {
   const { createdUsers, failedUsers } = await userService.createUsersFromExcel(
     sheetDataWithPassword
   );
-  console.log("bsxbjsnbjs", failedUsers);
 
   if (failedUsers.length > 0) {
     const hasMissingFields = failedUsers.some((user) =>
@@ -140,10 +139,10 @@ const downloadUserExcelTemplate = catchAsync(async (req, res) => {
       .json({ message: "Failed to download template", error: error.message });
   }
 });
-
-const getUsers = catchAsync(async (req, res) => {
-  const filter = pick(req.query, [
-    "name",
+//getUsers
+export const getUsers = catchAsync(async (req, res) => {
+  const rawFilters = pick(req.query, [
+    "userName",
     "phone",
     "userRole",
     "status",
@@ -151,29 +150,100 @@ const getUsers = catchAsync(async (req, res) => {
     "email",
     "from_date",
     "to_date",
+    "searchTerm",
   ]);
 
-  applyDateFilter(filter);
+  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 5;
 
-  const options = pick(req.query, ["sortBy", "sortType", "limit", "page"]);
+  const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+  let sortBy = (req.query.sortBy as string) || "createdAt";
+  let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  if (filter.name) {
-    filter.name = {
-      contains: filter.name,
-      mode: "insensitive",
-    };
+  applyDateFilter(rawFilters);
+
+  const filters: any = {};
+
+  // Existing filter logic
+  if (rawFilters.name) {
+    filters.name = { contains: rawFilters.name, mode: "insensitive" };
   }
 
-  console.log(options);
-  const result = await userService.queryUsers(filter, options);
-  res.send(result);
-});
+  // Add other existing filters similarly...
 
+  const searchTerm = (rawFilters.searchTerm as string)?.trim();
+  const isSearchMode = !!searchTerm;
+
+  // Search mode adjustments
+  if (isSearchMode) {
+    limit = 5;
+    sortBy = "createdAt";
+    sortType = "desc";
+  }
+
+  // Search conditions
+  const searchConditions = searchTerm
+    ? {
+        OR: [
+          { userName: { contains: searchTerm, mode: "insensitive" } },
+          { email: { contains: searchTerm, mode: "insensitive" } },
+          { phone: { contains: searchTerm, mode: "insensitive" } },
+        ],
+      }
+    : {};
+
+  const where = {
+    ...filters,
+    ...searchConditions,
+    NOT: { userRole: "SUPERADMIN" },
+  };
+
+  const options = {
+    limit,
+    page,
+    sortBy,
+    sortType,
+  };
+
+  const result = await userService.queryUsers(where, options);
+
+  if (!result || result.data.length === 0) {
+    res.status(httpStatus.OK).json({
+      success: false,
+      status: 404,
+      message: " users not found",
+      data: [],
+      totalData: 0,
+      page,
+      limit,
+      totalPages: 0,
+      mode: isSearchMode ? "search" : "pagination",
+    });
+    return;
+  }
+  res.status(httpStatus.OK).json({
+    status: 200,
+    success: true,
+    message: "Users fetched successfully",
+    data: result.data.map((user) => ({
+      ...user,
+      updatedAt: user.updatedAt,
+    })),
+    totalData: result.total,
+    page,
+    limit,
+    totalPages: Math.ceil(result.total / limit),
+    mode: isSearchMode ? "search" : "pagination",
+  });
+});
 const getUser = catchAsync(async (req, res) => {
   const user = await userService.getUserById(req.params.userId);
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-  }
+
+  res.status(httpStatus.OK).json({
+    success: false,
+    status: 404,
+    message: "User not found",
+    data: [],
+  });
   res.send(user);
 });
 

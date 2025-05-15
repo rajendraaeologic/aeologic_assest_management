@@ -5,14 +5,21 @@ export const createAssignAssetService = async (data) => {
   return response.data;
 };
 
-export const getAllAssignAssetsService = async (params = {}) => {
+export const getAllAssignAssetsService = async ({
+  limit = 5,
+  page = 1,
+  searchTerm = "",
+  status = "IN_USE",
+} = {}) => {
   const response = await API.get("/assignAsset/asset-assignments", {
     params: {
-      status: "IN_USE",
-      ...params,
+      limit,
+      page,
+      searchTerm: searchTerm.trim(),
+      status,
     },
   });
-  return response.data;
+  return response;
 };
 
 export const getAvailableAssetsService = async (params) => {
@@ -74,7 +81,6 @@ export const deleteAssignAssetService = async (ids) => {
       };
     }
   } catch (error) {
-    console.error("Delete Error:", error.response?.data);
     const errorMsg =
       error.response?.data?.message || "Error deleting assignment(s)";
     throw new Error(errorMsg);

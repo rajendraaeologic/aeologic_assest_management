@@ -15,7 +15,7 @@ const UpdateOrganization = ({ onClose }) => {
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
-
+  const { currentPage, rowsPerPage } = useSelector((state) => state.usersData);
   const selectedOrganization = useSelector(
     (state) => state.organizationData.selectedOrganization
   );
@@ -73,8 +73,13 @@ const UpdateOrganization = ({ onClose }) => {
         },
       };
 
-      await dispatch(updateOrganization(organizationData));
-      dispatch(getAllOrganizations());
+      await dispatch(updateOrganization(organizationData)).unwrap();
+      await dispatch(
+        getAllOrganizations({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
 
       toast.success(organizationStrings.updateOrganization.toast.success, {
         position: "top-right",
@@ -83,10 +88,20 @@ const UpdateOrganization = ({ onClose }) => {
 
       handleClose();
     } catch (error) {
-      toast.error(organizationStrings.updateOrganization.toast.error, {
-        position: "top-right",
-        autoClose: 1000,
-      });
+      if (error?.status === 409) {
+        setError("organizationName", {
+          type: "manual",
+          message: error.message,
+        });
+        return;
+      }
+      toast.error(
+        error.message || organizationStrings.updateOrganization.toast.error,
+        {
+          position: "top-right",
+          autoClose: 1500,
+        }
+      );
     }
   };
 
@@ -142,6 +157,12 @@ const UpdateOrganization = ({ onClose }) => {
                     message:
                       organizationStrings.addOrganization.validation
                         .organizationNameMaxLength,
+                  },
+                  pattern: {
+                    value: /^[a-zA-Z0-9]+$/,
+                    message:
+                      organizationStrings.addOrganization.validation
+                        .orgNamePattern,
                   },
                 })}
                 type="text"

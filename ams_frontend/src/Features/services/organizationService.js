@@ -5,9 +5,19 @@ export const createOrganizationService = async (data) => {
   return response.data;
 };
 
-export const getAllOrganizationsService = async () => {
-  const response = await API.get("/organization/getAllOrganizations");
-  return response.data;
+export const getAllOrganizationsService = async ({
+  limit = 5,
+  page = 1,
+  searchTerm = "",
+}) => {
+  const response = await API.get("/organization/getAllOrganizations", {
+    params: {
+      limit,
+      page,
+      searchTerm: searchTerm.trim(),
+    },
+  });
+  return response;
 };
 
 export const updateOrganizationService = async (data) => {
@@ -38,7 +48,6 @@ export const deleteOrganizationService = async (ids) => {
       };
     }
   } catch (error) {
-    console.error("Delete Error:", error.response?.data);
     const errorMsg =
       error.response?.data?.message || "Error deleting organization(s)";
     throw new Error(errorMsg);

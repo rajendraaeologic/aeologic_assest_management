@@ -13,6 +13,7 @@ const organizationStrings = {
       yes: "Yes",
       no: "No",
       ok: "OK",
+      deleting: "Deleting...",
     },
     table: {
       headers: {
@@ -64,6 +65,8 @@ const organizationStrings = {
         "Organization name must be at least 3 characters long",
       organizationNameMaxLength:
         "Organization name must be at most 25 characters long",
+      orgNamePattern:
+        "Organization Name must contain only alphanumeric characters",
     },
     buttons: {
       save: "Save",
@@ -89,6 +92,8 @@ const organizationStrings = {
         "Organization name must be at least 3 characters long",
       organizationNameMaxLength:
         "Organization name must be at most 25 characters long",
+      orgNamePattern:
+        "Organization Name must contain only alphanumeric characters",
     },
     buttons: {
       update: "Update",

@@ -23,57 +23,123 @@ const createBranch = catchAsync(async (req, res) => {
   }
 });
 
-const getAllBranches = catchAsync(async (req, res) => {
-  const filter = pick(req.query, [
+export const getAllBranches = catchAsync(async (req, res) => {
+  const rawFilters = pick(req.query, [
     "branchName",
-    "location",
+    "createdAtFrom",
+    "createdAtTo",
+    "searchTerm",
     "companyId",
-    "from_date",
-    "to_date",
   ]);
-  const options = pick(req.query, ["sortBy", "sortType", "limit", "page"]);
 
-  applyDateFilter(filter);
+  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+  const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+  let sortBy = (req.query.sortBy as string) || "createdAt";
+  let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  if (filter.branchName) {
-    filter.branchName = {
-      contains: filter.branchName,
-      mode: "insensitive",
-    };
+  applyDateFilter(rawFilters);
+
+  const filters: any = {};
+
+  if (rawFilters.createdAtFrom || rawFilters.createdAtTo) {
+    filters.createdAt = {};
+    if (rawFilters.createdAtFrom)
+      filters.createdAt.gte = rawFilters.createdAtFrom;
+    if (rawFilters.createdAtTo) filters.createdAt.lte = rawFilters.createdAtTo;
   }
 
-  const result = await branchService.queryBranches(filter, options);
+  if (rawFilters.branchName) {
+    filters.branchName = {
+      contains: rawFilters.branchName,
+      mode: "insensitive",
+    };
+    limit = 1;
+    sortBy = "createdAt";
+    sortType = "desc";
+  }
 
-  if (!result || result.length === 0) {
-    res.status(200).json({
-      status: "404",
-      message: "No Branches found",
+  if (rawFilters.companyId) {
+    filters.companyId = rawFilters.companyId;
+  }
+
+  const searchTerm = (rawFilters.searchTerm as string)?.trim();
+  const isSearchMode = !!searchTerm;
+
+  if (isSearchMode) {
+    limit = 5;
+    sortBy = "createdAt";
+    sortType = "desc";
+  }
+
+  const searchConditions = searchTerm
+    ? {
+        OR: [
+          {
+            branchName: {
+              contains: searchTerm,
+              mode: "insensitive",
+            },
+          },
+        ],
+      }
+    : {};
+
+  const where = {
+    ...filters,
+    ...searchConditions,
+  };
+
+  const options = {
+    limit,
+    page,
+    sortBy,
+    sortType,
+  };
+
+  const result = await branchService.queryBranches(where, options);
+
+  if (!result || result.data.length === 0) {
+    res.status(httpStatus.OK).json({
+      success: false,
+      status: 404,
+      message: "No branches found",
       data: [],
+      totalData: 0,
+      page,
+      limit,
+      totalPages: 0,
+      mode: isSearchMode ? "search" : "pagination",
     });
     return;
   }
 
-  res.status(200).json({
+  res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: "Branches fetched successfully",
-    data: result,
+    data: result.data,
+    totalData: result.total,
+    page,
+    limit,
+    totalPages: Math.ceil(result.total / limit),
+    mode: isSearchMode ? "search" : "pagination",
   });
 });
 
 // getBranchById
-
 const getBranchById = catchAsync(async (req, res) => {
   const branch = await branchService.getBranchById(req.params.branchId);
 
   if (!branch) {
-    res.status(200).json({
-      status: "404",
+    res.status(httpStatus.OK).json({
+      status: 404,
       message: "No Branch found",
       data: [],
     });
     return;
   }
-  res.status(200).json({
+  res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: "Branch fetched successfully",
     data: branch,
@@ -86,7 +152,8 @@ const updateBranch = catchAsync(async (req, res) => {
       req.params.branchId,
       req.body
     );
-    res.status(200).json({
+    res.status(httpStatus.OK).json({
+      status: 200,
       success: true,
       message: "Branch update successfully",
       data: branch,
@@ -100,7 +167,7 @@ const deleteBranch = catchAsync(async (req, res) => {
   try {
     await branchService.deleteBranchById(req.params.branchId);
     res.status(httpStatus.NO_CONTENT);
-    res.send({ message: "Branch deleted successfully" });
+    res.send({ message: "Branch soft-deleted successfully" });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
@@ -157,8 +224,8 @@ export const getBranchesByOrganizationId = catchAsync(async (req, res) => {
     options
   );
   if (!result || result.data.length === 0) {
-    res.status(200).json({
-      status: "404",
+    res.status(httpStatus.OK).json({
+      status: 404,
       message: "No barnch found for this organizations",
       data: [],
       totalData: result.total,
@@ -170,7 +237,8 @@ export const getBranchesByOrganizationId = catchAsync(async (req, res) => {
   }
 
   // Sending response back to the client
-  res.status(200).json({
+  res.status(httpStatus.OK).json({
+    status: 200,
     success: true,
     message: "Branches fetched successfully",
     data: result.data,

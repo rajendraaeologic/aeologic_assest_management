@@ -5,9 +5,19 @@ export const createAssetService = async (data) => {
   return response.data;
 };
 
-export const getAllAssetsService = async () => {
-  const response = await API.get("/asset/getAllAssets");
-  return response.data;
+export const getAllAssetsService = async ({
+  limit = 5,
+  page = 1,
+  searchTerm = "",
+}) => {
+  const response = await API.get("/asset/getAllAssets", {
+    params: {
+      limit,
+      page,
+      searchTerm: searchTerm.trim(),
+    },
+  });
+  return response;
 };
 
 export const updateAssetService = async (data) => {
@@ -35,7 +45,6 @@ export const deleteAssetService = async (ids) => {
       };
     }
   } catch (error) {
-    console.error("Delete Error:", error.response?.data);
     const errorMsg = error.response?.data?.message || "Error deleting asset(s)";
     throw new Error(errorMsg);
   }

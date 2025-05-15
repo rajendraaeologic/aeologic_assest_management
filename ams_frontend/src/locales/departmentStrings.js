@@ -13,6 +13,7 @@ const departmentStrings = {
       yes: "Yes",
       no: "No",
       ok: "OK",
+      deleting: "Deleting...",
     },
     table: {
       headers: {
@@ -72,6 +73,8 @@ const departmentStrings = {
         "Department Name  must be at most 25 characters long",
       branchRequired: "Branch is required",
       organizationRequired: "Organization is required",
+      deptNamePattern:
+        "Department Name must contain only alphanumeric characters",
     },
     buttons: {
       save: "Save",
@@ -94,6 +97,8 @@ const departmentStrings = {
         "Department Name must be at least 3 characters long",
       departmentNameMaxLength:
         "Department Name  must be at most 25 characters long",
+      deptNamePattern:
+        "Department Name must contain only alphanumeric characters",
     },
     buttons: {
       close: "Close",

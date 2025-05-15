@@ -1,17 +1,28 @@
 import React from "react";
+import {API_URL} from "../../App/api/config.js";
 
 const DownloadTemplateButton = () => {
   const handleDownload = async () => {
-    const response = await fetch(
-      "http://localhost:3000/api/v1/users/download-excel-template"
-    );
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "UserTemplate.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
+    try {
+        const response = await fetch(
+            `${API_URL}/users/download-excel-template`, {
+                responseType: "blob",
+            }
+        );
+      const blob = new Blob([response.data], {
+        type: response.headers["content-type"],
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "UserTemplate.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Download failed:", error);
+    }
   };
 
   return (

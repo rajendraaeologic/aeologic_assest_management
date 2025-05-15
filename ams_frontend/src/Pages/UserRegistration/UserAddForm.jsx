@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
 import API from "../../App/api/axiosInstance";
@@ -41,6 +41,8 @@ const AddUserForm = ({ onClose }) => {
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [selectedDept, setSelectedDept] = useState(null);
 
+  const { currentPage, rowsPerPage } = useSelector((state) => state.usersData);
+
   const {
     register,
     handleSubmit,
@@ -61,6 +63,7 @@ const AddUserForm = ({ onClose }) => {
     },
     mode: "onChange",
   });
+
   const userName = watch("userName");
   const phone = watch("phone");
   const branchId = watch("branchId");
@@ -206,6 +209,21 @@ const AddUserForm = ({ onClose }) => {
     setSelectedDept(null);
   };
 
+  const handleOrgClick = async () => {
+    setShowOrgDropdown((prev) => !prev);
+    if (searchTerm.trim() === "") await fetchOrganizations(1, "");
+  };
+
+  const handleBranchClick = async () => {
+    setShowBranchDropdown((prev) => !prev);
+    if (!showBranchDropdown) {
+      setBranchSearchTerm("");
+      setBranchPage(1);
+      setBranches([]);
+      await fetchBranches(1, "");
+    }
+  };
+
   // Branch handlers
   const handleBranchScroll = (e) => {
     const bottomReached =
@@ -251,12 +269,27 @@ const AddUserForm = ({ onClose }) => {
     setValue("departmentId", dept.id, { shouldValidate: true });
     setSelectedDept(dept);
     setShowDeptDropdown(false);
+    setDeptSearchTerm("");
+  };
+  const handleDeptClick = async () => {
+    setShowDeptDropdown((prev) => !prev);
+    if (!showDeptDropdown) {
+      setDeptSearchTerm("");
+      setDepartmentPage(1);
+      setDepartments([]);
+      await fetchDepartments(1, "");
+    }
   };
 
   const onSubmit = async (data) => {
     try {
       await dispatch(createUser(data)).unwrap();
-      dispatch(getAllUsers());
+      await dispatch(
+        getAllUsers({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
       toast.success(userStrings.addUser.toast.success, {
         position: "top-right",
         autoClose: 2000,
@@ -317,7 +350,9 @@ const AddUserForm = ({ onClose }) => {
                   className="block text-sm font-medium text-gray-700"
                 >
                   {userStrings.addUser.formLabels.userName}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <input
                   ref={firstInputRef}
                   {...register("userName", {
@@ -329,6 +364,10 @@ const AddUserForm = ({ onClose }) => {
                     maxLength: {
                       value: 25,
                       message: userStrings.addUser.validation.userNameMaxLength,
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message: userStrings.addUser.validation.userNamePattern,
                     },
                   })}
                   type="text"
@@ -358,7 +397,9 @@ const AddUserForm = ({ onClose }) => {
                   className="block text-sm font-medium text-gray-700"
                 >
                   {userStrings.addUser.formLabels.phone}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <input
                   {...register("phone", {
                     required: userStrings.addUser.validation.phoneRequired,
@@ -402,7 +443,9 @@ const AddUserForm = ({ onClose }) => {
                   className="block text-sm font-medium text-gray-700"
                 >
                   {userStrings.addUser.formLabels.email}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <input
                   {...register("email", {
                     required: userStrings.addUser.validation.emailRequired,
@@ -429,9 +472,16 @@ const AddUserForm = ({ onClose }) => {
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.addUser.formLabels.organization}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <div
-                  onClick={() => setShowOrgDropdown(!showOrgDropdown)}
+                  onClick={() => {
+                    {
+                      handleOrgClick();
+                    }
+                    setShowOrgDropdown(!showOrgDropdown);
+                  }}
                   className={`mt-1 p-2 w-full border ${
                     errors.companyId ? "border-red-500" : "border-gray-300"
                   } rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis`}
@@ -481,9 +531,12 @@ const AddUserForm = ({ onClose }) => {
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.addUser.formLabels.branch}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <div
                   onClick={() => {
+                    handleBranchClick();
                     if (!selectedOrgId) {
                       toast.error("Please select an organization first");
                       return;
@@ -535,9 +588,12 @@ const AddUserForm = ({ onClose }) => {
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.addUser.formLabels.department}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <div
                   onClick={() => {
+                    handleDeptClick();
                     if (!branchId) {
                       toast.error("Please select a branch first");
                       return;
@@ -589,7 +645,9 @@ const AddUserForm = ({ onClose }) => {
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.addUser.formLabels.role}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <select
                   {...register("userRole", {
                     required: userStrings.addUser.validation.roleRequired,
@@ -616,7 +674,9 @@ const AddUserForm = ({ onClose }) => {
               <div className="w-full">
                 <label className="block text-sm font-medium text-gray-700">
                   {userStrings.addUser.formLabels.status}
+                  <span className="text-red-500">*</span>
                 </label>
+
                 <select
                   {...register("status", {
                     required: userStrings.addUser.validation.statusRequired,

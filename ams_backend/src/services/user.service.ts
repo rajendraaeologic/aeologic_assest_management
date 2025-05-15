@@ -17,15 +17,15 @@ const createUser = async (
   if (!user) return null;
 
   if (await getUserByEmail(user.email)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
+    throw new ApiError(httpStatus.CONFLICT, "Email already taken");
   }
 
   if (await getUserByPhone(user.phone)) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
+    throw new ApiError(httpStatus.CONFLICT, "Phone already taken");
   }
 
   const { companyId, branchId, departmentId, plainPassword, ...rest } = user;
-  console.log("snsns", user);
+
   if (!companyId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Company ID is required");
   }
@@ -120,9 +120,13 @@ const createUsersFromExcel = async (
 
       const [branchExists, companyExists, departmentExists] = await Promise.all(
         [
-          db.branch.findUnique({ where: { id: branchId } }),
-          db.organization.findUnique({ where: { id: companyId } }),
-          db.department.findUnique({ where: { id: departmentId } }),
+          db.branch.findUnique({ where: { id: branchId, deleted: false } }),
+          db.organization.findUnique({
+            where: { id: companyId, deleted: false },
+          }),
+          db.department.findUnique({
+            where: { id: departmentId, deleted: false },
+          }),
         ]
       );
 
@@ -160,8 +164,12 @@ const createUsersFromExcel = async (
 
         const user = await db.$transaction(async (tx) => {
           const [existingEmail, existingPhone] = await Promise.all([
-            tx.user.findFirst({ where: { email: userData.email } }),
-            tx.user.findUnique({ where: { phone: userData.phone } }),
+            tx.user.findFirst({
+              where: { email: userData.email, deleted: false },
+            }),
+            tx.user.findUnique({
+              where: { phone: userData.phone, deleted: false },
+            }),
           ]);
 
           if (existingEmail) throw new Error(`Email exists: ${userData.email}`);
@@ -256,37 +264,45 @@ const queryUsers = async (
     sortType?: "asc" | "desc";
   },
   selectKeys: Prisma.UserSelect = UserKeys
-): Promise<User[]> => {
+): Promise<{ data: User[]; total: number }> => {
   const page = options.page ?? 1;
-  const limit = options.limit ?? 20;
-  const skip = (page - 1) * limit || 0;
-  const sortBy = options.sortBy;
+  const limit = options.limit ?? 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || "createdAt";
   const sortType = options.sortType ?? "desc";
-  return db.user.findMany({
-    where: {
-      ...filter,
-      NOT: {
-        userRole: "SUPERADMIN",
+  const finalFilter = {
+    ...filter,
+    deleted: false,
+  };
+
+  const [data, total] = await Promise.all([
+    db.user.findMany({
+      where: finalFilter,
+      select: {
+        ...selectKeys,
+        updatedAt: true,
       },
-    },
-    select: selectKeys,
-    skip: skip > 0 ? skip : 0,
-    take: limit,
-    orderBy: sortBy ? { [sortBy]: sortType } : undefined,
-  });
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortType },
+    }),
+    db.user.count({ where: finalFilter }),
+  ]);
+
+  return { data, total };
 };
 
 const getUserById = async (
   id: string
 ): Promise<Omit<User, "password"> | null> => {
   return db.user.findUnique({
-    where: { id },
+    where: { id, deleted: false },
   });
 };
 
 const getSuperAdmin = async (): Promise<Omit<User, "password"> | null> => {
   return db.user.findFirst({
-    where: { userRole: UserRole.SUPERADMIN },
+    where: { userRole: UserRole.SUPERADMIN, deleted: false },
   });
 };
 const getUserByEmail = async (
@@ -295,7 +311,7 @@ const getUserByEmail = async (
 ): Promise<Omit<User, "password"> | null> => {
   if (!excludeUserId) {
     return db.user.findFirst({
-      where: { email },
+      where: { email, deleted: false },
     }) as Promise<Omit<User, "password"> | null>;
   }
 };
@@ -307,7 +323,7 @@ const getUserWithPasswordByEmail = async (
   if (!excludeUserId) {
     return db.user.findFirst({
       omit: { password: false },
-      where: { email },
+      where: { email, deleted: false },
     });
   }
 };
@@ -320,6 +336,7 @@ const getUserByPhone = async (
   return db.user.findUnique({
     where: {
       phone,
+      deleted: false,
       ...(excludeUserId ? { NOT: { id: excludeUserId } } : {}),
     },
     select: selectKeys,
@@ -337,25 +354,68 @@ const updateUserById = async (
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  if (
-    updateBody.email &&
-    (await getUserByEmail(updateBody.email as string, userId))
-  ) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Email already taken");
+  let newEmail: string | undefined;
+  let newPhone: string | undefined;
+
+  // Extract new email value from update body
+  if (updateBody.email) {
+    if (typeof updateBody.email === "string") {
+      newEmail = updateBody.email;
+    } else if (
+      typeof updateBody.email === "object" &&
+      "set" in updateBody.email
+    ) {
+      newEmail = updateBody.email.set;
+    }
   }
 
-  if (
-    updateBody.phone &&
-    (await getUserByPhone(updateBody.phone as string, userId))
-  ) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Phone already taken");
+  // Extract new phone value from update body
+  if (updateBody.phone) {
+    if (typeof updateBody.phone === "string") {
+      newPhone = updateBody.phone;
+    } else if (
+      typeof updateBody.phone === "object" &&
+      "set" in updateBody.phone
+    ) {
+      newPhone = updateBody.phone.set;
+    }
+  }
+
+  // Check email uniqueness if changed
+  if (newEmail && newEmail !== user.email) {
+    const existingUserWithEmail = await db.user.findFirst({
+      where: {
+        email: newEmail,
+        id: { not: userId },
+        deleted: false,
+      },
+    });
+
+    if (existingUserWithEmail) {
+      throw new ApiError(httpStatus.CONFLICT, "Email already taken");
+    }
+  }
+
+  // Check phone uniqueness if changed
+  if (newPhone && newPhone !== user.phone) {
+    const existingUserWithPhone = await db.user.findFirst({
+      where: {
+        phone: newPhone,
+        id: { not: userId },
+        deleted: false,
+      },
+    });
+
+    if (existingUserWithPhone) {
+      throw new ApiError(httpStatus.CONFLICT, "Phone already taken");
+    }
   }
 
   const oldEmail = user.email;
   let plainPassword = null;
 
-  // If email is updated, generate a new password
-  if (updateBody.email && oldEmail !== updateBody.email) {
+  // Generate new password only if email is actually changing
+  if (newEmail && newEmail !== oldEmail) {
     plainPassword = generateRandomPassword();
     updateBody.password = await encryptPassword(plainPassword);
   }
@@ -366,24 +426,19 @@ const updateUserById = async (
     select: selectKeys,
   });
 
-  // Send email if email changed
-  if (updateBody.email && oldEmail !== updateBody.email) {
+  // Send email notification if email changed
+  if (newEmail && newEmail !== oldEmail) {
     const emailContent = generateUserEmailUpdateNotification(
       updatedUser.userName,
-      updateBody.email as string,
-      plainPassword || "[unchanged]"
+      newEmail,
+      plainPassword!
     );
 
-    await sendEmail(
-      updateBody.email as string,
-      "Your Email Has Been Updated",
-      emailContent
-    );
+    await sendEmail(newEmail, "Your Email Has Been Updated", emailContent);
   }
 
   return updatedUser;
 };
-
 const deleteUserById = async (
   userId: string
 ): Promise<Omit<User, "password">> => {
@@ -393,73 +448,125 @@ const deleteUserById = async (
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
+  if (user.deleted) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "User already deleted");
+  }
+
   try {
-    await db.$transaction(
+    const updatedUser = await db.$transaction(
       async (tx) => {
-        await tx.assetAssignment.deleteMany({ where: { userId } });
-        await tx.assetHistory.deleteMany({ where: { userId } });
-        await tx.user.delete({ where: { id: user.id } });
+        // Soft-delete related assetAssignments
+        await tx.assetAssignment.updateMany({
+          where: { userId },
+          data: { deleted: true },
+        });
+
+        // Soft-delete related assetHistories
+        await tx.assetHistory.updateMany({
+          where: { userId },
+          data: { deleted: true },
+        });
+
+        // Soft-delete the user itself
+        return tx.user.update({
+          where: { id: userId },
+          data: { deleted: true },
+        });
       },
       {
         maxWait: 5000,
         timeout: 15000,
       }
     );
+
+    return updatedUser;
   } catch (error) {
-    console.error("Error deleting user:", error);
+    if (error instanceof ApiError) throw error;
+    console.error("User soft delete failed:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
-
-  return user;
 };
 
 const deleteUsersByIds = async (
   userIds: string[]
 ): Promise<Omit<User, "password">[]> => {
+  // Fetch all users (including soft-deleted)
+  const users = await db.user.findMany({
+    where: { id: { in: userIds } },
+  });
+
+  // Check for missing IDs
+  const foundIds = users.map((u) => u.id);
+  const missingIds = userIds.filter((id) => !foundIds.includes(id));
+  if (missingIds.length > 0) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `Users not found: ${missingIds.join(", ")}`
+    );
+  }
+
+  // Check if any are already soft-deleted
+  const alreadyDeleted = users.filter((u) => u.deleted);
+  if (alreadyDeleted.length > 0) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Users already deleted: ${alreadyDeleted.map((u) => u.id).join(", ")}`
+    );
+  }
+
   try {
-    return await db.$transaction(
+    const updatedUsers = await db.$transaction(
       async (tx) => {
-        const users = await Promise.all(
-          userIds.map((id) =>
-            tx.user.findUnique({
-              where: { id },
-              select: {
-                id: true,
-                userName: true,
-                email: true,
-              },
-            })
-          )
-        );
+        // Check for active asset assignments (non-deleted)
+        const activeAssignmentCount = await tx.assetAssignment.count({
+          where: {
+            userId: { in: userIds },
+            deleted: false,
+          },
+        });
 
-        const notFoundIds = userIds.filter((_, index) => !users[index]);
-        if (notFoundIds.length > 0) {
-          throw new ApiError(
-            httpStatus.NOT_FOUND,
-            `Users not found: ${notFoundIds.join(", ")}`
-          );
+        if (activeAssignmentCount > 0) {
+          const message =
+            activeAssignmentCount === 1
+              ? "1 active asset assignment exists - cannot delete users"
+              : `${activeAssignmentCount} active asset assignments exist - cannot delete users`;
+          throw new ApiError(httpStatus.BAD_REQUEST, message);
         }
-        await tx.assetAssignment.deleteMany({
+
+        // Soft-delete related entities
+        await tx.assetAssignment.updateMany({
           where: { userId: { in: userIds } },
+          data: { deleted: true },
         });
 
-        // Delete related asset history
-        await tx.assetHistory.deleteMany({
+        await tx.assetHistory.updateMany({
           where: { userId: { in: userIds } },
+          data: { deleted: true },
         });
-        await tx.user.deleteMany({
+
+        // Soft-delete users
+        await tx.user.updateMany({
+          where: { id: { in: userIds } },
+          data: { deleted: true },
+        });
+
+        // Return updated users without passwords
+        const updatedUsers = await tx.user.findMany({
           where: { id: { in: userIds } },
         });
 
-        return users as Omit<User, "password">[];
+        return updatedUsers.map(({ password, ...user }) => user);
       },
       {
         maxWait: 5000,
         timeout: 15000,
       }
     );
+
+    return updatedUsers;
   } catch (error) {
-    console.error("Error deleting users:", error);
+    if (error instanceof ApiError) throw error;
+    console.error("Bulk user soft-delete failed:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
 };
@@ -475,7 +582,7 @@ const deleteUsersByIds = async (
 
 const checkUserExists = async (userId: string) => {
   const user = await db.user.findUnique({
-    where: { id: userId },
+    where: { id: userId, deleted: false },
   });
   return user !== null;
 };

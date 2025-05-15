@@ -29,7 +29,7 @@ export default {
         verifyEmailExpirationMinutes: parseInt(env.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES),
     },
     sms :{
-        otpTemplate: "Your Shiksha OTP code is {{otp}}. Please do not share this code with anyone.",
+        otpTemplate: "Your AMS OTP code is {{otp}}. Please do not share this code with anyone.",
         enabled: env.SMS_SERVICE_ENABLED === 'true',
         bulkSmsUrl: env.BULK_SMS_BASE_URL,
         bulkSmsApiTokenId: env.BULK_SMS_API_TOKEN_ID,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -17,23 +17,32 @@ import AddAsset from "./AddAsset";
 import UpdateAsset from "./UpdateAsset";
 import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
-import { getAllAssets } from "../../Features/slices/assetSlice";
+import { getAllAssets, setSearchTerm } from "../../Features/slices/assetSlice";
 import { deleteAsset } from "../../Features/slices/assetSlice";
 import assetStrings from "../../locales/assetStrings";
-
+import { toast } from "react-toastify";
+import debounce from "lodash.debounce";
+import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader";
+import PaginationControls from "../../components/common/PaginationControls";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
+import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 const Asset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { isSidebarOpen } = useContext(SliderContext);
   const strings = assetStrings.asset;
 
-  const { assets, selectedAssets, currentPage, rowsPerPage } = useSelector(
-    (state) => state.assetUserData
-  );
-
-  useEffect(() => {
-    dispatch(getAllAssets());
-  }, [dispatch]);
+  const {
+    assets,
+    selectedAssets,
+    currentPage,
+    rowsPerPage,
+    totalPages,
+    totalAssets,
+    searchTerm,
+    loading,
+    error,
+  } = useSelector((state) => state.assetUserData);
 
   const [isAddAsset, setIsAddAsset] = useState(false);
   const [isUpdateAsset, setIsUpdateAsset] = useState(false);
@@ -42,21 +51,46 @@ const Asset = () => {
   const [showSelectFirstPopup, setShowSelectFirstPopup] = useState(false);
   const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
-
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [isSearching, setIsSearching] = useState(false);
   const options = ["5", "10", "25", "50", "100"];
-  const totalPages = Math.ceil(assets.length / rowsPerPage);
 
-  const [searchAsset, setSearchAsset] = useState({
-    assetName: "",
-    uniqueId: "",
-    brand: "",
-    model: "",
-    serialNumber: "",
-    status: "",
-    branch: "",
-    department: "",
-    organizationName: "",
-  });
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      dispatch(setSearchTerm(value));
+      setIsSearching(false);
+    }, 500),
+    [dispatch]
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    setLocalSearchTerm(searchTerm);
+  }, [searchTerm]);
+
+  // Fetch users when page, limit, or searchTerm changes
+  useEffect(() => {
+    dispatch(
+      getAllAssets({
+        page: currentPage,
+        limit: rowsPerPage,
+        searchTerm: searchTerm.trim(),
+      })
+    );
+  }, [dispatch, currentPage, rowsPerPage, searchTerm]);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setIsSearching(true);
+    setLocalSearchTerm(value);
+    debouncedSearch(value);
+  };
 
   useEffect(() => {
     if (
@@ -74,52 +108,21 @@ const Asset = () => {
     };
   }, [showDeleteConfirmation, showSelectFirstPopup, showDeleteSuccessPopup]);
 
-  const handleSearchChange = (e) => {
-    const { name, value } = e.target;
-    setSearchAsset((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const filteredAssets = assets?.filter((asset) => {
-    return Object.entries(searchAsset).every(([key, searchValue]) => {
-      if (key === "branch" && asset.branch) {
-        return asset.branch.branchName
-          .toLowerCase()
-          .includes(searchValue.toLowerCase());
-      }
-      if (key === "department" && asset.department) {
-        return asset.department.departmentName
-          .toLowerCase()
-          .includes(searchValue.toLowerCase());
-      }
-
-      return (asset[key] || "")
-        .toString()
-        .toLowerCase()
-        .includes(searchValue.toLowerCase());
-    });
-  });
-
-  const startIndex = currentPage * rowsPerPage;
-  const currentRows = filteredAssets.slice(
-    startIndex,
-    startIndex + rowsPerPage
-  );
-
   const handleNavigate = () => {
     navigate("/dashboard");
   };
 
   const handlePrev = () => {
-    if (currentPage > 0) dispatch(setCurrentPage(currentPage - 1));
+    if (currentPage > 1) {
+      dispatch(setCurrentPage(currentPage - 1));
+    }
   };
 
   const handleNext = () => {
-    if (currentPage < totalPages - 1) dispatch(setCurrentPage(currentPage + 1));
+    if (currentPage < totalPages) {
+      dispatch(setCurrentPage(currentPage + 1));
+    }
   };
-
   const handleDeleteSelectedAssets = () => {
     if (selectedAssets.length === 0) {
       setShowSelectFirstPopup(true);
@@ -150,27 +153,55 @@ const Asset = () => {
     setShowDeleteConfirmation(true);
   };
 
-  const confirmDelete = () => {
-    if (assetToDelete) {
-      dispatch(deleteAsset([assetToDelete]));
-      setDeleteMessage(strings.modals.deleteSuccess.single);
-    } else if (selectedAssets.length > 0) {
-      dispatch(deleteAsset(selectedAssets));
-      setDeleteMessage(
-        strings.modals.deleteSuccess.multiple.replace(
-          "{count}",
-          selectedAssets.length
-        )
-      );
+  const confirmDelete = async () => {
+    setIsDeleting(true);
+
+    try {
+      if (assetToDelete) {
+        await dispatch(deleteAsset([assetToDelete])).unwrap();
+        dispatch(
+          getAllAssets({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
+        setDeleteMessage(strings.modals.deleteSuccess.single);
+      } else if (selectedAssets.length > 0) {
+        await dispatch(deleteAsset(selectedAssets)).unwrap();
+        dispatch(
+          getAllAssets({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
+        setDeleteMessage(
+          strings.modals.deleteSuccess.multiple.replace(
+            "{count}",
+            selectedAssets.length
+          )
+        );
+      }
+
+      setShowDeleteConfirmation(false);
+      setAssetToDelete(null);
+      setShowDeleteSuccessPopup(true);
+      setTimeout(() => {
+        setShowDeleteSuccessPopup(false);
+      }, 2000);
+    } finally {
+      setIsDeleting(false);
     }
-    setShowDeleteConfirmation(false);
-    setAssetToDelete(null);
-    setShowDeleteSuccessPopup(true);
-    setTimeout(() => {
-      setShowDeleteSuccessPopup(false);
-    }, 2000);
   };
 
+  // Delete Success  toast
+  useEffect(() => {
+    if (showDeleteSuccessPopup && deleteMessage) {
+      toast.success(deleteMessage, {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  }, [showDeleteSuccessPopup, deleteMessage]);
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);
     setAssetToDelete(null);
@@ -223,458 +254,138 @@ const Asset = () => {
         </div>
 
         <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex items-center gap-2 pt-8 ml-3">
-            <p>{strings.table.showEntries}</p>
-            <div className="border-2 flex justify-evenly">
-              <select
-                value={rowsPerPage}
-                onChange={(e) =>
-                  dispatch(setRowsPerPage(parseInt(e.target.value)))
-                }
-                className="outline-none px-1"
-              >
-                {options.map((option, index) => (
-                  <option key={index} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+          <div className="flex items-center justify-between pt-8 px-6">
+            {/* Left side: Show entries dropdown */}
+            <div className="flex items-center gap-2">
+              <p>{assetStrings.asset.table.showEntries}</p>
+              <div className="border-2 flex justify-evenly">
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) =>
+                    dispatch(setRowsPerPage(parseInt(e.target.value)))
+                  }
+                  className="outline-none px-1"
+                >
+                  {options.map((option, index) => (
+                    <option key={index} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p>{assetStrings.asset.table.entries}</p>
             </div>
-            <p>{strings.table.entries}</p>
+
+            {/* Right side: Search bar */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search"
+                className="border p-2 rounded w-64"
+                value={localSearchTerm}
+                onChange={handleSearchChange}
+              />
+              {isSearching && (
+                <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
+                  Searching...
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
-            <table
-              className="table-auto min-w-max text-left border-collapse"
-              style={{ tableLayout: "fixed" }}
-            >
+            <table className="table-auto w-full text-left border-collapse">
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.assetName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.uniqueId}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.brand}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.model}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.serialNumber}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.status}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.organizationName}
-                  </th>
+                  {[
+                    strings.table.headers.assetName,
+                    strings.table.headers.uniqueId,
+                    strings.table.headers.brand,
+                    strings.table.headers.model,
+                    strings.table.headers.serialNumber,
+                    strings.table.headers.status,
+                    strings.table.headers.organizationName,
+                    strings.table.headers.branch,
+                    strings.table.headers.department,
+                    strings.table.headers.action,
+                  ].map((header, idx) => (
+                    <th
+                      key={idx}
+                      className="px-2 py-2 border border-gray-300 whitespace-nowrap"
+                    >
+                      {header}
+                    </th>
+                  ))}
 
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.branch}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.department}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {strings.table.headers.action}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
+                  {/* Delete All Checkbox Header */}
+                  <th className="px-2 py-2 border border-gray-300 min-w-[100px] max-w-[100px] whitespace-nowrap">
                     {strings.table.headers.deleteAll}
+                    <div className="flex justify-center items-center gap-1 mt-1">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedAssets.length === assets.length &&
+                            assets.length > 0
+                          }
+                          onChange={handleSelectAllAssets}
+                          className="mr-2"
+                        />
+                      </label>
+                      <button onClick={handleDeleteSelectedAssets}>
+                        <MdDelete className="h-5 w-5 text-[red]" />
+                      </button>
+                    </div>
                   </th>
                 </tr>
               </thead>
 
-              {/* Search Row */}
               <tbody>
-                <tr className="bg-gray-100">
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="assetName"
-                      placeholder={strings.table.searchPlaceholders.assetName}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.assetName}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="uniqueId"
-                      placeholder={strings.table.searchPlaceholders.uniqueId}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.uniqueId}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="brand"
-                      placeholder={strings.table.searchPlaceholders.brand}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.brand}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="model"
-                      placeholder={strings.table.searchPlaceholders.model}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.model}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="serialNumber"
-                      placeholder={
-                        strings.table.searchPlaceholders.serialNumber
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.serialNumber}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="status"
-                      placeholder={strings.table.searchPlaceholders.status}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.status}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="branch"
-                      placeholder={
-                        strings.table.searchPlaceholders.organizationName
-                      }
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.organizationName}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="branch"
-                      placeholder={strings.table.searchPlaceholders.branch}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.branch}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="department"
-                      placeholder={strings.table.searchPlaceholders.department}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchAsset.department}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  ></td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      <div className="">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedAssets.length === assets.length &&
-                              assets.length > 0
-                            }
-                            onChange={handleSelectAllAssets}
-                            className="mr-2"
-                          />
-                        </label>
-                      </div>
-                      <button onClick={handleDeleteSelectedAssets}>
-                        <MdDelete className="h-6 w-6 text-[red]" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-
-              {/* Table Body */}
-              <tbody>
-                {currentRows.length > 0 ? (
-                  currentRows.map((asset, index) => (
+                {loading ? (
+                  <SkeletonLoader rows={5} columns={11} />
+                ) : assets.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="12"
+                      className="px-2 py-4 text-center border border-gray-300"
+                    >
+                      {strings.table.noData}
+                    </td>
+                  </tr>
+                ) : (
+                  assets.map((asset, index) => (
                     <tr
                       key={asset.id || index}
                       className={`${
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.assetName}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.uniqueId}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.brand}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.model}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.serialNumber}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.status}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.company?.organizationName ||
-                          strings.table.notAvailable}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.branch?.branchName || strings.table.notAvailable}
-                      </td>
+                      {/* Asset Columns */}
+                      {[
+                        asset.assetName,
+                        asset.uniqueId,
+                        asset.brand,
+                        asset.model,
+                        asset.serialNumber,
+                        asset.status,
+                        asset.company?.organizationName,
+                        asset.branch?.branchName,
+                        asset.department?.departmentName,
+                      ].map((field, i) => (
+                        <td
+                          key={i}
+                          className="px-2 py-2 border border-gray-300 break-words align-top"
+                        >
+                          {field || strings.notAvailable.emptyText}
+                        </td>
+                      ))}
 
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                        }}
-                      >
-                        {asset.department?.departmentName ||
-                          strings.table.notAvailable}
-                      </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
-                        <div className="flex ">
+                      {/* Action Buttons */}
+                      <td className="px-2 py-2 border border-gray-300 text-center">
+                        <div className="flex justify-center gap-2">
                           <button
                             onClick={() => handleEditAsset(asset)}
-                            className="px-3 py-2 rounded-sm "
+                            className="px-3 py-2 rounded-sm"
                           >
                             <FontAwesomeIcon icon={faPen} />
                           </button>
@@ -686,87 +397,33 @@ const Asset = () => {
                           </button>
                         </div>
                       </td>
-                      <td
-                        className="px-2 py-2 border text-center border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
+
+                      {/* Checkbox Selection */}
+                      <td className="px-2 py-2 border text-center">
                         <input
                           type="checkbox"
-                          checked={selectedAssets?.includes(asset.id) ?? false}
+                          checked={selectedAssets.includes(asset.id)}
                           onChange={() => handleToggleAssetSelection(asset.id)}
                         />
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="12"
-                      className="px-2 py-4 text-center border border-gray-300"
-                    >
-                      {strings.table.noData}
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2 flex items-center gap-2">
-              <button
-                onClick={handlePrev}
-                disabled={currentPage === 0 || totalPages === 0}
-                className={`${
-                  currentPage === 0 || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {assetStrings.asset.buttons.previous}
-              </button>
-
-              <span className="px-2 space-x-1">
-                {totalPages > 0 ? (
-                  <>
-                    <span
-                      className={`py-1 px-3 ${
-                        currentPage + 1 < totalPages
-                          ? "bg-[#3bc0c3] text-white"
-                          : "border-2"
-                      }`}
-                    >
-                      {currentPage + 1}
-                    </span>
-                    <span
-                      className={`py-1 px-3 ${
-                        currentPage + 1 === totalPages
-                          ? "bg-[#3bc0c3] text-white"
-                          : "border-2"
-                      }`}
-                    >
-                      {totalPages}
-                    </span>
-                  </>
-                ) : (
-                  <span className="py-1 px-3">0 / 0</span>
-                )}
-              </span>
-
-              <button
-                onClick={handleNext}
-                disabled={currentPage + 1 >= totalPages || totalPages === 0}
-                className={`${
-                  currentPage + 1 >= totalPages
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {assetStrings.asset.buttons.next}
-              </button>
-            </div>
-          </div>
+          <PaginationControls
+            currentPage={currentPage}
+            rowsPerPage={rowsPerPage}
+            totalItems={totalAssets}
+            totalPages={totalPages}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            previousLabel={strings.buttons.previous}
+            nextLabel={strings.buttons.next}
+          />
         </div>
       </div>
       {/* Modals */}
@@ -784,62 +441,21 @@ const Asset = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {assetToDelete
-                ? strings.modals.deleteConfirmation.single
-                : strings.modals.deleteConfirmation.multiple.replace(
-                    "{count}",
-                    selectedAssets.length
-                  )}
-            </h3>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-300 rounded-md"
-              >
-                {strings.buttons.no}
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-md"
-              >
-                {strings.buttons.yes}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <DeleteConfirmationModal
+        show={showDeleteConfirmation}
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        isSingle={!!assetToDelete}
+        count={selectedAssets.length}
+        strings={assetStrings.asset}
+      />
       {/* Select First Popup */}
-      {showSelectFirstPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {strings.modals.selectFirst}
-            </h3>
-            <div className="flex justify-end">
-              <button
-                onClick={closeSelectFirstPopup}
-                className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
-              >
-                {strings.buttons.ok}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Success Popup */}
-      {showDeleteSuccessPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">{deleteMessage}</h3>
-          </div>
-        </div>
-      )}
+      <SelectFirstPopup
+        show={showSelectFirstPopup}
+        onClose={closeSelectFirstPopup}
+        strings={assetStrings.asset}
+      />
     </div>
   );
 };

@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import SliderContext from "../../components/ContexApi";
-import dashboardStrings from "../../locales/DashboardStrings";
+import dashboardStrings from "../../locales/dashboardStrings";
 import API from "../../App/api/axiosInstance";
 import { selectCurrentUser } from "../../Features/auth/authSlice";
 import { useSelector } from "react-redux";

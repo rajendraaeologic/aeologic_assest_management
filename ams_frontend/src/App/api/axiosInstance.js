@@ -1,5 +1,6 @@
 import axios from "axios";
 import { setCredentials, logOut } from "../../Features/auth/authSlice";
+import {API_URL} from "./config.js";
 
 let storeInstance;
 
@@ -8,7 +9,7 @@ export const injectStore = (store) => {
 };
 
 const API = axios.create({
-  baseURL: "http://localhost:3000/api/v1",
+  baseURL: API_URL,
 });
 
 API.interceptors.request.use(
@@ -36,7 +37,7 @@ API.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const refreshResponse = await axios.get(
-          "http://localhost:3000/api/v1/auth/refresh",
+          `${API_URL}/auth/refresh`,
           { withCredentials: true }
         );
 

@@ -6,6 +6,7 @@ import API from "../../App/api/axiosInstance";
 import assetStrings from "../../locales/assetStrings";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { getAllAssets } from "../../Features/slices/assetSlice";
 
 const UpdateAsset = ({ onClose, onSuccess }) => {
   const dispatch = useDispatch();
@@ -15,6 +16,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
   const { error } = useSelector((state) => state.assetUserData);
   const selectedAsset = useSelector(
     (state) => state.assetUserData.selectedAsset
+  );
+  const { currentPage, rowsPerPage } = useSelector(
+    (state) => state.assetUserData
   );
 
   // Organization dropdown state
@@ -248,12 +252,18 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
     fetchBranches(1, search);
   };
 
-  const handleBranchClick = () => {
+  const handleBranchClick = async () => {
     if (!selectedOrgId) {
       toast.error("Please select an organization first");
       return;
     }
-    setShowBranchDropdown(!showBranchDropdown);
+    setShowBranchDropdown((prev) => !prev);
+    if (!showBranchDropdown) {
+      setBranchSearchTerm("");
+      setBranchPage(1);
+      setBranches([]);
+      await fetchBranches(1, "");
+    }
   };
 
   const handleBranchSelect = (branch) => {
@@ -282,12 +292,18 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
     fetchDepartments(1, search);
   };
 
-  const handleDeptClick = () => {
+  const handleDeptClick = async () => {
     if (!branchId) {
       toast.error("Please select a branch first");
       return;
     }
-    setShowDeptDropdown(!showDeptDropdown);
+    setShowDeptDropdown((prev) => !prev);
+    if (!showDeptDropdown) {
+      setDeptSearchTerm("");
+      setDepartmentPage(1);
+      setDepartments([]);
+      await fetchDepartments(1, "");
+    }
   };
 
   const handleDeptSelect = (dept) => {
@@ -351,6 +367,12 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
       };
 
       await dispatch(updateAsset(updateData)).unwrap();
+      await dispatch(
+        getAllAssets({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
       toast.success(assetStrings.updateAsset.toast.success, {
         position: "top-right",
         autoClose: 1000,
@@ -358,9 +380,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
       onSuccess();
       handleClose();
     } catch (error) {
+      console.log("error", error);
       toast.error(error.message || assetStrings.updateAsset.toast.error, {
         position: "top-right",
-        autoClose: 1000,
+        autoClose: 1500,
       });
     }
   };
@@ -389,11 +412,6 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
 
         <div className="p-5 px-10">
           <form onSubmit={handleSubmit(onSubmit)}>
-            {error && (
-              <div className="mb-4 p-2 bg-red-100 text-red-700 rounded">
-                {error}
-              </div>
-            )}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Asset Name */}
               <div className="w-full">
@@ -425,6 +443,11 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       value: 25,
                       message:
                         assetStrings.updateAsset.validation.assetNameMaxLength,
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message:
+                        assetStrings.updateAsset.validation.assetNamePattern,
                     },
                   })}
                 />
@@ -627,17 +650,34 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       assetStrings.updateAsset.validation.statusRequired,
                   })}
                 >
-                  <option value="ACTIVE">
-                    {assetStrings.updateAsset.statusOptions.ACTIVE}
-                  </option>
                   <option value="IN_USE">
-                    {assetStrings.updateAsset.statusOptions.IN_USE}
+                    {assetStrings.addAsset.statusOptions.in_use}
                   </option>
+                  <option value="UNASSIGNED">
+                    {assetStrings.addAsset.statusOptions.unassigned}
+                  </option>
+                  <option value="ASSIGNED">
+                    {assetStrings.addAsset.statusOptions.assigned}
+                  </option>
+
+                  <option value="LOST">
+                    {assetStrings.addAsset.statusOptions.lost}
+                  </option>
+                  <option value="DAMAGED">
+                    {assetStrings.addAsset.statusOptions.damaged}
+                  </option>
+                  <option value="IN_REPAIR">
+                    {assetStrings.addAsset.statusOptions.in_REPAIR}
+                  </option>
+                  <option value="DISPOSED">
+                    {assetStrings.addAsset.statusOptions.disposed}
+                  </option>
+
                   <option value="UNDER_MAINTENANCE">
-                    {assetStrings.updateAsset.statusOptions.UNDER_MAINTENANCE}
+                    {assetStrings.addAsset.statusOptions.maintenance}
                   </option>
                   <option value="RETIRED">
-                    {assetStrings.updateAsset.statusOptions.RETIRED}
+                    {assetStrings.addAsset.statusOptions.retired}
                   </option>
                 </select>
                 {errors.status && (
@@ -754,9 +794,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                 </label>
                 <div
                   onClick={handleBranchClick}
-                  className={`mt-1 p-2 w-full border ${
-                    !selectedBranch ? "border-red-500" : "border-gray-300"
-                  } rounded-md cursor-pointer bg-white`}
+                  className={
+                    "mt-1 p-2 w-full border  border-gray-300 rounded-md cursor-pointer bg-white"
+                  }
                 >
                   {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                 </div>
@@ -805,9 +845,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                 </label>
                 <div
                   onClick={handleDeptClick}
-                  className={`mt-1 p-2 w-full border ${
-                    !selectedDept ? "border-red-500" : "border-gray-300"
-                  } rounded-md cursor-pointer bg-white`}
+                  className={
+                    "mt-1 p-2 w-full border  border-gray-300 rounded-md cursor-pointer bg-white"
+                  }
                 >
                   {selectedDept
                     ? selectedDept.departmentName

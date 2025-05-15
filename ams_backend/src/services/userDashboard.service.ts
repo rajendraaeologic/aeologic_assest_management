@@ -25,6 +25,7 @@ const queryAssignAssetUser = async (
   const combinedFilter = {
     ...filter,
     userId,
+    deleted: false,
   };
 
   return await db.assetAssignment.findMany({

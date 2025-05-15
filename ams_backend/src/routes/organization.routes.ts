@@ -3,8 +3,6 @@ import validate from "@/middleware/validation.middleware";
 import organizationController from "@/controller/organization.controller";
 import organizationValidation from "@/validations/organization.validation";
 import auth from "@/middleware/auth.middleware";
-import { UserRole } from "@prisma/client";
-console.log("UserRole", UserRole);
 
 const router = express.Router();
 

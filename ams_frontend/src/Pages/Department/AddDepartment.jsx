@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
 import "react-toastify/dist/ReactToastify.css";
@@ -31,6 +31,10 @@ const AddDepartment = ({ onClose }) => {
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const { currentPage, rowsPerPage } = useSelector(
+    (state) => state.departmentData
+  );
 
   const {
     register,
@@ -175,12 +179,18 @@ const AddDepartment = ({ onClose }) => {
     fetchBranches(1, search);
   };
 
-  const handleBranchClick = () => {
+  const handleBranchClick = async () => {
     if (!organizationId) {
       toast.error("Please select an organization first");
       return;
     }
-    setShowBranchDropdown(!showBranchDropdown);
+    setShowBranchDropdown((prev) => !prev);
+    if (!showBranchDropdown) {
+      setBranchSearchTerm("");
+      setBranchPage(1);
+      setBranches([]);
+      await fetchBranches(1, "");
+    }
   };
 
   const handleBranchSelect = (branch) => {
@@ -198,7 +208,12 @@ const AddDepartment = ({ onClose }) => {
         })
       ).unwrap();
 
-      dispatch(getAllDepartments());
+      await dispatch(
+        getAllDepartments({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
       toast.success(departmentStrings.addDepartment.toast.success, {
         position: "top-right",
         autoClose: 1000,
@@ -273,6 +288,12 @@ const AddDepartment = ({ onClose }) => {
                       message:
                         departmentStrings.addDepartment.validation
                           .departmentNameMaxLength,
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message:
+                        departmentStrings.addDepartment.validation
+                          .deptNamePattern,
                     },
                   })}
                   type="text"

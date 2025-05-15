@@ -11,4 +11,5 @@ export { default as branchService } from "./branch.service";
 export { default as assetService } from "./asset.service";
 export { default as dashboardService } from "./dashboard.service";
 export { default as userDashboardService } from "./userDashboard.service";
-export { default as assignAssetService } from "./assignasset.service";
+export { default as assignAssetService } from "./assignAsset.service";
+export { default as assetHistoryService } from "./assetHistory.service";

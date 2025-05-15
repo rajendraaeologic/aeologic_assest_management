@@ -1,22 +1,20 @@
 import express from "express";
-import assignAssetValidation, {
-  getAssetsByDepartmentIdValidation,
-} from "@/validations/assignAsset.validation";
+import assignAssetValidation from "@/validations/assignAsset.validation";
 import assignAssetController from "@/controller/assignAsset.controller";
 import validate from "@/middleware/validation.middleware";
 import auth from "@/middleware/auth.middleware";
-import assetValidation from "@/validations/asset.validations";
-import assetController from "@/controller/asset.controller";
 
 const router = express.Router();
 
 router
   .route("/asset-assignments")
   .post(
+    auth("manageAssignAsset"),
     validate(assignAssetValidation.assignAssetValidation),
     assignAssetController.assignAsset
   )
   .get(
+    auth("manageAssignAsset"),
     validate(assignAssetValidation.getAssetAssignmentsValidation),
     assignAssetController.getAssetAssignments
   );
@@ -24,6 +22,7 @@ router
 router
   .route("/available-assets")
   .get(
+    auth("manageAssignAsset"),
     validate(assignAssetValidation.getAvailableAssetsValidation),
     assignAssetController.getAvailableAssets
   );
@@ -31,6 +30,7 @@ router
 router
   .route("/assignable-users")
   .get(
+    auth("manageAssignAsset"),
     validate(assignAssetValidation.getUsersForAssignmentValidation),
     assignAssetController.getUsersForAssignment
   );
@@ -39,6 +39,7 @@ router
 router
   .route("/asset/:assetId")
   .get(
+    auth("manageAssignAsset"),
     validate(assignAssetValidation.getAssetAssignmentsValidation),
     assignAssetController.getAssetAssignments
   );
@@ -47,18 +48,21 @@ router
 router
   .route("/user/:userId")
   .get(
+    auth("manageAssignAsset"),
     validate(assignAssetValidation.getAssetAssignmentsValidation),
     assignAssetController.getAssetAssignments
   );
 
 router.get(
   "/:departmentId/assets",
+  auth("manageAssignAsset"),
   validate(assignAssetValidation.getAssetsByDepartmentIdValidation),
   assignAssetController.getAssetsByDepartmentId
 );
 
 router.get(
   "/:departmentId/users",
+  auth("manageAssignAsset"),
   validate(assignAssetValidation.getUsersByDepartmentIdValidation),
   assignAssetController.getUsersByDepartmentId
 );
@@ -66,14 +70,17 @@ router.get(
 router
   .route("/:assignmentId")
   .get(
+    auth("manageAssignAsset"),
     validate(assignAssetValidation.getAssetAssignmentByIdValidation),
     assignAssetController.getAssetAssignmentById
   )
   .delete(
+    auth("manageAssignAsset"),
     validate(assignAssetValidation.deleteAssignAssetValidation),
     assignAssetController.deleteAssignment
   )
   .put(
+    auth("manageAssignAsset"),
     validate(assignAssetValidation.updateAssetAssignmentValidation),
     assignAssetController.updateAssetAssignment
   );
@@ -81,6 +88,7 @@ router
 router
   .route("/bulk-delete")
   .post(
+    auth("manageAssignAsset"),
     validate(assignAssetValidation.bulkDeleteAssetsValidation),
     assignAssetController.bulkDeleteAssignments
   );

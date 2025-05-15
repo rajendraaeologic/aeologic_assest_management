@@ -8,9 +8,19 @@ export const createDepartmentService = async (data) => {
   return response.data;
 };
 
-export const getAllDepartmentsService = async () => {
-  const response = await API.get("/department/getAllDepartments");
-  return response.data;
+export const getAllDepartmentsService = async ({
+  limit = 5,
+  page = 1,
+  searchTerm = "",
+}) => {
+  const response = await API.get("/department/getAllDepartments", {
+    params: {
+      limit,
+      page,
+      searchTerm: searchTerm.trim(),
+    },
+  });
+  return response;
 };
 
 export const updateDepartmentService = async (data) => {
@@ -41,7 +51,6 @@ export const deleteDepartmentService = async (ids) => {
       };
     }
   } catch (error) {
-    console.error("Delete Error:", error.response?.data);
     const errorMsg =
       error.response?.data?.message || "Error deleting department(s)";
     throw new Error(errorMsg);

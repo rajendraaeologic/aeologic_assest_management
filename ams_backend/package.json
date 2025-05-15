@@ -7,12 +7,15 @@
     "postinstall": "npx prisma generate && npx prisma db push",
     "start": "node ./dist/server.js",
     "build": "npx tsc && tsc-alias",
-    "dev": "nodemon -r tsconfig-paths/register ./src/server.ts"
+    "dev": "nodemon -r tsconfig-paths/register ./src/server.ts",
+    "gcp-build": "npm run build",
+    "deploy": "gcloud functions deploy ams_api --gen2 --trigger-http --runtime nodejs22 --region us-central1 --source . --entry-point api --allow-unauthenticated --timeout 60 --max-instances 3 --build-env-vars-file env.json --env-vars-file env.json"
   },
   "author": "abhishek@aeologic.com",
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-ses": "^3.682.0",
+    "@google-cloud/functions-framework": "^4.0.0",
     "axios": "^1.7.7",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.5",

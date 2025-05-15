@@ -3,13 +3,16 @@ import app from '@/app';
 import db from '@/lib/db';
 import appConfig from '@/config/app';
 import logger from '@/config/logger';
+import * as functions from '@google-cloud/functions-framework';
 
 let server: Server;
 db.$connect().then(() => {
     logger.info('Connected to SQL Database');
-    server = app.listen(appConfig.port, () => {
-        logger.info(`Listening to port ${appConfig.port}`);
-    });
+    if(appConfig.env === "development"){
+        server = app.listen(appConfig.port, () => {
+            logger.info(`Listening to port ${appConfig.port}`);
+        });
+    }
 });
 
 const exitHandler = () => {
@@ -50,3 +53,5 @@ const gracefulShutdown = () => {
 
 process.on('SIGINT', gracefulShutdown);
 process.on('SIGTERM', gracefulShutdown);
+
+functions.http('api', app);

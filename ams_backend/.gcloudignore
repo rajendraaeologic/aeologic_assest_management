@@ -1,0 +1,28 @@
+.gcloudignore
+# Node.js
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# TypeScript
+dist/
+
+# Prisma - migrations are applied separately
+prisma/migrations/
+# prisma/dev.db # If you use SQLite for local dev
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Git
+.git/
+.gitignore
+
+# IDE / OS files
+.vscode/
+.idea/
+*.DS_Store
+
+env_to_json.sh

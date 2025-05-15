@@ -16,7 +16,9 @@ const UpdateBranch = ({ onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
 
-  const { selectedBranch } = useSelector((state) => state.branchData);
+  const { selectedBranch, currentPage, rowsPerPage } = useSelector(
+    (state) => state.branchData
+  );
 
   const {
     register,
@@ -77,7 +79,12 @@ const UpdateBranch = ({ onClose }) => {
       };
 
       await dispatch(updateBranch(branchData)).unwrap();
-      dispatch(getAllBranches());
+      await dispatch(
+        getAllBranches({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
 
       toast.success(branchStrings.updateBranch.toast.success, {
         position: "top-right",
@@ -148,6 +155,11 @@ const UpdateBranch = ({ onClose }) => {
                       message:
                         branchStrings.updateBranch.validation
                           .branchNameMaxLength,
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message:
+                        branchStrings.updateBranch.validation.branchNamePattern,
                     },
                   })}
                   type="text"

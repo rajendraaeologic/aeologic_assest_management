@@ -51,53 +51,34 @@ const createAssetValidation = {
     .min(1),
 };
 
-const getAllAssetsValidation = {
+export const getAllAssetsValidation = {
   query: Joi.object().keys({
     assetName: Joi.string().optional(),
-
-    status: Joi.string().valid("ACTIVE", "INACTIVE", "UNDER_REPAIR").optional(),
-    uniqueId: Joi.string().required(),
-    description: Joi.string().allow("").optional(),
-    brand: Joi.string().allow("").optional(),
-    model: Joi.string().allow("").optional(),
-    serialNumber: Joi.string().allow("").optional(),
-    // categoryId: Joi.string()
-    //   .allow(null)
-    //   .optional()
-    //   .custom(isValidMongoDBObjectId)
-    //   .messages(isValidMongoDBObjectIdCustomMessages),
-
-    // locationId: Joi.string()
-    //   .allow(null)
-    //   .optional()
-    //   .custom(isValidMongoDBObjectId)
-    //   .messages(isValidMongoDBObjectIdCustomMessages),
-
-    // assignedToUserId: Joi.string()
-    //   .allow(null)
-    //   .optional()
-    //   .custom(isValidMongoDBObjectId)
-    //   .messages(isValidMongoDBObjectIdCustomMessages),
-
+    status: Joi.string()
+      .valid(
+        "IN_USE",
+        "UNASSIGNED",
+        "ASSIGNED",
+        "MAINTENANCE",
+        "RETIRED",
+        "ASSIGNED",
+        "LOST",
+        "DAMAGED",
+        "IN_REPAIR",
+        "DISPOSED"
+      )
+      .optional(),
     branchId: Joi.string()
       .allow(null)
       .optional()
       .custom(isValidMongoDBObjectId)
       .messages(isValidMongoDBObjectIdCustomMessages),
-
     departmentId: Joi.string()
       .allow(null)
       .optional()
       .custom(isValidMongoDBObjectId)
       .messages(isValidMongoDBObjectIdCustomMessages),
-
-    companyId: Joi.string()
-      .allow(null)
-      .optional()
-      .custom(isValidMongoDBObjectId)
-      .messages(isValidMongoDBObjectIdCustomMessages),
     from_date: Joi.date().iso().optional(),
-
     to_date: Joi.date()
       .iso()
       .optional()
@@ -114,15 +95,19 @@ const getAllAssetsValidation = {
         "date.to_date.lessThanFromDate":
           '"to_date" must be greater than "from_date"',
       }),
-
+    searchTerm: Joi.string().trim().optional(),
     sortBy: Joi.string()
-      .valid("name", "status", "purchaseDate", "cost", "createdAt", "updatedAt")
+      .valid(
+        "assetName",
+        "status",
+        "purchaseDate",
+        "cost",
+        "createdAt",
+        "updatedAt"
+      )
       .optional(),
-
     sortType: Joi.string().valid("asc", "desc").optional(),
-
     limit: Joi.number().integer().min(1).optional(),
-
     page: Joi.number().integer().min(1).optional(),
   }),
 };

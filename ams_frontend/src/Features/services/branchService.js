@@ -5,9 +5,19 @@ export const createBranchService = async (data) => {
   return response.data;
 };
 
-export const getAllBranchesService = async () => {
-  const response = await API.get("/branch/getAllBranches");
-  return response.data;
+export const getAllBranchesService = async ({
+  limit = 5,
+  page = 1,
+  searchTerm = "",
+}) => {
+  const response = await API.get("/branch/getAllBranches", {
+    params: {
+      limit,
+      page,
+      searchTerm: searchTerm.trim(),
+    },
+  });
+  return response;
 };
 
 export const updateBranchService = async (data) => {

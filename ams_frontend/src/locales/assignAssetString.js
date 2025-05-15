@@ -13,6 +13,7 @@ const assignAssetStrings = {
       yes: "Yes",
       no: "No",
       ok: "OK",
+      deleting: "Deleting...",
     },
     table: {
       headers: {
@@ -48,7 +49,7 @@ const assignAssetStrings = {
         multiple: "{count} assignAssets deleted successfully!",
       },
     },
-    chipsList: {
+    notAvailable: {
       emptyText: "N/A",
     },
   },

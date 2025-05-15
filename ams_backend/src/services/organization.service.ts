@@ -13,7 +13,7 @@ const createOrganization = async (
   }
 
   const existingOrganization = await db.organization.findFirst({
-    where: { organizationName: organization.organizationName },
+    where: { organizationName: organization.organizationName, deleted: false },
   });
 
   if (existingOrganization) {
@@ -46,15 +46,20 @@ const queryOrganizations = async (
   const sortBy = options.sortBy || "createdAt";
   const sortType = options.sortType || "desc";
 
+  const finalFilter = {
+    ...filter,
+    deleted: false,
+  };
+
   const [data, total] = await Promise.all([
     db.organization.findMany({
-      where: filter,
+      where: finalFilter,
       select: OrganizationKeys,
       skip,
       take: limit,
       orderBy: { [sortBy]: sortType },
     }),
-    db.organization.count({ where: filter }),
+    db.organization.count({ where: finalFilter }),
   ]);
 
   return { data, total };
@@ -63,7 +68,7 @@ const queryOrganizations = async (
 //getOrganizationById
 const getOrganizationById = async (organizationId: string) => {
   return await db.organization.findUnique({
-    where: { id: organizationId },
+    where: { id: organizationId, deleted: false },
     select: OrganizationKeys,
   });
 };
@@ -75,7 +80,7 @@ const updateOrganizationById = async (
   selectKeys: Prisma.OrganizationSelect = OrganizationKeys
 ): Promise<any | null> => {
   const organization = await db.organization.findUnique({
-    where: { id: organizationId },
+    where: { id: organizationId, deleted: false },
   });
 
   if (!organization) {
@@ -103,6 +108,7 @@ const updateOrganizationById = async (
         where: {
           organizationName: newName,
           id: { not: organizationId },
+          deleted: false,
         },
       });
 
@@ -125,31 +131,42 @@ const updateOrganizationById = async (
 //deleteOrganizationById
 const deleteOrganizationById = async (
   organizationId: string
-): Promise<Omit<Organization, "sensitiveField">> => {
-  const organization = await getOrganizationById(organizationId);
+): Promise<Organization> => {
+  // Fetch organization (including soft-deleted ones)
+  const organization = await db.organization.findUnique({
+    where: { id: organizationId },
+  });
 
   if (!organization) {
     throw new ApiError(httpStatus.NOT_FOUND, "Organization not found");
   }
 
+  if (organization.deleted) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Organization already deleted");
+  }
+
   try {
-    await db.$transaction(
+    const updatedOrganization = await db.$transaction(
       async (tx) => {
-        // Check for existing branches first
+        // Check for active branches (non-deleted)
         const branchCount = await tx.branch.count({
-          where: { companyId: organizationId },
+          where: {
+            companyId: organizationId,
+            deleted: false,
+          },
         });
 
         if (branchCount > 0) {
           const message =
             branchCount === 1
-              ? "This organization is associated with branche and cannot be deleted."
-              : `This organization is associated with ${branchCount} branches and cannot be deleted.`;
+              ? "This organization has active branches and cannot be deleted."
+              : `This organization has ${branchCount} active branches and cannot be deleted.`;
           throw new ApiError(httpStatus.BAD_REQUEST, message);
         }
 
-        // Proceed with deletions if no branches found
-        await tx.assetAssignment.deleteMany({
+        // Soft-delete all related entities
+        // Asset Assignments
+        await tx.assetAssignment.updateMany({
           where: {
             asset: {
               OR: [
@@ -158,9 +175,11 @@ const deleteOrganizationById = async (
               ],
             },
           },
+          data: { deleted: true },
         });
 
-        await tx.assetHistory.deleteMany({
+        // Asset Histories
+        await tx.assetHistory.updateMany({
           where: {
             asset: {
               OR: [
@@ -169,105 +188,110 @@ const deleteOrganizationById = async (
               ],
             },
           },
+          data: { deleted: true },
         });
 
-        await tx.asset.deleteMany({
+        // Assets
+        await tx.asset.updateMany({
           where: {
             OR: [
               { branch: { companyId: organizationId } },
               { department: { branch: { companyId: organizationId } } },
             ],
           },
+          data: { deleted: true },
         });
 
-        await tx.user.deleteMany({
+        // Users
+        await tx.user.updateMany({
           where: {
             OR: [
               { branch: { companyId: organizationId } },
               { department: { branch: { companyId: organizationId } } },
             ],
           },
+          data: { deleted: true },
         });
 
-        await tx.department.deleteMany({
-          where: {
-            branch: { companyId: organizationId },
-          },
+        // Departments
+        await tx.department.updateMany({
+          where: { branch: { companyId: organizationId } },
+          data: { deleted: true },
         });
 
-        await tx.branch.deleteMany({
+        // Branches
+        await tx.branch.updateMany({
           where: { companyId: organizationId },
+          data: { deleted: true },
         });
 
-        await tx.organization.delete({
+        // Soft-delete the organization
+        return tx.organization.update({
           where: { id: organizationId },
+          data: { deleted: true },
         });
       },
-      {
-        maxWait: 5000,
-        timeout: 20000,
-      }
+      { maxWait: 5000, timeout: 20000 }
     );
+
+    return updatedOrganization;
   } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    console.error("Error while deleting organization:", error);
+    if (error instanceof ApiError) throw error;
+    console.error("Soft delete failed:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
-
-  return organization;
 };
 
 // deleteOrganizationsByIds
 const deleteOrganizationsByIds = async (
   organizationIds: string[]
-): Promise<Omit<Organization, "sensitiveField">[]> => {
+): Promise<Organization[]> => {
+  // Fetch all organizations (including soft-deleted)
   const organizations = await db.organization.findMany({
     where: { id: { in: organizationIds } },
   });
 
-  if (organizations.length !== organizationIds.length) {
-    const foundIds = organizations.map((org) => org.id);
-    const missingIds = organizationIds.filter((id) => !foundIds.includes(id));
+  // Check for missing IDs
+  const foundIds = organizations.map((org) => org.id);
+  const missingIds = organizationIds.filter((id) => !foundIds.includes(id));
+  if (missingIds.length > 0) {
     throw new ApiError(
       httpStatus.NOT_FOUND,
       `Organizations not found: ${missingIds.join(", ")}`
     );
   }
 
+  // Check if any are already soft-deleted
+  const alreadyDeleted = organizations.filter((org) => org.deleted);
+  if (alreadyDeleted.length > 0) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Organizations already deleted: ${alreadyDeleted
+        .map((o) => o.id)
+        .join(", ")}`
+    );
+  }
+
   try {
-    await db.$transaction(
+    const updatedOrgs = await db.$transaction(
       async (tx) => {
-        // Check for branches in all organizations first
-        const branches = await tx.branch.findMany({
+        // Check for active branches in ANY organization
+        const activeBranches = await tx.branch.count({
           where: {
             companyId: { in: organizationIds },
-          },
-          select: {
-            companyId: true,
+            deleted: false,
           },
         });
 
-        // Group branches by organization
-        const orgsWithBranches = new Set(
-          branches.map((branch) => branch.companyId)
-        );
-
-        // Check each organization for branches
-        const blockedOrgs = organizationIds.filter((id) =>
-          orgsWithBranches.has(id)
-        );
-
-        if (blockedOrgs.length > 0) {
+        if (activeBranches > 0) {
           throw new ApiError(
             httpStatus.BAD_REQUEST,
-            "This organizations is associated with branches and cannot be deleted."
+            "Some organizations have active branches"
           );
         }
 
-        // 1. Delete Asset Assignments
-        await tx.assetAssignment.deleteMany({
+        // 1. Asset Assignments
+        await tx.assetAssignment.updateMany({
           where: {
             asset: {
               OR: [
@@ -280,10 +304,11 @@ const deleteOrganizationsByIds = async (
               ],
             },
           },
+          data: { deleted: true },
         });
 
-        // 2. Delete Asset History
-        await tx.assetHistory.deleteMany({
+        // 2. Asset Histories
+        await tx.assetHistory.updateMany({
           where: {
             asset: {
               OR: [
@@ -296,10 +321,11 @@ const deleteOrganizationsByIds = async (
               ],
             },
           },
+          data: { deleted: true },
         });
 
-        // 3. Delete Assets
-        await tx.asset.deleteMany({
+        // 3. Assets
+        await tx.asset.updateMany({
           where: {
             OR: [
               { branch: { companyId: { in: organizationIds } } },
@@ -308,10 +334,11 @@ const deleteOrganizationsByIds = async (
               },
             ],
           },
+          data: { deleted: true },
         });
 
-        // 4. Delete Users
-        await tx.user.deleteMany({
+        // 4. Users
+        await tx.user.updateMany({
           where: {
             OR: [
               { branch: { companyId: { in: organizationIds } } },
@@ -320,43 +347,40 @@ const deleteOrganizationsByIds = async (
               },
             ],
           },
+          data: { deleted: true },
         });
 
-        // 5. Delete Departments
-        await tx.department.deleteMany({
-          where: {
-            branch: { companyId: { in: organizationIds } },
-          },
+        // 5. Departments
+        await tx.department.updateMany({
+          where: { branch: { companyId: { in: organizationIds } } },
+          data: { deleted: true },
         });
 
-        // 6. Delete Branches
-        await tx.branch.deleteMany({
-          where: {
-            companyId: { in: organizationIds },
-          },
+        // 6. Branches
+        await tx.branch.updateMany({
+          where: { companyId: { in: organizationIds } },
+          data: { deleted: true },
         });
 
-        // 7. Delete Organizations
-        await tx.organization.deleteMany({
-          where: {
-            id: { in: organizationIds },
-          },
+        // 7. Organizations
+        await tx.organization.updateMany({
+          where: { id: { in: organizationIds } },
+          data: { deleted: true },
+        });
+
+        return tx.organization.findMany({
+          where: { id: { in: organizationIds } },
         });
       },
-      {
-        maxWait: 5000,
-        timeout: 20000,
-      }
+      { maxWait: 5000, timeout: 20000 }
     );
+
+    return updatedOrgs;
   } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    console.error("Error deleting organizations:", error);
+    if (error instanceof ApiError) throw error;
+    console.error("Bulk soft delete error:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
-
-  return organizations;
 };
 
 export default {

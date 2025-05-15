@@ -9,7 +9,7 @@ import {
   createBranch,
   getAllBranches,
 } from "../../Features/slices/branchSlice";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 const AddBranch = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -23,6 +23,8 @@ const AddBranch = ({ onClose }) => {
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  const { currentPage, rowsPerPage } = useSelector((state) => state.branchData);
 
   const {
     register,
@@ -103,7 +105,12 @@ const AddBranch = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       await dispatch(createBranch(data)).unwrap();
-      dispatch(getAllBranches());
+      await dispatch(
+        getAllBranches({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
       toast.success(branchStrings.addBranch.toast.success, {
         position: "top-right",
         autoClose: 1000,
@@ -190,6 +197,11 @@ const AddBranch = ({ onClose }) => {
                       value: 25,
                       message:
                         branchStrings.addBranch.validation.branchNameMaxLength,
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message:
+                        branchStrings.addBranch.validation.branchNamePattern,
                     },
                   })}
                   type="text"

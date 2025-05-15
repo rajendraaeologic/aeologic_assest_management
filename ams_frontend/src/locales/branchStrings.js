@@ -13,6 +13,7 @@ const branchStrings = {
       yes: "Yes",
       no: "No",
       ok: "OK",
+      deleting: "Deleting...",
     },
     table: {
       headers: {
@@ -77,6 +78,8 @@ const branchStrings = {
       branchLocationMaxLength:
         "Branch Location  must be at most 25 characters long",
       organizationRequired: "Organization selection is required",
+      branchNamePattern:
+        "Branch name must contain only alphanumeric characters",
     },
     select: {
       loading: "Loading organizations...",
@@ -109,6 +112,8 @@ const branchStrings = {
         "Branch Location  must be at least 3 characters long",
       branchLocationMaxLength:
         "Branch Location  must be at most 25 characters long",
+      branchNamePattern:
+        "Branch name must contain only alphanumeric characters",
     },
     toast: {
       success: "Branch updated successfully!",

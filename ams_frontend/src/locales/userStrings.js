@@ -13,11 +13,12 @@ const userStrings = {
       no: "No",
       yes: "Yes",
       ok: "OK",
+      deleting: "Deleting...",
       close: "Close",
     },
     table: {
       showEntries: "Show",
-      entries: "entries",
+      entries: "Entries",
       noData: "No users found",
       headers: {
         userName: "User Name",
@@ -25,7 +26,7 @@ const userStrings = {
         email: "Email",
         status: "Status",
         userRole: "User Role",
-        organizationName: "OrganizationName",
+        organizationName: "Organization Name",
         branchName: "Branch Name",
         departmentName: "Department Name",
         action: "Action",
@@ -104,6 +105,7 @@ const userStrings = {
       departmentRequired: "Please select a department",
       roleRequired: "Please select a role",
       statusRequired: "Status is required",
+      userNamePattern: "Username must contain only alphanumeric characters",
     },
     select: {
       organizationDefault: "Select Organization",
@@ -158,6 +160,7 @@ const userStrings = {
       branchRequired: "Branch selection is required",
       departmentRequired: "Department selection is required",
       statusRequired: "Please select a status",
+      userNamePattern: "Username must contain only alphanumeric characters",
     },
     select: {
       organizationDefault: "Select organization",

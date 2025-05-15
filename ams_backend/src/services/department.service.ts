@@ -11,7 +11,7 @@ const createDepartment = async (
   if (!department) return null;
 
   const branchExists = await db.branch.findUnique({
-    where: { id: department.branchId },
+    where: { id: department.branchId, deleted: false },
   });
 
   if (!branchExists) {
@@ -22,6 +22,7 @@ const createDepartment = async (
     where: {
       departmentName: department.departmentName,
       branchId: department.branchId,
+      deleted: false,
     },
   });
 
@@ -41,7 +42,7 @@ const createDepartment = async (
 };
 
 //   queryDepartments
-const queryDepartments = async (
+export const queryDepartments = async (
   filter: object,
   options: {
     limit?: number;
@@ -49,26 +50,36 @@ const queryDepartments = async (
     sortBy?: string;
     sortType?: "asc" | "desc";
   }
-): Promise<any[]> => {
+): Promise<{ data: any[]; total: number }> => {
   const page = options.page ?? 1;
   const limit = options.limit ?? 10;
-  const skip = (page - 1) * limit || 0;
-  const sortBy = options.sortBy;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || "createdAt";
   const sortType = options.sortType ?? "desc";
 
-  return await db.department.findMany({
-    where: { ...filter },
-    select: DepartmentKeys,
-    skip: skip > 0 ? skip : 0,
-    take: limit,
-    orderBy: sortBy ? { [sortBy]: sortType } : undefined,
-  });
+  const finalFilter = {
+    ...filter,
+    deleted: false,
+  };
+
+  const [data, total] = await Promise.all([
+    db.department.findMany({
+      where: finalFilter,
+      select: DepartmentKeys,
+      skip,
+      take: limit,
+      orderBy: { [sortBy]: sortType },
+    }),
+    db.department.count({ where: finalFilter }),
+  ]);
+
+  return { data, total };
 };
 
 // getDepartmentById
 const getDepartmentById = async (id: string) => {
   return await db.department.findUnique({
-    where: { id },
+    where: { id, deleted: false },
     select: DepartmentKeys,
   });
 };
@@ -81,7 +92,7 @@ const updateDepartmentById = async (
   selectKeys: Prisma.DepartmentSelect = DepartmentKeys
 ): Promise<any | null> => {
   const department = await db.department.findUnique({
-    where: { id: departmentId },
+    where: { id: departmentId, deleted: false },
   });
   if (!department) {
     throw new ApiError(httpStatus.NOT_FOUND, "Department not found");
@@ -108,6 +119,7 @@ const updateDepartmentById = async (
         where: {
           departmentName: newName,
           id: { not: departmentId },
+          deleted: false,
         },
       });
 
@@ -127,6 +139,7 @@ const updateDepartmentById = async (
 };
 
 // deleteDepartmentById
+
 const deleteDepartmentById = async (
   departmentId: string
 ): Promise<Omit<Department, "sensitiveField">> => {
@@ -136,56 +149,76 @@ const deleteDepartmentById = async (
     throw new ApiError(httpStatus.NOT_FOUND, "Department not found");
   }
 
+  if (department.deleted) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Department already deleted");
+  }
+
   try {
-    await db.$transaction(
+    const updatedDepartment = await db.$transaction(
       async (tx) => {
         //  Check if any users or assets are linked to this department
         const [userCount, assetCount] = await Promise.all([
-          tx.user.count({ where: { departmentId } }),
-          tx.asset.count({ where: { departmentId } }),
+          tx.user.count({
+            where: { departmentId, deleted: false },
+          }),
+          tx.asset.count({
+            where: { departmentId, deleted: false },
+          }),
         ]);
 
         if (userCount > 0) {
           const message =
             userCount === 1
-              ? " This department is associated with user and cannot be deleted"
-              : ` This department is associated with ${userCount} users and cannot be deleted`;
-
+              ? "This department is associated with 1 user and cannot be deleted."
+              : `This department is associated with ${userCount} users and cannot be deleted.`;
           throw new ApiError(httpStatus.BAD_REQUEST, message);
         }
+
         if (assetCount > 0) {
           const message =
             assetCount === 1
-              ? " This department is associated with asset and cannot be deleted"
-              : ` This department is associated with ${assetCount} assets and cannot be deleted`;
-
+              ? "This department is associated with 1 asset and cannot be deleted."
+              : `This department is associated with ${assetCount} assets and cannot be deleted.`;
           throw new ApiError(httpStatus.BAD_REQUEST, message);
         }
 
-        //  Proceed with deletion
-        await tx.assetAssignment.deleteMany({
+        // Soft delete related entities
+
+        // Asset Assignments
+        await tx.assetAssignment.updateMany({
           where: {
             OR: [{ asset: { departmentId } }, { user: { departmentId } }],
           },
+          data: { deleted: true },
         });
 
-        await tx.assetHistory.deleteMany({
+        // Asset Histories
+        await tx.assetHistory.updateMany({
           where: {
             OR: [{ asset: { departmentId } }, { user: { departmentId } }],
           },
+          data: { deleted: true },
         });
 
-        await tx.asset.deleteMany({
+        // Assets
+        await tx.asset.updateMany({
           where: { departmentId },
+          data: { deleted: true },
         });
 
+        // Users — nullify departmentId and optionally soft delete
         await tx.user.updateMany({
           where: { departmentId },
-          data: { departmentId: null },
+          data: {
+            departmentId: null,
+            // deleted: true // <- Optional: if users should be soft-deleted as well
+          },
         });
 
-        await tx.department.delete({
+        // Department (soft delete)
+        return tx.department.update({
           where: { id: departmentId },
+          data: { deleted: true },
         });
       },
       {
@@ -193,107 +226,137 @@ const deleteDepartmentById = async (
         timeout: 15000,
       }
     );
+
+    return updatedDepartment;
   } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    console.error("Error while deleting department:", error);
+    if (error instanceof ApiError) throw error;
+    console.error("Error while soft-deleting department:", error);
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
-
-  return department;
 };
 
 //deleteDepartmentsByIds
 const deleteDepartmentsByIds = async (
   departmentIds: string[]
 ): Promise<Omit<Department, "sensitiveField">[]> => {
+  // Step 1: Fetch all departments (even if soft-deleted)
   const departments = await db.department.findMany({
     where: { id: { in: departmentIds } },
   });
 
-  if (departments.length !== departmentIds.length) {
-    const foundIds = departments.map((d) => d.id);
-    const missingIds = departmentIds.filter((id) => !foundIds.includes(id));
+  const foundIds = departments.map((d) => d.id);
+  const missingIds = departmentIds.filter((id) => !foundIds.includes(id));
+  if (missingIds.length > 0) {
     throw new ApiError(
       httpStatus.NOT_FOUND,
       `Departments not found: ${missingIds.join(", ")}`
     );
   }
 
-  //  Check for linked users & assets
-  const [userLinks, assetLinks] = await Promise.all([
-    db.user.findMany({
-      where: { departmentId: { in: departmentIds } },
-      select: { departmentId: true },
-    }),
-    db.asset.findMany({
-      where: { departmentId: { in: departmentIds } },
-      select: { departmentId: true },
-    }),
-  ]);
-
-  const departmentsWithUsers = [
-    ...new Set(userLinks.map((u) => u.departmentId)),
-  ];
-  const departmentsWithAssets = [
-    ...new Set(assetLinks.map((a) => a.departmentId)),
-  ];
-
-  if (departmentsWithUsers.length || departmentsWithAssets.length) {
-    const userDeptNames = departments
-      .filter((d) => departmentsWithUsers.includes(d.id))
-      .map((d) => d.departmentName);
-    const assetDeptNames = departments
-      .filter((d) => departmentsWithAssets.includes(d.id))
-      .map((d) => d.departmentName);
-
-    if (userDeptNames.length) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        " This departments is associated with users and cannot be deleted"
-      );
-    }
-    if (assetDeptNames.length) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        " This departments is associated with assets and cannot be deleted"
-      );
-    }
+  // Step 2: Check if any are already soft-deleted
+  const alreadyDeleted = departments.filter((d) => d.deleted);
+  if (alreadyDeleted.length > 0) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Departments already deleted: ${alreadyDeleted
+        .map((d) => d.id)
+        .join(", ")}`
+    );
   }
 
-  // Proceed with deletion
   try {
-    await db.$transaction(
+    const updatedDepartments = await db.$transaction(
       async (tx) => {
-        await tx.assetAssignment.deleteMany({
+        // Step 3: Check if linked with active users or assets
+        const [linkedUsers, linkedAssets] = await Promise.all([
+          tx.user.findMany({
+            where: {
+              departmentId: { in: departmentIds },
+              deleted: false,
+            },
+            select: { departmentId: true },
+          }),
+          tx.asset.findMany({
+            where: {
+              departmentId: { in: departmentIds },
+              deleted: false,
+            },
+            select: { departmentId: true },
+          }),
+        ]);
+
+        const departmentsWithUsers = [
+          ...new Set(linkedUsers.map((u) => u.departmentId)),
+        ];
+        const departmentsWithAssets = [
+          ...new Set(linkedAssets.map((a) => a.departmentId)),
+        ];
+
+        if (departmentsWithUsers.length || departmentsWithAssets.length) {
+          const deptNamesWithUsers = departments
+            .filter((d) => departmentsWithUsers.includes(d.id))
+            .map((d) => d.departmentName);
+          const deptNamesWithAssets = departments
+            .filter((d) => departmentsWithAssets.includes(d.id))
+            .map((d) => d.departmentName);
+
+          if (deptNamesWithUsers.length) {
+            throw new ApiError(
+              httpStatus.BAD_REQUEST,
+              `Departments associated with active users: ${deptNamesWithUsers.join(
+                ", "
+              )}`
+            );
+          }
+
+          if (deptNamesWithAssets.length) {
+            throw new ApiError(
+              httpStatus.BAD_REQUEST,
+              `Departments associated with active assets: ${deptNamesWithAssets.join(
+                ", "
+              )}`
+            );
+          }
+        }
+
+        // Step 4: Soft delete related data
+        await tx.assetAssignment.updateMany({
           where: {
             OR: [
               { asset: { departmentId: { in: departmentIds } } },
               { user: { departmentId: { in: departmentIds } } },
             ],
           },
+          data: { deleted: true },
         });
 
-        await tx.assetHistory.deleteMany({
+        await tx.assetHistory.updateMany({
           where: {
             OR: [
               { asset: { departmentId: { in: departmentIds } } },
               { user: { departmentId: { in: departmentIds } } },
             ],
           },
+          data: { deleted: true },
         });
 
-        await tx.asset.deleteMany({
+        await tx.asset.updateMany({
           where: { departmentId: { in: departmentIds } },
+          data: { deleted: true },
         });
 
         await tx.user.updateMany({
           where: { departmentId: { in: departmentIds } },
-          data: { departmentId: null },
+          data: { deleted: true },
         });
 
-        await tx.department.deleteMany({
+        await tx.department.updateMany({
+          where: { id: { in: departmentIds } },
+          data: { deleted: true },
+        });
+
+        // Step 5: Return soft-deleted departments
+        return tx.department.findMany({
           where: { id: { in: departmentIds } },
         });
       },
@@ -302,12 +365,13 @@ const deleteDepartmentsByIds = async (
         timeout: 20000,
       }
     );
+
+    return updatedDepartments;
   } catch (error) {
-    console.error("Error deleting departments:", error);
+    console.error("Bulk department soft-delete error:", error);
+    if (error instanceof ApiError) throw error;
     throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, error.message);
   }
-
-  return departments;
 };
 
 //getDepartmentsByBranchId
@@ -332,6 +396,7 @@ export const getDepartmentsByBranchId = async (
 
   const filters: any = {
     branchId,
+    deleted: false,
   };
 
   if (options.status) filters.status = options.status;

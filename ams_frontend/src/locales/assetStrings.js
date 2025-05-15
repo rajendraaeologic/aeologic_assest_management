@@ -13,6 +13,7 @@ const assetStrings = {
       yes: "Yes",
       no: "No",
       ok: "OK",
+      deleting: "Deleting...",
     },
     table: {
       headers: {
@@ -24,9 +25,9 @@ const assetStrings = {
         status: "Status",
         assignedUser: "Assigned To",
         assetLocation: "Location",
-        organizationName: "OrganizationName",
-        branch: "Branch",
-        department: "Department",
+        organizationName: "Organization Name",
+        branch: "Branch Name",
+        department: "Department Name",
         action: "Action",
         deleteAll: "Delete All",
       },
@@ -69,6 +70,9 @@ const assetStrings = {
       maintenance: "Maintenance",
       retired: "Retired",
     },
+    notAvailable: {
+      emptyText: "N/A",
+    },
   },
   addAsset: {
     title: "Add Asset",
@@ -97,10 +101,16 @@ const assetStrings = {
       status: "Select status",
     },
     statusOptions: {
-      ACTIVE: "Active",
-      IN_USE: "In Use",
-      UNDER_MAINTENANCE: "Under Maintenance",
-      RETIRED: "Retired",
+      assigned: "ASSIGNED",
+      unassigned: "UNASSIGNED",
+      maintenance: "MAINTENANCE",
+      retired: "RETIRED",
+      assigned: "ASSIGNED",
+      lost: "LOST",
+      in_use: "IN_USE",
+      damaged: "DAMAGED",
+      in_REPAIR: "IN_REPAIR",
+      disposed: "DISPOSED",
     },
     select: {
       loadingBranches: "Loading branches...",
@@ -134,6 +144,7 @@ const assetStrings = {
       companyRequired: "Organization selection is required",
       branchRequired: "Branch selection is required",
       departmentRequired: "Department selection is required",
+      assetNamePattern: "Asset name must contain only alphanumeric characters",
     },
     buttons: {
       save: "Save",
@@ -164,10 +175,16 @@ const assetStrings = {
       department: "Department",
     },
     statusOptions: {
-      ACTIVE: "Active",
-      IN_USE: "In Use",
-      UNDER_MAINTENANCE: "Under Maintenance",
-      RETIRED: "Retired",
+      in_use: "IN_USE",
+      unassigned: "UNASSIGNED",
+      assigned: "ASSIGNED",
+      maintenance: "MAINTENANCE",
+      retired: "RETIRED",
+      assigned: "ASSIGNED",
+      lost: "LOST",
+      damaged: "DAMAGED",
+      in_REPAIR: "IN_REPAIR",
+      disposed: "DISPOSED",
     },
     validation: {
       assetNameRequired: "Asset name is required",
@@ -193,6 +210,7 @@ const assetStrings = {
       companyRequired: "Organization selection is required",
       branchRequired: "Branch selection is required",
       departmentRequired: "Department selection is required",
+      assetNamePattern: "Asset name must contain only alphanumeric characters",
     },
     toast: {
       success: "Asset updated successfully!",

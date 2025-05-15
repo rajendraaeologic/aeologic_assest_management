@@ -18,7 +18,9 @@ const UpdateAssignAsset = ({ onClose }) => {
   const selectedAssignment = useSelector(
     (state) => state.assignAssetData.selectedAssignAsset
   );
-
+  const { currentPage, rowsPerPage } = useSelector(
+    (state) => state.assignAssetData
+  );
   // User dropdown state
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -286,6 +288,13 @@ const UpdateAssignAsset = ({ onClose }) => {
     fetchOrganizations(1, search);
   };
 
+  const handleOrgClick = () => {
+    setShowOrgDropdown(!showOrgDropdown);
+    if (!showOrgDropdown && searchTerm === "") {
+      fetchOrganizations(1, "");
+    }
+  };
+
   const handleOrgSelect = (org) => {
     setSelectedOrg(org);
     setValue("companyId", org.id, { shouldValidate: true });
@@ -320,6 +329,20 @@ const UpdateAssignAsset = ({ onClose }) => {
     fetchBranches(1, search);
   };
 
+  const handleBranchClick = async () => {
+    if (!selectedOrgId) {
+      toast.error("Please select an organization first");
+      return;
+    }
+    setShowBranchDropdown((prev) => !prev);
+    if (!showBranchDropdown) {
+      setBranchSearchTerm("");
+      setBranchPage(1);
+      setBranches([]);
+      await fetchBranches(1, "");
+    }
+  };
+
   const handleBranchSelect = (branch) => {
     setValue("branchId", branch.id, { shouldValidate: true });
     setSelectedBranch(branch);
@@ -350,6 +373,20 @@ const UpdateAssignAsset = ({ onClose }) => {
     const search = e.target.value;
     setDeptSearchTerm(search);
     fetchDepartments(1, search);
+  };
+
+  const handleDeptClick = async () => {
+    if (!branchId) {
+      toast.error("Please select a branch first");
+      return;
+    }
+    setShowDeptDropdown((prev) => !prev);
+    if (!showDeptDropdown) {
+      setDeptSearchTerm("");
+      setDepartmentPage(1);
+      setDepartments([]);
+      await fetchDepartments(1, "");
+    }
   };
 
   const handleDeptSelect = (dept) => {
@@ -433,7 +470,12 @@ const UpdateAssignAsset = ({ onClose }) => {
       await dispatch(updateAssignAsset(payload)).unwrap();
 
       // After successful update, refresh the assignments list
-      dispatch(getAllAssignAssets());
+      await dispatch(
+        getAllAssignAssets({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
 
       toast.success(assignAssetStrings.updateAssignAsset.toast.success, {
         position: "top-right",
@@ -548,7 +590,12 @@ const UpdateAssignAsset = ({ onClose }) => {
                   {assignAssetStrings.updateAssignAsset.formLabels.organization}
                 </label>
                 <div
-                  onClick={() => setShowOrgDropdown(!showOrgDropdown)}
+                  onClick={() => {
+                    {
+                      handleOrgClick();
+                    }
+                    setShowOrgDropdown(!showOrgDropdown);
+                  }}
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis"
                 >
                   {selectedOrg
@@ -599,10 +646,8 @@ const UpdateAssignAsset = ({ onClose }) => {
                 </label>
                 <div
                   onClick={() => {
-                    if (!selectedOrgId) {
-                      toast.error("Please select an organization first");
-                      return;
-                    }
+                    handleBranchClick();
+
                     setShowBranchDropdown(!showBranchDropdown);
                   }}
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
@@ -653,10 +698,8 @@ const UpdateAssignAsset = ({ onClose }) => {
                 </label>
                 <div
                   onClick={() => {
-                    if (!branchId) {
-                      toast.error("Please select a branch first");
-                      return;
-                    }
+                    handleDeptClick();
+
                     setShowDeptDropdown(!showDeptDropdown);
                   }}
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
@@ -707,6 +750,7 @@ const UpdateAssignAsset = ({ onClose }) => {
                 <label className="block text-sm font-medium text-gray-700">
                   {assignAssetStrings.updateAssignAsset.formLabels.asset}
                 </label>
+
                 <div
                   onClick={() => {
                     if (!departmentId) {
@@ -718,9 +762,10 @@ const UpdateAssignAsset = ({ onClose }) => {
                   className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
                 >
                   {selectedAsset
-                    ? `${selectedAsset.assetName} `
+                    ? `${selectedAsset.assetName}`
                     : "Select Asset"}
                 </div>
+
                 {showAssetDropdown && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
@@ -730,37 +775,42 @@ const UpdateAssignAsset = ({ onClose }) => {
                       onChange={handleAssetSearch}
                       className="p-2 w-full border-b outline-none"
                     />
+
                     <ul
                       onScroll={handleAssetScroll}
                       className="max-h-40 overflow-auto"
                     >
                       {assets.map((asset) => {
+                        const isUnassigned = asset.status === "UNASSIGNED";
                         const isCurrentAsset =
                           selectedAssignment?.asset?.id === asset.id;
-                        const isInUse = asset.status === "IN_USE";
-                        const isDisabled = isInUse && !isCurrentAsset;
+
+                        const isDisabled = !isUnassigned && !isCurrentAsset;
 
                         return (
                           <li
                             key={asset.id}
-                            onClick={() =>
-                              !isDisabled && handleAssetSelect(asset)
-                            }
+                            onClick={() => {
+                              if (!isDisabled) handleAssetSelect(asset);
+                            }}
                             className={`px-4 py-2 hover:bg-gray-100 ${
                               isDisabled
                                 ? "cursor-not-allowed text-gray-400"
-                                : "cursor-pointer"
+                                : "cursor-pointer text-black"
                             }`}
                           >
                             {asset.assetName}
-                            {isInUse && (
+                            {!isUnassigned && (
                               <span className="ml-2 text-sm text-red-500">
-                                {isCurrentAsset ? "(Current)" : "(In Use)"}
+                                {isCurrentAsset
+                                  ? "(Current)"
+                                  : `(${asset.status})`}
                               </span>
                             )}
                           </li>
                         );
                       })}
+
                       {loadingAssets && (
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
@@ -774,6 +824,7 @@ const UpdateAssignAsset = ({ onClose }) => {
                     </ul>
                   </div>
                 )}
+
                 {errors.assetId && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.assetId.message}

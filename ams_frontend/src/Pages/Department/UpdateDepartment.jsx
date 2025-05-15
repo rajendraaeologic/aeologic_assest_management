@@ -20,6 +20,9 @@ const UpdateDepartment = ({ onClose }) => {
   const selectedDepartment = useSelector(
     (state) => state.departmentData.selectedDepartment
   );
+  const { currentPage, rowsPerPage } = useSelector(
+    (state) => state.departmentData
+  );
 
   const {
     register,
@@ -78,7 +81,12 @@ const UpdateDepartment = ({ onClose }) => {
       };
 
       await dispatch(updateDepartment(departmentData)).unwrap();
-      dispatch(getAllDepartments());
+      await dispatch(
+        getAllDepartments({
+          page: currentPage,
+          limit: rowsPerPage,
+        })
+      ).unwrap();
 
       toast.success(departmentStrings.updateDepartment.toast.success, {
         position: "top-right",
@@ -156,6 +164,12 @@ const UpdateDepartment = ({ onClose }) => {
                       message:
                         departmentStrings.updateDepartment.validation
                           .departmentNameMaxLength,
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9]+$/,
+                      message:
+                        departmentStrings.updateDepartment.validation
+                          .deptNamePattern,
                     },
                   })}
                   type="text"

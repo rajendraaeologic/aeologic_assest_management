@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useCallback } from "react";
+
 import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen } from "@fortawesome/free-solid-svg-icons";
-import ChipsList from "../../components/UI/ChipsList";
+import ChipsList from "../../components/common/UI/ChipsList";
 import {
   setCurrentPage,
   setRowsPerPage,
@@ -18,10 +19,18 @@ import AddOrganization from "./AddOrganization";
 import UpdateOrganization from "./UpdateOrganization";
 import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
-import { getAllOrganizations } from "../../Features/slices/organizationSlice";
+import {
+  getAllOrganizations,
+  setSearchTerm,
+} from "../../Features/slices/organizationSlice";
 import { deleteOrganization } from "../../Features/slices/organizationSlice";
 import organizationStrings from "../../locales/organizationStrings";
 import { toast } from "react-toastify";
+import debounce from "lodash.debounce";
+import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader";
+import PaginationControls from "../../components/common/PaginationControls";
+import SelectFirstPopup from "../../components/common/SelectFirstPopup";
+import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 
 const Organization = () => {
   const dispatch = useDispatch();
@@ -32,12 +41,20 @@ const Organization = () => {
   const { title, breadcrumb, buttons, table, modals, notAvailable } =
     organizationStrings.organization;
 
-  const { organizations, selectedOrganizations, currentPage, rowsPerPage } =
-    useSelector((state) => state.organizationData);
+  const {
+    organizations,
+    selectedOrganizations,
+    currentPage,
+    rowsPerPage,
+    totalPages,
+    totalOrganizations,
+    searchTerm,
+    loading,
+    error,
+  } = useSelector((state) => state.organizationData);
 
-  useEffect(() => {
-    dispatch(getAllOrganizations());
-  }, [dispatch, organizations.length]);
+  // const startRow = (currentPage - 1) * rowsPerPage + 1;
+  // const endRow = Math.min(currentPage * rowsPerPage, totalOrganizations);
 
   const [isAddOrganization, setIsAddOrganization] = useState(false);
   const [isUpdateOrganization, setIsUpdateOrganization] = useState(false);
@@ -46,16 +63,45 @@ const Organization = () => {
   const [showSelectFirstPopup, setShowSelectFirstPopup] = useState(false);
   const [showDeleteSuccessPopup, setShowDeleteSuccessPopup] = useState(false);
   const [deleteMessage, setDeleteMessage] = useState("");
-
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [isSearching, setIsSearching] = useState(false);
   const options = ["5", "10", "25", "50", "100"];
-  const totalPages = Math.ceil(organizations.length / rowsPerPage);
+  const debouncedSearch = useCallback(
+    debounce((value) => {
+      dispatch(setSearchTerm(value));
+      setIsSearching(false);
+    }, 500),
+    [dispatch]
+  );
 
-  const [searchOrganization, setSearchOrganization] = useState({
-    organizationName: "",
-    branchName: "",
-    branchLocation: "",
-    departmentName: "",
-  });
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
+  useEffect(() => {
+    setLocalSearchTerm(searchTerm);
+  }, [searchTerm]);
+
+  // Fetch users when page, limit, or searchTerm changes
+  useEffect(() => {
+    dispatch(
+      getAllOrganizations({
+        page: currentPage,
+        limit: rowsPerPage,
+        searchTerm: searchTerm.trim(),
+      })
+    );
+  }, [dispatch, currentPage, rowsPerPage, searchTerm]);
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setIsSearching(true);
+    setLocalSearchTerm(value);
+    debouncedSearch(value);
+  };
 
   useEffect(() => {
     if (
@@ -73,62 +119,20 @@ const Organization = () => {
     };
   }, [showDeleteConfirmation, showSelectFirstPopup, showDeleteSuccessPopup]);
 
-  const handleSearchChange = (e) => {
-    const { name, value } = e.target;
-    setSearchOrganization((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const filteredOrganizations = organizations?.filter((org) => {
-    return (
-      (searchOrganization.organizationName === "" ||
-        (org.organizationName || "")
-          .toLowerCase()
-          .includes(searchOrganization.organizationName.toLowerCase())) &&
-      (searchOrganization.branchName === "" ||
-        org.branches?.some((branch) =>
-          branch.branchName
-            .toLowerCase()
-            .includes(searchOrganization.branchName.toLowerCase())
-        ) ||
-        false) &&
-      (searchOrganization.branchLocation === "" ||
-        org.branches?.some((branch) =>
-          branch.branchLocation
-            .toLowerCase()
-            .includes(searchOrganization.branchLocation.toLowerCase())
-        ) ||
-        false) &&
-      (searchOrganization.departmentName === "" ||
-        org.branches?.some((branch) =>
-          branch.departments?.some((dept) =>
-            dept.departmentName
-              .toLowerCase()
-              .includes(searchOrganization.departmentName.toLowerCase())
-          )
-        ) ||
-        false)
-    );
-  });
-
-  const startIndex = currentPage * rowsPerPage;
-  const currentRows = filteredOrganizations.slice(
-    startIndex,
-    startIndex + rowsPerPage
-  );
-
   const handleNavigate = () => {
     navigate("/dashboard");
   };
 
   const handlePrev = () => {
-    if (currentPage > 0) dispatch(setCurrentPage(currentPage - 1));
+    if (currentPage > 1) {
+      dispatch(setCurrentPage(currentPage - 1));
+    }
   };
 
   const handleNext = () => {
-    if (currentPage < totalPages - 1) dispatch(setCurrentPage(currentPage + 1));
+    if (currentPage < totalPages) {
+      dispatch(setCurrentPage(currentPage + 1));
+    }
   };
 
   const handleDeleteSelectedOrganizations = () => {
@@ -162,13 +166,26 @@ const Organization = () => {
 
   const confirmDelete = async () => {
     try {
+      setIsDeleting(true);
       if (organizationToDelete) {
         // Single organization delete
         await dispatch(deleteOrganization([organizationToDelete])).unwrap();
+        dispatch(
+          getAllOrganizations({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(modals.deleteSuccess.single);
       } else if (selectedOrganizations.length > 0) {
         // Multiple organizations delete
         await dispatch(deleteOrganization(selectedOrganizations)).unwrap();
+        dispatch(
+          getAllOrganizations({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+        );
         setDeleteMessage(
           modals.deleteSuccess.multiple.replace(
             "{count}",
@@ -195,8 +212,19 @@ const Organization = () => {
       setShowDeleteConfirmation(false);
       setOrganizationToDelete(null);
       dispatch(deselectAllOrganizations());
+    } finally {
+      setIsDeleting(false);
     }
   };
+  // Delete Success  toast
+  useEffect(() => {
+    if (showDeleteSuccessPopup && deleteMessage) {
+      toast.success(deleteMessage, {
+        position: "top-right",
+        autoClose: 2000,
+      });
+    }
+  }, [showDeleteSuccessPopup, deleteMessage]);
 
   const cancelDelete = () => {
     setShowDeleteConfirmation(false);
@@ -247,262 +275,132 @@ const Organization = () => {
           </div>
         </div>
 
-        <div className=" min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex Users-center gap-2 pt-8 ml-3">
-            <p>{table.showEntries}</p>
-            <div className="border-2 flex justify-evenly">
-              <select
-                value={rowsPerPage}
-                onChange={(e) =>
-                  dispatch(setRowsPerPage(parseInt(e.target.value)))
-                }
-                className="outline-none px-1"
-              >
-                {options.map((option, index) => (
-                  <option key={index} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
+        <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
+          <div className="flex items-center justify-between pt-8 px-6">
+            {/* Left side: Show entries dropdown */}
+            <div className="flex items-center gap-2">
+              <p>{table.showEntries}</p>
+              <div className="border-2 flex justify-evenly">
+                <select
+                  value={rowsPerPage}
+                  onChange={(e) =>
+                    dispatch(setRowsPerPage(parseInt(e.target.value)))
+                  }
+                  className="outline-none px-1"
+                >
+                  {options.map((option, index) => (
+                    <option key={index} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p>{table.entries}</p>
             </div>
-            <p>{table.entries}</p>
+
+            {/* Right side: Search bar */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search"
+                className="border p-2 rounded w-64"
+                value={localSearchTerm}
+                onChange={handleSearchChange}
+              />
+              {isSearching && (
+                <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
+                  Searching...
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
-            <table
-              className="table-auto min-w-full text-left border-collapse"
-              style={{ tableLayout: "fixed" }}
-            >
+            <table className="table-auto w-full text-left border-collapse">
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
                 <tr>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.orgName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.branchName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.branchLocation}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.departmentName}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    {table.headers.action}
-                  </th>
-                  <th
-                    className="px-2 py-4 border border-gray-300"
-                    style={{
-                      maxWidth: "100px",
-                      minWidth: "100px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
+                  {[
+                    table.headers.orgName,
+                    table.headers.branchName,
+                    table.headers.branchLocation,
+                    table.headers.departmentName,
+                    table.headers.action,
+                  ].map((header, idx) => (
+                    <th
+                      key={idx}
+                      className="px-2 py-2 border border-gray-300 whitespace-nowrap"
+                    >
+                      {header}
+                    </th>
+                  ))}
+
+                  <th className="px-2 py-2 border border-gray-300 min-w-[100px] max-w-[100px] whitespace-nowrap">
                     {table.headers.deleteAll}
+                    <div className="flex justify-center items-center gap-1 mt-1">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedOrganizations.length ===
+                              organizations.length && organizations.length > 0
+                          }
+                          onChange={handleSelectAllOrganizations}
+                          className="mr-2"
+                        />
+                      </label>
+                      <button onClick={handleDeleteSelectedOrganizations}>
+                        <MdDelete className="h-5 w-5 text-[red]" />
+                      </button>
+                    </div>
                   </th>
                 </tr>
               </thead>
 
-              {/* Search Row */}
               <tbody>
-                <tr className="bg-gray-100">
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="organizationName"
-                      placeholder={table.searchPlaceholders.orgName}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.organizationName}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="branchName"
-                      placeholder={table.searchPlaceholders.branchName}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.branchName}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="branchLocation"
-                      placeholder={table.searchPlaceholders.branchLocation}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.branchLocation}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{
-                      maxWidth: "180px",
-                      minWidth: "120px",
-                      overflowWrap: "break-word",
-                    }}
-                  >
-                    <input
-                      type="text"
-                      name="departmentName"
-                      placeholder={table.searchPlaceholders.departmentName}
-                      className="w-full px-2 py-1 border rounded-md focus:outline-none"
-                      value={searchOrganization.departmentName}
-                      onChange={handleSearchChange}
-                      style={{ maxWidth: "100%" }}
-                    />
-                  </td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  ></td>
-                  <td
-                    className="px-2 py-3 border border-gray-300 bg-[#b4b6b8]"
-                    style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                  >
-                    <div className="flex justify-center items-center">
-                      <div className="">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedOrganizations.length ===
-                                organizations.length && organizations.length > 0
-                            }
-                            onChange={handleSelectAllOrganizations}
-                            className="mr-2"
-                          />
-                        </label>
-                      </div>
-                      <button onClick={handleDeleteSelectedOrganizations}>
-                        <MdDelete className="h-6 w-6  text-[red]" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-
-              {/* Table Body */}
-              <tbody>
-                {currentRows.length > 0 ? (
-                  currentRows.map((org, index) => (
+                {loading ? (
+                  <SkeletonLoader rows={5} columns={6} />
+                ) : organizations.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="6"
+                      className="px-2 py-4 text-center border border-gray-300"
+                    >
+                      {table.noData}
+                    </td>
+                  </tr>
+                ) : (
+                  organizations.map((org, index) => (
                     <tr
                       key={org.id || index}
                       className={`${
                         index % 2 === 0 ? "bg-gray-50" : "bg-white"
                       } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
-                        {org.organizationName}
+                      {/* Organization Name */}
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                        {org.organizationName || notAvailable.emptyText}
                       </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
+
+                      {/* Branches Chip List */}
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
                         <ChipsList
                           items={org.branches}
                           labelKey="branchName"
                           emptyText={notAvailable.emptyText}
                         />
                       </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
+
+                      {/* Branch Locations Chip List */}
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
                         <ChipsList
                           items={org.branches}
                           labelKey="branchLocation"
                           emptyText={notAvailable.emptyText}
                         />
                       </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{
-                          maxWidth: "180px",
-                          minWidth: "120px",
-                          overflowWrap: "break-word",
-                          verticalAlign: "top",
-                        }}
-                      >
+
+                      {/* Departments Chip List */}
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
                         <ChipsList
                           items={
                             org.branches?.flatMap(
@@ -513,37 +411,33 @@ const Organization = () => {
                           emptyText={notAvailable.emptyText}
                         />
                       </td>
-                      <td
-                        className="px-2 py-2 border border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
-                        <div className="flex ">
+
+                      {/* Action Buttons */}
+                      <td className="px-2 py-2 border border-gray-300 text-center align-top">
+                        <div className="flex justify-center gap-2">
                           <button
                             onClick={() => {
                               setIsUpdateOrganization(true);
                               handlerUpdateData(org);
                             }}
-                            className="px-3 py-2 rounded-sm "
+                            className="px-3 py-2 rounded-sm"
                           >
                             <FontAwesomeIcon icon={faPen} />
                           </button>
                           <button
                             onClick={() => handleDeleteClick(org)}
-                            className="px-3 py-2 rounded-sm   text-[red]"
+                            className="px-3 py-2 rounded-sm text-[red]"
                           >
                             <MdDelete className="h-6 w-6" />
                           </button>
                         </div>
                       </td>
-                      <td
-                        className="px-2 py-2 border text-center border-gray-300"
-                        style={{ maxWidth: "100px", wordWrap: "break-word" }}
-                      >
+
+                      {/* Checkbox Selection */}
+                      <td className="px-2 py-2 border border-gray-300 text-center align-top">
                         <input
                           type="checkbox"
-                          checked={
-                            selectedOrganizations?.includes(org.id) ?? false
-                          }
+                          checked={selectedOrganizations.includes(org.id)}
                           onChange={() =>
                             handleToggleOrganizationSelection(org.id)
                           }
@@ -551,75 +445,22 @@ const Organization = () => {
                       </td>
                     </tr>
                   ))
-                ) : (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="px-4 py-4 text-center text-black"
-                    >
-                      {table.noData}
-                    </td>
-                  </tr>
                 )}
               </tbody>
             </table>
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex justify-end mr-4">
-            <div className="px-2 py-2 border-2 flex items-center gap-2">
-              <button
-                onClick={handlePrev}
-                disabled={currentPage === 0 || totalPages === 0}
-                className={`${
-                  currentPage === 0 || totalPages === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {buttons.previous}
-              </button>
-
-              <span className="px-2 space-x-1">
-                {totalPages > 0 ? (
-                  <>
-                    <span
-                      className={`py-1 px-3 ${
-                        currentPage + 1 < totalPages
-                          ? "bg-[#3bc0c3] text-white"
-                          : "border-2"
-                      }`}
-                    >
-                      {currentPage + 1}
-                    </span>
-                    <span
-                      className={`py-1 px-3 ${
-                        currentPage + 1 === totalPages
-                          ? "bg-[#3bc0c3] text-white"
-                          : "border-2"
-                      }`}
-                    >
-                      {totalPages}
-                    </span>
-                  </>
-                ) : (
-                  <span className="py-1 px-3">0 / 0</span>
-                )}
-              </span>
-
-              <button
-                onClick={handleNext}
-                disabled={currentPage + 1 >= totalPages || totalPages === 0}
-                className={`${
-                  currentPage + 1 >= totalPages
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                {buttons.next}
-              </button>
-            </div>
-          </div>
+          <PaginationControls
+            currentPage={currentPage}
+            rowsPerPage={rowsPerPage}
+            totalItems={totalOrganizations}
+            totalPages={totalPages}
+            onPrev={handlePrev}
+            onNext={handleNext}
+            previousLabel={buttons.previous}
+            nextLabel={buttons.next}
+          />
         </div>
       </div>
       {/* Modals */}
@@ -631,60 +472,21 @@ const Organization = () => {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirmation && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">
-              {organizationToDelete
-                ? modals.deleteConfirmation.single
-                : modals.deleteConfirmation.multiple.replace(
-                    "{count}",
-                    selectedOrganizations.length
-                  )}
-            </h3>
-            <div className="flex justify-end gap-4">
-              <button
-                onClick={cancelDelete}
-                className="px-4 py-2 bg-gray-300 rounded-md"
-              >
-                {buttons.no}
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="px-4 py-2 bg-red-500 text-white rounded-md"
-              >
-                {buttons.yes}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <DeleteConfirmationModal
+        show={showDeleteConfirmation}
+        onCancel={cancelDelete}
+        onConfirm={confirmDelete}
+        isDeleting={isDeleting}
+        isSingle={!!organizationToDelete}
+        count={selectedOrganizations.length}
+        strings={organizationStrings.organization}
+      />
       {/* Select First Popup */}
-      {showSelectFirstPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">{modals.selectFirst}</h3>
-            <div className="flex justify-end">
-              <button
-                onClick={closeSelectFirstPopup}
-                className="px-4 py-2 bg-[#3bc0c3] text-white rounded-md"
-              >
-                {buttons.ok}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Success Popup */}
-      {showDeleteSuccessPopup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">{deleteMessage}</h3>
-          </div>
-        </div>
-      )}
+      <SelectFirstPopup
+        show={showSelectFirstPopup}
+        onClose={closeSelectFirstPopup}
+        strings={organizationStrings.organization}
+      />
     </div>
   );
 };

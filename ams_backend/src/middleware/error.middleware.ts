@@ -30,10 +30,10 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     const response = {
         code: statusCode,
         message,
-        ...(appConfig.env === 'development' && { stack: err.stack })
+        ...(['local','development'].includes(appConfig.env) && { stack: err.stack })
     };
 
-    if (appConfig.env === 'development') {
+    if (['local','development'].includes(appConfig.env)) {
         logger.error(err);
     }
 

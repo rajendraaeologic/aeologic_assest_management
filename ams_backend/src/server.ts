@@ -8,7 +8,7 @@ import * as functions from '@google-cloud/functions-framework';
 let server: Server;
 db.$connect().then(() => {
     logger.info('Connected to SQL Database');
-    if(appConfig.env === "development"){
+    if(appConfig.env === "local"){
         server = app.listen(appConfig.port, () => {
             logger.info(`Listening to port ${appConfig.port}`);
         });

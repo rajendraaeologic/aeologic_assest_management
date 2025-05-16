@@ -68,15 +68,15 @@ model UserNotification {
 }
 
 model Organization {
-  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
   organizationName String
   branches         Branch[]
   users            User[]
   assets           Asset[]
-  deleted          Boolean   @default(false)
-  deletedAt      DateTime @default(now())
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @default(now()) @updatedAt
+  deleted          Boolean  @default(false)
+  deletedAt        DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @default(now()) @updatedAt
 }
 
 model Branch {
@@ -88,22 +88,22 @@ model Branch {
   assets         Asset[]
   users          User[]
   deleted        Boolean      @default(false)
-  deletedAt      DateTime @default(now())
+  deletedAt      DateTime     @default(now())
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @default(now()) @updatedAt
   departments    Department[]
 }
 
 model Department {
-  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
   departmentName String
-  branchId       String    @db.ObjectId
-  branch         Branch    @relation(fields: [branchId], references: [id])
+  branchId       String   @db.ObjectId
+  branch         Branch   @relation(fields: [branchId], references: [id])
   users          User[]
-  deleted        Boolean   @default(false)
+  deleted        Boolean  @default(false)
   deletedAt      DateTime @default(now())
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @default(now()) @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
   Asset          Asset[]
 }
 
@@ -121,7 +121,7 @@ model User {
   Token            Token[]
   assignedAssets   Asset[]
   deleted          Boolean            @default(false)
-  deletedAt      DateTime @default(now())
+  deletedAt        DateTime?          @default(now())
   UserNotification UserNotification[]
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @default(now()) @updatedAt
@@ -157,7 +157,7 @@ model Asset {
   branch           Branch?           @relation(fields: [branchId], references: [id])
   departmentId     String?           @db.ObjectId
   deleted          Boolean           @default(false)
-  deletedAt      DateTime @default(now())
+  deletedAt        DateTime?         @default(now())
   department       Department?       @relation(fields: [departmentId], references: [id])
   companyId        String            @db.ObjectId
   company          Organization      @relation(fields: [companyId], references: [id])
@@ -168,7 +168,7 @@ model AssetHistory {
   assetId   String    @db.ObjectId
   action    String
   deleted   Boolean   @default(false)
-  deletedAt      DateTime @default(now())
+  deletedAt DateTime? @default(now())
   userId    String    @db.ObjectId
   timestamp DateTime  @default(now())
   asset     Asset?    @relation(fields: [assetId], references: [id])
@@ -181,7 +181,7 @@ model AssetReport {
   totalValue  Float
   reportDate  DateTime  @default(now())
   deleted     Boolean   @default(false)
-  deletedAt      DateTime @default(now())
+  deletedAt   DateTime? @default(now())
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }
@@ -191,7 +191,7 @@ model AssetAssignment {
   assetId    String      @db.ObjectId
   userId     String      @db.ObjectId
   deleted    Boolean     @default(false)
-  deletedAt      DateTime @default(now())
+  deletedAt  DateTime?   @default(now())
   assignedAt DateTime    @default(now())
   status     AssetStatus @default(UNASSIGNED)
   asset      Asset       @relation(fields: [assetId], references: [id])

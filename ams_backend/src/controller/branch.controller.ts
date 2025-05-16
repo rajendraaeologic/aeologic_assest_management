@@ -5,7 +5,115 @@ import { Branch } from "@prisma/client";
 import branchService from "@/services/branch.service";
 import { applyDateFilter } from "@/utils/filters.utils";
 import pick from "@/lib/pick";
-// createBranch
+
+/**
+ * @swagger
+ * tags:
+ *   name: Branches
+ *   description: Branch management
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Branch:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         branchName:
+ *           type: string
+ *         branchLocation:
+ *           type: string
+ *         companyId:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         deleted:
+ *           type: boolean
+ *     BranchResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *         branch:
+ *           $ref: '#/components/schemas/Branch'
+ *     BranchesListResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: number
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         data:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Branch'
+ *         totalData:
+ *           type: number
+ *         page:
+ *           type: number
+ *         limit:
+ *           type: number
+ *         totalPages:
+ *           type: number
+ *         mode:
+ *           type: string
+ */
+
+/**
+ * @swagger
+ * /branch/createBranch:
+ *   post:
+ *     summary: Create a new branch
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - branchName
+ *               - branchLocation
+ *               - companyId
+ *             properties:
+ *               branchName:
+ *                 type: string
+ *                 example: "Downtown Office"
+ *               branchLocation:
+ *                 type: string
+ *                 example: "123 Main Street"
+ *               companyId:
+ *                 type: string
+ *                 example: "comp123"
+ *     responses:
+ *       "201":
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 branch:
+ *                   $ref: '#/components/schemas/Branch'
+ *                 message:
+ *                   type: string
+ *                   example: "Branch Created Successfully."
+ *       "400":
+ *         description: Bad Request
+ *       "409":
+ *         description: Conflict (branch already exists)
+ */
 const createBranch = catchAsync(async (req, res) => {
   try {
     const branch = await branchService.createBranch({
@@ -23,6 +131,77 @@ const createBranch = catchAsync(async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /branch/getAllBranches:
+ *   get:
+ *     summary: Get all branches
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchName
+ *         schema:
+ *           type: string
+ *         description: Filter by branch name
+ *       - in: query
+ *         name: companyId
+ *         schema:
+ *           type: string
+ *         description: Filter by company ID
+ *       - in: query
+ *         name: createdAtFrom
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date from
+ *       - in: query
+ *         name: createdAtTo
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date to
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *         description: Search term for branch name
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Limit number of results
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortType
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/BranchesListResponse'
+ *       "404":
+ *         description: No branches found
+ */
 export const getAllBranches = catchAsync(async (req, res) => {
   const rawFilters = pick(req.query, [
     "branchName",
@@ -126,7 +305,40 @@ export const getAllBranches = catchAsync(async (req, res) => {
   });
 });
 
-// getBranchById
+/**
+ * @swagger
+ * /branch/{branchId}:
+ *   get:
+ *     summary: Get branch by ID
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: branchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Branch ID
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Branch'
+ *       "404":
+ *         description: Branch not found
+ */
 const getBranchById = catchAsync(async (req, res) => {
   const branch = await branchService.getBranchById(req.params.branchId);
 
@@ -145,7 +357,57 @@ const getBranchById = catchAsync(async (req, res) => {
     data: branch,
   });
 });
-// updateBranch
+
+/**
+ * @swagger
+ * /branch/{branchId}:
+ *   put:
+ *     summary: Update branch
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: branchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Branch ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               branchName:
+ *                 type: string
+ *                 example: "Updated Branch Name"
+ *               branchLocation:
+ *                 type: string
+ *                 example: "Updated Location"
+ *               companyId:
+ *                 type: string
+ *                 example: "comp123"
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Branch'
+ *       "404":
+ *         description: Branch not found
+ */
 const updateBranch = catchAsync(async (req, res) => {
   try {
     const branch = await branchService.updateBranchById(
@@ -163,6 +425,35 @@ const updateBranch = catchAsync(async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /branch/{branchId}:
+ *   delete:
+ *     summary: Delete branch (soft delete)
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: branchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Branch ID
+ *     responses:
+ *       "204":
+ *         description: No Content
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Branch soft-deleted successfully"
+ *       "404":
+ *         description: Branch not found
+ */
 const deleteBranch = catchAsync(async (req, res) => {
   try {
     await branchService.deleteBranchById(req.params.branchId);
@@ -173,6 +464,42 @@ const deleteBranch = catchAsync(async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /branch/bulk-delete:
+ *   post:
+ *     summary: Bulk delete branches (soft delete)
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - branchIds
+ *             properties:
+ *               branchIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["branch1", "branch2"]
+ *     responses:
+ *       "204":
+ *         description: No Content
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Branches deleted successfully"
+ *       "404":
+ *         description: Branches not found
+ */
 const deleteBranches = catchAsync(async (req, res) => {
   try {
     await branchService.deleteBranchesByIds(req.body.branchIds);
@@ -183,6 +510,95 @@ const deleteBranches = catchAsync(async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /branch/organization/{organizationId}:
+ *   get:
+ *     summary: Get branches by organization ID
+ *     tags: [Branches]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: organizationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Organization ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Limit number of results
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortType
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *         description: Sort order
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *       - in: query
+ *         name: createdAtFrom
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date from
+ *       - in: query
+ *         name: createdAtTo
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date to
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *         description: Search term for branch name
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Branch'
+ *                 totalData:
+ *                   type: number
+ *                 page:
+ *                   type: number
+ *                 limit:
+ *                   type: number
+ *                 totalPages:
+ *                   type: number
+ *       "404":
+ *         description: No branches found for this organization
+ */
 export const getBranchesByOrganizationId = catchAsync(async (req, res) => {
   const { organizationId } = req.params;
 

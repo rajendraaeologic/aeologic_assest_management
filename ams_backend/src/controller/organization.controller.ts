@@ -6,7 +6,96 @@ import pick from "@/lib/pick";
 import organizationService from "@/services/organization.service";
 import { applyDateFilter } from "@/utils/filters.utils";
 
-// createOrganization
+/**
+ * @swagger
+ * tags:
+ *   name: Organizations
+ *   description: Organization management
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Organization:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         organizationName:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *         deleted:
+ *           type: boolean
+ *     OrganizationResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *         organization:
+ *           $ref: '#/components/schemas/Organization'
+ *     OrganizationsListResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: number
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         data:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Organization'
+ *         totalData:
+ *           type: number
+ *         page:
+ *           type: number
+ *         limit:
+ *           type: number
+ *         totalPages:
+ *           type: number
+ *         mode:
+ *           type: string
+ */
+
+/**
+ * @swagger
+ * /organization/createOrganization:
+ *   post:
+ *     summary: Create a new organization
+ *     tags: [Organizations]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - organizationName
+ *             properties:
+ *               organizationName:
+ *                 type: string
+ *                 example: "Acme Corp"
+ *     responses:
+ *       "201":
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OrganizationResponse'
+ *       "400":
+ *         description: Bad Request
+ *       "409":
+ *         description: Conflict (organization already exists)
+ */
 const createOrganization = catchAsync(async (req, res) => {
   try {
     const organization = await organizationService.createOrganization({
@@ -22,6 +111,72 @@ const createOrganization = catchAsync(async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /organization/getAllOrganizations:
+ *   get:
+ *     summary: Get all organizations
+ *     tags: [Organizations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: organizationName
+ *         schema:
+ *           type: string
+ *         description: Filter by organization name
+ *       - in: query
+ *         name: createdAtFrom
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date from
+ *       - in: query
+ *         name: createdAtTo
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date to
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *         description: Search term for organization name
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Limit number of results
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortType
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/OrganizationsListResponse'
+ *       "404":
+ *         description: No organizations found
+ */
 export const getAllOrganizations = catchAsync(async (req, res) => {
   const rawFilters = pick(req.query, [
     "organizationName",
@@ -121,7 +276,40 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
   });
 });
 
-//getOrganizationById
+/**
+ * @swagger
+ * /organization/{organizationId}:
+ *   get:
+ *     summary: Get organization by ID
+ *     tags: [Organizations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: organizationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Organization ID
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Organization'
+ *       "404":
+ *         description: Organization not found
+ */
 const getOrganizationById = catchAsync(async (req, res) => {
   const result = await organizationService.getOrganizationById(
     req.params.organizationId
@@ -143,6 +331,50 @@ const getOrganizationById = catchAsync(async (req, res) => {
   });
 });
 
+/**
+ * @swagger
+ * /organization/{organizationId}:
+ *   put:
+ *     summary: Update organization
+ *     tags: [Organizations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: organizationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Organization ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               organizationName:
+ *                 type: string
+ *                 example: "Updated Organization Name"
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Organization'
+ *       "404":
+ *         description: Organization not found
+ */
 const updateOrganization = catchAsync(async (req, res) => {
   try {
     const result = await organizationService.updateOrganizationById(
@@ -160,7 +392,35 @@ const updateOrganization = catchAsync(async (req, res) => {
   }
 });
 
-// deleteDepartment
+/**
+ * @swagger
+ * /organization/{organizationId}:
+ *   delete:
+ *     summary: Delete organization (soft delete)
+ *     tags: [Organizations]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: organizationId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Organization ID
+ *     responses:
+ *       "204":
+ *         description: No Content
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Organization soft-deleted successfully"
+ *       "404":
+ *         description: Organization not found
+ */
 const deleteOrganization = catchAsync(async (req, res) => {
   try {
     await organizationService.deleteOrganizationById(req.params.organizationId);
@@ -171,12 +431,46 @@ const deleteOrganization = catchAsync(async (req, res) => {
   }
 });
 
-//bulkDeleteOrganizations
-
+/**
+ * @swagger
+ * /organization/bulk-delete:
+ *   post:
+ *     summary: Bulk delete organizations (soft delete)
+ *     tags: [Organizations]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - organizationIds
+ *             properties:
+ *               organizationIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["org1", "org2"]
+ *     responses:
+ *       "204":
+ *         description: No Content
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Organizations soft-deleted successfully"
+ *       "404":
+ *         description: Organizations not found
+ */
 const bulkDeleteOrganizations = catchAsync(async (req, res) => {
   try {
     await organizationService.deleteOrganizationsByIds(
-      req.body.organizationIds
+        req.body.organizationIds
     );
     res.status(httpStatus.NO_CONTENT);
     res.send({ message: "Organizations soft-deleted successfully" });

@@ -326,6 +326,7 @@ const getUserWithPasswordByEmail = async (
       where: { email, deleted: false },
     });
   }
+  return null
 };
 
 const getUserByPhone = async (

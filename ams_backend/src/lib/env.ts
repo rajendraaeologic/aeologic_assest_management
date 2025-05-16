@@ -3,7 +3,7 @@ import { config } from "dotenv";
 config();
 
 const envSchema = Joi.object().keys({
-    NODE_ENV: Joi.string().valid("development", "production").default("development"),
+    NODE_ENV: Joi.string().valid("local","development", "production").default("development"),
     PORT: Joi.number().default(3000),
     DATABASE_URL: Joi.string().required(),
     APP_URL: Joi.string().default('http://localhost:3000'),

@@ -4,7 +4,7 @@
   "description": "Aeologic Asset Management Solution",
   "main": "dist/server.js",
   "scripts": {
-    "postinstall": "npx prisma generate && npx prisma db push",
+    "db-push": "npx prisma generate && npx prisma db push",
     "start": "node ./dist/server.js",
     "build": "npx tsc && tsc-alias",
     "dev": "nodemon -r tsconfig-paths/register ./src/server.ts",

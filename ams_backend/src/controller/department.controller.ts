@@ -6,6 +6,99 @@ import { Department } from "@prisma/client";
 import pick from "@/lib/pick";
 import { applyDateFilter } from "@/utils/filters.utils";
 
+/**
+ * @swagger
+ * tags:
+ *   name: Departments
+ *   description: Department management
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Department:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         departmentName:
+ *           type: string
+ *         branchId:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *     DepartmentResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *         department:
+ *           $ref: '#/components/schemas/Department'
+ *     DepartmentsListResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: number
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         data:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Department'
+ *         totalData:
+ *           type: number
+ *         page:
+ *           type: number
+ *         limit:
+ *           type: number
+ *         totalPages:
+ *           type: number
+ *         mode:
+ *           type: string
+ */
+
+/**
+ * @swagger
+ * /department/createDepartment:
+ *   post:
+ *     summary: Create a new department
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - departmentName
+ *               - branchId
+ *             properties:
+ *               departmentName:
+ *                 type: string
+ *                 example: "Human Resources"
+ *               branchId:
+ *                 type: string
+ *                 example: "branch123"
+ *     responses:
+ *       "201":
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DepartmentResponse'
+ *       "400":
+ *         description: Bad Request
+ */
+
 const createDepartment = catchAsync(async (req, res) => {
   try {
     const department = await departmentService.createDepartment({
@@ -23,7 +116,77 @@ const createDepartment = catchAsync(async (req, res) => {
   }
 });
 
-// getAllDepartments
+/**
+ * @swagger
+ * /department/getAllDepartments:
+ *   get:
+ *     summary: Get all departments with filtering and pagination
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: departmentName
+ *         schema:
+ *           type: string
+ *         description: Filter by department name
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *         description: Filter by branch ID
+ *       - in: query
+ *         name: from_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter departments created after this date
+ *       - in: query
+ *         name: to_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter departments created before this date
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *         description: Search term for department name
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Limit number of results
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortType
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DepartmentsListResponse'
+ *       "404":
+ *         description: No departments found
+ */
 
 export const getAllDepartments = catchAsync(async (req, res) => {
   const rawFilters = pick(req.query, [
@@ -128,7 +291,40 @@ export const getAllDepartments = catchAsync(async (req, res) => {
   });
 });
 
-// getDepartmentById
+/**
+ * @swagger
+ * /department/{id}:
+ *   get:
+ *     summary: Get department by ID
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Department ID
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Department'
+ *       "404":
+ *         description: Department not found
+ */
 
 const getDepartmentById = catchAsync(async (req, res) => {
   const department = await departmentService.getDepartmentById(req.params.id);
@@ -149,7 +345,54 @@ const getDepartmentById = catchAsync(async (req, res) => {
   });
 });
 
-// updateDepartment
+/**
+ * @swagger
+ * /department/{departmentId}:
+ *   put:
+ *     summary: Update department
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: departmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Department ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               departmentName:
+ *                 type: string
+ *                 example: "Updated Department Name"
+ *               branchId:
+ *                 type: string
+ *                 example: "updatedBranch123"
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   $ref: '#/components/schemas/Department'
+ *       "404":
+ *         description: Department not found
+ */
+
 const updateDepartment = catchAsync(async (req, res) => {
   try {
     const department = await departmentService.updateDepartmentById(
@@ -167,7 +410,36 @@ const updateDepartment = catchAsync(async (req, res) => {
   }
 });
 
-// deleteDepartment
+/**
+ * @swagger
+ * /department/{departmentId}:
+ *   delete:
+ *     summary: Delete department
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: departmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Department ID
+ *     responses:
+ *       "204":
+ *         description: No Content
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Department deleted successfully"
+ *       "404":
+ *         description: Department not found
+ */
+
 const deleteDepartment = catchAsync(async (req, res) => {
   try {
     await departmentService.deleteDepartmentById(req.params.departmentId);
@@ -178,7 +450,42 @@ const deleteDepartment = catchAsync(async (req, res) => {
   }
 });
 
-//deleteDepartments
+/**
+ * @swagger
+ * /department/bulk-delete:
+ *   post:
+ *     summary: Bulk delete departments
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - departmentIds
+ *             properties:
+ *               departmentIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["dept1", "dept2"]
+ *     responses:
+ *       "204":
+ *         description: No Content
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Departments deleted successfully"
+ *       "404":
+ *         description: Departments not found
+ */
 
 const deleteDepartments = catchAsync(async (req, res) => {
   try {
@@ -189,6 +496,98 @@ const deleteDepartments = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
 });
+
+/**
+ * @swagger
+ * /department/branch/{branchId}:
+ *   get:
+ *     summary: Get departments by branch ID
+ *     tags: [Departments]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: branchId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Branch ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Limit number of results
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortType
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *       - in: query
+ *         name: createdAtFrom
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date from
+ *       - in: query
+ *         name: createdAtTo
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date to
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *         description: Search term for department name
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Department'
+ *                 totalData:
+ *                   type: number
+ *                 page:
+ *                   type: number
+ *                 limit:
+ *                   type: number
+ *                 totalPages:
+ *                   type: number
+ *       "404":
+ *         description: No departments found for this branch
+ */
 
 export const getDepartmentsByBranchId = catchAsync(async (req, res) => {
   const { branchId } = req.params;

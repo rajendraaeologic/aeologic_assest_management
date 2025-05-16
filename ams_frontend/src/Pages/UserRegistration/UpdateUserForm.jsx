@@ -440,7 +440,7 @@ const UpdateUserForm = ({ onClose }) => {
                         userStrings.updateUser.validation.userNameMaxLength,
                     },
                     pattern: {
-                      value: /^[a-zA-Z0-9]+$/,
+                      value: /^[a-zA-Z0-9 ]+$/,
                       message:
                         userStrings.updateUser.validation.userNamePattern,
                     },

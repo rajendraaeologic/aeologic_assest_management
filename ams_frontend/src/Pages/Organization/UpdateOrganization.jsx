@@ -159,7 +159,7 @@ const UpdateOrganization = ({ onClose }) => {
                         .organizationNameMaxLength,
                   },
                   pattern: {
-                    value: /^[a-zA-Z0-9]+$/,
+                    value: /^[a-zA-Z0-9 ]+$/,
                     message:
                       organizationStrings.addOrganization.validation
                         .orgNamePattern,

@@ -366,7 +366,7 @@ const AddUserForm = ({ onClose }) => {
                       message: userStrings.addUser.validation.userNameMaxLength,
                     },
                     pattern: {
-                      value: /^[a-zA-Z0-9]+$/,
+                      value: /^[a-zA-Z0-9 ]+$/,
                       message: userStrings.addUser.validation.userNamePattern,
                     },
                   })}

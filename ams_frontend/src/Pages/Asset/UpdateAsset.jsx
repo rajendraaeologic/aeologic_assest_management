@@ -445,7 +445,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                         assetStrings.updateAsset.validation.assetNameMaxLength,
                     },
                     pattern: {
-                      value: /^[a-zA-Z0-9]+$/,
+                      value: /^[a-zA-Z0-9 ]+$/,
                       message:
                         assetStrings.updateAsset.validation.assetNamePattern,
                     },
@@ -708,7 +708,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                     required:
                       assetStrings.updateAsset.validation.descriptionRequired,
                     minLength: {
-                      value: 10,
+                      value: 3,
                       message:
                         assetStrings.updateAsset.validation
                           .descriptionMinLength,

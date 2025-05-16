@@ -381,7 +381,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                         assetStrings.addAsset.validation.assetNameMaxLength,
                     },
                     pattern: {
-                      value: /^[a-zA-Z0-9]+$/,
+                      value: /^[a-zA-Z0-9 ]+$/,
                       message:
                         assetStrings.addAsset.validation.assetNamePattern,
                     },

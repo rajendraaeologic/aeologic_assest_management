@@ -5,9 +5,9 @@ const options: swaggerJsdoc.Options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'Node API Documentation',
+            title: 'Asset management',
             version: '1.0.0',
-            description: 'API documentation for your Node.js application',
+            description: 'API documentation for Asset management',
             license: {
                 name: 'MIT',
                 url: 'https://opensource.org/licenses/MIT',

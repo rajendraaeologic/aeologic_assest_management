@@ -11,6 +11,158 @@ import { userValidation } from "@/validations";
 import { generateRandomPassword } from "@/utils/passwordGenerator";
 import * as fs from "fs";
 
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: User management
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         userName:
+ *           type: string
+ *         email:
+ *           type: string
+ *         phone:
+ *           type: string
+ *         status:
+ *           type: string
+ *           enum: [ACTIVE, INACTIVE]
+ *         userRole:
+ *           type: string
+ *           enum: [ADMIN, USER, SUPERADMIN]
+ *         isEmailVerified:
+ *           type: boolean
+ *         branchId:
+ *           type: string
+ *         departmentId:
+ *           type: string
+ *         companyId:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *     UserResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *         user:
+ *           $ref: '#/components/schemas/User'
+ *     UsersListResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: number
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         data:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/User'
+ *         totalData:
+ *           type: number
+ *         page:
+ *           type: number
+ *         limit:
+ *           type: number
+ *         totalPages:
+ *           type: number
+ *         mode:
+ *           type: string
+ *     ExcelUploadResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: number
+ *         message:
+ *           type: string
+ *         successCount:
+ *           type: number
+ *         failedCount:
+ *           type: number
+ *         createdUsers:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/User'
+ *         failedUsers:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               data:
+ *                 type: object
+ *               error:
+ *                 type: string
+ */
+
+/**
+ * @swagger
+ * /users/:
+ *   post:
+ *     summary: Create a new user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userName
+ *               - email
+ *               - userRole
+ *             properties:
+ *               userName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *                 description: If not provided, a random password will be generated
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, INACTIVE]
+ *                 default: ACTIVE
+ *               userRole:
+ *                 type: string
+ *                 enum: [ADMIN, USER]
+ *               branchId:
+ *                 type: string
+ *               departmentId:
+ *                 type: string
+ *               companyId:
+ *                 type: string
+ *     responses:
+ *       "201":
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserResponse'
+ *       "400":
+ *         description: Bad request
+ *       "409":
+ *         description: Email already exists
+ */
 const createUser = catchAsync(async (req, res) => {
   try {
     const plainPassword = req.body.password || generateRandomPassword();
@@ -37,6 +189,41 @@ const createUser = catchAsync(async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /users/upload-excel:
+ *   post:
+ *     summary: Upload users from Excel file
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - file
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *                 description: Excel file containing user data
+ *     responses:
+ *       "201":
+ *         description: Users uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ExcelUploadResponse'
+ *       "400":
+ *         description: Bad request (invalid file format or missing data)
+ *       "404":
+ *         description: Referenced IDs not found
+ *       "409":
+ *         description: Duplicate users found
+ */
 const uploadUsersFromExcel = catchAsync(async (req, res) => {
   const { error } = userValidation.uploadUsers.file.validate(req.file);
   if (error) {
@@ -122,7 +309,28 @@ const uploadUsersFromExcel = catchAsync(async (req, res) => {
   });
   return;
 });
-//downloadUserExcelTemplate
+
+/**
+ * @swagger
+ * /users/download-excel-template:
+ *   get:
+ *     summary: Download user Excel template
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       "200":
+ *         description: Excel template file
+ *         content:
+ *           application/vnd.ms-excel:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       "404":
+ *         description: Template file not found
+ *       "500":
+ *         description: Server error
+ */
 const downloadUserExcelTemplate = catchAsync(async (req, res) => {
   try {
     const filePath = await userService.getUserExcelTemplateDowndload();
@@ -139,7 +347,100 @@ const downloadUserExcelTemplate = catchAsync(async (req, res) => {
       .json({ message: "Failed to download template", error: error.message });
   }
 });
-//getUsers
+
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Get all users
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: userName
+ *         schema:
+ *           type: string
+ *         description: Filter by username
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *         description: Filter by email
+ *       - in: query
+ *         name: phone
+ *         schema:
+ *           type: string
+ *         description: Filter by phone number
+ *       - in: query
+ *         name: userRole
+ *         schema:
+ *           type: string
+ *           enum: [ADMIN, USER]
+ *         description: Filter by user role
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [ACTIVE, INACTIVE]
+ *         description: Filter by user status
+ *       - in: query
+ *         name: isEmailVerified
+ *         schema:
+ *           type: boolean
+ *         description: Filter by email verification status
+ *       - in: query
+ *         name: from_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date from
+ *       - in: query
+ *         name: to_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date to
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *         description: Search term for username, email or phone
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 5
+ *         description: Maximum number of users to return
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortType
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UsersListResponse'
+ *       "404":
+ *         description: No users found
+ */
 export const getUsers = catchAsync(async (req, res) => {
   const rawFilters = pick(req.query, [
     "userName",
@@ -235,6 +536,35 @@ export const getUsers = catchAsync(async (req, res) => {
     mode: isSearchMode ? "search" : "pagination",
   });
 });
+
+/**
+ * @swagger
+ * /users/{userId}:
+ *   get:
+ *     summary: Get a specific user by ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   $ref: '#/components/schemas/User'
+ *       "404":
+ *         description: User not found
+ */
 const getUser = catchAsync(async (req, res) => {
   const user = await userService.getUserById(req.params.userId);
 
@@ -247,6 +577,57 @@ const getUser = catchAsync(async (req, res) => {
   res.send(user);
 });
 
+/**
+ * @swagger
+ * /users/{userId}:
+ *   put:
+ *     summary: Update a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userName:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               phone:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *                 enum: [ACTIVE, INACTIVE]
+ *               userRole:
+ *                 type: string
+ *                 enum: [ADMIN, USER]
+ *               branchId:
+ *                 type: string
+ *               departmentId:
+ *                 type: string
+ *               companyId:
+ *                 type: string
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/User'
+ *       "404":
+ *         description: User not found
+ */
 const updateUser = catchAsync(async (req, res) => {
   try {
     const user = await userService.updateUserById(req.params.userId, req.body);
@@ -256,6 +637,34 @@ const updateUser = catchAsync(async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /users/{userId}:
+ *   delete:
+ *     summary: Delete a user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       "204":
+ *         description: No content *         :
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "User deleted successfully"
+ *       "404":
+ *         description: User not found
+ */
 const deleteUser = catchAsync(async (req, res) => {
   try {
     await userService.deleteUserById(req.params.userId);
@@ -267,6 +676,41 @@ const deleteUser = catchAsync(async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /users/bulk-delete:
+ *   post:
+ *     summary: Delete multiple users
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userIds
+ *             properties:
+ *               userIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["user1", "user2"]
+ *     responses:
+ *       "204":
+ *         description: No content *         :
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Users deleted successfully"
+ *       "404":
+ *         description: One or more users not found
+ */
 const deleteUsers = catchAsync(async (req, res) => {
   try {
     await userService.deleteUsersByIds(req.body.userIds);

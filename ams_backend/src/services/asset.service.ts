@@ -237,19 +237,19 @@ const deleteAssetById = async (
         // 1. Soft-delete Asset Assignments
         await tx.assetAssignment.updateMany({
           where: { assetId: asset.id },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // 2. Soft-delete Asset Histories
         await tx.assetHistory.updateMany({
           where: { assetId: asset.id },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // 3. Soft-delete Asset
         await tx.asset.update({
           where: { id: asset.id },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Return the updated (soft-deleted) asset
@@ -303,7 +303,7 @@ const deleteAssetsByIds = async (
           where: {
             assetId: { in: assetIds },
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // 2. Soft delete asset history
@@ -311,13 +311,13 @@ const deleteAssetsByIds = async (
           where: {
             assetId: { in: assetIds },
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // 3. Soft delete assets
         await tx.asset.updateMany({
           where: { id: { in: assetIds } },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         return tx.asset.findMany({

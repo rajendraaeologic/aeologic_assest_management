@@ -459,19 +459,19 @@ const deleteUserById = async (
         // Soft-delete related assetAssignments
         await tx.assetAssignment.updateMany({
           where: { userId },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Soft-delete related assetHistories
         await tx.assetHistory.updateMany({
           where: { userId },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Soft-delete the user itself
         return tx.user.update({
           where: { id: userId },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
       },
       {
@@ -537,18 +537,18 @@ const deleteUsersByIds = async (
         // Soft-delete related entities
         await tx.assetAssignment.updateMany({
           where: { userId: { in: userIds } },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         await tx.assetHistory.updateMany({
           where: { userId: { in: userIds } },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Soft-delete users
         await tx.user.updateMany({
           where: { id: { in: userIds } },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Return updated users without passwords

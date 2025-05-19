@@ -583,7 +583,7 @@ const deleteAssignmentById = async (
         // Step 2: Soft-delete assignment
         const softDeletedAssignment = await tx.assetAssignment.update({
           where: { id: assignmentId },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Step 3: Update asset - clear assignment
@@ -663,7 +663,7 @@ const deleteAssignmentsByIds = async (
       // Step 2: Soft-delete assignments
       await tx.assetAssignment.updateMany({
         where: { id: { in: assignmentIds } },
-        data: { deleted: true },
+        data: { deleted: true, deletedAt: new Date() },
       });
 
       // Step 3: Update affected assets (if no active assignments remain)

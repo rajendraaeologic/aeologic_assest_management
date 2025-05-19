@@ -189,7 +189,7 @@ const deleteDepartmentById = async (
           where: {
             OR: [{ asset: { departmentId } }, { user: { departmentId } }],
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Asset Histories
@@ -197,13 +197,13 @@ const deleteDepartmentById = async (
           where: {
             OR: [{ asset: { departmentId } }, { user: { departmentId } }],
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Assets
         await tx.asset.updateMany({
           where: { departmentId },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Users — nullify departmentId and optionally soft delete
@@ -211,14 +211,15 @@ const deleteDepartmentById = async (
           where: { departmentId },
           data: {
             departmentId: null,
-            // deleted: true // <- Optional: if users should be soft-deleted as well
+            deleted: true,
+            deletedAt: new Date(),
           },
         });
 
         // Department (soft delete)
         return tx.department.update({
           where: { id: departmentId },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
       },
       {
@@ -327,7 +328,7 @@ const deleteDepartmentsByIds = async (
               { user: { departmentId: { in: departmentIds } } },
             ],
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         await tx.assetHistory.updateMany({
@@ -337,22 +338,22 @@ const deleteDepartmentsByIds = async (
               { user: { departmentId: { in: departmentIds } } },
             ],
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         await tx.asset.updateMany({
           where: { departmentId: { in: departmentIds } },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         await tx.user.updateMany({
           where: { departmentId: { in: departmentIds } },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         await tx.department.updateMany({
           where: { id: { in: departmentIds } },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Step 5: Return soft-deleted departments

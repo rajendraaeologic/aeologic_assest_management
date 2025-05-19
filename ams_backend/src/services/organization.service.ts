@@ -175,7 +175,7 @@ const deleteOrganizationById = async (
               ],
             },
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Asset Histories
@@ -188,7 +188,7 @@ const deleteOrganizationById = async (
               ],
             },
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Assets
@@ -199,7 +199,7 @@ const deleteOrganizationById = async (
               { department: { branch: { companyId: organizationId } } },
             ],
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Users
@@ -210,25 +210,25 @@ const deleteOrganizationById = async (
               { department: { branch: { companyId: organizationId } } },
             ],
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Departments
         await tx.department.updateMany({
           where: { branch: { companyId: organizationId } },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Branches
         await tx.branch.updateMany({
           where: { companyId: organizationId },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // Soft-delete the organization
         return tx.organization.update({
           where: { id: organizationId },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
       },
       { maxWait: 5000, timeout: 20000 }
@@ -304,7 +304,7 @@ const deleteOrganizationsByIds = async (
               ],
             },
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // 2. Asset Histories
@@ -321,7 +321,7 @@ const deleteOrganizationsByIds = async (
               ],
             },
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // 3. Assets
@@ -334,7 +334,7 @@ const deleteOrganizationsByIds = async (
               },
             ],
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // 4. Users
@@ -347,25 +347,25 @@ const deleteOrganizationsByIds = async (
               },
             ],
           },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // 5. Departments
         await tx.department.updateMany({
           where: { branch: { companyId: { in: organizationIds } } },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // 6. Branches
         await tx.branch.updateMany({
           where: { companyId: { in: organizationIds } },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         // 7. Organizations
         await tx.organization.updateMany({
           where: { id: { in: organizationIds } },
-          data: { deleted: true },
+          data: { deleted: true, deletedAt: new Date() },
         });
 
         return tx.organization.findMany({

@@ -12,14 +12,14 @@ export const loginUser = createAsyncThunk(
 
       if (
         !response.data ||
-        !response.data.tokens ||
-        !response.data.tokens.access ||
-        !response.data.tokens.refresh
+        !response.data.data.tokens ||
+        !response.data.data.tokens.access ||
+        !response.data.data.tokens.refresh
       ) {
         return rejectWithValue("Invalid login response");
       }
 
-      const { tokens, user } = response.data;
+      const { tokens, user } = response.data.data;
 
       dispatch(
         setCredentials({
@@ -32,7 +32,7 @@ export const loginUser = createAsyncThunk(
       return tokens.access.token;
     } catch (error) {
       console.error("Login Thunk Error:", error);
-      return rejectWithValue(error.response?.data || "Login failed");
+      return rejectWithValue(error.response?.data?.message || "Login failed");
     }
   }
 );

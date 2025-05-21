@@ -13,6 +13,127 @@ import ApiError from "@/lib/ApiError";
 import { generateCode } from "@/lib/generateCode";
 import { encryptPassword } from "@/lib/encryption";
 import { LoginUserKeys } from "@/utils/selects.utils";
+/**
+ * @swagger
+ * tags:
+ *   name: Authentication
+ *   description: User authentication and authorization
+ */
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     AuthResponse:
+ *       type: object
+ *       properties:
+ *         statusCode:
+ *           type: number
+ *           example: 200
+ *         message:
+ *           type: string
+ *           example: "Login successful"
+ *         data:
+ *           type: object
+ *           properties:
+ *             user:
+ *               $ref: '#/components/schemas/User'
+ *             tokens:
+ *               $ref: '#/components/schemas/Tokens'
+ *     Tokens:
+ *       type: object
+ *       properties:
+ *         access:
+ *           type: object
+ *           properties:
+ *             token:
+ *               type: string
+ *             expires:
+ *               type: string
+ *               format: date-time
+ *         refresh:
+ *           type: object
+ *           properties:
+ *             token:
+ *               type: string
+ *             expires:
+ *               type: string
+ *               format: date-time
+ *     ErrorResponse:
+ *       type: object
+ *       properties:
+ *         statusCode:
+ *           type: number
+ *           example: 401
+ *         message:
+ *           type: string
+ *           example: "Incorrect email or password"
+ *         isOperational:
+ *           type: boolean
+ *           example: true
+ *         stack:
+ *           type: string
+ *           nullable: true
+ *         errorType:
+ *           type: string
+ *           example: "Unauthorized"
+ *     ForgotPasswordResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: "Password reset email sent successfully"
+ *     VerifyEmailResponse:
+ *       type: object
+ *       properties:
+ *         message:
+ *           type: string
+ *           example: "Verification email sent"
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
+
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login with email and password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "user@example.com"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "password123"
+ *     responses:
+ *       "200":
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResponse'
+ *       "401":
+ *         description: Unauthorized
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
 
 const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
@@ -80,16 +201,99 @@ const login = catchAsync(async (req, res) => {
     .status(httpStatus.CREATED)
     .send({ user, isNewUser, tokens, message: "OTP verified successfully." });
 });*/
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Logout user
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       "204":
+ *         description: Logout successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Logout Successfully"
+ */
 
 const logout = catchAsync(async (req, res) => {
   await authService.logout(req.body.refreshToken);
   res.status(httpStatus.NO_CONTENT).send({ message: "Logout Successfully" });
 });
+/**
+ * @swagger
+ * /auth/refresh-tokens:
+ *   post:
+ *     summary: Refresh authentication tokens
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - refreshToken
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *     responses:
+ *       "200":
+ *         description: Tokens refreshed successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Tokens'
+ */
 
 const refreshTokens = catchAsync(async (req, res) => {
   const tokens = await authService.refreshAuth(req.body.refreshToken);
   res.send({ ...tokens });
 });
+/**
+ * @swagger
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Request password reset
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "user@example.com"
+ *     responses:
+ *       "204":
+ *         description: Password reset email sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ForgotPasswordResponse'
+ */
 
 const forgotPassword = catchAsync(async (req, res) => {
   const resetPasswordToken = await tokenService.generateResetPasswordToken(
@@ -100,6 +304,43 @@ const forgotPassword = catchAsync(async (req, res) => {
     .status(httpStatus.NO_CONTENT)
     .send({ message: `Password reset email sent successfully` });
 });
+/**
+ * @swagger
+ * /auth/reset-password:
+ *   post:
+ *     summary: Reset password
+ *     tags: [Authentication]
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - password
+ *             properties:
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "newPassword123"
+ *     responses:
+ *       "204":
+ *         description: Password reset successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Password reset done successfully"
+ */
 
 const resetPassword = catchAsync(async (req, res) => {
   await authService.resetPassword(req.query.token as string, req.body.password);
@@ -107,6 +348,24 @@ const resetPassword = catchAsync(async (req, res) => {
     .status(httpStatus.NO_CONTENT)
     .send({ message: `Password reset done successfully` });
 });
+/**
+ * @swagger
+ * /auth/send-verification-email:
+ *   post:
+ *     summary: Send verification email
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       "204":
+ *         description: Verification email sent
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/VerifyEmailResponse'
+ *       "400":
+ *         description: Bad request (email already verified or no email)
+ */
 
 const sendVerificationEmail = catchAsync(async (req, res) => {
   const user = req.user as User;
@@ -125,7 +384,30 @@ const sendVerificationEmail = catchAsync(async (req, res) => {
     .status(httpStatus.NO_CONTENT)
     .send({ message: `Verification email sent` });
 });
-
+/**
+ * @swagger
+ * /auth/verify-email:
+ *   post:
+ *     summary: Verify email
+ *     tags: [Authentication]
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       "204":
+ *         description: Email verified successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Email Verification done successfully"
+ */
 const verifyEmail = catchAsync(async (req, res) => {
   await authService.verifyEmail(req.query.token as string);
   res

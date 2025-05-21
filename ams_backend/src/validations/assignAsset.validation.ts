@@ -115,7 +115,7 @@ export const getAssetAssignmentsValidation = {
         "date.to_date.lessThanFromDate":
           '"to_date" must be greater than "from_date"',
       }),
-    searchTerm: Joi.string().trim().optional(),
+    searchTerm: Joi.string().allow("").optional(),
     sortBy: Joi.string().valid("assignedAt", "status").optional(),
     sortType: Joi.string().valid("asc", "desc").optional(),
     limit: Joi.number().integer().min(1).optional(),
@@ -174,7 +174,7 @@ export const getAssetsByDepartmentIdValidation = {
     status: Joi.string().optional(),
     createdAtFrom: Joi.date().iso().optional(),
     createdAtTo: Joi.date().iso().optional(),
-    searchTerm: Joi.string().optional(),
+    searchTerm: Joi.string().allow("").optional(),
   }),
 };
 
@@ -194,7 +194,7 @@ export const getUsersByDepartmentIdValidation = {
     status: Joi.string().optional(),
     createdAtFrom: Joi.date().iso().optional(),
     createdAtTo: Joi.date().iso().optional(),
-    searchTerm: Joi.string().optional(),
+    searchTerm: Joi.string().allow("").optional(),
   }),
 };
 

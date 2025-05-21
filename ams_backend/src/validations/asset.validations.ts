@@ -95,7 +95,7 @@ export const getAllAssetsValidation = {
         "date.to_date.lessThanFromDate":
           '"to_date" must be greater than "from_date"',
       }),
-    searchTerm: Joi.string().trim().optional(),
+      searchTerm: Joi.string().allow("").optional(),
     sortBy: Joi.string()
       .valid(
         "assetName",

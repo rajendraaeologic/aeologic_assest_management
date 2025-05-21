@@ -31,6 +31,7 @@ const getUsers = {
     sortType: Joi.string().valid("asc", "desc").default("desc"),
     limit: Joi.number().integer().min(1).optional(),
     page: Joi.number().integer().min(1).optional(),
+    searchTerm: Joi.string().allow("").optional(),
   }),
 };
 

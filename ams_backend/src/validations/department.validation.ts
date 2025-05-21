@@ -25,7 +25,7 @@ const getAllDepartmentsValidation = {
     sortType: Joi.string().valid("asc", "desc").default("desc"),
     limit: Joi.number().integer().optional(),
     page: Joi.number().integer().optional(),
-    searchTerm: Joi.string().trim().optional(),
+    searchTerm: Joi.string().allow("").optional(),
   }),
 };
 
@@ -88,7 +88,7 @@ export const getDepartmentsByBranchIdValidation = {
     status: Joi.string().optional(),
     createdAtFrom: Joi.date().iso().optional(),
     createdAtTo: Joi.date().iso().optional(),
-    searchTerm: Joi.string().optional(),
+    searchTerm: Joi.string().allow("").optional(),
   }),
 };
 export default {

@@ -10,7 +10,175 @@ import xlsx from "xlsx";
 import { userValidation } from "@/validations";
 import { generateRandomPassword } from "@/utils/passwordGenerator";
 import * as fs from "fs";
+/**
+ * @swagger
+ * tags:
+ *   name: Users
+ *   description: User management
+ */
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         userName:
+ *           type: string
+ *         email:
+ *           type: string
+ *           format: email
+ *         phone:
+ *           type: string
+ *         status:
+ *           type: string
+ *         userRole:
+ *           type: string
+ *         isEmailVerified:
+ *           type: boolean
+ *         branchId:
+ *           type: string
+ *         departmentId:
+ *           type: string
+ *         companyId:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *     UserResponse:
+ *       type: object
+ *       properties:
+ *         statusCode:
+ *           type: number
+ *         message:
+ *           type: string
+ *         data:
+ *           type: object
+ *           properties:
+ *             user:
+ *               $ref: '#/components/schemas/User'
+ *     UsersListResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: number
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         data:
+ *           type: object
+ *           properties:
+ *             users:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *         totalData:
+ *           type: number
+ *         page:
+ *           type: number
+ *         limit:
+ *           type: number
+ *         totalPages:
+ *           type: number
+ *         mode:
+ *           type: string
+ *     ExcelUploadResponse:
+ *       type: object
+ *       properties:
+ *         statusCode:
+ *           type: number
+ *         message:
+ *           type: string
+ *         data:
+ *           type: object
+ *           properties:
+ *             successCount:
+ *               type: number
+ *             failedCount:
+ *               type: number
+ *             createdUsers:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/User'
+ *             failedUsers:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   row:
+ *                     type: object
+ *                   error:
+ *                     type: string
+ */
+
+/**
+ * @swagger
+ * /users/:
+ *   post:
+ *     summary: Create a new user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userName
+ *               - phone
+ *               - email
+ *               - userRole
+ *             properties:
+ *               userName:
+ *                 type: string
+ *                 example: "John Doe"
+ *               phone:
+ *                 type: string
+ *                 example: "1234567890"
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: "john@example.com"
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "password123"
+ *               status:
+ *                 type: string
+ *                 example: "ACTIVE"
+ *               userRole:
+ *                 type: string
+ *                 example: "USER"
+ *               branchId:
+ *                 type: string
+ *                 example: "branch-id"
+ *               departmentId:
+ *                 type: string
+ *                 example: "dept-id"
+ *               companyId:
+ *                 type: string
+ *                 example: "company-id"
+ *     responses:
+ *       "201":
+ *         description: User created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserResponse'
+ *       "400":
+ *         description: Bad request
+ *       "404":
+ *         description: Not found
+ */
 const createUser = catchAsync(async (req, res) => {
   try {
     const plainPassword = req.body.password || generateRandomPassword();
@@ -39,6 +207,38 @@ const createUser = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
 });
+/**
+ * @swagger
+ * /users/upload:
+ *   post:
+ *     summary: Upload users from Excel file
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               file:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       "201":
+ *         description: Users created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ExcelUploadResponse'
+ *       "400":
+ *         description: Bad request (invalid file or data)
+ *       "409":
+ *         description: Conflict (duplicate users)
+ *       "404":
+ *         description: Not found (invalid references)
+ */
 
 const uploadUsersFromExcel = catchAsync(async (req, res) => {
   const { error } = userValidation.uploadUsers.file.validate(req.file);
@@ -128,6 +328,27 @@ const uploadUsersFromExcel = catchAsync(async (req, res) => {
     }
   });
 });
+/**
+ * @swagger
+ * /users/template:
+ *   get:
+ *     summary: Download user Excel template
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       "200":
+ *         description: Template file downloaded
+ *         content:
+ *           application/octet-stream:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       "404":
+ *         description: Template not found
+ *       "500":
+ *         description: Internal server error
+ */
 
 const downloadUserExcelTemplate = catchAsync(async (req, res) => {
   try {
@@ -151,7 +372,92 @@ const downloadUserExcelTemplate = catchAsync(async (req, res) => {
     });
   }
 });
-
+/**
+ * @swagger
+ * /users:
+ *   get:
+ *     summary: Get all users
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: userName
+ *         schema:
+ *           type: string
+ *         description: Filter by user name
+ *       - in: query
+ *         name: phone
+ *         schema:
+ *           type: string
+ *         description: Filter by phone
+ *       - in: query
+ *         name: userRole
+ *         schema:
+ *           type: string
+ *         description: Filter by user role
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *         description: Filter by email
+ *       - in: query
+ *         name: from_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date from
+ *       - in: query
+ *         name: to_date
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by creation date to
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *         description: Search term for user name, email, or phone
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 5
+ *         description: Limit number of results
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortType
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UsersListResponse'
+ *       "404":
+ *         description: No users found
+ */
 export const getUsers = catchAsync(async (req, res) => {
   const rawFilters = pick(req.query, [
     "userName",
@@ -254,6 +560,31 @@ export const getUsers = catchAsync(async (req, res) => {
     mode: isSearchMode ? "search" : "pagination",
   });
 });
+/**
+ * @swagger
+ * /users/{userId}:
+ *   get:
+ *     summary: Get user by ID
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserResponse'
+ *       "404":
+ *         description: User not found
+ */
 
 const getUser = catchAsync(async (req, res) => {
   const user = await userService.getUserById(req.params.userId);
@@ -273,7 +604,54 @@ const getUser = catchAsync(async (req, res) => {
     data: { user }
   });
 });
-
+/**
+ * @swagger
+ * /users/{userId}:
+ *   put:
+ *     summary: Update user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userName:
+ *                 type: string
+ *               phone:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *               userRole:
+ *                 type: string
+ *               branchId:
+ *                 type: string
+ *               departmentId:
+ *                 type: string
+ *               companyId:
+ *                 type: string
+ *     responses:
+ *       "200":
+ *         description: User updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UserResponse'
+ *       "404":
+ *         description: User not found
+ */
 const updateUser = catchAsync(async (req, res) => {
   try {
     const user = await userService.updateUserById(req.params.userId, req.body);
@@ -286,7 +664,38 @@ const updateUser = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
 });
-
+/**
+ * @swagger
+ * /users/{userId}:
+ *   delete:
+ *     summary: Delete user
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: User ID
+ *     responses:
+ *       "200":
+ *         description: User deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 statusCode:
+ *                   type: number
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: null
+ *       "404":
+ *         description: User not found
+ */
 const deleteUser = catchAsync(async (req, res) => {
   try {
     await userService.deleteUserById(req.params.userId);
@@ -300,6 +709,48 @@ const deleteUser = catchAsync(async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /users/bulk-delete:
+ *   post:
+ *     summary: Bulk delete users
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - userIds
+ *             properties:
+ *               userIds:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["user1", "user2"]
+ *     responses:
+ *       "200":
+ *         description: Users deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 statusCode:
+ *                   type: number
+ *                 message:
+ *                   type: string
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     deletedCount:
+ *                       type: number
+ *       "404":
+ *         description: Users not found
+ */
 const deleteUsers = catchAsync(async (req, res) => {
   try {
     await userService.deleteUsersByIds(req.body.userIds);

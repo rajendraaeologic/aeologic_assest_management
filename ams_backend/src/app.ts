@@ -17,6 +17,8 @@ import { corsOptions } from "@/config/cors";
 import helmet from "helmet";
 import { morganLogger } from "@/middleware/morganLogger.middleware";
 import path from "path";
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "@/config/swagger";
 
 const app = express();
 app.set("trust proxy", 1);
@@ -49,6 +51,15 @@ if (appConfig.env === "production") {
 
 app.use("/public", express.static(path.resolve("public")));
 app.use("/uploads", express.static(path.resolve(appConfig.uploads.uploadDir)));
+
+app.use(`/api-docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  explorer: true,
+  customCssUrl: "https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-material.css",
+}));
+// app.use(`${appConfig.apiPrefix}/api-docs`, swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+//     explorer: true,
+//     customCssUrl: "https://cdn.jsdelivr.net/npm/swagger-ui-themes@3.0.0/themes/3.x/theme-material.css",
+// }));
 
 app.use(appConfig.apiPrefix, router);
 

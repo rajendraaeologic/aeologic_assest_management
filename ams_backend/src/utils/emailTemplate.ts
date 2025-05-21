@@ -7,12 +7,13 @@ export const generateUserWelcomeEmail = (
       <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f9f9f9; color: #333;">
         <h2>Hi ${userName},</h2>
   
-        <p>Welcome to our platform! Your account has been created successfully.</p>
+        <p>Welcome to Aeologic asset management! Your account has been created successfully.</p>
   
         <h3>Your login credentials:</h3>
         <div style="background-color: #fff; padding: 15px; border: 1px solid #ddd; border-radius: 5px;">
           <p><strong>Email:</strong> ${email}</p>
           <p><strong>Password:</strong> ${password}</p>
+          <p><strong>Login:</strong> <a href="https://asset-management-83e3b.web.app">Click here to login</a></p>
         </div>
   
         <p style="margin-top: 20px;"><strong>Please keep this information safe and confidential.</strong></p>

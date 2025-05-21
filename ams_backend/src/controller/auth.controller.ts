@@ -16,10 +16,29 @@ import { LoginUserKeys } from "@/utils/selects.utils";
 
 const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
-  const user = await authService.loginUserWithEmailAndPassword(email, password);
-  const tokens = await tokenService.generateAuthTokens(user);
-  res.send({ user, tokens });
+  try {
+    const user = await authService.loginUserWithEmailAndPassword(email, password);
+    const tokens = await tokenService.generateAuthTokens(user);
+
+    res.status(200).send({
+      statusCode: 200,
+      message: "Login successful",
+      data: {
+        user,
+        tokens
+      }
+    });
+  } catch (error) {
+    throw new ApiError(
+        httpStatus.UNAUTHORIZED,
+        "Incorrect email or password",
+        true,
+        null,
+        "Unauthorized"
+    );
+  }
 });
+
 
 /*const sendOTP = catchAsync(async (req, res) => {
   const { phone } = req.body;

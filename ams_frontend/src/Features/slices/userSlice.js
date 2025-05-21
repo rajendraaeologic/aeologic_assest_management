@@ -27,7 +27,7 @@ export const getAllUsers = createAsyncThunk(
   async ({ limit = 5, page = 1, searchTerm = "" }, { rejectWithValue }) => {
     try {
       const response = await getAllUsersService({ limit, page, searchTerm });
-      return response.data;
+      return response.data.data.users || [];
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch users"
@@ -165,7 +165,7 @@ const userSlice = createSlice({
       })
       .addCase(getAllUsers.fulfilled, (state, action) => {
         state.loading = false;
-        state.users = action.payload.data;
+        state.users = action.payload;
         state.totalUsers = action.payload.totalData;
         state.totalPages = action.payload.totalPages;
         state.currentPage = action.payload.page;

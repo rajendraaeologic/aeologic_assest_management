@@ -29,8 +29,11 @@ const createUser = catchAsync(async (req, res) => {
     } as User & { plainPassword: string });
 
     res.status(httpStatus.CREATED).send({
-      message: "User Created Successfully.",
-      user,
+      statusCode: httpStatus.CREATED,
+      message: "User created successfully",
+      data: {
+        user
+      }
     });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
@@ -101,45 +104,54 @@ const uploadUsersFromExcel = catchAsync(async (req, res) => {
     }
 
     res.status(statusCode).json({
-      status: statusCode,
+      statusCode: statusCode,
       message,
-      successCount: createdUsers.length,
-      failedCount: failedUsers.length,
-      createdUsers,
-      failedUsers,
+      data: {
+        successCount: createdUsers.length,
+        failedCount: failedUsers.length,
+        createdUsers,
+        failedUsers,
+      }
     });
     return;
   }
 
   // Only send success response if no failures
   res.status(httpStatus.CREATED).json({
-    status: httpStatus.CREATED,
+    statusCode: httpStatus.CREATED,
     message: "All users processed successfully",
-    successCount: createdUsers.length,
-    failedCount: 0,
-    createdUsers,
-    failedUsers: [],
+    data: {
+      successCount: createdUsers.length,
+      failedCount: 0,
+      createdUsers,
+      failedUsers: [],
+    }
   });
-  return;
 });
-//downloadUserExcelTemplate
+
 const downloadUserExcelTemplate = catchAsync(async (req, res) => {
   try {
     const filePath = await userService.getUserExcelTemplateDowndload();
 
     if (!fs.existsSync(filePath)) {
-      res.status(404).json({ message: "Template file not found." });
+      res.status(404).json({
+        statusCode: httpStatus.NOT_FOUND,
+        message: "Template file not found",
+        data: null
+      });
     }
 
     const fileName = "UserTemplate.csv";
     res.download(filePath, fileName);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Failed to download template", error: error.message });
+    res.status(500).json({
+      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+      message: "Failed to download template",
+      data: { error: error.message }
+    });
   }
 });
-//getUsers
+
 export const getUsers = catchAsync(async (req, res) => {
   const rawFilters = pick(req.query, [
     "userName",
@@ -210,8 +222,10 @@ export const getUsers = catchAsync(async (req, res) => {
     res.status(httpStatus.OK).json({
       success: false,
       status: 404,
-      message: " users not found",
-      data: [],
+      message: "Users not found",
+      data: {
+        users: []
+      },
       totalData: 0,
       page,
       limit,
@@ -220,14 +234,19 @@ export const getUsers = catchAsync(async (req, res) => {
     });
     return;
   }
+
+  const users = result.data.map((user) => ({
+    ...user,
+    updatedAt: user.updatedAt,
+  }));
+
   res.status(httpStatus.OK).json({
     status: 200,
     success: true,
     message: "Users fetched successfully",
-    data: result.data.map((user) => ({
-      ...user,
-      updatedAt: user.updatedAt,
-    })),
+    data: {
+      users
+    },
     totalData: result.total,
     page,
     limit,
@@ -235,22 +254,34 @@ export const getUsers = catchAsync(async (req, res) => {
     mode: isSearchMode ? "search" : "pagination",
   });
 });
+
 const getUser = catchAsync(async (req, res) => {
   const user = await userService.getUserById(req.params.userId);
 
+  if (!user) {
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
+      message: "User not found",
+      data: []
+    });
+    return;
+  }
+
   res.status(httpStatus.OK).json({
-    success: false,
-    status: 404,
-    message: "User not found",
-    data: [],
+    statusCode: httpStatus.OK,
+    message: "User fetched successfully",
+    data: { user }
   });
-  res.send(user);
 });
 
 const updateUser = catchAsync(async (req, res) => {
   try {
     const user = await userService.updateUserById(req.params.userId, req.body);
-    res.send(user);
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "User updated successfully",
+      data: { user }
+    });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
@@ -259,9 +290,11 @@ const updateUser = catchAsync(async (req, res) => {
 const deleteUser = catchAsync(async (req, res) => {
   try {
     await userService.deleteUserById(req.params.userId);
-    res
-      .status(httpStatus.NO_CONTENT)
-      .send({ message: "User deleted successfully" });
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "User deleted successfully",
+      data: null
+    });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
@@ -270,9 +303,13 @@ const deleteUser = catchAsync(async (req, res) => {
 const deleteUsers = catchAsync(async (req, res) => {
   try {
     await userService.deleteUsersByIds(req.body.userIds);
-    res
-      .status(httpStatus.NO_CONTENT)
-      .send({ message: "Users deleted successfully" });
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "Users deleted successfully",
+      data: {
+        deletedCount: req.body.userIds.length
+      }
+    });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }

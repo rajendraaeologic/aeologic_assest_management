@@ -148,6 +148,10 @@ const Asset = () => {
     setIsUpdateAsset(true);
   };
 
+  const handlePageChange = (page) => {
+    dispatch(setCurrentPage(page));
+  };
+
   const handleDeleteClick = (asset) => {
     setAssetToDelete(asset.id);
     setShowDeleteConfirmation(true);
@@ -230,9 +234,6 @@ const Asset = () => {
               {strings.title}
             </h3>
             <div className="flex gap-3 md:mr-8">
-              <button className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg">
-                <CiSaveUp2 className="h-6 w-6" />
-              </button>
               <button
                 onClick={() => setIsAddAsset(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
@@ -421,6 +422,7 @@ const Asset = () => {
             totalPages={totalPages}
             onPrev={handlePrev}
             onNext={handleNext}
+            onPageChange={handlePageChange}
             previousLabel={strings.buttons.previous}
             nextLabel={strings.buttons.next}
           />

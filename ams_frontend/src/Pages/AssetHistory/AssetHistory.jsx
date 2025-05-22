@@ -489,16 +489,6 @@ const AssetHistory = () => {
               <FiClock className="mr-2" />
               {strings.title}
             </motion.h3>
-            <div className="flex gap-3 md:mr-8">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg hover:bg-[#2fa8ab] transition-colors flex items-center"
-              >
-                <CiSaveUp2 className="h-6 w-6 mr-1" />
-                Export
-              </motion.button>
-            </div>
           </div>
           <div className="mx-5 flex gap-2 mb-4 items-center">
             <button

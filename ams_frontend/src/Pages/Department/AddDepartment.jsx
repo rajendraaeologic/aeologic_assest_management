@@ -68,11 +68,16 @@ const AddDepartment = ({ onClose }) => {
       const response = await API.get(
         `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
       );
-      const { data, totalPages } = response.data;
-
-      setOrganizations((prev) => (page === 1 ? data : [...prev, ...data]));
+      const {
+        data: {
+          data: { organizations, pagination },
+        },
+      } = response;
+      setOrganizations((prev) =>
+          page === 1 ? organizations : [...prev, ...organizations]
+      );
       setOrgPage(page);
-      setHasMoreOrgs(page < totalPages);
+      setHasMoreOrgs(page < pagination.totalPages);
     } catch (error) {
       toast.error(departmentStrings.addDepartment.toast.error, {
         position: "top-right",
@@ -91,11 +96,16 @@ const AddDepartment = ({ onClose }) => {
       const response = await API.get(
         `/branch/${organizationId}/branches?limit=5&page=${page}&searchTerm=${search}`
       );
-      const { data, totalPages } = response.data;
-
-      setBranches((prev) => (page === 1 ? data : [...prev, ...data]));
+      const {
+        data: {
+          data: { branches,pagination },
+        },
+      } = response;
+      setBranches((prev) =>
+          page === 1 ? branches : [...prev, ...branches]
+      );
       setBranchPage(page);
-      setHasMoreBranches(page < totalPages);
+      setHasMoreBranches(page < pagination.totalPages);
     } catch (error) {
       toast.error("Error fetching branches");
     } finally {
@@ -290,7 +300,7 @@ const AddDepartment = ({ onClose }) => {
                           .departmentNameMaxLength,
                     },
                     pattern: {
-                      value: /^[a-zA-Z0-9]+$/,
+                      value: /^[a-zA-Z0-9 ]+$/,
                       message:
                         departmentStrings.addDepartment.validation
                           .deptNamePattern,

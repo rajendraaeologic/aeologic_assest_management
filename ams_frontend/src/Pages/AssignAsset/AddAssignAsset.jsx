@@ -16,6 +16,12 @@ const AddAssignAsset = ({ onClose }) => {
   const modalRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
 
+  const [noOrgsFound, setNoOrgsFound] = useState(false);
+  const [noBranchesFound, setNoBranchesFound] = useState(false);
+  const [noDeptsFound, setNoDeptsFound] = useState(false);
+  const [noUsersFound, setNoUsersFound] = useState(false);
+  const [noAssetsFound, setNoAssetsFound] = useState(false);
+
   // State variables for dropdowns
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -95,6 +101,7 @@ const AddAssignAsset = ({ onClose }) => {
           data: { users,pagination },
         },
       } = response;
+      setNoUsersFound(users.length === 0 && search !== "");
       setUsers((prev) =>
           page === 1 ? users : [...prev, ...users]
       );
@@ -132,6 +139,7 @@ const AddAssignAsset = ({ onClose }) => {
           data: { assets,pagination },
         },
       } = response;
+      setNoAssetsFound(assets.length === 0 && search !== "");
       setAssets((prev) =>
           page === 1 ? assets : [...prev, ...assets]
       );
@@ -167,6 +175,7 @@ const AddAssignAsset = ({ onClose }) => {
           data: { organizations, pagination },
         },
       } = response;
+      setNoOrgsFound(organizations.length === 0 && search !== "");
       setOrganizations((prev) =>
           page === 1 ? organizations : [...prev, ...organizations]
       );
@@ -204,6 +213,7 @@ const AddAssignAsset = ({ onClose }) => {
           data: { branches,pagination },
         },
       } = response;
+      setNoBranchesFound(branches.length === 0 && search !== "");
       setBranches((prev) =>
           page === 1 ? branches : [...prev, ...branches]
       );
@@ -230,6 +240,7 @@ const AddAssignAsset = ({ onClose }) => {
           data: { departments,pagination },
         },
       } = response;
+      setNoDeptsFound(departments.length === 0 && search !== "");
       setDepartments((prev) =>
           page === 1 ? departments : [...prev, ...departments]
       );
@@ -267,6 +278,7 @@ const AddAssignAsset = ({ onClose }) => {
 
   const handleUserSearch = (e) => {
     const search = e.target.value;
+    setNoUsersFound(false);
     setUserSearchTerm(search);
     fetchUsersByDepartmentId(1, search);
   };
@@ -287,6 +299,7 @@ const AddAssignAsset = ({ onClose }) => {
 
   const handleAssetSearch = (e) => {
     const search = e.target.value;
+    setNoAssetsFound(false);
     setAssetSearchTerm(search);
     fetchAssetsByDepartmentId(1, search);
   };
@@ -307,6 +320,7 @@ const AddAssignAsset = ({ onClose }) => {
 
   const handleOrgSearch = (e) => {
     const search = e.target.value;
+    setNoOrgsFound(false);
     setSearchTerm(search);
     fetchOrganizations(1, search);
   };
@@ -341,6 +355,7 @@ const AddAssignAsset = ({ onClose }) => {
 
   const handleBranchSearch = (e) => {
     const search = e.target.value;
+    setNoBranchesFound(false);
     setBranchSearchTerm(search);
     fetchBranches(1, search);
   };
@@ -379,6 +394,7 @@ const AddAssignAsset = ({ onClose }) => {
 
   const handleDeptSearch = (e) => {
     const search = e.target.value;
+    setNoDeptsFound(false);
     setDeptSearchTerm(search);
     fetchDepartments(1, search);
   };
@@ -581,6 +597,11 @@ const AddAssignAsset = ({ onClose }) => {
                           }
                         </li>
                       )}
+                      {noOrgsFound && !orgLoading && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No organizations found
+                          </li>
+                      )}
                     </ul>
                   </div>
                 )}
@@ -634,6 +655,11 @@ const AddAssignAsset = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noBranchesFound && !loadingBranches && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No branches found
+                          </li>
                       )}
                     </ul>
                   </div>
@@ -691,6 +717,11 @@ const AddAssignAsset = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noDeptsFound && !loadingDepartments && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No departments found
+                          </li>
                       )}
                     </ul>
                   </div>
@@ -827,6 +858,11 @@ const AddAssignAsset = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noUsersFound && !loadingUsers && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No Users found
+                          </li>
                       )}
                     </ul>
                   </div>

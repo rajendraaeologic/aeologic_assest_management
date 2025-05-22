@@ -21,6 +21,13 @@ const UpdateAssignAsset = ({ onClose }) => {
   const { currentPage, rowsPerPage } = useSelector(
     (state) => state.assignAssetData
   );
+
+  const [noOrgsFound, setNoOrgsFound] = useState(false);
+  const [noBranchesFound, setNoBranchesFound] = useState(false);
+  const [noDeptsFound, setNoDeptsFound] = useState(false);
+  const [noUsersFound, setNoUsersFound] = useState(false);
+  const [noAssetsFound, setNoAssetsFound] = useState(false);
+
   // User dropdown state
   const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -91,6 +98,7 @@ const UpdateAssignAsset = ({ onClose }) => {
           data: { organizations, pagination },
         },
       } = response;
+      setNoOrgsFound(organizations.length === 0 && search !== "");
       setOrganizations((prev) =>
           page === 1 ? organizations : [...prev, ...organizations]
       );
@@ -116,6 +124,7 @@ const UpdateAssignAsset = ({ onClose }) => {
           data: { branches,pagination },
         },
       } = response;
+      setNoBranchesFound(branches.length === 0 && search !== "");
       setBranches((prev) =>
           page === 1 ? branches : [...prev, ...branches]
       );
@@ -141,6 +150,7 @@ const UpdateAssignAsset = ({ onClose }) => {
           data: { departments,pagination },
         },
       } = response;
+      setNoDeptsFound(departments.length === 0 && search !== "");
       setDepartments((prev) =>
           page === 1 ? departments : [...prev, ...departments]
       );
@@ -166,6 +176,7 @@ const UpdateAssignAsset = ({ onClose }) => {
           data: { users,pagination },
         },
       } = response;
+      setNoUsersFound(users.length === 0 && search !== "");
       setUsers((prev) =>
           page === 1 ? users : [...prev, ...users]
       );
@@ -191,6 +202,7 @@ const UpdateAssignAsset = ({ onClose }) => {
           data: { assets,pagination },
         },
       } = response;
+      setNoAssetsFound(assets.length === 0 && search !== "");
       setAssets((prev) =>
           page === 1 ? assets : [...prev, ...assets]
       );
@@ -318,6 +330,7 @@ const UpdateAssignAsset = ({ onClose }) => {
 
   const handleOrgSearch = (e) => {
     const search = e.target.value;
+    setNoOrgsFound(false);
     setSearchTerm(search);
     fetchOrganizations(1, search);
   };
@@ -359,6 +372,7 @@ const UpdateAssignAsset = ({ onClose }) => {
 
   const handleBranchSearch = (e) => {
     const search = e.target.value;
+    setNoBranchesFound(false);
     setBranchSearchTerm(search);
     fetchBranches(1, search);
   };
@@ -405,6 +419,7 @@ const UpdateAssignAsset = ({ onClose }) => {
 
   const handleDeptSearch = (e) => {
     const search = e.target.value;
+    setNoDeptsFound(false);
     setDeptSearchTerm(search);
     fetchDepartments(1, search);
   };
@@ -446,6 +461,7 @@ const UpdateAssignAsset = ({ onClose }) => {
 
   const handleAssetSearch = (e) => {
     const search = e.target.value;
+    setNoAssetsFound(false);
     setAssetSearchTerm(search);
     fetchAssetsByDepartmentId(1, search);
   };
@@ -467,6 +483,7 @@ const UpdateAssignAsset = ({ onClose }) => {
 
   const handleUserSearch = (e) => {
     const search = e.target.value;
+    setNoUsersFound(false);
     setUserSearchTerm(search);
     fetchUsersByDepartmentId(1, search);
   };
@@ -668,6 +685,11 @@ const UpdateAssignAsset = ({ onClose }) => {
                           Loading...
                         </li>
                       )}
+                      {noOrgsFound && !orgLoading && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No organizations found
+                          </li>
+                      )}
                     </ul>
                   </div>
                 )}
@@ -719,6 +741,11 @@ const UpdateAssignAsset = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noBranchesFound && !loadingBranches && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No branches found
+                          </li>
                       )}
                     </ul>
                   </div>
@@ -773,6 +800,11 @@ const UpdateAssignAsset = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noDeptsFound && !loadingDepartments && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No departments found
+                          </li>
                       )}
                     </ul>
                   </div>
@@ -913,6 +945,11 @@ const UpdateAssignAsset = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noUsersFound && !loadingUsers && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No Users found
+                          </li>
                       )}
                     </ul>
                   </div>

@@ -128,6 +128,10 @@ const Branch = () => {
     }
   };
 
+  const handlePageChange = (page) => {
+    dispatch(setCurrentPage(page));
+  };
+
   const handleDeleteSelectedBranches = () => {
     if (selectedBranches.length === 0) {
       setShowSelectFirstPopup(true);
@@ -246,9 +250,6 @@ const Branch = () => {
               {branchStrings.branch.title}
             </h3>
             <div className="flex gap-3 md:mr-8">
-              <button className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg">
-                <CiSaveUp2 className="h-6 w-6" />
-              </button>
               <button
                 onClick={() => setIsAddBranch(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
@@ -444,6 +445,7 @@ const Branch = () => {
             totalPages={totalPages}
             onPrev={handlePrev}
             onNext={handleNext}
+            onPageChange={handlePageChange}
             previousLabel={branchStrings.branch.buttons.previous}
             nextLabel={branchStrings.branch.buttons.next}
           />

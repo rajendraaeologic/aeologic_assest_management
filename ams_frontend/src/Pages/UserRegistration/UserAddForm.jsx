@@ -14,6 +14,10 @@ const AddUserForm = ({ onClose }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [selectedOrgId, setSelectedOrgId] = useState("");
 
+  const [noOrgsFound, setNoOrgsFound] = useState(false);
+  const [noBranchesFound, setNoBranchesFound] = useState(false);
+  const [noDeptsFound, setNoDeptsFound] = useState(false);
+
   // Organization dropdown state
   const [organizations, setOrganizations] = useState([]);
   const [orgLoading, setOrgLoading] = useState(false);
@@ -84,7 +88,7 @@ const AddUserForm = ({ onClose }) => {
       setOrganizations((prev) =>
           page === 1 ? organizations : [...prev, ...organizations]
       );
-
+      setNoOrgsFound(organizations.length === 0 && search !== "");
       setOrgPage(page);
       setHasMoreOrgs(page < pagination.totalPages);
     } catch (error) {
@@ -109,6 +113,7 @@ const AddUserForm = ({ onClose }) => {
       setBranches((prev) =>
           page === 1 ? branches : [...prev, ...branches]
       );
+      setNoBranchesFound(branches.length === 0 && search !== "");
       setBranchPage(page);
       setHasMoreBranches(page < pagination.totalPages);
     } catch (error) {
@@ -131,6 +136,7 @@ const AddUserForm = ({ onClose }) => {
           data: { departments,pagination },
         },
       } = response;
+      setNoDeptsFound(departments.length === 0 && search !== "");
       setDepartments((prev) =>
           page === 1 ? departments : [...prev, ...departments]
       );
@@ -211,6 +217,7 @@ const AddUserForm = ({ onClose }) => {
   const handleOrgSearch = (e) => {
     const search = e.target.value;
     setSearchTerm(search);
+    setNoOrgsFound(false);
     fetchOrganizations(1, search);
   };
 
@@ -255,6 +262,7 @@ const AddUserForm = ({ onClose }) => {
   const handleBranchSearch = (e) => {
     const search = e.target.value;
     setBranchSearchTerm(search);
+    setNoBranchesFound(false);
     fetchBranches(1, search);
   };
 
@@ -281,6 +289,7 @@ const AddUserForm = ({ onClose }) => {
   const handleDeptSearch = (e) => {
     const search = e.target.value;
     setDeptSearchTerm(search);
+    setNoDeptsFound(false);
     fetchDepartments(1, search);
   };
 
@@ -385,7 +394,7 @@ const AddUserForm = ({ onClose }) => {
                       message: userStrings.addUser.validation.userNameMaxLength,
                     },
                     pattern: {
-                      value: /^[a-zA-Z0-9]+$/,
+                      value: /^[a-zA-Z0-9 ]+$/,
                       message: userStrings.addUser.validation.userNamePattern,
                     },
                   })}
@@ -541,6 +550,11 @@ const AddUserForm = ({ onClose }) => {
                           Loading...
                         </li>
                       )}
+                      {noOrgsFound && !orgLoading && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No organizations found
+                          </li>
+                      )}
                     </ul>
                   </div>
                 )}
@@ -592,6 +606,11 @@ const AddUserForm = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noBranchesFound && !loadingBranches && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No branches found
+                          </li>
                       )}
                     </ul>
                   </div>
@@ -649,6 +668,11 @@ const AddUserForm = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noDeptsFound && !loadingDepartments && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No departments found
+                          </li>
                       )}
                     </ul>
                   </div>

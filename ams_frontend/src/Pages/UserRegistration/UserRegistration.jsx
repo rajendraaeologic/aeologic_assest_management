@@ -164,6 +164,9 @@ const UserRegistration = () => {
     setUserToDelete(user.id);
     setShowDeleteConfirmation(true);
   };
+  const handlePageChange = (page) => {
+    dispatch(setCurrentPage(page));
+  };
 
   const confirmDelete = async () => {
     setIsDeleting(true);
@@ -483,6 +486,7 @@ const UserRegistration = () => {
             totalPages={totalPages}
             onPrev={handlePrev}
             onNext={handleNext}
+            onPageChange={handlePageChange}
             previousLabel={userStrings.user.buttons.previous}
             nextLabel={userStrings.user.buttons.next}
           />

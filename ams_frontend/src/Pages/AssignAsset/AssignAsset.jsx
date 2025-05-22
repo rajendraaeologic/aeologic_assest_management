@@ -130,6 +130,10 @@ const AssignAsset = () => {
     }
   };
 
+  const handlePageChange = (page) => {
+    dispatch(setCurrentPage(page));
+  };
+
   const handleDeleteSelectedAssignAssets = () => {
     if (selectedAssignAssets.length === 0) {
       setShowSelectFirstPopup(true);
@@ -237,9 +241,7 @@ const AssignAsset = () => {
           <div className="flex justify-between mx-5 mt-2">
             <h3 className="text-xl font-semibold text-[#6c757D]">{title}</h3>
             <div className="flex gap-3 md:mr-8">
-              <button className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg">
-                <CiSaveUp2 className="h-6 w-6" />
-              </button>
+
               <button
                 onClick={() => setIsAddAssignAsset(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
@@ -425,6 +427,7 @@ const AssignAsset = () => {
             totalPages={totalAssignPages}
             onPrev={handlePrev}
             onNext={handleNext}
+            onPageChange={handlePageChange}
             previousLabel={buttons.previous}
             nextLabel={buttons.next}
           />

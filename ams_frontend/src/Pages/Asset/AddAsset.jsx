@@ -17,6 +17,10 @@ const AddAsset = ({ onClose, onSuccess }) => {
     (state) => state.assetUserData
   );
 
+  const [noOrgsFound, setNoOrgsFound] = useState(false);
+  const [noBranchesFound, setNoBranchesFound] = useState(false);
+  const [noDeptsFound, setNoDeptsFound] = useState(false);
+
   // Organization dropdown state
   const [organizations, setOrganizations] = useState([]);
   const [orgLoading, setOrgLoading] = useState(false);
@@ -89,6 +93,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
           data: { organizations, pagination },
         },
       } = response;
+      setNoOrgsFound(organizations.length === 0 && search !== "");
       setOrganizations((prev) =>
           page === 1 ? organizations : [...prev, ...organizations]
       );
@@ -125,6 +130,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
           data: { branches,pagination },
         },
       } = response;
+      setNoBranchesFound(branches.length === 0 && search !== "");
       setBranches((prev) =>
           page === 1 ? branches : [...prev, ...branches]
       );
@@ -149,6 +155,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
           data: { departments,pagination },
         },
       } = response;
+      setNoDeptsFound(departments.length === 0 && search !== "");
       setDepartments((prev) =>
           page === 1 ? departments : [...prev, ...departments]
       );
@@ -186,6 +193,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
 
   const handleOrgSearch = (e) => {
     const search = e.target.value;
+    setNoOrgsFound(false);
     setSearchTerm(search);
     fetchOrganizations(1, search);
   };
@@ -219,6 +227,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
 
   const handleBranchSearch = (e) => {
     const search = e.target.value;
+    setNoBranchesFound(false);
     setBranchSearchTerm(search);
     fetchBranches(1, search);
   };
@@ -255,6 +264,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
 
   const handleDeptSearch = (e) => {
     const search = e.target.value;
+    setNoDeptsFound(false);
     setDeptSearchTerm(search);
     fetchDepartments(1, search);
   };
@@ -401,7 +411,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                         assetStrings.addAsset.validation.assetNameMaxLength,
                     },
                     pattern: {
-                      value: /^[a-zA-Z0-9]+$/,
+                      value: /^[a-zA-Z0-9 ]+$/,
                       message:
                         assetStrings.addAsset.validation.assetNamePattern,
                     },
@@ -721,6 +731,11 @@ const AddAsset = ({ onClose, onSuccess }) => {
                           Loading...
                         </li>
                       )}
+                      {noOrgsFound && !orgLoading && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No organizations found
+                          </li>
+                      )}
                     </ul>
                   </div>
                 )}
@@ -776,6 +791,11 @@ const AddAsset = ({ onClose, onSuccess }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noBranchesFound && !loadingBranches && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No branches found
+                          </li>
                       )}
                     </ul>
                   </div>
@@ -834,6 +854,11 @@ const AddAsset = ({ onClose, onSuccess }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noDeptsFound && !loadingDepartments && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No departments found
+                          </li>
                       )}
                     </ul>
                   </div>

@@ -57,11 +57,17 @@ const AddBranch = ({ onClose }) => {
       const response = await API.get(
         `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
       );
-      const { data, totalPages } = response.data;
+      const {
+        data: {
+          data: { organizations, pagination },
+        },
+      } = response;
+      setOrganizations((prev) =>
+          page === 1 ? organizations : [...prev, ...organizations]
+      );
 
-      setOrganizations((prev) => (page === 1 ? data : [...prev, ...data]));
       setOrgPage(page);
-      setHasMoreOrgs(page < totalPages);
+      setHasMoreOrgs(page < pagination.totalPages);
     } catch (error) {
       toast.error(branchStrings.addBranch.toast.error, {
         position: "top-right",
@@ -199,7 +205,7 @@ const AddBranch = ({ onClose }) => {
                         branchStrings.addBranch.validation.branchNameMaxLength,
                     },
                     pattern: {
-                      value: /^[a-zA-Z0-9]+$/,
+                      value: /^[a-zA-Z0-9 ]+$/,
                       message:
                         branchStrings.addBranch.validation.branchNamePattern,
                     },

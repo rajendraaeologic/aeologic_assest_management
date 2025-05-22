@@ -15,6 +15,10 @@ const UpdateUserForm = ({ onClose }) => {
   const selectedUser = useSelector((state) => state.usersData.selectedUser);
   const { currentPage, rowsPerPage } = useSelector((state) => state.usersData);
 
+  const [noOrgsFound, setNoOrgsFound] = useState(false);
+  const [noBranchesFound, setNoBranchesFound] = useState(false);
+  const [noDeptsFound, setNoDeptsFound] = useState(false);
+
   // Organization dropdown state
   const [organizations, setOrganizations] = useState([]);
   const [orgLoading, setOrgLoading] = useState(false);
@@ -84,6 +88,7 @@ const UpdateUserForm = ({ onClose }) => {
           data: { organizations, pagination },
         },
       } = response;
+      setNoOrgsFound(organizations.length === 0 && search !== "");
       setOrganizations((prev) =>
           page === 1 ? organizations : [...prev, ...organizations]
       );
@@ -110,6 +115,7 @@ const UpdateUserForm = ({ onClose }) => {
           data: { branches,pagination },
         },
       } = response;
+      setNoBranchesFound(branches.length === 0 && search !== "");
       setBranches((prev) =>
           page === 1 ? branches : [...prev, ...branches]
       );
@@ -135,6 +141,7 @@ const UpdateUserForm = ({ onClose }) => {
           data: { departments,pagination },
         },
       } = response;
+      setNoDeptsFound(departments.length === 0 && search !== "");
       setDepartments((prev) =>
           page === 1 ? departments : [...prev, ...departments]
       );
@@ -217,6 +224,7 @@ const UpdateUserForm = ({ onClose }) => {
 
   const handleOrgSearch = (e) => {
     const search = e.target.value;
+    setNoOrgsFound(false);
     setSearchTerm(search);
     fetchOrganizations(1, search);
   };
@@ -253,6 +261,7 @@ const UpdateUserForm = ({ onClose }) => {
 
   const handleBranchSearch = (e) => {
     const search = e.target.value;
+    setNoBranchesFound(false);
     setBranchSearchTerm(search);
     fetchBranches(1, search);
   };
@@ -293,6 +302,7 @@ const UpdateUserForm = ({ onClose }) => {
 
   const handleDeptSearch = (e) => {
     const search = e.target.value;
+    setNoDeptsFound(false);
     setDeptSearchTerm(search);
     fetchDepartments(1, search);
   };
@@ -459,7 +469,7 @@ const UpdateUserForm = ({ onClose }) => {
                         userStrings.updateUser.validation.userNameMaxLength,
                     },
                     pattern: {
-                      value: /^[a-zA-Z0-9]+$/,
+                      value: /^[a-zA-Z0-9 ]+$/,
                       message:
                         userStrings.updateUser.validation.userNamePattern,
                     },
@@ -584,6 +594,11 @@ const UpdateUserForm = ({ onClose }) => {
                           Loading...
                         </li>
                       )}
+                      {noOrgsFound && !orgLoading && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No organizations found
+                          </li>
+                      )}
                     </ul>
                   </div>
                 )}
@@ -635,6 +650,11 @@ const UpdateUserForm = ({ onClose }) => {
                           Loading...
                         </li>
                       )}
+                      {noBranchesFound && !loadingBranches && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No branches found
+                          </li>
+                      )}
                     </ul>
                   </div>
                 )}
@@ -685,6 +705,11 @@ const UpdateUserForm = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noDeptsFound && !loadingDepartments && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No departments found
+                          </li>
                       )}
                     </ul>
                   </div>

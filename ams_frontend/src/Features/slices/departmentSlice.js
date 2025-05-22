@@ -29,7 +29,7 @@ export const getAllDepartments = createAsyncThunk(
         page,
         searchTerm,
       });
-      return response.data || [];
+      return response.data.data || [];
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch departments"
@@ -143,11 +143,11 @@ const departmentSlice = createSlice({
       })
       .addCase(getAllDepartments.fulfilled, (state, action) => {
         state.loading = false;
-        state.departments = action.payload.data;
-        state.totalDepartments = action.payload.totalData;
-        state.totalPages = action.payload.totalPages;
-        state.currentPage = action.payload.page;
-        state.rowsPerPage = action.payload.limit;
+        state.departments = action.payload.departments;
+        state.totalDepartments = action.payload.pagination.totalData;
+        state.totalPages = action.payload.pagination.totalPages;
+        state.currentPage = action.payload.pagination.page;
+        state.rowsPerPage = action.payload.pagination.limit;
       })
       .addCase(getAllDepartments.rejected, (state, action) => {
         state.loading = false;

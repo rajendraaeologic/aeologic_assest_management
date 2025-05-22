@@ -33,7 +33,8 @@ export const getAllAssignAssets = createAsyncThunk(
         searchTerm,
         status,
       });
-      return response.data || [];
+      console.log(response);
+      return response.data.data || [];
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch assign assets"
@@ -149,11 +150,11 @@ const assignAssetSlice = createSlice({
       })
       .addCase(getAllAssignAssets.fulfilled, (state, action) => {
         state.loading = false;
-        state.assignAssets = action.payload.data;
-        state.totalAssignAssets = action.payload.totalData;
-        state.totalAssignPages = action.payload.totalPages;
-        state.currentAssignPage = action.payload.page;
-        state.assignRowsPerPage = action.payload.limit;
+        state.assignAssets = action.payload.assignments;
+        state.totalAssignAssets = action.payload.pagination.totalData;
+        state.totalAssignPages = action.payload.pagination.totalPages;
+        state.currentAssignPage = action.payload.pagination.page;
+        state.assignRowsPerPage = action.payload.pagination.limit;
       })
 
       .addCase(getAllAssignAssets.rejected, (state, action) => {

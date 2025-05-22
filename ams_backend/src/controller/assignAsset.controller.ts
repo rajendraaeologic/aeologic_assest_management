@@ -146,9 +146,12 @@ const assignAsset = catchAsync(async (req, res) => {
   const result = await assignAssetService.assignAsset(assetId, userId);
 
   res.status(httpStatus.CREATED).json({
+    status: httpStatus.CREATED,
     success: true,
     message: "Asset assigned successfully",
-    data: result,
+    data: {
+      assignment: result,
+    },
   });
 
   const isAssetAvailable = await db.asset.findFirst({
@@ -178,10 +181,12 @@ const unassignAsset = catchAsync(async (req, res) => {
   const result = await assignAssetService.unassignAsset(assignmentId);
 
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Asset unassigned successfully",
-    data: result,
+    data: {
+      assignment: result,
+    },
   });
 });
 
@@ -325,29 +330,37 @@ export const getAssetAssignments = catchAsync(async (req, res) => {
 
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
       success: false,
-      status: 404,
       message: "No asset assignments found",
-      data: [],
-      totalData: 0,
-      page,
-      limit,
-      totalPages: 0,
-      mode: isSearchMode ? "search" : "pagination",
+      data: {
+        assignments: [],
+        pagination: {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          mode: isSearchMode ? "search" : "pagination",
+        },
+      },
     });
     return;
   }
 
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Asset assignments fetched successfully",
-    data: result.data,
-    totalData: result.total,
-    page,
-    limit,
-    totalPages: Math.ceil(result.total / limit),
-    mode: isSearchMode ? "search" : "pagination",
+    data: {
+      assignments: result.data,
+      pagination: {
+        total: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+        mode: isSearchMode ? "search" : "pagination",
+      },
+    },
   });
 });
 
@@ -557,26 +570,35 @@ export const getAssetsByDepartmentId = catchAsync(async (req, res) => {
 
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
-      status: 404,
+      status: httpStatus.OK,
+      success: false,
       message: "No assets found for this department",
-      data: [],
-      totalData: result?.total || 0,
-      page: options.page,
-      limit: options.limit,
-      totalPages: Math.ceil((result?.total || 0) / options.limit),
+      data: {
+        assets: [],
+        pagination: {
+          totalData: result?.total || 0,
+          page: options.page,
+          limit: options.limit,
+          totalPages: Math.ceil((result?.total || 0) / options.limit),
+        },
+      },
     });
     return;
   }
 
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Assets fetched successfully",
-    data: result.data,
-    totalData: result.total,
-    page: options.page,
-    limit: options.limit,
-    totalPages: Math.ceil(result.total / options.limit),
+    data: {
+      assets: result.data,
+      pagination: {
+        totalData: result.total,
+        page: options.page,
+        limit: options.limit,
+        totalPages: Math.ceil(result.total / options.limit),
+      },
+    },
   });
 });
 
@@ -692,26 +714,35 @@ export const getUsersByDepartmentId = catchAsync(async (req, res) => {
 
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
-      status: 404,
+      status: httpStatus.OK,
+      success: false,
       message: "No users found for this department",
-      data: [],
-      totalData: result?.total || 0,
-      page: options.page,
-      limit: options.limit,
-      totalPages: Math.ceil((result?.total || 0) / options.limit),
+      data: {
+        users: [],
+        pagination: {
+          total: result?.total || 0,
+          page: options.page,
+          limit: options.limit,
+          totalPages: Math.ceil((result?.total || 0) / options.limit),
+        },
+      },
     });
     return;
   }
 
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Users fetched successfully",
-    data: result.data,
-    totalData: result.total,
-    page: options.page,
-    limit: options.limit,
-    totalPages: Math.ceil(result.total / options.limit),
+    data: {
+      users: result.data,
+      pagination: {
+        total: result.total,
+        page: options.page,
+        limit: options.limit,
+        totalPages: Math.ceil(result.total / options.limit),
+      },
+    },
   });
 });
 
@@ -746,16 +777,27 @@ const getAssetAssignmentById = catchAsync(async (req, res) => {
   );
 
   if (!assignment) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Assignment not found");
+    res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
+      success: false,
+      message: "Assignment not found",
+      data: {
+        assignment: null,
+      },
+    });
+    return;
   }
 
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Assignment fetched successfully",
-    data: assignment,
+    data: {
+      assignment,
+    },
   });
 });
+
 
 /**
  * @swagger
@@ -805,10 +847,12 @@ const updateAssetAssignment = catchAsync(async (req, res) => {
   });
 
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Asset assignment updated successfully",
-    data: result,
+    data: {
+      assignment: result,
+    },
   });
 });
 
@@ -846,10 +890,13 @@ const deleteAssignment = catchAsync(async (req, res) => {
 
   const result = await assignAssetService.deleteAssignmentById(assignmentId);
 
-  res.status(httpStatus.NO_CONTENT).json({
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
     success: true,
     message: "Assignment deleted successfully",
-    data: result,
+    data: {
+      assignment: result,
+    },
   });
 });
 
@@ -892,10 +939,13 @@ const bulkDeleteAssignments = catchAsync(async (req, res) => {
 
   const result = await assignAssetService.deleteAssignmentsByIds(assignmentIds);
 
-  res.status(httpStatus.NO_CONTENT).json({
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
     success: true,
     message: "Assignments deleted successfully",
-    data: result,
+    data: {
+      assignments: result,
+    },
   });
 });
 

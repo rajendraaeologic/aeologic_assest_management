@@ -103,8 +103,11 @@ const createOrganization = catchAsync(async (req, res) => {
     } as Organization);
 
     res.status(httpStatus.CREATED).send({
-      message: "Organization Created Successfully.",
-      organization,
+      statusCode: httpStatus.CREATED,
+      message: "Organization Created Successfully",
+      data: {
+        organization
+      }
     });
   } catch (error) {
     throw new ApiError(httpStatus.CONFLICT, error.message);
@@ -251,28 +254,35 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
 
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
-      success: false,
-      status: 404,
+      statusCode: httpStatus.OK,
       message: "No organizations found",
-      data: [],
-      totalData: 0,
-      page,
-      limit,
-      totalPages: 0,
-      mode: isSearchMode ? "search" : "pagination",
+      data: {
+        organizations: [],
+        pagination: {
+          totalData: 0,
+          page,
+          limit,
+          totalPages: 0,
+          mode: isSearchMode ? "search" : "pagination",
+        }
+      }
     });
+    return;
   }
 
   res.status(httpStatus.OK).json({
-    status: 200,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Organizations fetched successfully",
-    data: result.data,
-    totalData: result.total,
-    page,
-    limit,
-    totalPages: Math.ceil(result.total / limit),
-    mode: isSearchMode ? "search" : "pagination",
+    data: {
+      organizations: result.data,
+      pagination: {
+        totalData: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+        mode: isSearchMode ? "search" : "pagination",
+      }
+    }
   });
 });
 
@@ -327,7 +337,9 @@ const getOrganizationById = catchAsync(async (req, res) => {
     status: 200,
     success: true,
     message: "Organization fetched successfully",
-    data: result,
+    data:{
+      result
+    }
   });
 });
 
@@ -385,7 +397,9 @@ const updateOrganization = catchAsync(async (req, res) => {
       status: 200,
       success: true,
       message: "Organization update successfully",
-      data: result,
+      data:{
+        result
+      }
     });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
@@ -423,8 +437,11 @@ const updateOrganization = catchAsync(async (req, res) => {
 const deleteOrganization = catchAsync(async (req, res) => {
   try {
     await organizationService.deleteOrganizationById(req.params.organizationId);
-    res.status(httpStatus.NO_CONTENT);
-    res.send({ message: "Organization soft-deleted successfully" });
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "Organization soft-deleted successfully",
+      data: null
+    });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
@@ -470,8 +487,11 @@ const bulkDeleteOrganizations = catchAsync(async (req, res) => {
     await organizationService.deleteOrganizationsByIds(
       req.body.organizationIds
     );
-    res.status(httpStatus.NO_CONTENT);
-    res.send({ message: "Organizations soft-deleted successfully" });
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "Organizations soft-deleted successfully",
+      data: null
+    });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }

@@ -295,8 +295,9 @@ const AssetHistory = () => {
       try {
         setLoading(true);
         const response = await API.get("/assetHistory/");
+        console.log(response)
         if (response.data?.success) {
-          const groupedHistories = groupByAsset(response.data.data);
+          const groupedHistories = groupByAsset(response.data.data.histories);
           setHistories(groupedHistories);
           if (groupedHistories.length === 0)
             setError(strings.noHistoryAvailable);

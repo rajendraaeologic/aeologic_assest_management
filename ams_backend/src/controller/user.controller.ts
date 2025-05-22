@@ -523,20 +523,20 @@ export const getUsers = catchAsync(async (req, res) => {
   };
 
   const result = await userService.queryUsers(where, options);
-
+console.log(result)
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
       success: false,
       status: 404,
       message: "Users not found",
       data: {
-        users: []
+        users: [],
+        totalData: 0,
+        page,
+        limit,
+        totalPages: 0,
+        mode: isSearchMode ? "search" : "pagination",
       },
-      totalData: 0,
-      page,
-      limit,
-      totalPages: 0,
-      mode: isSearchMode ? "search" : "pagination",
     });
     return;
   }
@@ -551,13 +551,15 @@ export const getUsers = catchAsync(async (req, res) => {
     success: true,
     message: "Users fetched successfully",
     data: {
-      users
+      users,
+      pagination:{
+        totalData: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+        mode: isSearchMode ? "search" : "pagination",
+      }
     },
-    totalData: result.total,
-    page,
-    limit,
-    totalPages: Math.ceil(result.total / limit),
-    mode: isSearchMode ? "search" : "pagination",
   });
 });
 /**

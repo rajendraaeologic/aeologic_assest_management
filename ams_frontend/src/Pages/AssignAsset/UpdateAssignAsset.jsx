@@ -86,12 +86,19 @@ const UpdateAssignAsset = ({ onClose }) => {
       const response = await API.get(
         `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
       );
-      const { data, totalPages } = response.data;
-      setOrganizations((prev) => (page === 1 ? data : [...prev, ...data]));
+      const {
+        data: {
+          data: { organizations, pagination },
+        },
+      } = response;
+      setOrganizations((prev) =>
+          page === 1 ? organizations : [...prev, ...organizations]
+      );
+
       setOrgPage(page);
-      setHasMoreOrgs(page < totalPages);
+      setHasMoreOrgs(page < pagination.totalPages);
     } catch (error) {
-      toast.error("Error fetching organizations", error);
+      console.error("Error fetching organizations", error);
     } finally {
       setOrgLoading(false);
     }
@@ -104,12 +111,18 @@ const UpdateAssignAsset = ({ onClose }) => {
       const response = await API.get(
         `/branch/${selectedOrgId}/branches?limit=5&page=${page}&searchTerm=${search}`
       );
-      const { data, totalPages } = response.data;
-      setBranches((prev) => (page === 1 ? data : [...prev, ...data]));
+      const {
+        data: {
+          data: { branches,pagination },
+        },
+      } = response;
+      setBranches((prev) =>
+          page === 1 ? branches : [...prev, ...branches]
+      );
       setBranchPage(page);
-      setHasMoreBranches(page < totalPages);
+      setHasMoreBranches(page < pagination.totalPages);
     } catch (error) {
-      toast.error("Error fetching branches", error);
+      console.error("Error fetching branches", error);
     } finally {
       setLoadingBranches(false);
     }
@@ -122,12 +135,19 @@ const UpdateAssignAsset = ({ onClose }) => {
       const response = await API.get(
         `/department/${branchId}/departments?page=${page}&limit=5&searchTerm=${search}`
       );
-      const { data, totalPages } = response.data;
-      setDepartments((prev) => (page === 1 ? data : [...prev, ...data]));
+      console.log("depat",response)
+      const {
+        data: {
+          data: { departments,pagination },
+        },
+      } = response;
+      setDepartments((prev) =>
+          page === 1 ? departments : [...prev, ...departments]
+      );
       setDepartmentPage(page);
-      setHasMoreDepts(page < totalPages);
+      setHasMoreDepts(page < pagination.totalPages);
     } catch (error) {
-      toast.error("Error fetching departments", error);
+      console.error("Error fetching departments", error);
     } finally {
       setLoadingDepartments(false);
     }
@@ -140,12 +160,19 @@ const UpdateAssignAsset = ({ onClose }) => {
       const response = await API.get(
         `/assignAsset/${departmentId}/users?page=${page}&limit=5&searchTerm=${search}`
       );
-      const { data, totalPages } = response.data;
-      setUsers((prev) => (page === 1 ? data : [...prev, ...data]));
+      console.log("users",response)
+      const {
+        data: {
+          data: { users,pagination },
+        },
+      } = response;
+      setUsers((prev) =>
+          page === 1 ? users : [...prev, ...users]
+      );
       setUserPage(page);
-      setHasMoreUsers(page < totalPages);
+      setHasMoreUsers(page < pagination.totalPages);
     } catch (error) {
-      toast.error("Error fetching users", error);
+      console.error("Error fetching users", error);
     } finally {
       setLoadingUsers(false);
     }
@@ -158,12 +185,19 @@ const UpdateAssignAsset = ({ onClose }) => {
       const response = await API.get(
         `/assignAsset/${departmentId}/assets?page=${page}&limit=5&searchTerm=${search}`
       );
-      const { data, totalPages } = response.data;
-      setAssets((prev) => (page === 1 ? data : [...prev, ...data]));
+      console.log("Assetbydept",response)
+      const {
+        data: {
+          data: { assets,pagination },
+        },
+      } = response;
+      setAssets((prev) =>
+          page === 1 ? assets : [...prev, ...assets]
+      );
       setAssetPage(page);
-      setHasMoreAssets(page < totalPages);
+      setHasMoreAssets(page < pagination.totalPages);
     } catch (error) {
-      toast.error("Error fetching assets", error);
+      console.error("Error fetching assets", error);
     } finally {
       setLoadingAssets(false);
     }

@@ -29,7 +29,7 @@ export const getAllAssets = createAsyncThunk(
         page,
         searchTerm,
       });
-      return response.data || [];
+      return response.data.data || [];
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch assets"
@@ -137,11 +137,11 @@ const assetSlice = createSlice({
       })
       .addCase(getAllAssets.fulfilled, (state, action) => {
         state.loading = false;
-        state.assets = action.payload.data;
-        state.totalAssets = action.payload.totalData;
-        state.totalPages = action.payload.totalPages;
-        state.currentPage = action.payload.page;
-        state.rowsPerPage = action.payload.limit;
+        state.assets = action.payload.assets;
+        state.totalAssets = action.payload.pagination.totalData;
+        state.totalPages = action.payload.pagination.totalPages;
+        state.currentPage = action.payload.pagination.page;
+        state.rowsPerPage = action.payload.pagination.limit;
       })
       .addCase(getAllAssets.rejected, (state, action) => {
         state.loading = false;

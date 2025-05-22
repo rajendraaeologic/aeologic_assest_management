@@ -189,9 +189,12 @@ const createAsset = catchAsync(async (req, res) => {
     });
 
     res.status(httpStatus.CREATED).json({
+      status: httpStatus.CREATED,
       success: true,
       message: "Asset Created Successfully",
-      data: asset,
+      data: {
+        asset,
+      },
     });
   } catch (error) {
     throw new ApiError(httpStatus.BAD_REQUEST, error.message);
@@ -360,29 +363,37 @@ export const getAllAssets = catchAsync(async (req, res) => {
 
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
       success: false,
-      status: 404,
       message: "No assets found",
-      data: [],
-      totalData: 0,
-      page,
-      limit,
-      totalPages: 0,
-      mode: isSearchMode ? "search" : "pagination",
+      data: {
+        assets: [],
+        pagination: {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          mode: isSearchMode ? "search" : "pagination",
+        },
+      },
     });
     return;
   }
 
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Assets fetched successfully",
-    data: result.data,
-    totalData: result.total,
-    page,
-    limit,
-    totalPages: Math.ceil(result.total / limit),
-    mode: isSearchMode ? "search" : "pagination",
+    data: {
+      assets: result.data,
+      pagination: {
+        total: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+        mode: isSearchMode ? "search" : "pagination",
+      },
+    },
   });
 });
 
@@ -427,14 +438,24 @@ const getAssetById = catchAsync(async (req, res) => {
   });
 
   if (!asset) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Asset not found");
+    res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
+      success: false,
+      message: "Asset not found",
+      data: {
+        asset: null,
+      },
+    });
+    return;
   }
 
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Asset fetched successfully",
-    data: asset,
+    data: {
+      asset,
+    },
   });
 });
 
@@ -506,7 +527,14 @@ const updateAsset = catchAsync(async (req, res) => {
 
   const updatedAsset = await assetService.updateAssetById(assetId, updateBody);
 
-  res.send(updatedAsset);
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
+    success: true,
+    message: "Asset updated successfully",
+    data: {
+      asset: updatedAsset,
+    },
+  });
 });
 
 /**
@@ -542,9 +570,11 @@ const updateAsset = catchAsync(async (req, res) => {
 const deleteAsset = catchAsync(async (req, res) => {
   await assetService.deleteAssetById(req.params.assetId);
 
-  res.status(httpStatus.NO_CONTENT).json({
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
     success: true,
     message: "Asset deleted successfully",
+    data: null,
   });
 });
 
@@ -587,9 +617,11 @@ const deleteAsset = catchAsync(async (req, res) => {
  */
 const bulkDeleteAssets = catchAsync(async (req, res) => {
   await assetService.deleteAssetsByIds(req.body.assetIds);
-  res.status(httpStatus.NO_CONTENT).json({
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
     success: true,
     message: "Assets deleted successfully",
+    data: null,
   });
 });
 
@@ -654,9 +686,12 @@ const assignAsset = catchAsync(async (req, res) => {
   });
 
   res.status(httpStatus.CREATED).json({
+    status: httpStatus.CREATED,
     success: true,
     message: "Asset assigned successfully",
-    data: assignment,
+    data: {
+      assignment,
+    },
   });
 });
 
@@ -715,13 +750,17 @@ const getAssetAssignments = catchAsync(async (req, res) => {
     select: AssetAssignmentKeys,
   });
 
-  res.status(200).json({
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
     success: true,
     message:
       assignments.length > 0
         ? "Asset assignments fetched successfully"
         : "No assignments found",
-    data: assignments,
+    data: {
+      assignments,
+      count: assignments.length,
+    },
   });
 });
 
@@ -790,13 +829,17 @@ const getAssetHistory = catchAsync(async (req, res) => {
     select: AssetHistoryKeys,
   });
 
-  res.status(200).json({
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
     success: true,
     message:
       history.length > 0
         ? "Asset history fetched successfully"
         : "No history found",
-    data: history,
+    data: {
+      history,
+      count: history.length,
+    },
   });
 });
 

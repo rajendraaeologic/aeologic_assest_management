@@ -37,9 +37,10 @@ const Dashboard = () => {
     const fetchDashboardCounts = async () => {
       try {
         const res = await API.get("/dashboard/counts");
+        console.log(res)
         if (res.status === 200 && res.data?.data && isMounted) {
           const { users, organizations, branches, departments, assets } =
-            res.data.data;
+            res.data.data.counts;
 
           const data = [
             {

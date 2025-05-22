@@ -73,19 +73,26 @@ const AddUserForm = ({ onClose }) => {
     try {
       setOrgLoading(true);
       const response = await API.get(
-        `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
+          `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
+    );
+
+      const {
+        data: {
+          data: { organizations, pagination },
+        },
+      } = response;
+      setOrganizations((prev) =>
+          page === 1 ? organizations : [...prev, ...organizations]
       );
-      const { data, totalPages } = response.data;
-      setOrganizations((prev) => (page === 1 ? data : [...prev, ...data]));
+
       setOrgPage(page);
-      setHasMoreOrgs(page < totalPages);
+      setHasMoreOrgs(page < pagination.totalPages);
     } catch (error) {
       toast.error("Error fetching organizations");
     } finally {
       setOrgLoading(false);
     }
   };
-
   // Fetch branches
   const fetchBranches = async (page, search = "") => {
     if (!selectedOrgId) return;
@@ -94,10 +101,16 @@ const AddUserForm = ({ onClose }) => {
       const response = await API.get(
         `/branch/${selectedOrgId}/branches?limit=5&page=${page}&searchTerm=${search}`
       );
-      const { data, totalPages } = response.data;
-      setBranches((prev) => (page === 1 ? data : [...prev, ...data]));
+      const {
+        data: {
+          data: { branches,pagination },
+        },
+      } = response;
+      setBranches((prev) =>
+          page === 1 ? branches : [...prev, ...branches]
+      );
       setBranchPage(page);
-      setHasMoreBranches(page < totalPages);
+      setHasMoreBranches(page < pagination.totalPages);
     } catch (error) {
       toast.error("Error fetching branches");
     } finally {
@@ -113,10 +126,16 @@ const AddUserForm = ({ onClose }) => {
       const response = await API.get(
         `/department/${branchId}/departments?page=${page}&limit=5&searchTerm=${search}`
       );
-      const { data, totalPages } = response.data;
-      setDepartments((prev) => (page === 1 ? data : [...prev, ...data]));
+      const {
+        data: {
+          data: { departments,pagination },
+        },
+      } = response;
+      setDepartments((prev) =>
+          page === 1 ? departments : [...prev, ...departments]
+      );
       setDepartmentPage(page);
-      setHasMoreDepts(page < totalPages);
+      setHasMoreDepts(page < pagination.totalPages);
     } catch (error) {
       toast.error("Error fetching departments");
     } finally {

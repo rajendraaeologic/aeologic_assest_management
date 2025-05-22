@@ -107,9 +107,12 @@ const createDepartment = catchAsync(async (req, res) => {
     } as Department);
 
     res.status(httpStatus.CREATED).send({
-      department,
-
-      message: "Department Created Successfully.",
+      status: httpStatus.CREATED,
+      success: true,
+      message: "Department Created Successfully",
+      data: {
+        department,
+      },
     });
   } catch (error) {
     throw new ApiError(httpStatus.BAD_REQUEST, error.message);
@@ -265,29 +268,37 @@ export const getAllDepartments = catchAsync(async (req, res) => {
 
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
       success: false,
-      status: 404,
       message: "No departments found",
-      data: [],
-      totalData: 0,
-      page,
-      limit,
-      totalPages: 0,
-      mode: isSearchMode ? "search" : "pagination",
+      data: {
+        departments: [],
+        pagination: {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          mode: isSearchMode ? "search" : "pagination",
+        },
+      },
     });
     return;
   }
 
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Departments fetched successfully",
-    data: result.data,
-    totalData: result.total,
-    page,
-    limit,
-    totalPages: Math.ceil(result.total / limit),
-    mode: isSearchMode ? "search" : "pagination",
+    data: {
+      departments: result.data,
+      pagination: {
+        total: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+        mode: isSearchMode ? "search" : "pagination",
+      },
+    },
   });
 });
 
@@ -331,17 +342,22 @@ const getDepartmentById = catchAsync(async (req, res) => {
 
   if (!department) {
     res.status(httpStatus.OK).json({
-      status: 404,
+      status: httpStatus.OK,
+      success: false,
       message: "No Department found",
-      data: [],
+      data: {
+        department: null,
+      },
     });
     return;
   }
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Department fetched successfully",
-    data: department,
+    data: {
+      department,
+    },
   });
 });
 
@@ -400,10 +416,12 @@ const updateDepartment = catchAsync(async (req, res) => {
       req.body
     );
     res.status(httpStatus.OK).json({
-      status: 200,
+      status: httpStatus.OK,
       success: true,
-      message: "Department update successfully",
-      data: department,
+      message: "Department updated successfully",
+      data: {
+        department,
+      },
     });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
@@ -443,12 +461,17 @@ const updateDepartment = catchAsync(async (req, res) => {
 const deleteDepartment = catchAsync(async (req, res) => {
   try {
     await departmentService.deleteDepartmentById(req.params.departmentId);
-    res.status(httpStatus.NO_CONTENT);
-    res.send({ message: "Department deleted successfully" });
+    res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
+      success: true,
+      message: "Department deleted successfully",
+      data: null,
+    });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
 });
+
 
 /**
  * @swagger
@@ -490,8 +513,12 @@ const deleteDepartment = catchAsync(async (req, res) => {
 const deleteDepartments = catchAsync(async (req, res) => {
   try {
     await departmentService.deleteDepartmentsByIds(req.body.departmentIds);
-    res.status(httpStatus.NO_CONTENT);
-    res.send({ message: "Departments deleted successfully" });
+    res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
+      success: true,
+      message: "Departments deleted successfully",
+      data: null,
+    });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
@@ -629,26 +656,35 @@ export const getDepartmentsByBranchId = catchAsync(async (req, res) => {
 
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
-      status: 404,
+      status: httpStatus.OK,
+      success: false,
       message: "No departments found for this branch",
-      data: [],
-      totalData: result.total,
-      page: options.page,
-      limit: options.limit,
-      totalPages: Math.ceil(result.total / options.limit),
+      data: {
+        departments: [],
+        pagination: {
+          total: result?.total || 0,
+          page: options.page,
+          limit: options.limit,
+          totalPages: Math.ceil((result?.total || 0) / options.limit),
+        },
+      },
     });
     return;
   }
 
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Departments fetched successfully",
-    data: result.data,
-    totalData: result.total,
-    page: options.page,
-    limit: options.limit,
-    totalPages: Math.ceil(result.total / options.limit),
+    data: {
+      departments: result.data,
+      pagination: {
+        total: result.total,
+        page: options.page,
+        limit: options.limit,
+        totalPages: Math.ceil(result.total / options.limit),
+      },
+    },
   });
 });
 

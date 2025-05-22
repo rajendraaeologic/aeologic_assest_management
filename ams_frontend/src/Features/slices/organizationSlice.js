@@ -29,7 +29,8 @@ export const getAllOrganizations = createAsyncThunk(
         page,
         searchTerm,
       });
-      return response.data || [];
+      console.log(response);
+      return response.data.data || [];
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch organizations"
@@ -145,11 +146,11 @@ const organizationSlice = createSlice({
       })
       .addCase(getAllOrganizations.fulfilled, (state, action) => {
         state.loading = false;
-        state.organizations = action.payload.data;
-        state.totalOrganizations = action.payload.totalData;
-        state.totalPages = action.payload.totalPages;
-        state.currentPage = action.payload.page;
-        state.rowsPerPage = action.payload.limit;
+        state.organizations = action.payload.organizations;
+        state.totalOrganizations = action.payload.pagination.totalData;
+        state.totalPages = action.payload.pagination.totalPages;
+        state.currentPage = action.payload.pagination.page;
+        state.rowsPerPage = action.payload.pagination.limit;
       })
 
       .addCase(getAllOrganizations.rejected, (state, action) => {

@@ -134,7 +134,9 @@ const getAssignAssetUser = catchAsync(async (req, res) => {
     status: 200,
     success: true,
     message: "Assigned assets fetched successfully for User",
-    data: assignments,
+    data: {
+      assignments,
+    }
   });
   return;
 });

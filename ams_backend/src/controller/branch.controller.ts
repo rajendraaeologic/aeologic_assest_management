@@ -123,8 +123,12 @@ const createBranch = catchAsync(async (req, res) => {
     } as Branch);
 
     res.status(httpStatus.CREATED).send({
-      branch,
-      message: "Branch Created Successfully.",
+      status: httpStatus.CREATED,
+      success: true,
+      message: "Branch Created Successfully",
+      data: {
+        branch,
+      },
     });
   } catch (error) {
     throw new ApiError(httpStatus.CONFLICT, error.message);
@@ -279,29 +283,37 @@ export const getAllBranches = catchAsync(async (req, res) => {
 
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
       success: false,
-      status: 404,
       message: "No branches found",
-      data: [],
-      totalData: 0,
-      page,
-      limit,
-      totalPages: 0,
-      mode: isSearchMode ? "search" : "pagination",
+      data: {
+        branches: [],
+        pagination: {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          mode: isSearchMode ? "search" : "pagination",
+        },
+      },
     });
     return;
   }
 
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Branches fetched successfully",
-    data: result.data,
-    totalData: result.total,
-    page,
-    limit,
-    totalPages: Math.ceil(result.total / limit),
-    mode: isSearchMode ? "search" : "pagination",
+    data: {
+      branches: result.data,
+      pagination: {
+        total: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+        mode: isSearchMode ? "search" : "pagination",
+      },
+    },
   });
 });
 
@@ -344,17 +356,22 @@ const getBranchById = catchAsync(async (req, res) => {
 
   if (!branch) {
     res.status(httpStatus.OK).json({
-      status: 404,
+      status: httpStatus.OK,
+      success: false,
       message: "No Branch found",
-      data: [],
+      data: {
+        branch: null,
+      },
     });
     return;
   }
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Branch fetched successfully",
-    data: branch,
+    data: {
+      branch,
+    },
   });
 });
 
@@ -415,10 +432,12 @@ const updateBranch = catchAsync(async (req, res) => {
       req.body
     );
     res.status(httpStatus.OK).json({
-      status: 200,
+      status: httpStatus.OK,
       success: true,
-      message: "Branch update successfully",
-      data: branch,
+      message: "Branch updated successfully",
+      data: {
+        branch,
+      },
     });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
@@ -457,8 +476,12 @@ const updateBranch = catchAsync(async (req, res) => {
 const deleteBranch = catchAsync(async (req, res) => {
   try {
     await branchService.deleteBranchById(req.params.branchId);
-    res.status(httpStatus.NO_CONTENT);
-    res.send({ message: "Branch soft-deleted successfully" });
+    res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
+      success: true,
+      message: "Branch soft-deleted successfully",
+      data: null,
+    });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
@@ -504,7 +527,12 @@ const deleteBranches = catchAsync(async (req, res) => {
   try {
     await branchService.deleteBranchesByIds(req.body.branchIds);
     res.status(httpStatus.NO_CONTENT);
-    res.send({ message: "Branches deleted successfully" });
+    res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
+      success: true,
+      message: "Branches deleted successfully",
+      data: null,
+    });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
   }
@@ -641,27 +669,35 @@ export const getBranchesByOrganizationId = catchAsync(async (req, res) => {
   );
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
-      status: 404,
-      message: "No barnch found for this organizations",
-      data: [],
-      totalData: result.total,
-      page: options.page,
-      limit: options.limit,
-      totalPages: Math.ceil(result.total / options.limit),
+      status: httpStatus.OK,
+      success: false,
+      message: "No branch found for this organization",
+      data: {
+        branches: [],
+        pagination: {
+          total: result?.total || 0,
+          page: options.page,
+          limit: options.limit,
+          totalPages: Math.ceil((result?.total || 0) / options.limit),
+        },
+      },
     });
     return;
   }
 
-  // Sending response back to the client
   res.status(httpStatus.OK).json({
-    status: 200,
+    status: httpStatus.OK,
     success: true,
     message: "Branches fetched successfully",
-    data: result.data,
-    totalData: result.total,
-    page: options.page,
-    limit: options.limit,
-    totalPages: Math.ceil(result.total / options.limit),
+    data: {
+      branches: result.data,
+      pagination: {
+        total: result.total,
+        page: options.page,
+        limit: options.limit,
+        totalPages: Math.ceil(result.total / options.limit),
+      },
+    },
   });
 });
 

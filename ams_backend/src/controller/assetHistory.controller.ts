@@ -57,10 +57,14 @@ const getAssetHistories = catchAsync(async (req, res) => {
     message: result.data.length
       ? "Asset histories fetched successfully"
       : "No asset histories found",
-    data: result.data,
-    total: result.total,
-    page: options.page || 1,
-    limit: options.limit || 10,
+    data: {
+      histories :result.data,
+      pagination:{
+        total: result.total,
+        page: options.page || 1,
+        limit: options.limit || 10,
+      }
+    }
   });
 });
 
@@ -95,15 +99,27 @@ const getAssetHistoryById = catchAsync(async (req, res) => {
   );
 
   if (!history) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Asset history not found");
+    res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
+      success: false,
+      message: "Asset history not found",
+      data: {
+        history: null,
+      },
+    });
+    return;
   }
 
   res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
     success: true,
     message: "Asset history fetched successfully",
-    data: history,
+    data: {
+      history,
+    },
   });
 });
+
 
 /**
  * @swagger
@@ -149,8 +165,12 @@ const getAssetHistoryByAssetId = catchAsync(async (req, res) => {
     message: result.data.length
       ? "Asset histories fetched successfully"
       : "No histories found for this asset",
-    data: result.data,
-    total: result.total,
+    data: {
+      histories: result.data,
+      pagination: {
+        total: result.total,
+      }
+    }
   });
 });
 

@@ -29,7 +29,8 @@ export const getAllBranches = createAsyncThunk(
         page,
         searchTerm,
       });
-      return response.data || [];
+      console.log(response);
+      return response.data.data || [];
     } catch (error) {
       return rejectWithValue(
         error.response?.data?.message || "Failed to fetch branches"
@@ -137,11 +138,11 @@ const branchSlice = createSlice({
       })
       .addCase(getAllBranches.fulfilled, (state, action) => {
         state.loading = false;
-        state.branches = action.payload.data;
-        state.totalBranches = action.payload.totalData;
-        state.totalPages = action.payload.totalPages;
-        state.currentPage = action.payload.page;
-        state.rowsPerPage = action.payload.limit;
+        state.branches = action.payload.branches;
+        state.totalBranches = action.payload.pagination.totalData;
+        state.totalPages = action.payload.pagination.totalPages;
+        state.currentPage = action.payload.pagination.page;
+        state.rowsPerPage = action.payload.pagination.limit;
       })
 
       .addCase(getAllBranches.rejected, (state, action) => {

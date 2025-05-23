@@ -431,10 +431,6 @@ const AddUserForm = ({ onClose }) => {
                 <input
                   {...register("phone", {
                     required: userStrings.addUser.validation.phoneRequired,
-                    minLength: {
-                      value: 7,
-                      message: userStrings.addUser.validation.phoneMinLength,
-                    },
                     maxLength: {
                       value: 10,
                       message: userStrings.addUser.validation.phoneMaxLength,

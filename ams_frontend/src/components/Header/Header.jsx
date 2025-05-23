@@ -1,7 +1,7 @@
 import  { useContext, useState } from "react";
 import SliderContext from "../ContexApi";
 import { FaBars } from "react-icons/fa";
-import { TfiArrowCircleUp } from "react-icons/tfi";
+import {TfiArrowCircleDown, TfiArrowCircleUp} from "react-icons/tfi";
 import { BiLogOut } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -68,7 +68,7 @@ const Header = () => {
             isDropdownOpen ? "rotate-180" : "rotate-0"
           }`}
         >
-          <TfiArrowCircleUp />
+          <TfiArrowCircleDown />
         </button>
 
         <div

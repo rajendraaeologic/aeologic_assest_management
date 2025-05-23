@@ -11,7 +11,7 @@ import {
   toggleSelectDepartment,
   selectAllDepartments,
   deselectAllDepartments,
-  setSelectedDepartment,
+  setSelectedDepartment, resetDeptTableState,
 } from "../../Features/slices/departmentSlice";
 import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
@@ -30,6 +30,7 @@ import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoade
 import PaginationControls from "../../components/common/PaginationControls";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
+import {resetOrgTableState} from "../../Features/slices/organizationSlice.js";
 const UserDepartment = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -94,6 +95,16 @@ const UserDepartment = () => {
     setIsSearching(value.trim().length > 0);
     debouncedSearch(value);
   };
+
+  useEffect(() => {
+    dispatch(setSearchTerm(""));
+    setLocalSearchTerm("");
+    return () => {
+      dispatch(setSearchTerm(""));
+      setLocalSearchTerm("");
+      dispatch(resetDeptTableState());
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (

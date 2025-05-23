@@ -22,7 +22,7 @@ import {
   toggleSelectUser,
   selectAllUsers,
   deselectAllUsers,
-  setSelectedUser,
+  setSelectedUser, resetUserTableState,
 } from "../../Features/slices/userSlice";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import { CiSaveUp2 } from "react-icons/ci";
@@ -35,6 +35,7 @@ import { deleteUser, setSearchTerm } from "../../Features/slices/userSlice";
 import userStrings from "../../locales/userStrings";
 import DownloadTemplateButton from "./DownloadTemplateButton";
 import debounce from "lodash.debounce";
+import {resetBranchTableState} from "../../Features/slices/branchSlice.js";
 
 const UserRegistration = () => {
   const dispatch = useDispatch();
@@ -104,6 +105,17 @@ const UserRegistration = () => {
     setIsSearching(value.trim().length > 0);
     debouncedSearch(value);
   };
+
+  useEffect(() => {
+    dispatch(setSearchTerm(""));
+    setLocalSearchTerm("");
+    return () => {
+      dispatch(setSearchTerm(""));
+      setLocalSearchTerm("");
+      dispatch(resetUserTableState());
+
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (

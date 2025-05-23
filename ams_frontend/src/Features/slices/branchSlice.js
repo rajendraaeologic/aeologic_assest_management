@@ -99,6 +99,11 @@ const branchSlice = createSlice({
       state.rowsPerPage = action.payload;
       state.currentPage = 1;
     },
+    resetBranchTableState: (state) => {
+      state.currentPage = 1;
+      state.rowsPerPage = 5;
+      state.searchTerm = "";
+    },
     toggleSelectBranch: (state, action) => {
       const id = action.payload;
       if (state.selectedBranches.includes(id)) {
@@ -188,6 +193,7 @@ export const {
   setSelectedBranch,
   setCurrentPage,
   setRowsPerPage,
+  resetBranchTableState,
   toggleSelectBranch,
   selectAllBranches,
   deselectAllBranches,

@@ -97,7 +97,11 @@ const departmentSlice = createSlice({
       state.searchTerm = action.payload;
       state.currentPage = 1;
     },
-
+    resetDeptTableState: (state) => {
+      state.currentPage = 1;
+      state.rowsPerPage = 5;
+      state.searchTerm = "";
+    },
     setRowsPerPage: (state, action) => {
       state.rowsPerPage = action.payload;
       state.currentPage = 1;
@@ -192,6 +196,7 @@ export const {
   setSelectedDepartment,
   setCurrentPage,
   setRowsPerPage,
+  resetDeptTableState,
   toggleSelectDepartment,
   selectAllDepartments,
   deselectAllDepartments,

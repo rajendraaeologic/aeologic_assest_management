@@ -23,6 +23,7 @@ const AddBranch = ({ onClose }) => {
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [noOrgsFound, setNoOrgsFound] = useState(false);
 
   const { currentPage, rowsPerPage } = useSelector((state) => state.branchData);
 
@@ -62,10 +63,10 @@ const AddBranch = ({ onClose }) => {
           data: { organizations, pagination },
         },
       } = response;
+      setNoOrgsFound(organizations.length === 0 && search !== "");
       setOrganizations((prev) =>
           page === 1 ? organizations : [...prev, ...organizations]
       );
-
       setOrgPage(page);
       setHasMoreOrgs(page < pagination.totalPages);
     } catch (error) {
@@ -153,6 +154,7 @@ const AddBranch = ({ onClose }) => {
   const handleSearch = (e) => {
     const search = e.target.value;
     setSearchTerm(search);
+    setNoOrgsFound(false);
     fetchOrganizations(1, search);
   };
 
@@ -299,6 +301,11 @@ const AddBranch = ({ onClose }) => {
                       placeholder="Search organization..."
                       value={searchTerm}
                       onChange={handleSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -318,6 +325,11 @@ const AddBranch = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noOrgsFound && !orgLoading && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No organizations found
+                          </li>
                       )}
                     </ul>
                   </div>

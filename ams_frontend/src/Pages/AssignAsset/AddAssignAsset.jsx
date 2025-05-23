@@ -574,6 +574,11 @@ const AddAssignAsset = ({ onClose }) => {
                       }
                       value={searchTerm}
                       onChange={handleOrgSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -593,7 +598,7 @@ const AddAssignAsset = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           {
                             assignAssetStrings.addAssignAsset.select
-                              .loadingBranches
+                              .loadingOrganizations
                           }
                         </li>
                       )}
@@ -636,6 +641,11 @@ const AddAssignAsset = ({ onClose }) => {
                       placeholder="Search branch..."
                       value={branchSearchTerm}
                       onChange={handleBranchSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -652,9 +662,12 @@ const AddAssignAsset = ({ onClose }) => {
                         </li>
                       ))}
                       {loadingBranches && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            {
+                              assignAssetStrings.addAssignAsset.select
+                                  .loadingBranches
+                            }
+                          </li>
                       )}
                       {noBranchesFound && !loadingBranches && (
                           <li className="px-4 py-2 text-sm text-gray-500">
@@ -698,6 +711,11 @@ const AddAssignAsset = ({ onClose }) => {
                       placeholder="Search department..."
                       value={deptSearchTerm}
                       onChange={handleDeptSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -714,9 +732,12 @@ const AddAssignAsset = ({ onClose }) => {
                         </li>
                       ))}
                       {loadingDepartments && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            {
+                              assignAssetStrings.addAssignAsset.select
+                                  .loadingDepartments
+                            }
+                          </li>
                       )}
                       {noDeptsFound && !loadingDepartments && (
                           <li className="px-4 py-2 text-sm text-gray-500">
@@ -762,6 +783,11 @@ const AddAssignAsset = ({ onClose }) => {
                       placeholder="Search asset..."
                       value={assetSearchTerm}
                       onChange={handleAssetSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
 
@@ -794,13 +820,14 @@ const AddAssignAsset = ({ onClose }) => {
                           </li>
                         );
                       })}
-
                       {loadingAssets && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            {
+                              assignAssetStrings.addAssignAsset.select
+                                  .loadingAssets
+                            }
+                          </li>
                       )}
-
                       {assets.length === 0 && !loadingAssets && (
                         <li className="px-4 py-2 text-sm text-gray-500">
                           No available assets found
@@ -839,6 +866,11 @@ const AddAssignAsset = ({ onClose }) => {
                       placeholder="Search user..."
                       value={userSearchTerm}
                       onChange={handleUserSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -855,9 +887,12 @@ const AddAssignAsset = ({ onClose }) => {
                         </li>
                       ))}
                       {loadingUsers && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            {
+                              assignAssetStrings.addAssignAsset.select
+                                  .loadingUsers
+                            }
+                          </li>
                       )}
                       {noUsersFound && !loadingUsers && (
                           <li className="px-4 py-2 text-sm text-gray-500">

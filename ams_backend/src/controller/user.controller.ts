@@ -531,11 +531,13 @@ console.log(result)
       message: "Users not found",
       data: {
         users: [],
-        totalData: 0,
-        page,
-        limit,
-        totalPages: 0,
-        mode: isSearchMode ? "search" : "pagination",
+        pagination:{
+          totalData: 0,
+          page,
+          limit,
+          totalPages: 0,
+          mode: isSearchMode ? "search" : "pagination",
+        }
       },
     });
     return;

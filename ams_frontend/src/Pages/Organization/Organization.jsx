@@ -11,7 +11,7 @@ import {
   toggleSelectOrganization,
   selectAllOrganizations,
   deselectAllOrganizations,
-  setSelectedOrganization,
+  setSelectedOrganization, resetOrgTableState,
 } from "../../Features/slices/organizationSlice";
 import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
@@ -31,6 +31,7 @@ import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoade
 import PaginationControls from "../../components/common/PaginationControls";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
+import {resetBranchTableState} from "../../Features/slices/branchSlice.js";
 
 const Organization = () => {
   const dispatch = useDispatch();
@@ -74,6 +75,15 @@ const Organization = () => {
     }, 500),
     [dispatch]
   );
+  useEffect(() => {
+    dispatch(setSearchTerm(""));
+    setLocalSearchTerm("");
+    return () => {
+      dispatch(setSearchTerm(""));
+      setLocalSearchTerm("");
+      dispatch(resetOrgTableState());
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     return () => {

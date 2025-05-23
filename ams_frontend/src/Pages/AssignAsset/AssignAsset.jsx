@@ -10,7 +10,7 @@ import {
   toggleSelectAssignAsset,
   selectAllAssignAssets,
   deselectAllAssignAssets,
-  setSelectedAssignAsset,
+  setSelectedAssignAsset, resetAssignAssetTableState,
 } from "../../Features/slices/assignAssetSlice";
 import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
@@ -30,6 +30,7 @@ import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoade
 import PaginationControls from "../../components/common/PaginationControls";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
+import {resetDeptTableState} from "../../Features/slices/departmentSlice.js";
 const AssignAsset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -98,6 +99,17 @@ const AssignAsset = () => {
     setIsSearching(value.trim().length > 0);
     debouncedSearch(value);
   };
+
+  useEffect(() => {
+    dispatch(setSearchTerm(""));
+    setLocalSearchTerm("");
+    return () => {
+      dispatch(setSearchTerm(""));
+      setLocalSearchTerm("");
+      dispatch(resetAssignAssetTableState());
+
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (

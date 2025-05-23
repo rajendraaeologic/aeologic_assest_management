@@ -98,8 +98,8 @@ const Organization = () => {
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
-    setIsSearching(true);
     setLocalSearchTerm(value);
+    setIsSearching(value.trim().length > 0);
     debouncedSearch(value);
   };
 

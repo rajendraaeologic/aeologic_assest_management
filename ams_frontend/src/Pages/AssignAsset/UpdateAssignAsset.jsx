@@ -665,6 +665,11 @@ const UpdateAssignAsset = ({ onClose }) => {
                       placeholder="Search organization..."
                       value={searchTerm}
                       onChange={handleOrgSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -681,9 +686,12 @@ const UpdateAssignAsset = ({ onClose }) => {
                         </li>
                       ))}
                       {orgLoading && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            {
+                              assignAssetStrings.addAssignAsset.select
+                                  .loadingOrganizations
+                            }
+                          </li>
                       )}
                       {noOrgsFound && !orgLoading && (
                           <li className="px-4 py-2 text-sm text-gray-500">
@@ -722,6 +730,11 @@ const UpdateAssignAsset = ({ onClose }) => {
                       placeholder="Search branch..."
                       value={branchSearchTerm}
                       onChange={handleBranchSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -738,9 +751,12 @@ const UpdateAssignAsset = ({ onClose }) => {
                         </li>
                       ))}
                       {loadingBranches && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            {
+                              assignAssetStrings.addAssignAsset.select
+                                  .loadingBranches
+                            }
+                          </li>
                       )}
                       {noBranchesFound && !loadingBranches && (
                           <li className="px-4 py-2 text-sm text-gray-500">
@@ -781,6 +797,11 @@ const UpdateAssignAsset = ({ onClose }) => {
                       placeholder="Search department..."
                       value={deptSearchTerm}
                       onChange={handleDeptSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -797,9 +818,12 @@ const UpdateAssignAsset = ({ onClose }) => {
                         </li>
                       ))}
                       {loadingDepartments && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            {
+                              assignAssetStrings.addAssignAsset.select
+                                  .loadingDepartments
+                            }
+                          </li>
                       )}
                       {noDeptsFound && !loadingDepartments && (
                           <li className="px-4 py-2 text-sm text-gray-500">
@@ -839,6 +863,11 @@ const UpdateAssignAsset = ({ onClose }) => {
                       placeholder="Search asset..."
                       value={assetSearchTerm}
                       onChange={handleAssetSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
 
@@ -876,11 +905,13 @@ const UpdateAssignAsset = ({ onClose }) => {
                           </li>
                         );
                       })}
-
                       {loadingAssets && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            {
+                              assignAssetStrings.addAssignAsset.select
+                                  .loadingAssets
+                            }
+                          </li>
                       )}
                       {assets.length === 0 && !loadingAssets && (
                         <li className="px-4 py-2 text-sm text-gray-500">
@@ -926,6 +957,11 @@ const UpdateAssignAsset = ({ onClose }) => {
                       placeholder="Search user..."
                       value={userSearchTerm}
                       onChange={handleUserSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -942,9 +978,12 @@ const UpdateAssignAsset = ({ onClose }) => {
                         </li>
                       ))}
                       {loadingUsers && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            {
+                              assignAssetStrings.addAssignAsset.select
+                                  .loadingUsers
+                            }
+                          </li>
                       )}
                       {noUsersFound && !loadingUsers && (
                           <li className="px-4 py-2 text-sm text-gray-500">

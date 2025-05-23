@@ -93,7 +93,11 @@ const assetSlice = createSlice({
       state.searchTerm = action.payload;
       state.currentPage = 1;
     },
-
+    resetAssetTableState: (state) => {
+      state.currentPage = 1;
+      state.rowsPerPage = 5;
+      state.searchTerm = "";
+    },
     setRowsPerPage: (state, action) => {
       state.rowsPerPage = action.payload;
       state.currentPage = 1;
@@ -186,6 +190,7 @@ export const {
   setSelectedAsset,
   setCurrentPage,
   setRowsPerPage,
+  resetAssetTableState,
   toggleSelectAsset,
   selectAllAssets,
   deselectAllAssets,

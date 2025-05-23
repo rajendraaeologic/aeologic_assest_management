@@ -526,6 +526,11 @@ const AddUserForm = ({ onClose }) => {
                       placeholder="Search organization..."
                       value={searchTerm}
                       onChange={handleOrgSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -583,6 +588,11 @@ const AddUserForm = ({ onClose }) => {
                       placeholder="Search branch..."
                       value={branchSearchTerm}
                       onChange={handleBranchSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -645,6 +655,11 @@ const AddUserForm = ({ onClose }) => {
                       placeholder="Search department..."
                       value={deptSearchTerm}
                       onChange={handleDeptSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul

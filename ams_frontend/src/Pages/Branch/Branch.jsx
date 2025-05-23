@@ -9,7 +9,7 @@ import {
   toggleSelectBranch,
   selectAllBranches,
   deselectAllBranches,
-  setSelectedBranch,
+  setSelectedBranch, resetBranchTableState,
 } from "../../Features/slices/branchSlice";
 import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
@@ -95,6 +95,16 @@ const Branch = () => {
     setIsSearching(value.trim().length > 0);
     debouncedSearch(value);
   };
+
+  useEffect(() => {
+    dispatch(setSearchTerm(""));
+    setLocalSearchTerm("");
+    return () => {
+      dispatch(setSearchTerm(""));
+      setLocalSearchTerm("");
+      dispatch(resetBranchTableState());
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     if (

@@ -84,8 +84,11 @@ const assignAssetStrings = {
       branchDefault: "Please select a branch",
       departmentDefault: "Please select a department",
       assetDefault: "Please select an asset",
+      loadingOrganizations: "Loading organizations...",
       loadingBranches: "Loading branches...",
       loadingDepartments: "Loading departments...",
+      loadingAssets: "Loading assets...",
+      loadingUsers: "Loading users...",
     },
     validation: {
       organizationRequired: "Organization selection is required",

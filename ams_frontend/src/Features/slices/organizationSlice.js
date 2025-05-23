@@ -103,6 +103,12 @@ const organizationSlice = createSlice({
       state.currentPage = 1;
     },
 
+    resetOrgTableState: (state) => {
+      state.currentPage = 1;
+      state.rowsPerPage = 5;
+      state.searchTerm = "";
+    },
+
     setRowsPerPage: (state, action) => {
       state.rowsPerPage = action.payload;
       state.currentPage = 1;
@@ -196,6 +202,7 @@ export const {
   setSelectedOrganization,
   setCurrentPage,
   setRowsPerPage,
+  resetOrgTableState,
   toggleSelectOrganization,
   selectAllOrganizations,
   deselectAllOrganizations,

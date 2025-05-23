@@ -31,6 +31,8 @@ const AddDepartment = ({ onClose }) => {
   const [showOrgDropdown, setShowOrgDropdown] = useState(false);
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [noOrgsFound, setNoOrgsFound] = useState(false);
+  const [noBranchesFound, setNoBranchesFound] = useState(false);
 
   const { currentPage, rowsPerPage } = useSelector(
     (state) => state.departmentData
@@ -73,6 +75,7 @@ const AddDepartment = ({ onClose }) => {
           data: { organizations, pagination },
         },
       } = response;
+      setNoOrgsFound(organizations.length === 0 && search !== "");
       setOrganizations((prev) =>
           page === 1 ? organizations : [...prev, ...organizations]
       );
@@ -101,6 +104,7 @@ const AddDepartment = ({ onClose }) => {
           data: { branches,pagination },
         },
       } = response;
+      setNoBranchesFound(branches.length === 0 && search !== "");
       setBranches((prev) =>
           page === 1 ? branches : [...prev, ...branches]
       );
@@ -155,6 +159,7 @@ const AddDepartment = ({ onClose }) => {
   const handleOrgSearch = (e) => {
     const search = e.target.value;
     setSearchTerm(search);
+    setNoOrgsFound(false);
     fetchOrganizations(1, search);
   };
 
@@ -186,6 +191,7 @@ const AddDepartment = ({ onClose }) => {
   const handleBranchSearch = (e) => {
     const search = e.target.value;
     setBranchSearchTerm(search);
+    setNoBranchesFound(false);
     fetchBranches(1, search);
   };
 
@@ -353,6 +359,11 @@ const AddDepartment = ({ onClose }) => {
                       placeholder="Search organization..."
                       value={searchTerm}
                       onChange={handleOrgSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -372,6 +383,11 @@ const AddDepartment = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noOrgsFound && !orgLoading && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No organizations found
+                          </li>
                       )}
                     </ul>
                   </div>
@@ -403,6 +419,11 @@ const AddDepartment = ({ onClose }) => {
                       placeholder="Search branch..."
                       value={branchSearchTerm}
                       onChange={handleBranchSearch}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                        }
+                      }}
                       className="p-2 w-full border-b outline-none"
                     />
                     <ul
@@ -422,6 +443,11 @@ const AddDepartment = ({ onClose }) => {
                         <li className="px-4 py-2 text-sm text-gray-500">
                           Loading...
                         </li>
+                      )}
+                      {noBranchesFound && !loadingBranches && (
+                          <li className="px-4 py-2 text-sm text-gray-500">
+                            No branches found
+                          </li>
                       )}
                     </ul>
                   </div>

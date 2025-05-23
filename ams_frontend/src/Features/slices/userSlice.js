@@ -105,7 +105,11 @@ const userSlice = createSlice({
       state.searchTerm = action.payload;
       state.currentPage = 1;
     },
-
+    resetUserTableState: (state) => {
+      state.currentPage = 1;
+      state.rowsPerPage = 5;
+      state.searchTerm = "";
+    },
     setRowsPerPage: (state, action) => {
       state.rowsPerPage = action.payload;
       state.currentPage = 1;
@@ -216,6 +220,7 @@ export const {
   setSelectedUser,
   setCurrentPage,
   setRowsPerPage,
+  resetUserTableState,
   toggleSelectUser,
   selectAllUsers,
   deselectAllUsers,

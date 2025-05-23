@@ -20,6 +20,7 @@ import {
 } from "react-icons/fi";
 import { CiSaveUp2 } from "react-icons/ci";
 import { MdExpandMore, MdExpandLess } from "react-icons/md";
+import skeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader.jsx";
 
 const statusConfig = {
   ACTIVE: {
@@ -374,281 +375,241 @@ const AssetHistory = () => {
     }
   };
 
-  if (loading)
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-100 px-6 pt-24">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center"
-        >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-            className="rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"
-          />
-          <p className="text-gray-600">{strings.loading}</p>
-        </motion.div>
-      </div>
-    );
-
-  if (error || histories.length === 0)
-    return (
+  return (
       <div
-        className={`w-full min-h-screen bg-slate-100 px-2 ${
-          isSidebarOpen
-            ? "overflow-hidden"
-            : "overflow-y-auto overflow-x-hidden"
-        }`}
+          className={`w-full min-h-screen bg-slate-100 px-2 ${
+              isSidebarOpen ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"
+          }`}
       >
         <div
-          className={`mx-auto min-h-screen ${
-            isSidebarOpen
-              ? "pl-0 md:pl-[250px] lg:pl-[250px]"
-              : "pl-0 md:pl-[90px] lg:pl-[90px]"
-          }`}
+            className={`mx-auto min-h-screen ${
+                isSidebarOpen
+                    ? "pl-0 md:pl-[250px] lg:pl-[250px]"
+                    : "pl-0 md:pl-[90px] lg:pl-[90px]"
+            }`}
         >
           <div className="pt-24">
             <div className="flex justify-between mx-5 mt-2">
-              <h3 className="text-xl font-semibold text-[#6c757D]">
+              <motion.h3
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="text-xl font-semibold text-[#6c757D] flex items-center"
+              >
+                <FiClock className="mr-2" />
                 {strings.title}
-              </h3>
-              <div className="flex gap-3 md:mr-8">
-                <button className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg hover:bg-[#2fa8ab] transition-colors">
-                  <CiSaveUp2 className="h-6 w-6" />
-                </button>
-              </div>
+              </motion.h3>
             </div>
             <div className="mx-5 flex gap-2 mb-4 items-center">
               <button
-                onClick={handleNavigate}
-                className="text-[#6c757D] hover:text-blue-600 transition-colors flex items-center"
+                  onClick={handleNavigate}
+                  className="text-[#6c757D] hover:text-blue-600 transition-colors flex items-center"
               >
                 {strings.breadcrumb.dashboard}
               </button>
               <FiChevronRight className="text-gray-400" />
-              <p className="text-[#6c757D]">
-                {strings.breadcrumb.assetHistory}
-              </p>
+              <p className="text-[#6c757D]">{strings.breadcrumb.assetHistory}</p>
             </div>
           </div>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-center min-h-[50vh]"
-          >
-            <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-md mx-auto">
-              <div className="text-gray-400 mb-4">
-                <motion.div
-                  animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                >
-                  <FiAlertCircle className="h-16 w-16 mx-auto" />
-                </motion.div>
-              </div>
-              <h3 className="text-lg font-medium text-gray-800 mb-2">
-                {error || strings.noAssetsFound}
-              </h3>
-              <p className="text-gray-600">
-                {error === strings.noAssetsFound
-                  ? "There are no assets available to show history for."
-                  : "Please check back later or contact support if you believe this is an error."}
-              </p>
-              <button
-                onClick={handleNavigate}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Return to Dashboard
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-    );
-
-  return (
-    <div
-      className={`w-full min-h-screen bg-slate-100 px-2 ${
-        isSidebarOpen ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"
-      }`}
-    >
-      <div
-        className={`mx-auto min-h-screen ${
-          isSidebarOpen
-            ? "pl-0 md:pl-[250px] lg:pl-[250px]"
-            : "pl-0 md:pl-[90px] lg:pl-[90px]"
-        }`}
-      >
-        <div className="pt-24">
-          <div className="flex justify-between mx-5 mt-2">
-            <motion.h3
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="text-xl font-semibold text-[#6c757D] flex items-center"
-            >
-              <FiClock className="mr-2" />
-              {strings.title}
-            </motion.h3>
-          </div>
-          <div className="mx-5 flex gap-2 mb-4 items-center">
-            <button
-              onClick={handleNavigate}
-              className="text-[#6c757D] hover:text-blue-600 transition-colors flex items-center"
-            >
-              {strings.breadcrumb.dashboard}
-            </button>
-            <FiChevronRight className="text-gray-400" />
-            <p className="text-[#6c757D]">{strings.breadcrumb.assetHistory}</p>
-          </div>
-        </div>
-        <div className="bg-slate-100 min-h-screen pb-4">
-          <Fade cascade damping={0.1} triggerOnce>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-6">
-              {histories.map(({ asset, histories }) => (
-                <motion.div
-                  key={asset.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  whileHover={{ y: -5 }}
-                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 self-start border border-gray-100"
-                >
-                  <div className="mb-4">
-                    <AssetNameWithTooltip asset={asset} />
-                    <div className="flex items-center mt-2 text-gray-500">
-                      <FiActivity className="mr-2" />
-                      <span>Current Status: </span>
-                      <span className="ml-1 capitalize font-medium">
-                        {asset.status.toUpperCase()}
-                      </span>
-                    </div>
-                    {histories.length > 0 && (
-                      <div className="flex items-center mt-2 text-gray-500">
-                        <FiClock className="mr-2" />
-                        <span>Last Action: </span>
-                        <span className="ml-1 font-medium">
-                          {getLatestAction(histories[0])}
-                        </span>
-                      </div>
-                    )}
-                    {asset.assignedUser && (
-                      <div className="flex items-center mt-2 text-gray-500">
-                        <FiUser className="mr-2" />
-                        <span>Assigned to: </span>
-                        <span className="ml-1 font-medium">
-                          {asset.assignedUser.userName ||
-                            asset.assignedUser.email}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <motion.button
-                    onClick={() => toggleDetails(asset.id)}
-                    whileHover={{ color: "#3B82F6" }}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
-                  >
-                    {expandedIds.includes(asset.id) ? (
-                      <>
-                        <MdExpandLess className="mr-1" />
-                        {strings.hideDetails}
-                      </>
-                    ) : (
-                      <>
-                        <MdExpandMore className="mr-1" />
-                        {strings.showDetails}
-                      </>
-                    )}
-                  </motion.button>
-                  <AnimatePresence>
-                    {expandedIds.includes(asset.id) && (
+          <div className="bg-slate-100 min-h-screen pb-4">
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-6">
+                  {[...Array(3)].map((_, index) => (
                       <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.3 }}
-                        className="overflow-hidden"
+                          key={index}
+                          className="bg-white rounded-xl shadow-md p-6 self-start border border-gray-100 animate-pulse"
                       >
-                        <div className="mt-4 pt-4 border-t border-gray-200">
-                          <div className="space-y-6">
-                            <div>
-                              <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
-                                <FiInfo className="mr-2" />
-                                {strings.assetDetails}
-                              </h3>
-                              {asset.company?.organizationName && (
-                                <DetailItem
-                                  label="Organization"
-                                  value={asset.company.organizationName}
-                                  icon={<FiLayers />}
-                                />
-                              )}
-                              {asset.branch?.branchName && (
-                                <DetailItem
-                                  label="Branch"
-                                  value={asset.branch.branchName}
-                                  icon={<FiSettings />}
-                                />
-                              )}
-                              {asset.department?.departmentName && (
-                                <DetailItem
-                                  label="Department"
-                                  value={asset.department.departmentName}
-                                  icon={<FiHardDrive />}
-                                />
-                              )}
+                        <div className="mb-4">
+                          <div className="h-6 bg-gray-200 rounded w-3/4 mb-2"></div>
+                          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                        </div>
+                        <div className="h-4 bg-gray-200 rounded w-1/3 mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded w-2/5"></div>
+                      </motion.div>
+                  ))}
+                </div>
+            ) : error || histories.length === 0 ? (
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="flex items-center justify-center min-h-[50vh]"
+                >
+                  <div className="text-center p-8 bg-white rounded-lg shadow-md max-w-md mx-auto">
+                    <div className="text-gray-400 mb-4">
+                      <motion.div
+                          animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.1, 1] }}
+                          transition={{ repeat: Infinity, duration: 2 }}
+                      >
+                        <FiAlertCircle className="h-16 w-16 mx-auto" />
+                      </motion.div>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-800 mb-2">
+                      {error || strings.noAssetsFound}
+                    </h3>
+                    <p className="text-gray-600">
+                      {error === strings.noAssetsFound
+                          ? "There are no assets available to show history for."
+                          : "Please check back later or contact support if you believe this is an error."}
+                    </p>
+                    <button
+                        onClick={handleNavigate}
+                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      Return to Dashboard
+                    </button>
+                  </div>
+                </motion.div>
+            ) : (
+                <Fade cascade damping={0.1} triggerOnce>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-6">
+                    {histories.map(({ asset, histories }) => (
+                        <motion.div
+                            key={asset.id}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            whileHover={{ y: -5 }}
+                            className="bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow p-6 self-start border border-gray-100"
+                        >
+                          <div className="mb-4">
+                            <AssetNameWithTooltip asset={asset} />
+                            <div className="flex items-center mt-2 text-gray-500">
+                              <FiActivity className="mr-2" />
+                              <span>Current Status: </span>
+                              <span className="ml-1 capitalize font-medium">
+                          {asset.status.toUpperCase()}
+                        </span>
                             </div>
-                            <div>
-                              <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
-                                <FiClock className="mr-2" />
-                                {strings.historyTimeline}
-                              </h3>
-                              <div className="border-l-2 border-gray-200 pl-4 ml-2">
-                                {histories.length > 0 ? (
-                                  <>
-                                    {histories.map((history, index) => (
-                                      <TimelineEvent
-                                        key={history.id}
-                                        event={history}
-                                        isLast={index === histories.length - 1}
-                                        index={index}
-                                      />
-                                    ))}
-                                    <div className="relative">
-                                      <div className="absolute left-[-26px] top-1 h-5 w-5 rounded-full bg-indigo-500 flex items-center justify-center">
-                                        <FiLayers className="h-3 w-3 text-white" />
+                            {histories.length > 0 && (
+                                <div className="flex items-center mt-2 text-gray-500">
+                                  <FiClock className="mr-2" />
+                                  <span>Last Action: </span>
+                                  <span className="ml-1 font-medium">
+                            {getLatestAction(histories[0])}
+                          </span>
+                                </div>
+                            )}
+                            {asset.assignedUser && (
+                                <div className="flex items-center mt-2 text-gray-500">
+                                  <FiUser className="mr-2" />
+                                  <span>Assigned to: </span>
+                                  <span className="ml-1 font-medium">
+                            {asset.assignedUser.userName ||
+                                asset.assignedUser.email}
+                          </span>
+                                </div>
+                            )}
+                          </div>
+                          <motion.button
+                              onClick={() => toggleDetails(asset.id)}
+                              whileHover={{ color: "#3B82F6" }}
+                              className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center"
+                          >
+                            {expandedIds.includes(asset.id) ? (
+                                <>
+                                  <MdExpandLess className="mr-1" />
+                                  {strings.hideDetails}
+                                </>
+                            ) : (
+                                <>
+                                  <MdExpandMore className="mr-1" />
+                                  {strings.showDetails}
+                                </>
+                            )}
+                          </motion.button>
+                          <AnimatePresence>
+                            {expandedIds.includes(asset.id) && (
+                                <motion.div
+                                    initial={{ opacity: 0, height: 0 }}
+                                    animate={{ opacity: 1, height: "auto" }}
+                                    exit={{ opacity: 0, height: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                    className="overflow-hidden"
+                                >
+                                  <div className="mt-4 pt-4 border-t border-gray-200">
+                                    <div className="space-y-6">
+                                      <div>
+                                        <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                                          <FiInfo className="mr-2" />
+                                          {strings.assetDetails}
+                                        </h3>
+                                        {asset.company?.organizationName && (
+                                            <DetailItem
+                                                label="Organization"
+                                                value={asset.company.organizationName}
+                                                icon={<FiLayers />}
+                                            />
+                                        )}
+                                        {asset.branch?.branchName && (
+                                            <DetailItem
+                                                label="Branch"
+                                                value={asset.branch.branchName}
+                                                icon={<FiSettings />}
+                                            />
+                                        )}
+                                        {asset.department?.departmentName && (
+                                            <DetailItem
+                                                label="Department"
+                                                value={asset.department.departmentName}
+                                                icon={<FiHardDrive />}
+                                            />
+                                        )}
                                       </div>
-                                      <div className="pl-6">
-                                        <p className="text-xs text-gray-500 flex items-center">
-                                          <FiCalendar className="mr-1" />
-                                          {new Date(
-                                            asset.createdAt
-                                          ).toLocaleString()}
-                                        </p>
-                                        <p className="font-medium flex items-center">
-                                          <FiLayers className="mr-2" />
-                                          ASSET CREATED
-                                        </p>
+                                      <div>
+                                        <h3 className="font-semibold text-gray-800 mb-3 flex items-center">
+                                          <FiClock className="mr-2" />
+                                          {strings.historyTimeline}
+                                        </h3>
+                                        <div className="border-l-2 border-gray-200 pl-4 ml-2">
+                                          {histories.length > 0 ? (
+                                              <>
+                                                {histories.map((history, index) => (
+                                                    <TimelineEvent
+                                                        key={history.id}
+                                                        event={history}
+                                                        isLast={
+                                                            index === histories.length - 1
+                                                        }
+                                                        index={index}
+                                                    />
+                                                ))}
+                                                <div className="relative">
+                                                  <div className="absolute left-[-26px] top-1 h-5 w-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                                                    <FiLayers className="h-3 w-3 text-white" />
+                                                  </div>
+                                                  <div className="pl-6">
+                                                    <p className="text-xs text-gray-500 flex items-center">
+                                                      <FiCalendar className="mr-1" />
+                                                      {new Date(
+                                                          asset.createdAt
+                                                      ).toLocaleString()}
+                                                    </p>
+                                                    <p className="font-medium flex items-center">
+                                                      <FiLayers className="mr-2" />
+                                                      ASSET CREATED
+                                                    </p>
+                                                  </div>
+                                                </div>
+                                              </>
+                                          ) : (
+                                              <p className="text-gray-500 text-sm italic">
+                                                No history records available for this
+                                                asset
+                                              </p>
+                                          )}
+                                        </div>
                                       </div>
                                     </div>
-                                  </>
-                                ) : (
-                                  <p className="text-gray-500 text-sm italic">
-                                    No history records available for this asset
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))}
-            </div>
-          </Fade>
+                                  </div>
+                                </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
+                    ))}
+                  </div>
+                </Fade>
+            )}
+          </div>
         </div>
       </div>
-    </div>
   );
 };
 

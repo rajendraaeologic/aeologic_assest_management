@@ -505,6 +505,10 @@ const UpdateUserForm = ({ onClose }) => {
                   } outline-none rounded-md`}
                   {...register("phone", {
                     required: userStrings.updateUser.validation.phoneRequired,
+                    maxLength: {
+                      value: 10,
+                      message: userStrings.updateUser.validation.phoneMaxLength,
+                    },
                     pattern: {
                       value: /^[0-9]{10}$/,
                       message: userStrings.updateUser.validation.phoneInvalid,

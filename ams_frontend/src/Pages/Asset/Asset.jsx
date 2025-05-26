@@ -27,6 +27,7 @@ import PaginationControls from "../../components/common/PaginationControls";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 import {resetDeptTableState} from "../../Features/slices/departmentSlice.js";
+import {toSentenceCase} from "../../utils/string.js";
 const Asset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -366,31 +367,34 @@ const Asset = () => {
                   </tr>
                 ) : (
                   assets.map((asset, index) => (
-                    <tr
-                      key={asset.id || index}
-                      className={`${
-                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-gray-200 divide-y divide-gray-300`}
-                    >
-                      {/* Asset Columns */}
-                      {[
-                        asset.assetName,
-                        asset.uniqueId,
-                        asset.brand,
-                        asset.model,
-                        asset.serialNumber,
-                        asset.status,
-                        asset.company?.organizationName,
-                        asset.branch?.branchName,
-                        asset.department?.departmentName,
-                      ].map((field, i) => (
-                        <td
-                          key={i}
-                          className="px-2 py-2 border border-gray-300 break-words align-top"
-                        >
-                          {field || strings.notAvailable.emptyText}
+                      <tr
+                          key={asset.id || index}
+                          className={`${
+                              index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          } hover:bg-gray-200 divide-y divide-gray-300`}
+                      >
+                        <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                          {toSentenceCase(asset.assetName) || strings.notAvailable.emptyText}
                         </td>
-                      ))}
+
+                        {/* Remaining Asset Fields */}
+                        {[
+                          asset.uniqueId,
+                          asset.brand,
+                          asset.model,
+                          asset.serialNumber,
+                          asset.status,
+                          asset.company?.organizationName,
+                          asset.branch?.branchName,
+                          asset.department?.departmentName,
+                        ].map((field, i) => (
+                            <td
+                                key={i}
+                                className="px-2 py-2 border border-gray-300 break-words align-top"
+                            >
+                              {field || strings.notAvailable.emptyText}
+                            </td>
+                        ))}
 
                       {/* Action Buttons */}
                       <td className="px-2 py-2 border border-gray-300 text-center">

@@ -31,6 +31,7 @@ import PaginationControls from "../../components/common/PaginationControls";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 import {resetOrgTableState} from "../../Features/slices/organizationSlice.js";
+import {toSentenceCase} from "../../utils/string.js";
 const UserDepartment = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -380,26 +381,25 @@ const UserDepartment = () => {
                   </tr>
                 ) : (
                   departments.map((department, index) => (
-                    <tr
-                      key={department.id || index}
-                      className={`${
-                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-gray-200 divide-y divide-gray-300`}
-                    >
-                      {/* Main Data Columns */}
-                      {[
-                        department.departmentName,
-                        department.branch?.branchName,
-                        department.branch?.branchLocation,
-                      ].map((field, i) => (
-                        <td
-                          key={i}
-                          className="px-2 py-2 border border-gray-300 break-words align-top"
-                        >
-                          {field ||
-                            departmentStrings.department.notAvailable.emptyText}
+                      <tr
+                          key={department.id || index}
+                          className={`${
+                              index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                          } hover:bg-gray-200 divide-y divide-gray-300`}
+                      >
+                        {/* Main Data Columns with toSentenceCase */}
+                        <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                          {toSentenceCase(department.departmentName) ||
+                              departmentStrings.department.notAvailable.emptyText}
                         </td>
-                      ))}
+                        <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                          {toSentenceCase(department.branch?.branchName) ||
+                              departmentStrings.department.notAvailable.emptyText}
+                        </td>
+                        <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                          {toSentenceCase(department.branch?.branchLocation) ||
+                              departmentStrings.department.notAvailable.emptyText}
+                        </td>
 
                       {/* Action Buttons */}
                       <td className="px-2 py-2 border border-gray-300 text-center">

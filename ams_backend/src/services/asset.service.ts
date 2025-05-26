@@ -30,19 +30,26 @@ const createAsset = async (
     throw new ApiError(httpStatus.BAD_REQUEST, "Department ID is required");
   }
 
-  const [companyExists, branchExists, departmentExists, assetExists] =
-    await Promise.all([
-      db.organization.findUnique({ where: { id: asset.companyId } }),
-      db.branch.findUnique({ where: { id: asset.branchId } }),
-      db.department.findUnique({ where: { id: asset.departmentId } }),
-      db.asset.findFirst({ where: { uniqueId: asset.uniqueId } }),
-      db.asset.findFirst({
-        where: {
-          uniqueId: asset.uniqueId,
-          deleted: false,
-        },
-      }),
-    ]);
+  const lowerCaseAssetName = asset.assetName.toLowerCase();
+
+  const [companyExists, branchExists, departmentExists, assetUniqueIdExists, assetNameExists] =
+      await Promise.all([
+        db.organization.findUnique({ where: { id: asset.companyId } }),
+        db.branch.findUnique({ where: { id: asset.branchId } }),
+        db.department.findUnique({ where: { id: asset.departmentId } }),
+        db.asset.findFirst({
+          where: {
+            uniqueId: asset.uniqueId,
+            deleted: false,
+          },
+        }),
+        db.asset.findFirst({
+          where: {
+            assetName: lowerCaseAssetName,
+            deleted: false,
+          },
+        }),
+      ]);
 
   if (!companyExists) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Company ID");
@@ -53,16 +60,22 @@ const createAsset = async (
   if (!departmentExists) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Department ID");
   }
-  if (assetExists) {
+  if (assetUniqueIdExists) {
     throw new ApiError(
       httpStatus.CONFLICT,
       `Asset with unique ID "${asset.uniqueId}" already exists`
     );
   }
+  if (assetNameExists) {
+    throw new ApiError(
+        httpStatus.CONFLICT,
+        `Asset name "${asset.assetName}" already exists`
+    );
+  }
 
   return db.asset.create({
     data: {
-      assetName: asset.assetName,
+      assetName: lowerCaseAssetName,
       uniqueId: asset.uniqueId,
       brand: asset.brand,
       model: asset.model,
@@ -200,6 +213,43 @@ const updateAssetById = async (
         throw new ApiError(
           httpStatus.CONFLICT,
           "Asset with this serialNumber already exists"
+        );
+      }
+    }
+  }
+
+  // Check and lowercase assetName
+  if (updateBody.assetName) {
+    let newAssetName: string | undefined;
+
+    if (typeof updateBody.assetName === "string") {
+      newAssetName = updateBody.assetName.toLowerCase();
+      updateBody.assetName = newAssetName;
+    } else if (
+        updateBody.assetName &&
+        typeof updateBody.assetName === "object" &&
+        "set" in updateBody.assetName
+    ) {
+      const nameValue = updateBody.assetName.set;
+      if (typeof nameValue === "string") {
+        newAssetName = nameValue.toLowerCase();
+        updateBody.assetName.set = newAssetName;
+      }
+    }
+
+    if (newAssetName && newAssetName !== asset.assetName.toLowerCase()) {
+      const existingAssetWithName = await db.asset.findFirst({
+        where: {
+          assetName: newAssetName,
+          id: { not: assetId },
+          deleted: false,
+        },
+      });
+
+      if (existingAssetWithName) {
+        throw new ApiError(
+            httpStatus.CONFLICT,
+            `Asset with name "${existingAssetWithName.assetName}" already exists`
         );
       }
     }

@@ -11,6 +11,8 @@ const createBranch = async (
     return null;
   }
 
+  const lowerCaseBranchName = branch.branchName.toLowerCase();
+
   const existingOrganization = await db.organization.findUnique({
     where: { id: branch.companyId, deleted: false },
   });
@@ -20,24 +22,25 @@ const createBranch = async (
   }
 
   const existingBranchByName = await db.branch.findFirst({
-    where: { branchName: branch.branchName, deleted: false },
+    where: { branchName: lowerCaseBranchName, deleted: false },
   });
 
   if (existingBranchByName) {
     throw new ApiError(
-      httpStatus.CONFLICT,
-      `Branch  name   "${branch.branchName}" already exists `
+        httpStatus.CONFLICT,
+        `Branch name "${existingBranchByName.branchName}" already exists`
     );
   }
 
   return await db.branch.create({
     data: {
-      branchName: branch.branchName,
+      branchName: lowerCaseBranchName,
       branchLocation: branch.branchLocation,
       companyId: branch.companyId,
     },
   });
 };
+
 
 //queryBranches
 export const queryBranches = async (

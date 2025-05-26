@@ -32,6 +32,7 @@ import PaginationControls from "../../components/common/PaginationControls";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 import {resetBranchTableState} from "../../Features/slices/branchSlice.js";
+import {toSentenceCase} from "../../utils/string.js";
 
 const Organization = () => {
   const dispatch = useDispatch();
@@ -387,7 +388,7 @@ const Organization = () => {
                     >
                       {/* Organization Name */}
                       <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                        {org.organizationName || notAvailable.emptyText}
+                        {toSentenceCase(org.organizationName) || notAvailable.emptyText}
                       </td>
 
                       {/* Branches Chip List */}
@@ -411,13 +412,14 @@ const Organization = () => {
                       {/* Departments Chip List */}
                       <td className="px-2 py-2 border border-gray-300 break-words align-top">
                         <ChipsList
-                          items={
-                            org.branches?.flatMap(
-                              (branch) => branch.departments || []
-                            ) || []
-                          }
-                          labelKey="departmentName"
-                          emptyText={notAvailable.emptyText}
+                            items={
+                                org.branches?.flatMap(
+                                    (branch) => branch.departments || []
+                                ) || []
+                            }
+                            labelKey="departmentName"
+                            renderLabel={(dept) => toSentenceCase(dept.departmentName)}
+                            emptyText={notAvailable.emptyText}
                         />
                       </td>
 

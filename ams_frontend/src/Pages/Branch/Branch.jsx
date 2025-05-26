@@ -30,6 +30,7 @@ import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoade
 import PaginationControls from "../../components/common/PaginationControls";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
+import {toSentenceCase} from "../../utils/string.js";
 const Branch = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -385,27 +386,26 @@ const Branch = () => {
                       } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
                       {/* Main Data Columns */}
-                      {[
-                        branch.branchName,
-                        branch.branchLocation,
-                        branch.company?.organizationName,
-                      ].map((field, i) => (
-                        <td
-                          key={i}
-                          className="px-2 py-2 border border-gray-300 break-words align-top"
-                        >
-                          {field || branchStrings.branch.notAvailable.emptyText}
-                        </td>
-                      ))}
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                        {toSentenceCase(branch.branchName) ||
+                            branchStrings.branch.notAvailable.emptyText}
+                      </td>
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                        {branch.branchLocation ||
+                            branchStrings.branch.notAvailable.emptyText}
+                      </td>
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                        {toSentenceCase(branch.company?.organizationName) ||
+                            branchStrings.branch.notAvailable.emptyText}
+                      </td>
 
                       {/* Departments Chip List */}
                       <td className="px-2 py-2 border border-gray-300 break-words align-top">
                         <ChipsList
-                          items={branch.departments || []}
-                          labelKey="departmentName"
-                          emptyText={
-                            branchStrings.branch.notAvailable.emptyText
-                          }
+                            items={branch.departments || []}
+                            labelKey="departmentName"
+                            renderLabel={(dept) => toSentenceCase(dept.departmentName)}
+                            emptyText={branchStrings.branch.notAvailable.emptyText}
                         />
                       </td>
 

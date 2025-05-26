@@ -18,9 +18,11 @@ const createDepartment = async (
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Branch ID");
   }
 
+  const lowerCaseName = department.departmentName.toLowerCase();
+
   const existingDepartment = await db.department.findFirst({
     where: {
-      departmentName: department.departmentName,
+      departmentName: lowerCaseName,
       branchId: department.branchId,
       deleted: false,
     },
@@ -28,14 +30,14 @@ const createDepartment = async (
 
   if (existingDepartment) {
     throw new ApiError(
-      httpStatus.CONFLICT,
-      `Department with name "${department.departmentName}" already exists in this branch.`
+        httpStatus.CONFLICT,
+        `Department with name "${existingDepartment.departmentName}" already exists in this branch.`
     );
   }
 
   return await db.department.create({
     data: {
-      departmentName: department.departmentName,
+      departmentName: lowerCaseName,
       branch: { connect: { id: department.branchId } },
     },
   });
@@ -99,21 +101,25 @@ const updateDepartmentById = async (
   }
   // Check if departmentName is being updated
   if (updateBody.departmentName) {
-    const currentName = department.departmentName;
+    const currentName = department.departmentName.toLowerCase();
     let newName: string | undefined;
 
     // Extract new name value from update body
     if (typeof updateBody.departmentName === "string") {
-      newName = updateBody.departmentName;
+      newName = updateBody.departmentName.toLowerCase();
+      updateBody.departmentName = newName;
     } else if (
       updateBody.departmentName &&
       typeof updateBody.departmentName === "object" &&
       "set" in updateBody.departmentName
     ) {
-      newName = updateBody.departmentName.set;
+      const nameValue = updateBody.departmentName.set;
+      if (typeof nameValue === "string") {
+        newName = nameValue.toLowerCase();
+        updateBody.departmentName.set = newName;
+      }
     }
 
-    // Check if name is actually changing
     if (newName && newName !== currentName) {
       const existingDepartmentWithName = await db.department.findFirst({
         where: {
@@ -125,8 +131,8 @@ const updateDepartmentById = async (
 
       if (existingDepartmentWithName) {
         throw new ApiError(
-          httpStatus.CONFLICT,
-          "Department name already exists"
+            httpStatus.CONFLICT,
+            `Department with name "${existingDepartmentWithName.departmentName}" already exists`
         );
       }
     }

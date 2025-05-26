@@ -12,8 +12,10 @@ const createOrganization = async (
     return null;
   }
 
+  const lowerCaseName = organization.organizationName.toLowerCase();
+
   const existingOrganization = await db.organization.findFirst({
-    where: { organizationName: organization.organizationName, deleted: false },
+    where: { organizationName: lowerCaseName, deleted: false },
   });
 
   if (existingOrganization) {
@@ -25,7 +27,7 @@ const createOrganization = async (
 
   return await db.organization.create({
     data: {
-      organizationName: organization.organizationName,
+      organizationName: lowerCaseName,
     },
   });
 };
@@ -88,18 +90,17 @@ const updateOrganizationById = async (
   }
 
   if (updateBody.organizationName) {
-    const currentName = organization.organizationName;
+    const currentName = organization.organizationName.toLowerCase();
     let newName: string | undefined;
 
-    // Extract new name value from update body
     if (typeof updateBody.organizationName === "string") {
-      newName = updateBody.organizationName;
+      newName = updateBody.organizationName.toLowerCase();
     } else if (
       updateBody.organizationName &&
       typeof updateBody.organizationName === "object" &&
       "set" in updateBody.organizationName
     ) {
-      newName = updateBody.organizationName.set;
+      newName = updateBody.organizationName.set.toLowerCase();
     }
 
     // Check if name is actually changing
@@ -118,6 +119,11 @@ const updateOrganizationById = async (
           "Organization name already exists"
         );
       }
+
+      updateBody.organizationName =
+          typeof updateBody.organizationName === "string"
+              ? newName
+              : { set: newName };
     }
   }
 

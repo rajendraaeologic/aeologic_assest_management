@@ -14,6 +14,7 @@ import BranchReducer from "../Features/slices/branchSlice";
 import UserReducer from "../Features/slices/userSlice";
 import AssignAssetReducer from "../Features/slices/assignAssetSlice";
 import { injectStore } from "../App/api/axiosInstance";
+import assetHistoryReducer from '../Features/slices/assetHistorySlice';
 
 const persistConfig = {
   key: "auth",
@@ -35,6 +36,7 @@ export const store = configureStore({
     organizationData: OrganizationReducer,
     branchData: BranchReducer,
     assignAssetData: AssignAssetReducer,
+    assetHistory: assetHistoryReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

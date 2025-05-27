@@ -1,10 +1,270 @@
 import httpStatus from "http-status";
-import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
 import pick from "@/lib/pick";
-import { applyDateFilter } from "@/utils/filters.utils";
 import assetHistoryService from "@/services/assetHistory.service";
-import { AssetHistoryKeys } from "@/utils/selects.utils";
+import { Prisma } from "@prisma/client";
+
+
+const getAssetHistories = catchAsync(async (req, res) => {
+  const rawFilters = pick(req.query, [
+    "assetId",
+    "userId",
+    "action",
+    "timestampFrom",
+    "timestampTo",
+    "searchTerm",
+  ]) as {
+    assetId?: string;
+    userId?: string;
+    action?: string;
+    timestampFrom?: string;
+    timestampTo?: string;
+    searchTerm?: string;
+  };
+
+  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+  const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+  let sortBy = (req.query.sortBy as string) || "timestamp";
+  let sortType = (req.query.sortType as "asc" | "desc") || "desc";
+
+  const filters: any = {};
+
+  if (rawFilters.timestampFrom || rawFilters.timestampTo) {
+    filters.timestamp = {};
+    if (rawFilters.timestampFrom) filters.timestamp.gte = new Date(rawFilters.timestampFrom);
+    if (rawFilters.timestampTo) filters.timestamp.lte = new Date(rawFilters.timestampTo);
+  }
+
+  if (rawFilters.assetId) {
+    filters.assetId = {
+      contains: rawFilters.assetId,
+      mode: "insensitive",
+    };
+    limit = 1;
+    sortBy = "timestamp";
+    sortType = "desc";
+  }
+
+  const searchTerm = (rawFilters.searchTerm as string)?.trim();
+
+  const isSearchMode = !!searchTerm;
+  if (isSearchMode) {
+    limit = 5;
+    sortBy = "timestamp";
+    sortType = "desc";
+  }
+
+  const searchConditions = searchTerm
+      ? {
+        asset: {
+          assetName: {
+            contains: searchTerm,
+            mode: 'insensitive',
+          },
+        },
+      }
+      : {};
+
+
+  const where = {
+    deleted: false,
+    ...filters,
+    ...searchConditions,
+  };
+
+
+  const options = {
+    limit,
+    page,
+    sortBy,
+    sortType,
+  };
+
+  const result = await assetHistoryService.queryAssetHistories(where, options);
+
+  if (!result || result.data.length === 0) {
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "No asset histories found",
+      data: {
+        histories: [],
+        pagination: {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          mode: isSearchMode ? "search" : "pagination",
+        }
+      }
+    });
+    return;
+  }
+  res.status(httpStatus.OK).json({
+    statusCode: httpStatus.OK,
+    message: "Asset histories fetched successfully",
+    data: {
+      histories: result.data,
+      pagination: {
+        total: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+        mode: isSearchMode ? "search" : "pagination",
+      }
+    }
+  });
+});
+
+const getAssetHistoryById = catchAsync(async (req, res) => {
+  const history = await assetHistoryService.getAssetHistoryById(
+      req.params.historyId
+  );
+
+  if (!history) {
+    res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
+      success: false,
+      message: "Asset history not found",
+      data: {
+        history: null,
+      },
+    });
+    return;
+  }
+
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
+    success: true,
+    message: "Asset history fetched successfully",
+    data: {
+      history,
+    },
+  });
+});
+
+const getAssetHistoryByAssetId = catchAsync(async (req, res) => {
+  const rawFilters = pick(req.query, [
+    "action",
+    "userId",
+    "timestampFrom",
+    "timestampTo",
+    "searchTerm",
+  ]) as {
+    action?: string;
+    userId?: string;
+    timestampFrom?: string;
+    timestampTo?: string;
+    searchTerm?: string;
+  };
+
+  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+  const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+  let sortBy = (req.query.sortBy as string) || "timestamp";
+  let sortType = (req.query.sortType as "asc" | "desc") || "desc";
+
+
+
+  const filters: Prisma.AssetHistoryWhereInput = {
+    assetId: req.params.assetId,
+  };
+
+  if (rawFilters.timestampFrom || rawFilters.timestampTo) {
+    filters.timestamp = {};
+    if (rawFilters.timestampFrom) filters.timestamp.gte = new Date(rawFilters.timestampFrom);
+    if (rawFilters.timestampTo) filters.timestamp.lte = new Date(rawFilters.timestampTo);
+  }
+
+  if (rawFilters.userId) {
+    filters.userId = rawFilters.userId;
+  }
+
+  if (rawFilters.action) {
+    filters.action = rawFilters.action;
+  }
+
+  const searchTerm = rawFilters.searchTerm?.trim();
+
+  const isSearchMode = !!searchTerm;
+  if (isSearchMode) {
+    limit = 5;
+    sortBy = "timestamp";
+    sortType = "desc";
+  }
+
+  const searchConditions: Prisma.AssetHistoryWhereInput = searchTerm
+      ? {
+        OR: [
+          {
+            user: {
+              name: {
+                contains: searchTerm,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            action: {
+              contains: searchTerm,
+              mode: "insensitive",
+            },
+          },
+        ].filter(Boolean) as Prisma.AssetHistoryWhereInput[],
+      }
+      : {};
+
+  const where: Prisma.AssetHistoryWhereInput = {
+    deleted: false,
+    ...filters,
+    ...searchConditions,
+  };
+
+  const options = {
+    limit,
+    page,
+    sortBy,
+    sortType,
+  };
+
+  const result = await assetHistoryService.getAssetHistoriesByAssetId(
+      req.params.assetId,
+      where,
+      options
+  );
+
+  if (!result || result.data.length === 0) {
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "No asset histories found for this asset",
+      data: {
+        histories: [],
+        pagination: {
+          total: 0,
+          page,
+          limit,
+          totalPages: 0,
+          mode: isSearchMode ? "search" : "pagination",
+        }
+      }
+    });
+    return;
+  }
+
+  res.status(httpStatus.OK).json({
+    statusCode: httpStatus.OK,
+    message: "Asset histories fetched successfully",
+    data: {
+      histories: result.data,
+      pagination: {
+        total: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+        mode: isSearchMode ? "search" : "pagination",
+      }
+    }
+  });
+});
+
 
 /**
  * @swagger
@@ -44,29 +304,6 @@ import { AssetHistoryKeys } from "@/utils/selects.utils";
  *                 limit:
  *                   type: integer
  */
-const getAssetHistories = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ["assetId", "userId", "action"]);
-  const options = pick(req.query, ["sortBy", "sortType", "limit", "page"]);
-
-  applyDateFilter(filter);
-
-  const result = await assetHistoryService.queryAssetHistories(filter, options);
-
-  res.status(httpStatus.OK).json({
-    success: true,
-    message: result.data.length
-      ? "Asset histories fetched successfully"
-      : "No asset histories found",
-    data: {
-      histories :result.data,
-      pagination:{
-        total: result.total,
-        page: options.page || 1,
-        limit: options.limit || 10,
-      }
-    }
-  });
-});
 
 /**
  * @swagger
@@ -93,33 +330,6 @@ const getAssetHistories = catchAsync(async (req, res) => {
  *       404:
  *         description: Asset history not found
  */
-const getAssetHistoryById = catchAsync(async (req, res) => {
-  const history = await assetHistoryService.getAssetHistoryById(
-    req.params.historyId
-  );
-
-  if (!history) {
-    res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
-      message: "Asset history not found",
-      data: {
-        history: null,
-      },
-    });
-    return;
-  }
-
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Asset history fetched successfully",
-    data: {
-      history,
-    },
-  });
-});
-
 
 /**
  * @swagger
@@ -148,31 +358,6 @@ const getAssetHistoryById = catchAsync(async (req, res) => {
  *                 total:
  *                   type: integer
  */
-const getAssetHistoryByAssetId = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ["action", "userId"]);
-  const options = pick(req.query, ["sortBy", "sortType", "limit", "page"]);
-
-  applyDateFilter(filter);
-
-  const result = await assetHistoryService.getAssetHistoriesByAssetId(
-    req.params.assetId,
-    filter,
-    options
-  );
-
-  res.status(httpStatus.OK).json({
-    success: true,
-    message: result.data.length
-      ? "Asset histories fetched successfully"
-      : "No histories found for this asset",
-    data: {
-      histories: result.data,
-      pagination: {
-        total: result.total,
-      }
-    }
-  });
-});
 
 export default {
   getAssetHistories,

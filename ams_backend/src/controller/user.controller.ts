@@ -459,6 +459,7 @@ const downloadUserExcelTemplate = catchAsync(async (req, res) => {
  *         description: No users found
  */
 export const getUsers = catchAsync(async (req, res) => {
+  const user = req.user as User;
   const rawFilters = pick(req.query, [
     "userName",
     "phone",
@@ -513,6 +514,7 @@ export const getUsers = catchAsync(async (req, res) => {
     ...filters,
     ...searchConditions,
     NOT: { userRole: "SUPERADMIN" },
+    companyId: user.companyId
   };
 
   const options = {

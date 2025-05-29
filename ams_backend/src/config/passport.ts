@@ -20,6 +20,7 @@ const jwtVerify: VerifyCallback = async (payload, done) => {
                 email: true,
                 userName: true,
                 userRole: true,
+                companyId: true,
             },
             where: { id: payload.sub }
         });

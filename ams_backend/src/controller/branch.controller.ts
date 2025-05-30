@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
-import { Branch } from "@prisma/client";
+import {Branch, User} from "@prisma/client";
 import branchService from "@/services/branch.service";
 import { applyDateFilter } from "@/utils/filters.utils";
 import pick from "@/lib/pick";
@@ -207,6 +207,7 @@ const createBranch = catchAsync(async (req, res) => {
  *         description: No branches found
  */
 export const getAllBranches = catchAsync(async (req, res) => {
+  const user = req.user as User;
   const rawFilters = pick(req.query, [
     "branchName",
     "createdAtFrom",
@@ -270,6 +271,7 @@ export const getAllBranches = catchAsync(async (req, res) => {
   const where = {
     ...filters,
     ...searchConditions,
+    companyId: user.companyId
   };
 
   const options = {

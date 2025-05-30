@@ -2,10 +2,12 @@ import httpStatus from "http-status";
 import catchAsync from "@/lib/catchAsync";
 import pick from "@/lib/pick";
 import assetHistoryService from "@/services/assetHistory.service";
-import { Prisma } from "@prisma/client";
+import { Prisma, User } from "@prisma/client";
+import db from "@/lib/db";
 
 
 const getAssetHistories = catchAsync(async (req, res) => {
+  const user = req.user as User;
   const rawFilters = pick(req.query, [
     "assetId",
     "userId",
@@ -27,7 +29,41 @@ const getAssetHistories = catchAsync(async (req, res) => {
   let sortBy = (req.query.sortBy as string) || "timestamp";
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  const filters: any = {};
+  const companyBranches = await db.branch.findMany({
+    where: { companyId: user.companyId },
+    select: { id: true }
+  });
+  const branchIds = companyBranches.map(branch => branch.id);
+
+  const companyDepartments = await db.department.findMany({
+    where: { branchId: { in: branchIds } },
+    select: { id: true }
+  });
+  const departmentIds = companyDepartments.map(dept => dept.id);
+
+  const companyAssets = await db.asset.findMany({
+    where: {
+      OR: [
+        { branchId: { in: branchIds } },
+        { departmentId: { in: departmentIds } }
+      ]
+    },
+    select: { id: true }
+  });
+  const assetIds = companyAssets.map(asset => asset.id);
+
+  const companyUsers = await db.user.findMany({
+    where: { companyId: user.companyId },
+    select: { id: true }
+  });
+  const userIds = companyUsers.map(user => user.id);
+
+  const filters: any = {
+    OR: [
+      { assetId: { in: assetIds } },
+      { userId: { in: userIds } }
+    ]
+  };
 
   if (rawFilters.timestampFrom || rawFilters.timestampTo) {
     filters.timestamp = {};
@@ -143,6 +179,7 @@ const getAssetHistoryById = catchAsync(async (req, res) => {
 });
 
 const getAssetHistoryByAssetId = catchAsync(async (req, res) => {
+  const user = req.user as User;
   const rawFilters = pick(req.query, [
     "action",
     "userId",
@@ -157,12 +194,26 @@ const getAssetHistoryByAssetId = catchAsync(async (req, res) => {
     searchTerm?: string;
   };
 
+  const asset = await db.asset.findFirst({
+    where: {
+      id: req.params.assetId,
+      OR: [
+        { branch: { companyId: user.companyId } },
+        { department: { branch: { companyId: user.companyId } } }
+      ]
+    }
+  });
+
   let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
   const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
   let sortBy = (req.query.sortBy as string) || "timestamp";
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-
+  const companyUsers = await db.user.findMany({
+    where: { companyId: user.companyId },
+    select: { id: true }
+  });
+  const userIds = companyUsers.map(user => user.id);
 
   const filters: Prisma.AssetHistoryWhereInput = {
     assetId: req.params.assetId,
@@ -174,7 +225,7 @@ const getAssetHistoryByAssetId = catchAsync(async (req, res) => {
     if (rawFilters.timestampTo) filters.timestamp.lte = new Date(rawFilters.timestampTo);
   }
 
-  if (rawFilters.userId) {
+  if (rawFilters.userId && userIds.includes(rawFilters.userId)) {
     filters.userId = rawFilters.userId;
   }
 

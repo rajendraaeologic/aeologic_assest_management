@@ -3,13 +3,14 @@ import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
 import pick from "@/lib/pick";
 import { applyDateFilter } from "@/utils/filters.utils";
-import { PrismaClient } from "@prisma/client";
+import {PrismaClient, User} from "@prisma/client";
 import {
   AssetKeys,
   AssetAssignmentKeys,
   AssetHistoryKeys,
 } from "../utils/selects.utils";
 import { assetService } from "@/services";
+import db from "@/lib/db";
 
 const prisma = new PrismaClient();
 
@@ -283,6 +284,7 @@ const createAsset = catchAsync(async (req, res) => {
  *         description: No assets found
  */
 export const getAllAssets = catchAsync(async (req, res) => {
+  const user = req.user as User;
   const rawFilters = pick(req.query, [
     "assetName",
     "status",
@@ -300,7 +302,24 @@ export const getAllAssets = catchAsync(async (req, res) => {
 
   applyDateFilter(rawFilters);
 
-  const filters: any = {};
+  const companyBranches = await db.branch.findMany({
+    where: { companyId: user.companyId },
+    select: { id: true }
+  });
+  const branchIds = companyBranches.map(branch => branch.id);
+
+  const companyDepartments = await db.department.findMany({
+    where: { branchId: { in: branchIds } },
+    select: { id: true }
+  });
+  const departmentIds = companyDepartments.map(dept => dept.id);
+
+  const filters: any = {
+    OR: [
+      { branchId: { in: branchIds } },
+      { departmentId: { in: departmentIds } }
+    ]
+  };
 
   if (rawFilters.from_date || rawFilters.to_date) {
     filters.createdAt = {};

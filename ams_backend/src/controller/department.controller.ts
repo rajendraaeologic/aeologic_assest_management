@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
 import departmentService from "@/services/department.service";
-import {Department, User} from "@prisma/client";
+import {Department, User, UserRole} from "@prisma/client";
 import pick from "@/lib/pick";
 import { applyDateFilter } from "@/utils/filters.utils";
 import db from "@/lib/db";
@@ -254,16 +254,19 @@ export const getAllDepartments = catchAsync(async (req, res) => {
       }
     : {};
 
-  const companyBranches = await db.branch.findMany({
-    where: { companyId: user.companyId },
-    select: { id: true }
-  });
-  const branchIds = companyBranches.map(branch => branch.id);
+  let branchIds: string[] = [];
+  if (user.userRole !== UserRole.SUPERADMIN) {
+    const companyBranches = await db.branch.findMany({
+      where: { companyId: user.companyId },
+      select: { id: true }
+    });
+    branchIds = companyBranches.map(branch => branch.id);
+  }
 
   const where = {
     ...filters,
     ...searchConditions,
-    branchId: { in: branchIds }
+    ...(user.userRole !== UserRole.SUPERADMIN ? { branchId: { in: branchIds } } : {})
   };
 
   const options = {

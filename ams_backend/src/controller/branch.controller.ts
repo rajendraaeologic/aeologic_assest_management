@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
-import {Branch, User} from "@prisma/client";
+import {Branch, User, UserRole} from "@prisma/client";
 import branchService from "@/services/branch.service";
 import { applyDateFilter } from "@/utils/filters.utils";
 import pick from "@/lib/pick";
@@ -271,7 +271,7 @@ export const getAllBranches = catchAsync(async (req, res) => {
   const where = {
     ...filters,
     ...searchConditions,
-    companyId: user.companyId
+    ...(user.userRole !== UserRole.SUPERADMIN ? { companyId: user.companyId } : {})
   };
 
   const options = {

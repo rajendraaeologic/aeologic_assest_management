@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import catchAsync from "@/lib/catchAsync";
 import pick from "@/lib/pick";
 import assetHistoryService from "@/services/assetHistory.service";
-import { Prisma, User } from "@prisma/client";
+import {Prisma, User, UserRole} from "@prisma/client";
 import db from "@/lib/db";
 
 
@@ -29,11 +29,16 @@ const getAssetHistories = catchAsync(async (req, res) => {
   let sortBy = (req.query.sortBy as string) || "timestamp";
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  const companyBranches = await db.branch.findMany({
-    where: { companyId: user.companyId },
-    select: { id: true }
-  });
-  const branchIds = companyBranches.map(branch => branch.id);
+  // Only get company-specific IDs if user is not SUPERADMIN
+  let assetIds: string[] = [];
+  let userIds: string[] = [];
+
+  if (user.userRole !== UserRole.SUPERADMIN) {
+    const companyBranches = await db.branch.findMany({
+      where: { companyId: user.companyId },
+      select: { id: true }
+    });
+    const branchIds = companyBranches.map(branch => branch.id);
 
   const companyDepartments = await db.department.findMany({
     where: { branchId: { in: branchIds } },
@@ -41,28 +46,31 @@ const getAssetHistories = catchAsync(async (req, res) => {
   });
   const departmentIds = companyDepartments.map(dept => dept.id);
 
-  const companyAssets = await db.asset.findMany({
-    where: {
-      OR: [
-        { branchId: { in: branchIds } },
-        { departmentId: { in: departmentIds } }
-      ]
-    },
-    select: { id: true }
-  });
-  const assetIds = companyAssets.map(asset => asset.id);
+    const companyAssets = await db.asset.findMany({
+      where: {
+        OR: [
+          { branchId: { in: branchIds } },
+          { departmentId: { in: departmentIds } }
+        ]
+      },
+      select: { id: true }
+    });
+    assetIds = companyAssets.map(asset => asset.id);
 
-  const companyUsers = await db.user.findMany({
-    where: { companyId: user.companyId },
-    select: { id: true }
-  });
-  const userIds = companyUsers.map(user => user.id);
+    const companyUsers = await db.user.findMany({
+      where: { companyId: user.companyId },
+      select: { id: true }
+    });
+    userIds = companyUsers.map(user => user.id);
+  }
 
   const filters: any = {
-    OR: [
-      { assetId: { in: assetIds } },
-      { userId: { in: userIds } }
-    ]
+    ...(user.userRole !== UserRole.SUPERADMIN ? {
+      OR: [
+        { assetId: { in: assetIds } },
+        { userId: { in: userIds } }
+      ]
+    } : {})
   };
 
   if (rawFilters.timestampFrom || rawFilters.timestampTo) {
@@ -101,13 +109,11 @@ const getAssetHistories = catchAsync(async (req, res) => {
       }
       : {};
 
-
   const where = {
     deleted: false,
     ...filters,
     ...searchConditions,
   };
-
 
   const options = {
     limit,
@@ -150,7 +156,6 @@ const getAssetHistories = catchAsync(async (req, res) => {
     }
   });
 });
-
 const getAssetHistoryById = catchAsync(async (req, res) => {
   const history = await assetHistoryService.getAssetHistoryById(
       req.params.historyId

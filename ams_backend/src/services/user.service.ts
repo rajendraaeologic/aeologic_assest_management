@@ -12,7 +12,8 @@ import { generateUserEmailUpdateNotification } from "@/utils/emailTemplate";
 import path from "path";
 
 const createUser = async (
-  user: User & { plainPassword?: string }
+    user: User & { plainPassword?: string },
+    requestingUser?: User
 ): Promise<Omit<User, "password"> | null> => {
   if (!user) return null;
 
@@ -26,18 +27,65 @@ const createUser = async (
 
   const { companyId, branchId, departmentId, plainPassword, ...rest } = user;
 
-  if (!companyId) {
+  if (!companyId && requestingUser?.userRole !== UserRole.SUPERADMIN) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Company ID is required");
   }
+
+  if (requestingUser) {
+    let allowedRoles: UserRole[] = [];
+
+    switch (requestingUser.userRole) {
+      case UserRole.ADMIN:
+        allowedRoles = [UserRole.USER, UserRole.MANAGER];
+        break;
+      case UserRole.MANAGER:
+        allowedRoles = [UserRole.USER];
+        break;
+      case UserRole.SUPERADMIN:
+        allowedRoles = [UserRole.USER, UserRole.MANAGER, UserRole.ADMIN];
+        break;
+      default:
+        throw new ApiError(
+            httpStatus.FORBIDDEN,
+            "You don't have permission to create users"
+        );
+    }
+
+    if (!allowedRoles.includes(rest.userRole)) {
+      throw new ApiError(
+          httpStatus.FORBIDDEN,
+          `You can only create users with these roles: ${allowedRoles.join(', ')}`
+      );
+    }
+
+    if (
+        (requestingUser.userRole === UserRole.ADMIN && rest.userRole === UserRole.ADMIN) ||
+        (requestingUser.userRole === UserRole.MANAGER && rest.userRole === UserRole.MANAGER)
+    ) {
+      throw new ApiError(
+          httpStatus.FORBIDDEN,
+          "You cannot create users with the same or higher privilege level"
+      );
+    }
+
+    if (requestingUser.userRole !== UserRole.SUPERADMIN && companyId !== requestingUser.companyId) {
+      throw new ApiError(
+          httpStatus.FORBIDDEN,
+          "You can only create users for your own company"
+      );
+    }
+  } else {
+    throw new ApiError(
+        httpStatus.FORBIDDEN,
+        "Authentication required to create users"
+    );
+  }
+
   const createdUser = await db.user.create({
     data: {
       ...rest,
-      branch: {
-        connect: { id: branchId },
-      },
-      department: {
-        connect: { id: departmentId },
-      },
+      ...(branchId ? { branch: { connect: { id: branchId } } } : {}),
+      ...(departmentId ? { department: { connect: { id: departmentId } } } : {}),
       company: {
         connect: { id: companyId },
       },

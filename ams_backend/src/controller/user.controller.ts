@@ -3,7 +3,7 @@ import pick from "@/lib/pick";
 import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
 import { userService } from "@/services";
-import { User } from "@prisma/client";
+import {User, UserRole} from "@prisma/client";
 import { encryptPassword } from "@/lib/encryption";
 import { applyDateFilter } from "@/utils/filters.utils";
 import xlsx from "xlsx";
@@ -179,9 +179,10 @@ import * as fs from "fs";
  *       "404":
  *         description: Not found
  */
-const createUser = catchAsync(async (req, res) => {
+export const createUser = catchAsync(async (req, res) => {
   try {
     const plainPassword = req.body.password || generateRandomPassword();
+    const requestingUser = req.user as User;
 
     const user = await userService.createUser({
       userName: req.body.userName,
@@ -194,7 +195,7 @@ const createUser = catchAsync(async (req, res) => {
       departmentId: req.body.departmentId,
       companyId: req.body.companyId,
       plainPassword,
-    } as User & { plainPassword: string });
+    } as User & { plainPassword: string }, requestingUser);
 
     res.status(httpStatus.CREATED).send({
       statusCode: httpStatus.CREATED,
@@ -482,9 +483,8 @@ export const getUsers = catchAsync(async (req, res) => {
 
   const filters: any = {};
 
-  // Existing filter logic
-  if (rawFilters.name) {
-    filters.name = { contains: rawFilters.name, mode: "insensitive" };
+  if (rawFilters.userName) {
+    filters.userName = { contains: rawFilters.userName, mode: "insensitive" };
   }
 
   // Add other existing filters similarly...
@@ -514,7 +514,7 @@ export const getUsers = catchAsync(async (req, res) => {
     ...filters,
     ...searchConditions,
     NOT: { userRole: "SUPERADMIN" },
-    companyId: user.companyId
+    ...(user.userRole !== UserRole.SUPERADMIN ? { companyId: user.companyId } : {}),
   };
 
   const options = {

@@ -4,7 +4,7 @@ import catchAsync from "@/lib/catchAsync";
 import pick from "@/lib/pick";
 import { applyDateFilter } from "@/utils/filters.utils";
 import assignAssetService from "@/services/assignasset.service";
-import {AssetStatus, PrismaClient, User} from "@prisma/client";
+import {AssetStatus, PrismaClient, User, UserRole} from "@prisma/client";
 import db from "@/lib/db";
 
 const prisma = new PrismaClient();
@@ -285,11 +285,15 @@ export const getAssetAssignments = catchAsync(async (req, res) => {
 
   applyDateFilter(rawFilters);
 
-  const companyBranches = await db.branch.findMany({
-    where: { companyId: user.companyId },
-    select: { id: true }
-  });
-  const branchIds = companyBranches.map(branch => branch.id);
+  let assetIds: string[] = [];
+  let userIds: string[] = [];
+
+  if (user.userRole !== UserRole.SUPERADMIN) {
+    const companyBranches = await db.branch.findMany({
+      where: { companyId: user.companyId },
+      select: { id: true }
+    });
+    const branchIds = companyBranches.map(branch => branch.id);
 
   const companyDepartments = await db.department.findMany({
     where: { branchId: { in: branchIds } },
@@ -297,28 +301,31 @@ export const getAssetAssignments = catchAsync(async (req, res) => {
   });
   const departmentIds = companyDepartments.map(dept => dept.id);
 
-  const companyAssets = await db.asset.findMany({
-    where: {
-      OR: [
-        { branchId: { in: branchIds } },
-        { departmentId: { in: departmentIds } }
-      ]
-    },
-    select: { id: true }
-  });
-  const assetIds = companyAssets.map(asset => asset.id);
+    const companyAssets = await db.asset.findMany({
+      where: {
+        OR: [
+          { branchId: { in: branchIds } },
+          { departmentId: { in: departmentIds } }
+        ]
+      },
+      select: { id: true }
+    });
+    assetIds = companyAssets.map(asset => asset.id);
 
-  const companyUsers = await db.user.findMany({
-    where: { companyId: user.companyId },
-    select: { id: true }
-  });
-  const userIds = companyUsers.map(user => user.id);
+    const companyUsers = await db.user.findMany({
+      where: { companyId: user.companyId },
+      select: { id: true }
+    });
+    userIds = companyUsers.map(user => user.id);
+  }
 
   const filters: any = {
-    OR: [
-      { assetId: { in: assetIds } },
-      { userId: { in: userIds } }
-    ]
+    ...(user.userRole !== UserRole.SUPERADMIN ? {
+      OR: [
+        { assetId: { in: assetIds } },
+        { userId: { in: userIds } }
+      ]
+    } : {})
   };
 
   if (rawFilters.from_date || rawFilters.to_date) {

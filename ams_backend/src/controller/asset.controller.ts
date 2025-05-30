@@ -3,7 +3,7 @@ import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
 import pick from "@/lib/pick";
 import { applyDateFilter } from "@/utils/filters.utils";
-import {PrismaClient, User} from "@prisma/client";
+import {PrismaClient, User, UserRole} from "@prisma/client";
 import {
   AssetKeys,
   AssetAssignmentKeys,
@@ -302,23 +302,30 @@ export const getAllAssets = catchAsync(async (req, res) => {
 
   applyDateFilter(rawFilters);
 
-  const companyBranches = await db.branch.findMany({
-    where: { companyId: user.companyId },
-    select: { id: true }
-  });
-  const branchIds = companyBranches.map(branch => branch.id);
+  let branchIds: string[] = [];
+  let departmentIds: string[] = [];
 
-  const companyDepartments = await db.department.findMany({
-    where: { branchId: { in: branchIds } },
-    select: { id: true }
-  });
-  const departmentIds = companyDepartments.map(dept => dept.id);
+  if (user.userRole !== UserRole.SUPERADMIN) {
+    const companyBranches = await db.branch.findMany({
+      where: { companyId: user.companyId },
+      select: { id: true }
+    });
+    branchIds = companyBranches.map(branch => branch.id);
+
+    const companyDepartments = await db.department.findMany({
+      where: { branchId: { in: branchIds } },
+      select: { id: true }
+    });
+    departmentIds = companyDepartments.map(dept => dept.id);
+  }
 
   const filters: any = {
-    OR: [
-      { branchId: { in: branchIds } },
-      { departmentId: { in: departmentIds } }
-    ]
+    ...(user.userRole !== UserRole.SUPERADMIN ? {
+      OR: [
+        { branchId: { in: branchIds } },
+        { departmentId: { in: departmentIds } }
+      ]
+    } : {})
   };
 
   if (rawFilters.from_date || rawFilters.to_date) {

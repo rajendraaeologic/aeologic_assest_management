@@ -18,6 +18,8 @@ import { MdHistory } from "react-icons/md";
 import { NavLink } from "react-router-dom";
 import SliderContext from "../ContexApi";
 import ReactTooltip from "react-tooltip";
+import {useSelector} from "react-redux";
+import {selectCurrentUser} from "../../Features/auth/authSlice.js";
 
 const Sidebar = () => {
   const { isSidebarOpen } = useContext(SliderContext);
@@ -25,6 +27,10 @@ const Sidebar = () => {
   const [dropdownTop, setDropdownTop] = useState(0);
   const [dropdownLeft, setDropdownLeft] = useState(0);
   const reportRef = useRef(null);
+
+  const user = useSelector(selectCurrentUser);
+  const userRole = user?.userRole;
+
 
   const menuItems = [
     { name: "Dashboard", icon: <FaHome />, path: "/dashboard" },
@@ -42,6 +48,16 @@ const Sidebar = () => {
       path: "/outfordelivery",
     },
   ];
+
+  const filteredMenuItems = menuItems.filter((item) => {
+    if (
+        item.name === "Organization" &&
+        (userRole === "ADMIN" || userRole === "MANAGER")
+    ) {
+      return false;
+    }
+    return true;
+  });
 
   const reports = [
     { name: "Date Wish Report", path: "/datewishreport" },
@@ -93,7 +109,7 @@ const Sidebar = () => {
 
       <div className="mt-4 h-[calc(100vh-100px)] px-2 overflow-y-auto scrollbar-hide">
         <ul className="space-y-1 text-slate-500">
-          {menuItems.map((item, index) => (
+          {filteredMenuItems.map((item, index) => (
             <li key={index}>
               <NavLink
                 to={item.path}

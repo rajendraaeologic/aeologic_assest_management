@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import API from "../../App/api/axiosInstance";
 import userStrings from "../../locales/userStrings";
 import { getAllUsers, updateUser } from "../../Features/slices/userSlice";
+import {USER_ROLES} from "../../TypeRoles/constants.roles.js";
 
 const UpdateUserForm = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -46,6 +47,9 @@ const UpdateUserForm = ({ onClose }) => {
   const [deptSearchTerm, setDeptSearchTerm] = useState("");
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [selectedDept, setSelectedDept] = useState(null);
+
+  const currentUser = useSelector((state) => state.auth.user);
+  const currentUserRole = currentUser?.userRole;
 
   const {
     register,
@@ -352,6 +356,31 @@ const UpdateUserForm = ({ onClose }) => {
       required: userStrings.updateUser.validation.organizationRequired,
     });
   }, [register]);
+
+
+  const getRoleOptions = () => {
+    switch (currentUserRole) {
+      case USER_ROLES.ADMIN:
+        return [
+          { value: USER_ROLES.USER, label: "USER" },
+          { value: USER_ROLES.MANAGER, label: "MANAGER" }
+        ];
+      case USER_ROLES.MANAGER:
+        return [
+          { value: USER_ROLES.USER, label: "USER" }
+        ];
+      case USER_ROLES.SUPERADMIN:
+        return [
+          { value: USER_ROLES.USER, label: "USER" },
+          { value: USER_ROLES.MANAGER, label: "MANAGER" },
+          { value: USER_ROLES.ADMIN, label: "ADMIN" }
+        ];
+      default:
+        return [];
+    }
+  };
+  console.log("Current user role:", currentUserRole);
+  console.log("Role options:", getRoleOptions());
 
   const onSubmit = async (data) => {
     if (!selectedOrg) {
@@ -742,18 +771,28 @@ const UpdateUserForm = ({ onClose }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <select
-                  className={`mt-1 p-2 w-full border ${
-                    errors.userRole ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                  {...register("userRole", {
-                    required:
-                      userStrings.updateUser.validation.userRoleRequired,
-                  })}
+                    {...register("userRole", {
+                      required: userStrings.updateUser.validation.roleRequired,
+                      validate: (value) => {
+                        if (currentUserRole === USER_ROLES.ADMIN && value === USER_ROLES.ADMIN) {
+                          return "You cannot create an admin user";
+                        }
+                        if (currentUserRole === USER_ROLES.MANAGER && value === USER_ROLES.MANAGER) {
+                          return "You cannot create a manager user";
+                        }
+                        return true;
+                      }
+                    })}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.userRole ? "border-red-500" : "border-gray-300"
+                    } outline-none rounded-md`}
                 >
-                  <option value="">Select Role</option>
-                  <option value="ADMIN">ADMIN</option>
-                  <option value="MANAGER">MANAGER</option>
-                  <option value="USER">USER</option>
+                  <option value="">{userStrings.updateUser.select.roleDefault}</option>
+                  {getRoleOptions().map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                  ))}
                 </select>
                 {errors.userRole && (
                   <p className="text-red-500 text-sm mt-1">

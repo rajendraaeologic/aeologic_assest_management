@@ -487,8 +487,6 @@ export const getUsers = catchAsync(async (req, res) => {
     filters.userName = { contains: rawFilters.userName, mode: "insensitive" };
   }
 
-  // Add other existing filters similarly...
-
   const searchTerm = (rawFilters.searchTerm as string)?.trim();
   const isSearchMode = !!searchTerm;
 

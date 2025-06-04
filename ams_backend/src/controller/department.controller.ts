@@ -101,10 +101,12 @@ import db from "@/lib/db";
  */
 
 const createDepartment = catchAsync(async (req, res) => {
+  const user = req.user as User;
   try {
     const department = await departmentService.createDepartment({
       departmentName: req.body.departmentName,
       branchId: req.body.branchId,
+      companyId: user.companyId,
     } as Department);
 
     res.status(httpStatus.CREATED).send({
@@ -119,7 +121,6 @@ const createDepartment = catchAsync(async (req, res) => {
     throw new ApiError(httpStatus.BAD_REQUEST, error.message);
   }
 });
-
 /**
  * @swagger
  * /department/getAllDepartments:
@@ -198,6 +199,7 @@ export const getAllDepartments = catchAsync(async (req, res) => {
     "departmentName",
     "location",
     "branchId",
+    "companyId",
     "from_date",
     "to_date",
     "searchTerm",

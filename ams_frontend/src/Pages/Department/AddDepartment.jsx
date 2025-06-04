@@ -23,16 +23,8 @@ const AddDepartment = ({ onClose }) => {
   const [branchSearchTerm, setBranchSearchTerm] = useState("");
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
-
-  const [organizations, setOrganizations] = useState([]);
-  const [orgLoading, setOrgLoading] = useState(false);
-  const [orgPage, setOrgPage] = useState(1);
-  const [hasMoreOrgs, setHasMoreOrgs] = useState(true);
-  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
-  const [selectedOrg, setSelectedOrg] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [noOrgsFound, setNoOrgsFound] = useState(false);
   const [noBranchesFound, setNoBranchesFound] = useState(false);
+  const userCompanyId = useSelector((state) => state.auth.user.companyId);
 
   const { currentPage, rowsPerPage } = useSelector(
     (state) => state.departmentData
@@ -44,64 +36,38 @@ const AddDepartment = ({ onClose }) => {
     watch,
     formState: { errors, isSubmitting },
     setValue,
+    setError,
   } = useForm({
     defaultValues: {
       departmentName: "",
       branchId: "",
-      organizationId: "",
     },
     mode: "onChange",
   });
 
   useEffect(() => {
-    register("organizationId", {
-      required: departmentStrings.addDepartment.validation.organizationRequired,
-    });
     register("branchId", {
       required: departmentStrings.addDepartment.validation.branchRequired,
     });
   }, [register]);
 
   const departmentName = watch("departmentName");
-
-  const fetchOrganizations = async (page, search = "") => {
-    try {
-      setOrgLoading(true);
-      const response = await API.get(
-        `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
-      );
-      const {
-        data: {
-          data: { organizations, pagination },
-        },
-      } = response;
-      setNoOrgsFound(organizations.length === 0 && search !== "");
-      setOrganizations((prev) =>
-          page === 1 ? organizations : [...prev, ...organizations]
-      );
-      setOrgPage(page);
-      setHasMoreOrgs(page < pagination.totalPages);
-    } catch (error) {
-      toast.error(departmentStrings.addDepartment.toast.error, {
-        position: "top-right",
-        autoClose: 1000,
-      });
-    } finally {
-      setOrgLoading(false);
+  useEffect(() => {
+    if (userCompanyId) {
+      setOrganizationId(userCompanyId);
     }
-  };
+  }, [userCompanyId]);
 
   const fetchBranches = async (page, search = "") => {
     if (!organizationId) return;
-
     try {
       setLoadingBranches(true);
       const response = await API.get(
-        `/branch/${organizationId}/branches?limit=5&page=${page}&searchTerm=${search}`
+          `/branch/${organizationId}/branches?limit=5&page=${page}&searchTerm=${search}`
       );
       const {
         data: {
-          data: { branches,pagination },
+          data: { branches, pagination },
         },
       } = response;
       setNoBranchesFound(branches.length === 0 && search !== "");
@@ -118,7 +84,6 @@ const AddDepartment = ({ onClose }) => {
   };
 
   useEffect(() => {
-    fetchOrganizations(1, "");
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
@@ -148,38 +113,6 @@ const AddDepartment = ({ onClose }) => {
     }
   };
 
-  const handleOrgScroll = (e) => {
-    const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
-    if (bottomReached && !orgLoading && hasMoreOrgs) {
-      fetchOrganizations(orgPage + 1, searchTerm);
-    }
-  };
-
-  const handleOrgSearch = (e) => {
-    const search = e.target.value;
-    setSearchTerm(search);
-    setNoOrgsFound(false);
-    fetchOrganizations(1, search);
-  };
-
-  const handleOrgClick = () => {
-    setShowOrgDropdown(!showOrgDropdown);
-    if (!showOrgDropdown && searchTerm === "") {
-      fetchOrganizations(1, "");
-    }
-  };
-
-  const handleOrgSelect = (org) => {
-    setSelectedOrg(org);
-    setOrganizationId(org.id);
-    setValue("organizationId", org.id, { shouldValidate: true });
-    setValue("branchId", "");
-    setSelectedBranch(null);
-    setShowOrgDropdown(false);
-    setSearchTerm("");
-  };
-
   const handleBranchScroll = (e) => {
     const bottomReached =
       e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
@@ -197,7 +130,7 @@ const AddDepartment = ({ onClose }) => {
 
   const handleBranchClick = async () => {
     if (!organizationId) {
-      toast.error("Please select an organization first");
+      toast.error("Please ensure the company ID is loaded.");
       return;
     }
     setShowBranchDropdown((prev) => !prev);
@@ -334,131 +267,66 @@ const AddDepartment = ({ onClose }) => {
                 )}
               </div>
 
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {
-                    departmentStrings.addDepartment.formLabels
-                      .selectOrganization
-                  }
-                  <span className="text-red-500">*</span>
-                </label>
-                <div
-                  onClick={handleOrgClick}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.organizationId ? "border-red-500" : "border-gray-300"
-                  } rounded-md cursor-pointer bg-white`}
-                >
-                  {selectedOrg
-                    ? selectedOrg.organizationName
-                    : "Select Organization"}
-                </div>
-                {showOrgDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search organization..."
-                      value={searchTerm}
-                      onChange={handleOrgSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleOrgScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {organizations.map((org) => (
-                        <li
-                          key={org.id}
-                          onClick={() => handleOrgSelect(org)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {org.organizationName}
-                        </li>
-                      ))}
-                      {orgLoading && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {noOrgsFound && !orgLoading && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No organizations found
-                          </li>
-                      )}
-                    </ul>
+                <div className="w-full relative">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {departmentStrings.addDepartment.formLabels.selectBranch}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <div
+                      onClick={handleBranchClick}
+                      className={`mt-1 p-2 w-full border ${
+                          errors.branchId ? "border-red-500" : "border-gray-300"
+                      } rounded-md cursor-pointer bg-white`}
+                  >
+                    {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                   </div>
-                )}
-                {errors.organizationId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.organizationId.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {departmentStrings.addDepartment.formLabels.selectBranch}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div
-                  onClick={handleBranchClick}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.branchId ? "border-red-500" : "border-gray-300"
-                  } rounded-md cursor-pointer bg-white`}
-                >
-                  {selectedBranch ? selectedBranch.branchName : "Select Branch"}
-                </div>
-                {showBranchDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search branch..."
-                      value={branchSearchTerm}
-                      onChange={handleBranchSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleBranchScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {branches.map((branch) => (
-                        <li
-                          key={branch.id}
-                          onClick={() => handleBranchSelect(branch)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                  {showBranchDropdown && (
+                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                        <input
+                            type="text"
+                            placeholder="Search branch..."
+                            value={branchSearchTerm}
+                            onChange={handleBranchSearch}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault(); // Prevent form submission on Enter
+                              }
+                            }}
+                            className="p-2 w-full border-b outline-none"
+                        />
+                        <ul
+                            onScroll={handleBranchScroll}
+                            className="max-h-40 overflow-auto"
                         >
-                          {branch.branchName}
-                        </li>
-                      ))}
-                      {loadingBranches && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {noBranchesFound && !loadingBranches && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No branches found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-                {errors.branchId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.branchId.message}
-                  </p>
-                )}
+                          {branches.map((branch) => (
+                              <li
+                                  key={branch.id}
+                                  onClick={() => handleBranchSelect(branch)}
+                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              >
+                                {branch.branchName}
+                              </li>
+                          ))}
+                          {loadingBranches && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                Loading...
+                              </li>
+                          )}
+                          {noBranchesFound && !loadingBranches && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                No branches found
+                              </li>
+                          )}
+                        </ul>
+                      </div>
+                  )}
+                  {errors.branchId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.branchId.message}
+                      </p>
+                  )}
+                </div>
               </div>
-            </div>
 
             <hr className="mt-4" />
             <div className="flex justify-end gap-4 mt-6 mb-2 mr-5">

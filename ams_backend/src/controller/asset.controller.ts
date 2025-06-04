@@ -175,6 +175,7 @@ const prisma = new PrismaClient();
  *         description: Bad Request
  */
 const createAsset = catchAsync(async (req, res) => {
+  const user = req.user as User;
   try {
     const asset = await assetService.createAsset({
       assetName: req.body.assetName,
@@ -186,7 +187,7 @@ const createAsset = catchAsync(async (req, res) => {
       description: req.body.description,
       branchId: req.body.branchId,
       departmentId: req.body.departmentId,
-      companyId: req.body.companyId,
+      companyId: user.companyId,
     });
 
     res.status(httpStatus.CREATED).json({
@@ -285,6 +286,7 @@ const createAsset = catchAsync(async (req, res) => {
  */
 export const getAllAssets = catchAsync(async (req, res) => {
   const user = req.user as User;
+
   const rawFilters = pick(req.query, [
     "assetName",
     "status",
@@ -323,7 +325,9 @@ export const getAllAssets = catchAsync(async (req, res) => {
     ...(user.userRole !== UserRole.SUPERADMIN ? {
       OR: [
         { branchId: { in: branchIds } },
-        { departmentId: { in: departmentIds } }
+        { departmentId: { in: departmentIds } },
+        { companyId: user.companyId },
+
       ]
     } : {})
   };

@@ -3,7 +3,6 @@ import { IoClose } from "react-icons/io5";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useForm } from "react-hook-form";
-import API from "../../App/api/axiosInstance";
 import branchStrings from "../../locales/branchStrings";
 import {
   createBranch,
@@ -16,21 +15,11 @@ const AddBranch = ({ onClose }) => {
   const modalRef = useRef(null);
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [organizations, setOrganizations] = useState([]);
-  const [orgLoading, setOrgLoading] = useState(false);
-  const [orgPage, setOrgPage] = useState(1);
-  const [hasMoreOrgs, setHasMoreOrgs] = useState(true);
-  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
-  const [selectedOrg, setSelectedOrg] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [noOrgsFound, setNoOrgsFound] = useState(false);
-
   const { currentPage, rowsPerPage } = useSelector((state) => state.branchData);
 
   const {
     register,
     handleSubmit,
-    setValue,
     setError,
     watch,
     formState: { errors, isSubmitting },
@@ -38,7 +27,6 @@ const AddBranch = ({ onClose }) => {
     defaultValues: {
       branchName: "",
       branchLocation: "",
-      companyId: "",
     },
     mode: "onChange",
   });
@@ -47,40 +35,6 @@ const AddBranch = ({ onClose }) => {
   const branchLocation = watch("branchLocation");
 
   useEffect(() => {
-    register("companyId", {
-      required: branchStrings.addBranch.validation.organizationRequired,
-    });
-  }, [register]);
-
-  const fetchOrganizations = async (page, search = "") => {
-    try {
-      setOrgLoading(true);
-      const response = await API.get(
-        `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
-      );
-      const {
-        data: {
-          data: { organizations, pagination },
-        },
-      } = response;
-      setNoOrgsFound(organizations.length === 0 && search !== "");
-      setOrganizations((prev) =>
-          page === 1 ? organizations : [...prev, ...organizations]
-      );
-      setOrgPage(page);
-      setHasMoreOrgs(page < pagination.totalPages);
-    } catch (error) {
-      toast.error(branchStrings.addBranch.toast.error, {
-        position: "top-right",
-        autoClose: 1000,
-      });
-    } finally {
-      setOrgLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOrganizations(1, "");
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
@@ -100,14 +54,6 @@ const AddBranch = ({ onClose }) => {
     }
   };
 
-  const handleOrgScroll = (e) => {
-    const { scrollTop, clientHeight, scrollHeight } = e.target;
-    const bottomReached = scrollHeight - scrollTop <= clientHeight + 10;
-
-    if (bottomReached && !orgLoading && hasMoreOrgs) {
-      fetchOrganizations(orgPage + 1, searchTerm);
-    }
-  };
 
   const onSubmit = async (data) => {
     try {
@@ -138,26 +84,6 @@ const AddBranch = ({ onClose }) => {
     }
   };
 
-  const handleOrgClick = async () => {
-    setShowOrgDropdown((prev) => !prev);
-    if (searchTerm.trim() === "") await fetchOrganizations(1, "");
-  };
-
-  const handleOrgSelect = (org) => {
-    setSelectedOrg(org);
-    setValue("companyId", org.id, { shouldValidate: true });
-    setShowOrgDropdown(false);
-    setSearchTerm("");
-    setError("companyId", { type: "manual", message: "" });
-  };
-
-  const handleSearch = (e) => {
-    const search = e.target.value;
-    setSearchTerm(search);
-    setNoOrgsFound(false);
-    fetchOrganizations(1, search);
-  };
-
   return (
     <div
       className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${
@@ -167,7 +93,7 @@ const AddBranch = ({ onClose }) => {
     >
       <div
         ref={modalRef}
-        className={`mt-[20px] w-[500px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+        className={`mt-[20px] w-[400px] min-h-80 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
           isVisible ? "scale-100" : "scale-95"
         }`}
       >
@@ -182,7 +108,7 @@ const AddBranch = ({ onClose }) => {
 
         <div className="p-4">
           <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid sm:grid-cols-1 lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="w-full">
                 <label
                   htmlFor="branchName"
@@ -279,67 +205,6 @@ const AddBranch = ({ onClose }) => {
                 )}
               </div>
 
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {branchStrings.addBranch.formLabels.companyId}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div
-                  onClick={handleOrgClick}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.companyId ? "border-red-500" : "border-gray-300"
-                  } rounded-md cursor-pointer bg-white`}
-                >
-                  {selectedOrg?.organizationName ||
-                    branchStrings.addBranch.select.defaultOption}
-                </div>
-
-                {showOrgDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search organization..."
-                      value={searchTerm}
-                      onChange={handleSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleOrgScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {organizations.map((org) => (
-                        <li
-                          key={org.id}
-                          onClick={() => handleOrgSelect(org)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {org.organizationName}
-                        </li>
-                      ))}
-                      {orgLoading && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {noOrgsFound && !orgLoading && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No organizations found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-                {errors.companyId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.companyId.message}
-                  </p>
-                )}
-              </div>
             </div>
 
             <hr className="mt-4" />

@@ -22,11 +22,10 @@ const UpdateAssignAsset = ({ onClose }) => {
     (state) => state.assignAssetData
   );
 
-  const [noOrgsFound, setNoOrgsFound] = useState(false);
   const [noBranchesFound, setNoBranchesFound] = useState(false);
   const [noDeptsFound, setNoDeptsFound] = useState(false);
   const [noUsersFound, setNoUsersFound] = useState(false);
-  const [noAssetsFound, setNoAssetsFound] = useState(false);
+  const [setNoAssetsFound] = useState(false);
 
   // User dropdown state
   const [users, setUsers] = useState([]);
@@ -46,15 +45,6 @@ const UpdateAssignAsset = ({ onClose }) => {
   const [showAssetDropdown, setShowAssetDropdown] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
 
-  // Organization dropdown state
-  const [organizations, setOrganizations] = useState([]);
-  const [orgLoading, setOrgLoading] = useState(false);
-  const [orgPage, setOrgPage] = useState(1);
-  const [hasMoreOrgs, setHasMoreOrgs] = useState(true);
-  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
-  const [selectedOrg, setSelectedOrg] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
-
   // Branch dropdown state
   const [branches, setBranches] = useState([]);
   const [branchPage, setBranchPage] = useState(1);
@@ -72,6 +62,8 @@ const UpdateAssignAsset = ({ onClose }) => {
   const [deptSearchTerm, setDeptSearchTerm] = useState("");
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [selectedDept, setSelectedDept] = useState(null);
+  const { user } = useSelector((state) => state.auth);
+
 
   const {
     register,
@@ -87,37 +79,12 @@ const UpdateAssignAsset = ({ onClose }) => {
   const selectedOrgId = watch("companyId");
   const userId = watch("userId");
 
-  const fetchOrganizations = async (page, search = "") => {
-    try {
-      setOrgLoading(true);
-      const response = await API.get(
-        `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
-      );
-      const {
-        data: {
-          data: { organizations, pagination },
-        },
-      } = response;
-      setNoOrgsFound(organizations.length === 0 && search !== "");
-      setOrganizations((prev) =>
-          page === 1 ? organizations : [...prev, ...organizations]
-      );
-
-      setOrgPage(page);
-      setHasMoreOrgs(page < pagination.totalPages);
-    } catch (error) {
-      console.error("Error fetching organizations", error);
-    } finally {
-      setOrgLoading(false);
-    }
-  };
-
   const fetchBranches = async (page, search = "") => {
-    if (!selectedOrgId) return;
+    if (!user?.companyId) return;
     try {
       setLoadingBranches(true);
       const response = await API.get(
-        `/branch/${selectedOrgId}/branches?limit=5&page=${page}&searchTerm=${search}`
+          `/branch/${user.companyId}/branches?limit=5&page=${page}&searchTerm=${search}`
       );
       const {
         data: {
@@ -235,14 +202,18 @@ const UpdateAssignAsset = ({ onClose }) => {
   }, [departmentId, userSearchTerm, assetSearchTerm]);
 
   useEffect(() => {
-    fetchOrganizations(1, "");
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
+
+    if (user?.companyId) {
+      fetchBranches(1, "");
+    }
+
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [user?.companyId]);
 
   useEffect(() => {
     if (selectedAssignment) {
@@ -254,15 +225,7 @@ const UpdateAssignAsset = ({ onClose }) => {
         userId: selectedAssignment.user?.id,
       });
 
-      // Set selected organization if exists
-      if (selectedAssignment.user?.company) {
-        setSelectedOrg(selectedAssignment.user.company);
-        setOrganizations((prev) =>
-          prev.some((org) => org.id === selectedAssignment.user.company.id)
-            ? prev
-            : [...prev, selectedAssignment.user.company]
-        );
-      }
+
 
       // Set selected branch if exists
       if (selectedAssignment.user?.branch) {
@@ -319,47 +282,7 @@ const UpdateAssignAsset = ({ onClose }) => {
     }
   };
 
-  // Organization handlers
-  const handleOrgScroll = (e) => {
-    const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
-    if (bottomReached && !orgLoading && hasMoreOrgs) {
-      fetchOrganizations(orgPage + 1, searchTerm);
-    }
-  };
 
-  const handleOrgSearch = (e) => {
-    const search = e.target.value;
-    setNoOrgsFound(false);
-    setSearchTerm(search);
-    fetchOrganizations(1, search);
-  };
-
-  const handleOrgClick = () => {
-    setShowOrgDropdown(!showOrgDropdown);
-    if (!showOrgDropdown && searchTerm === "") {
-      fetchOrganizations(1, "");
-    }
-  };
-
-  const handleOrgSelect = (org) => {
-    setSelectedOrg(org);
-    setValue("companyId", org.id, { shouldValidate: true });
-    setShowOrgDropdown(false);
-    setSearchTerm("");
-    setValue("branchId", "");
-    setValue("departmentId", "");
-    setValue("assetId", "");
-    setValue("userId", "");
-    setBranches([]);
-    setDepartments([]);
-    setAssets([]);
-    setUsers([]);
-    setSelectedBranch(null);
-    setSelectedDept(null);
-    setSelectedAsset(null);
-    setSelectedUser(null);
-  };
 
   // Branch handlers
   const handleBranchScroll = (e) => {
@@ -496,6 +419,13 @@ const UpdateAssignAsset = ({ onClose }) => {
 
   const onSubmit = async (data) => {
     try {
+      if (!user?.companyId) {
+        toast.error("User organization not found", {
+          position: "top-right",
+          autoClose: 1000,
+        });
+        return;
+      }
       // Check if required IDs are available
       if (!selectedAssignment || !selectedAssignment.id) {
         toast.error("Selected assignment is missing or invalid");
@@ -635,73 +565,6 @@ const UpdateAssignAsset = ({ onClose }) => {
             />
 
             <div className="grid grid-cols-1 gap-4">
-              {/* Organization Dropdown */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assignAssetStrings.updateAssignAsset.formLabels.organization}
-                </label>
-                <div
-                  onClick={() => {
-                    {
-                      handleOrgClick();
-                    }
-                    setShowOrgDropdown(!showOrgDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis"
-                >
-                  {selectedOrg
-                    ? selectedOrg.organizationName
-                    : "Select Organization"}
-                </div>
-                {errors.companyId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.companyId.message}
-                  </p>
-                )}
-                {showOrgDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search organization..."
-                      value={searchTerm}
-                      onChange={handleOrgSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleOrgScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {organizations.map((org) => (
-                        <li
-                          key={org.id}
-                          onClick={() => handleOrgSelect(org)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {org.organizationName}
-                        </li>
-                      ))}
-                      {orgLoading && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            {
-                              assignAssetStrings.addAssignAsset.select
-                                  .loadingOrganizations
-                            }
-                          </li>
-                      )}
-                      {noOrgsFound && !orgLoading && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No organizations found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-              </div>
 
               {/* Branch Dropdown */}
               <div className="w-full relative">
@@ -709,12 +572,15 @@ const UpdateAssignAsset = ({ onClose }) => {
                   {assignAssetStrings.updateAssignAsset.formLabels.branch}
                 </label>
                 <div
-                  onClick={() => {
-                    handleBranchClick();
-
-                    setShowBranchDropdown(!showBranchDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                    onClick={() => {
+                      handleBranchClick();
+                      if (!user?.companyId) {
+                        toast.error("organization not found");
+                        return;
+                      }
+                      setShowBranchDropdown(!showBranchDropdown);
+                    }}
+                    className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
                 >
                   {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                 </div>

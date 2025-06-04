@@ -537,12 +537,13 @@ const AssetHistory = () => {
                             <div className="flex justify-center gap-2">
                               <button
                                   onClick={() => handleViewDetails({ asset, histories })}
-                                  className="px-3 py-2 rounded-sm"
+                                  className="px-3 py-2 rounded-sm text-blue-600 underline hover:text-blue-800"
                               >
-                                <span>View Details </span>
+                                <span>View Details</span>
                               </button>
                             </div>
                           </td>
+
                         </tr>
                     ))
                 )}

@@ -14,10 +14,6 @@ const createBranchValidation = {
       branchLocation: Joi.string().min(3).max(25).required().messages({
         "string.empty": "Branch location is required",
       }),
-      companyId: Joi.string()
-        .required()
-        .custom(isValidMongoDBObjectId, "Invalid MongoDB ObjectId")
-        .messages(isValidMongoDBObjectIdCustomMessages),
     })
     .min(1),
 };

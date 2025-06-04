@@ -10,6 +10,7 @@ const createDepartmentValidation = {
       departmentName: Joi.string().min(3).max(25).required(),
       //location: Joi.string().required(),
       branchId: Joi.string().required(),
+      companyId: Joi.string().optional().custom(isValidMongoDBObjectId),
     })
     .min(1),
 };
@@ -19,6 +20,7 @@ const getAllDepartmentsValidation = {
     departmentName: Joi.string().optional(),
     location: Joi.string().optional(),
     branchId: Joi.string().optional(),
+    companyId: Joi.string().optional().custom(isValidMongoDBObjectId),
     from_date: Joi.string().optional().isoDate(),
     to_date: Joi.string().optional().isoDate(),
     sortBy: Joi.string().optional(),

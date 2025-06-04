@@ -16,19 +16,10 @@ const AddAsset = ({ onClose, onSuccess }) => {
   const { loading, currentPage, rowsPerPage } = useSelector(
     (state) => state.assetUserData
   );
+  const { user } = useSelector((state) => state.auth);
 
-  const [noOrgsFound, setNoOrgsFound] = useState(false);
   const [noBranchesFound, setNoBranchesFound] = useState(false);
   const [noDeptsFound, setNoDeptsFound] = useState(false);
-
-  // Organization dropdown state
-  const [organizations, setOrganizations] = useState([]);
-  const [orgLoading, setOrgLoading] = useState(false);
-  const [orgPage, setOrgPage] = useState(1);
-  const [hasMoreOrgs, setHasMoreOrgs] = useState(true);
-  const [showOrgDropdown, setShowOrgDropdown] = useState(false);
-  const [selectedOrg, setSelectedOrg] = useState(null);
-  const [searchTerm, setSearchTerm] = useState("");
 
   // Branch dropdown state
   const [branches, setBranches] = useState([]);
@@ -38,7 +29,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
   const [branchSearchTerm, setBranchSearchTerm] = useState("");
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState(null);
-  const [selectedOrgId, setSelectedOrgId] = useState("");
 
   // Department dropdown state
   const [departments, setDepartments] = useState([]);
@@ -68,7 +58,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
       status: "UNASSIGNED",
       branchId: "",
       departmentId: "",
-      companyId: "",
+      companyId: user?.companyId ,
     },
     mode: "onChange",
   });
@@ -81,49 +71,26 @@ const AddAsset = ({ onClose, onSuccess }) => {
   const description = watch("description");
   const departmentId = watch("departmentId");
 
-  const fetchOrganizations = async (page, search = "") => {
-    try {
-      setOrgLoading(true);
-      const response = await API.get(
-        `/organization/getAllOrganizations?page=${page}&limit=5&searchTerm=${search}`
-      );
-
-      const {
-        data: {
-          data: { organizations, pagination },
-        },
-      } = response;
-      setNoOrgsFound(organizations.length === 0 && search !== "");
-      setOrganizations((prev) =>
-          page === 1 ? organizations : [...prev, ...organizations]
-      );
-
-      setOrgPage(page);
-      setHasMoreOrgs(page < pagination.totalPages);
-    } catch (error) {
-      console.error("Error fetching organizations", error);
-    } finally {
-      setOrgLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchOrganizations(1, "");
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
 
+    if (user?.companyId) {
+      fetchBranches(1, "");
+    }
+
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [user?.companyId]);
 
   const fetchBranches = async (page, search = "") => {
-    if (!selectedOrgId) return;
+    if (!user?.companyId) return;
     try {
       setLoadingBranches(true);
       const response = await API.get(
-        `/branch/${selectedOrgId}/branches?limit=5&page=${page}&searchTerm=${search}`
+          `/branch/${user.companyId}/branches?limit=5&page=${page}&searchTerm=${search}`
       );
       const {
         data: {
@@ -169,52 +136,10 @@ const AddAsset = ({ onClose, onSuccess }) => {
   };
 
   useEffect(() => {
-    if (selectedOrgId) {
-      setBranchSearchTerm("");
-      setBranchPage(1);
-      fetchBranches(1, "");
-    }
-  }, [selectedOrgId]);
-
-  useEffect(() => {
     if (branchId) {
       fetchDepartments(1, deptSearchTerm);
     }
   }, [branchId, deptSearchTerm]);
-
-  // Organization handlers
-  const handleOrgScroll = (e) => {
-    const bottomReached =
-      e.target.scrollHeight - e.target.scrollTop <= e.target.clientHeight + 10;
-    if (bottomReached && !orgLoading && hasMoreOrgs) {
-      fetchOrganizations(orgPage + 1, searchTerm);
-    }
-  };
-
-  const handleOrgSearch = (e) => {
-    const search = e.target.value;
-    setNoOrgsFound(false);
-    setSearchTerm(search);
-    fetchOrganizations(1, search);
-  };
-  const handleOrgClick = async () => {
-    setShowOrgDropdown((prev) => !prev);
-    if (searchTerm.trim() === "") await fetchOrganizations(1, "");
-  };
-
-  const handleOrgSelect = (org) => {
-    setSelectedOrg(org);
-    setSelectedOrgId(org.id);
-    setValue("companyId", org.id, { shouldValidate: true });
-    setShowOrgDropdown(false);
-    setSearchTerm("");
-    setValue("branchId", "");
-    setValue("departmentId", "");
-    setBranches([]);
-    setDepartments([]);
-    setSelectedBranch(null);
-    setSelectedDept(null);
-  };
 
   // Branch handlers
   const handleBranchScroll = (e) => {
@@ -309,8 +234,8 @@ const AddAsset = ({ onClose, onSuccess }) => {
   }, [register]);
 
   const onSubmit = async (data) => {
-    if (!data.companyId) {
-      toast.error("Please select a valid organization", {
+    if (!user?.companyId) {
+      toast.error("User organization not found", {
         position: "top-right",
         autoClose: 1000,
       });
@@ -370,16 +295,9 @@ const AddAsset = ({ onClose, onSuccess }) => {
           </button>
         </div>
 
-        <div className="p-5 px-10">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Hidden companyId input */}
-              <input
-                type="hidden"
-                {...register("companyId", {
-                  required: assetStrings.addAsset.validation.companyRequired,
-                })}
-              />
+          <div className="p-5 px-10">
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
               {/* Asset Name */}
               <div className="w-full">
@@ -638,6 +556,140 @@ const AddAsset = ({ onClose, onSuccess }) => {
                 )}
               </div>
 
+                {/* Branch Dropdown */}
+                <div className="w-full relative">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {assetStrings.addAsset.formLabels.branch}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <div
+                      onClick={() => {
+                        handleBranchClick();
+                        if (!user?.companyId) {
+                          toast.error("organization not found");
+                          return;
+                        }
+                        setShowBranchDropdown(!showBranchDropdown);
+                      }}
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  >
+                    {selectedBranch ? selectedBranch.branchName : "Select Branch"}
+                  </div>
+                  {errors.branchId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.branchId.message}
+                      </p>
+                  )}
+                  {showBranchDropdown && (
+                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                        <input
+                            type="text"
+                            placeholder="Search branch..."
+                            value={branchSearchTerm}
+                            onChange={handleBranchSearch}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                              }
+                            }}
+                            className="p-2 w-full border-b outline-none"
+                        />
+                        <ul
+                            onScroll={handleBranchScroll}
+                            className="max-h-40 overflow-auto"
+                        >
+                          {branches.map((branch) => (
+                              <li
+                                  key={branch.id}
+                                  onClick={() => handleBranchSelect(branch)}
+                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              >
+                                {branch.branchName}
+                              </li>
+                          ))}
+                          {loadingBranches && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                Loading...
+                              </li>
+                          )}
+                          {noBranchesFound && !loadingBranches && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                No branches found
+                              </li>
+                          )}
+                        </ul>
+                      </div>
+                  )}
+                </div>
+
+                {/* Department Dropdown */}
+                <div className="w-full relative">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {assetStrings.addAsset.formLabels.department}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <div
+                      onClick={() => {
+                        handleDeptClick();
+                        if (!branchId) {
+                          toast.error("Please select a branch first");
+                          return;
+                        }
+                        setShowDeptDropdown(!showDeptDropdown);
+                      }}
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  >
+                    {selectedDept
+                        ? selectedDept.departmentName
+                        : "Select Department"}
+                  </div>
+                  {errors.departmentId && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.departmentId.message}
+                      </p>
+                  )}
+                  {showDeptDropdown && (
+                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                        <input
+                            type="text"
+                            placeholder="Search department..."
+                            value={deptSearchTerm}
+                            onChange={handleDeptSearch}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                              }
+                            }}
+                            className="p-2 w-full border-b outline-none"
+                        />
+                        <ul
+                            onScroll={handleDeptScroll}
+                            className="max-h-40 overflow-auto"
+                        >
+                          {departments.map((dept) => (
+                              <li
+                                  key={dept.id}
+                                  onClick={() => handleDeptSelect(dept)}
+                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                              >
+                                {dept.departmentName}
+                              </li>
+                          ))}
+                          {loadingDepartments && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                Loading...
+                              </li>
+                          )}
+                          {noDeptsFound && !loadingDepartments && (
+                              <li className="px-4 py-2 text-sm text-gray-500">
+                                No departments found
+                              </li>
+                          )}
+                        </ul>
+                      </div>
+                  )}
+                </div>
+
               {/* Description */}
               <div className="w-full">
                 <label
@@ -648,7 +700,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <textarea
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  className="mt-1 p-2 w-[206%] border border-gray-300 outline-none rounded-md"
                   rows={2}
                   id="description"
                   maxLength={200}
@@ -680,205 +732,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                 )}
               </div>
 
-              {/* Organization Dropdown */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assetStrings.addAsset.formLabels.organization}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div
-                  onClick={() => {
-                    {
-                      handleOrgClick();
-                    }
-                    setShowOrgDropdown(!showOrgDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis"
-                >
-                  {selectedOrg
-                    ? selectedOrg.organizationName
-                    : "Select Organization"}
-                </div>
-                {errors.companyId && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.companyId.message}
-                  </p>
-                )}
-                {showOrgDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search organization..."
-                      value={searchTerm}
-                      onChange={handleOrgSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleOrgScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {organizations.map((org) => (
-                        <li
-                          key={org.id}
-                          onClick={() => handleOrgSelect(org)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {org.organizationName}
-                        </li>
-                      ))}
-                      {orgLoading && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {noOrgsFound && !orgLoading && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No organizations found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-              </div>
 
-              {/* Branch Dropdown */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assetStrings.addAsset.formLabels.branch}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div
-                  onClick={() => {
-                    handleBranchClick();
-                    if (!selectedOrgId) {
-                      toast.error("Please select an organization first");
-                      return;
-                    }
-                    setShowBranchDropdown(!showBranchDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
-                >
-                  {selectedBranch ? selectedBranch.branchName : "Select Branch"}
-                </div>
-                {errors.branchId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.branchId.message}
-                  </p>
-                )}
-                {showBranchDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search branch..."
-                      value={branchSearchTerm}
-                      onChange={handleBranchSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleBranchScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {branches.map((branch) => (
-                        <li
-                          key={branch.id}
-                          onClick={() => handleBranchSelect(branch)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {branch.branchName}
-                        </li>
-                      ))}
-                      {loadingBranches && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {noBranchesFound && !loadingBranches && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No branches found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-              </div>
-
-              {/* Department Dropdown */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assetStrings.addAsset.formLabels.department}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div
-                  onClick={() => {
-                    handleDeptClick();
-                    if (!branchId) {
-                      toast.error("Please select a branch first");
-                      return;
-                    }
-                    setShowDeptDropdown(!showDeptDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
-                >
-                  {selectedDept
-                    ? selectedDept.departmentName
-                    : "Select Department"}
-                </div>
-                {errors.departmentId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.departmentId.message}
-                  </p>
-                )}
-                {showDeptDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search department..."
-                      value={deptSearchTerm}
-                      onChange={handleDeptSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleDeptScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {departments.map((dept) => (
-                        <li
-                          key={dept.id}
-                          onClick={() => handleDeptSelect(dept)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {dept.departmentName}
-                        </li>
-                      ))}
-                      {loadingDepartments && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {noDeptsFound && !loadingDepartments && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No departments found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
-              </div>
             </div>
 
             <hr className="mt-4" />

@@ -50,6 +50,8 @@ const UpdateUserForm = ({ onClose }) => {
 
   const currentUser = useSelector((state) => state.auth.user);
   const currentUserRole = currentUser?.userRole;
+  const currentUserCompanyId = currentUser?.companyId;
+  const currentUserOrganizationName = currentUser?.organizationName;
 
   const {
     register,
@@ -82,6 +84,8 @@ const UpdateUserForm = ({ onClose }) => {
 
   // Fetch organizations
   const fetchOrganizations = async (page, search = "") => {
+    if (currentUserRole !== USER_ROLES.SUPERADMIN) return;
+
     try {
       setOrgLoading(true);
       const response = await API.get(
@@ -159,15 +163,27 @@ const UpdateUserForm = ({ onClose }) => {
   };
 
   useEffect(() => {
-    fetchOrganizations(1, "");
+    // Set initial organization based on user role
+    if (currentUserRole !== USER_ROLES.SUPERADMIN) {
+      if (currentUserCompanyId) {
+        setValue("companyId", currentUserCompanyId);
+        setSelectedOrg({
+          id: currentUserCompanyId,
+          organizationName: currentUserOrganizationName,
+        });
+        setSelectedOrgId(currentUserCompanyId); // Set selectedOrgId for branch fetching
+      }
+    } else {
+      fetchOrganizations(1, ""); // Only fetch for Superadmin
+    }
+
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
-
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, []);
+  }, [currentUserRole, currentUserCompanyId, currentUserOrganizationName]);
 
   useEffect(() => {
     if (selectedUser) {
@@ -233,12 +249,13 @@ const UpdateUserForm = ({ onClose }) => {
     fetchOrganizations(1, search);
   };
 
-  const handleOrgClick = () => {
-    setShowOrgDropdown(!showOrgDropdown);
-    if (!showOrgDropdown && searchTerm === "") {
-      fetchOrganizations(1, "");
+  const handleOrgClick = async () => {
+    // Only allow dropdown interaction for Superadmin
+    if (currentUserRole === USER_ROLES.SUPERADMIN) {
+      setShowOrgDropdown((prev) => !prev);
+      if (searchTerm.trim() === "") await fetchOrganizations(1, "");
     }
-  };
+  };;
 
   const handleOrgSelect = (org) => {
     setSelectedOrg(org);
@@ -581,66 +598,72 @@ const UpdateUserForm = ({ onClose }) => {
                 )}
               </div>
 
-              {/* Organization Dropdown */}
-              <div className="w-full relative">
-                <label className="block text-sm font-medium text-gray-700">
-                  {userStrings.updateUser.formLabels.organization}
-                  <span className="text-red-500">*</span>
-                </label>
-                <div
-                  onClick={handleOrgClick}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.companyId ? "border-red-500" : "border-gray-300"
-                  } rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis`}
-                >
-                  {selectedOrg?.organizationName || "Select Organization"}
-                </div>
-                {errors.companyId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.companyId.message}
-                  </p>
-                )}
-                {showOrgDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search organization..."
-                      value={searchTerm}
-                      onChange={handleOrgSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleOrgScroll}
-                      className="max-h-40 overflow-auto"
+              {/* Organization Field - Conditional Rendering */}
+              {currentUserRole === USER_ROLES.SUPERADMIN ? (
+                  <div className="w-full relative">
+                    <label className="block text-sm font-medium text-gray-700">
+                      {userStrings.updateUser.formLabels.organization}
+                      <span className="text-red-500">*</span>
+                    </label>
+
+                    <div
+                        onClick={handleOrgClick}
+                        className={`mt-1 p-2 w-full border ${
+                            errors.companyId ? "border-red-500" : "border-gray-300"
+                        } rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis`}
                     >
-                      {organizations.map((org) => (
-                        <li
-                          key={org.id}
-                          onClick={() => handleOrgSelect(org)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {org.organizationName}
-                        </li>
-                      ))}
-                      {orgLoading && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {noOrgsFound && !orgLoading && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No organizations found
-                          </li>
-                      )}
-                    </ul>
+                      {selectedOrg?.organizationName || "Select Organization"}
+                    </div>
+
+                    {errors.companyId && (
+                        <p className="text-red-500 text-sm mt-1">
+                          {errors.companyId.message}
+                        </p>
+                    )}
+
+                    {showOrgDropdown && (
+                        <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                          <input
+                              type="text"
+                              placeholder="Search organization..."
+                              value={searchTerm}
+                              onChange={handleOrgSearch}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                }
+                              }}
+                              className="p-2 w-full border-b outline-none"
+                          />
+                          <ul onScroll={handleOrgScroll} className="max-h-40 overflow-auto">
+                            {organizations.map((org) => (
+                                <li
+                                    key={org.id}
+                                    onClick={() => handleOrgSelect(org)}
+                                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                >
+                                  {org.organizationName}
+                                </li>
+                            ))}
+                            {orgLoading && (
+                                <li className="px-4 py-2 text-sm text-gray-500">Loading...</li>
+                            )}
+                            {noOrgsFound && !orgLoading && (
+                                <li className="px-4 py-2 text-sm text-gray-500">
+                                  No organizations found
+                                </li>
+                            )}
+                          </ul>
+                        </div>
+                    )}
                   </div>
-                )}
-              </div>
+              ) : (
+                  <input
+                      type="hidden"
+                      {...register("companyId")}
+                      value={currentUserCompanyId}
+                  />
+              )}
 
               {/* Branch Dropdown */}
               <div className="w-full relative">

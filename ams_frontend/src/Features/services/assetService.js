@@ -1,6 +1,7 @@
 import API from "../../App/api/axiosInstance";
 
 export const createAssetService = async (data) => {
+  console.log(data);
   const response = await API.post("/asset/createAsset", data);
   return response.data;
 };
@@ -17,6 +18,7 @@ export const getAllAssetsService = async ({
       searchTerm: searchTerm.trim(),
     },
   });
+  console.log(response);
   return response;
 };
 

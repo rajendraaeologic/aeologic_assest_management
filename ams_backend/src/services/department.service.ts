@@ -6,16 +6,20 @@ import { DepartmentKeys } from "@/utils/selects.utils";
 
 //createDepartment
 const createDepartment = async (
-  department: Pick<Department, "departmentName" | "branchId">
+    department: Pick<Department, "departmentName" | "branchId" | "companyId">
 ): Promise<Omit<Department, "id"> | null> => {
   if (!department) return null;
 
   const branchExists = await db.branch.findUnique({
-    where: { id: department.branchId, deleted: false },
+    where: {
+      id: department.branchId,
+      deleted: false,
+      companyId: department.companyId
+    },
   });
 
   if (!branchExists) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Branch ID");
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Branch ID or branch doesn't belong to your company");
   }
 
   const lowerCaseName = department.departmentName.toLowerCase();
@@ -24,6 +28,7 @@ const createDepartment = async (
     where: {
       departmentName: lowerCaseName,
       branchId: department.branchId,
+      companyId: department.companyId,
       deleted: false,
     },
   });
@@ -39,11 +44,11 @@ const createDepartment = async (
     data: {
       departmentName: lowerCaseName,
       branch: { connect: { id: department.branchId } },
+      company: { connect: { id: department.companyId } },
     },
   });
 };
 
-//   queryDepartments
 export const queryDepartments = async (
   filter: object,
   options: {
@@ -450,6 +455,90 @@ export const getDepartmentsByBranchId = async (
   return { data, total };
 };
 
+const getDepartmentsByCompanyId = async (
+    companyId: string,
+    options: {
+      limit?: number;
+      page?: number;
+      sortBy?: string;
+      sortType?: "asc" | "desc";
+      status?: string;
+      createdAtFrom?: Date;
+      createdAtTo?: Date;
+      searchTerm?: string;
+    }
+): Promise<{ data: any[]; total: number }> => {
+  const page = options.page ?? 1;
+  const limit = options.limit ?? 10;
+  const skip = (page - 1) * limit;
+  const sortBy = options.sortBy || "createdAt";
+  const sortType = options.sortType ?? "desc";
+
+  const filters: any = {
+    companyId,
+    deleted: false,
+  };
+
+  if (options.status) filters.status = options.status;
+
+  if (options.createdAtFrom || options.createdAtTo) {
+    filters.createdAt = {};
+    if (options.createdAtFrom) filters.createdAt.gte = options.createdAtFrom;
+    if (options.createdAtTo) filters.createdAt.lte = options.createdAtTo;
+  }
+
+  const searchConditions = options.searchTerm?.trim()
+      ? {
+        OR: [
+          {
+            departmentName: {
+              contains: options.searchTerm,
+              mode: "insensitive" as const,
+            },
+          },
+          {
+            branch: {
+              branchName: {
+                contains: options.searchTerm,
+                mode: "insensitive" as const,
+              },
+            },
+          },
+        ],
+      }
+      : {};
+
+  const where = {
+    ...filters,
+    ...searchConditions,
+  };
+
+  const finalLimit = options.searchTerm ? 5 : limit;
+
+  const [data, total] = await Promise.all([
+    db.department.findMany({
+      where,
+      select: {
+        ...DepartmentKeys,
+        branch: {
+          select: {
+            id: true,
+            branchName: true,
+          },
+        },
+      },
+      skip,
+      take: finalLimit,
+      orderBy: {
+        [sortBy]: sortType,
+      },
+    }),
+    db.department.count({ where }),
+  ]);
+
+  return { data, total };
+};
+
 export default {
   createDepartment,
   queryDepartments,
@@ -458,4 +547,5 @@ export default {
   deleteDepartmentById,
   deleteDepartmentsByIds,
   getDepartmentsByBranchId,
+  getDepartmentsByCompanyId,
 };

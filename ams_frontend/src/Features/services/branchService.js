@@ -1,6 +1,7 @@
 import API from "../../App/api/axiosInstance";
 
 export const createBranchService = async (data) => {
+  console.log(data);
   const response = await API.post("/branch/createBranch", data);
   return response.data;
 };

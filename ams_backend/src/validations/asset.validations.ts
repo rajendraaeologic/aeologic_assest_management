@@ -42,11 +42,6 @@ const createAssetValidation = {
         .optional()
         .custom(isValidMongoDBObjectId)
         .messages(isValidMongoDBObjectIdCustomMessages),
-      companyId: Joi.string()
-        .allow(null)
-        .optional()
-        .custom(isValidMongoDBObjectId)
-        .messages(isValidMongoDBObjectIdCustomMessages),
     })
     .min(1),
 };
@@ -74,6 +69,11 @@ export const getAllAssetsValidation = {
       .custom(isValidMongoDBObjectId)
       .messages(isValidMongoDBObjectIdCustomMessages),
     departmentId: Joi.string()
+      .allow(null)
+      .optional()
+      .custom(isValidMongoDBObjectId)
+      .messages(isValidMongoDBObjectIdCustomMessages),
+      companyId: Joi.string()
       .allow(null)
       .optional()
       .custom(isValidMongoDBObjectId)
@@ -164,11 +164,6 @@ const updateAssetValidation = {
         .custom(isValidMongoDBObjectId)
         .messages(isValidMongoDBObjectIdCustomMessages),
       departmentId: Joi.string()
-        .allow(null)
-        .optional()
-        .custom(isValidMongoDBObjectId)
-        .messages(isValidMongoDBObjectIdCustomMessages),
-      companyId: Joi.string()
         .allow(null)
         .optional()
         .custom(isValidMongoDBObjectId)

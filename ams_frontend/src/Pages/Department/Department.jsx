@@ -48,7 +48,7 @@ const UserDepartment = () => {
     loading,
     error,
   } = useSelector((state) => state.departmentData);
-
+console.log(departments);
   const [isAddDepartment, setIsAddDepartment] = useState(false);
   const [isUpdateDepartment, setIsUpdateDepartment] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);

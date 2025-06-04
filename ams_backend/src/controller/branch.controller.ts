@@ -115,11 +115,12 @@ import pick from "@/lib/pick";
  *         description: Conflict (branch already exists)
  */
 const createBranch = catchAsync(async (req, res) => {
+  const user = req.user as User;
   try {
     const branch = await branchService.createBranch({
       branchName: req.body.branchName,
       branchLocation: req.body.branchLocation,
-      companyId: req.body.companyId,
+      companyId: user.companyId,
     } as Branch);
 
     res.status(httpStatus.CREATED).send({

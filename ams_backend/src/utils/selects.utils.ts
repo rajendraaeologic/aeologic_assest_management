@@ -114,6 +114,7 @@ export const DepartmentKeys: Prisma.DepartmentSelect = {
       id: true,
       branchName: true,
       branchLocation: true,
+      companyId:true,
     },
   },
   users: {

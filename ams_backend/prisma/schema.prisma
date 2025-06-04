@@ -68,15 +68,16 @@ model UserNotification {
 }
 
 model Organization {
-  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  id               String       @id @default(auto()) @map("_id") @db.ObjectId
   organizationName String
   branches         Branch[]
   users            User[]
   assets           Asset[]
-  deleted          Boolean   @default(false)
-  deletedAt        DateTime? 
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @default(now()) @updatedAt
+  deleted          Boolean      @default(false)
+  deletedAt        DateTime?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @default(now()) @updatedAt
+  Department       Department[]
 }
 
 model Branch {
@@ -88,22 +89,24 @@ model Branch {
   assets         Asset[]
   users          User[]
   deleted        Boolean      @default(false)
-  deletedAt      DateTime? 
+  deletedAt      DateTime?
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @default(now()) @updatedAt
   departments    Department[]
 }
 
 model Department {
-  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  id             String       @id @default(auto()) @map("_id") @db.ObjectId
   departmentName String
-  branchId       String    @db.ObjectId
-  branch         Branch    @relation(fields: [branchId], references: [id])
+  companyId      String       @db.ObjectId
+  company        Organization @relation(fields: [companyId], references: [id])
+  branchId       String       @db.ObjectId
+  branch         Branch       @relation(fields: [branchId], references: [id])
   users          User[]
-  deleted        Boolean   @default(false)
+  deleted        Boolean      @default(false)
   deletedAt      DateTime?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @default(now()) @updatedAt
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @default(now()) @updatedAt
   Asset          Asset[]
 }
 

@@ -18,7 +18,8 @@ const branchStrings = {
     table: {
       headers: {
         branchName: "Branch Name",
-        branchLocation: "Branch Location",
+        state: "State",
+        city: "City",
         organizationName: "Organization Name",
         departmentName: "Department Name",
         userName: "User Name",
@@ -29,7 +30,9 @@ const branchStrings = {
       },
       searchPlaceholders: {
         branchName: "Branch Name",
-        branchLocation: "Branch Location",
+        state: "State",
+        city: "City",
+        branchCity: "Branch City",
         organizationName: "Organization Name",
         departmentName: "Department Name",
         userName: "User Name",
@@ -60,23 +63,21 @@ const branchStrings = {
     title: "Add Branch",
     formLabels: {
       branchName: "Branch Name",
-      branchLocation: "Location",
+      state: "State",
+      city: "City",
       companyId: "Organization",
     },
     placeholders: {
       branchName: "Branch name",
-      branchLocation: "Branch location",
+      state: "State",
+      city: "City",
     },
     validation: {
       branchNameRequired: "Branch name is required",
       branchNameMinLength: "Branch name must be at least 3 characters long",
       branchNameMaxLength: "Branch name must be at most 25 characters long",
-
-      branchLocationRequired: "Branch location is required",
-      branchLocationMinLength:
-        "Branch Location  must be at least 3 characters long",
-      branchLocationMaxLength:
-        "Branch Location  must be at most 25 characters long",
+      stateRequired: "State is required",
+      cityRequired: "City is required",
       organizationRequired: "Organization selection is required",
       branchNamePattern:
         "Branch name must contain only alphanumeric characters",
@@ -100,20 +101,15 @@ const branchStrings = {
     title: "Update Branch",
     formLabels: {
       branchName: "Branch Name",
-      branchLocation: "Location",
+      state: "State",
+      city: "City",
     },
     validation: {
       branchNameRequired: "Branch name is required",
       branchNameMinLength: "Branch name must be at least 3 characters long",
       branchNameMaxLength: "Branch name must be at most 25 characters long",
-
-      branchLocationRequired: "Branch location is required",
-      branchLocationMinLength:
-        "Branch Location  must be at least 3 characters long",
-      branchLocationMaxLength:
-        "Branch Location  must be at most 25 characters long",
-      branchNamePattern:
-        "Branch name must contain only alphanumeric characters",
+      stateRequired: "State is required",
+      cityRequired: "City is required",
     },
     toast: {
       success: "Branch updated successfully!",

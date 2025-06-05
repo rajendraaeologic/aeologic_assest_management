@@ -81,18 +81,19 @@ model Organization {
 }
 
 model Branch {
-  id             String       @id @default(auto()) @map("_id") @db.ObjectId
-  branchName     String
-  branchLocation String
-  companyId      String       @db.ObjectId
-  company        Organization @relation(fields: [companyId], references: [id])
-  assets         Asset[]
-  users          User[]
-  deleted        Boolean      @default(false)
-  deletedAt      DateTime?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @default(now()) @updatedAt
-  departments    Department[]
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  branchName  String
+  state       String
+  city        String
+  companyId   String       @db.ObjectId
+  company     Organization @relation(fields: [companyId], references: [id])
+  assets      Asset[]
+  users       User[]
+  deleted     Boolean      @default(false)
+  deletedAt   DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+  departments Department[]
 }
 
 model Department {

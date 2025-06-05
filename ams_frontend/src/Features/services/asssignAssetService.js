@@ -11,6 +11,7 @@ export const getAllAssignAssetsService = async ({
   searchTerm = "",
   status = "IN_USE",
 } = {}) => {
+
   const response = await API.get("/assignAsset/asset-assignments", {
     params: {
       limit,
@@ -19,7 +20,9 @@ export const getAllAssignAssetsService = async ({
       status,
     },
   });
+  console.log(response);
   return response;
+
 };
 
 export const getAvailableAssetsService = async (params) => {

@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useForm } from "react-hook-form";
 import branchStrings from "../../locales/branchStrings";
+import { State, City } from 'country-state-city';
 import {
   createBranch,
   getAllBranches,
@@ -15,33 +16,81 @@ const AddBranch = ({ onClose }) => {
   const modalRef = useRef(null);
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
-  const { currentPage, rowsPerPage } = useSelector((state) => state.branchData);
+  const { selectedBranch,currentPage, rowsPerPage } = useSelector((state) => state.branchData);
+  const [selectedState, setSelectedState] = useState(null);
+  const [states, setStates] = useState([]);
+  const [cities, setCities] = useState([]);
+  const indiaCountryCode = 'IN';
 
   const {
     register,
     handleSubmit,
+    reset,
+    setValue,
     setError,
     watch,
     formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
       branchName: "",
-      branchLocation: "",
+      state: "",
+      city: "",
     },
     mode: "onChange",
   });
 
   const branchName = watch("branchName");
-  const branchLocation = watch("branchLocation");
+  const state = watch("state");
+  const city = watch("city");
+
 
   useEffect(() => {
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
+    const indiaStates = State.getStatesOfCountry(indiaCountryCode);
+    setStates(indiaStates);
     return () => {
       document.body.style.overflow = "auto";
     };
   }, []);
+
+  useEffect(() => {
+    if (selectedBranch) {
+      // Find the state ISO code by name
+      const stateCode = State.getStatesOfCountry(indiaCountryCode)
+          .find(s => s.name === selectedBranch.state)?.isoCode || '';
+
+      reset({
+        branchName: selectedBranch.branchName,
+        state: stateCode,
+        city: selectedBranch.city,
+      });
+
+      // Load cities for the state if it exists
+      if (stateCode) {
+        const stateCities = City.getCitiesOfState(indiaCountryCode, stateCode);
+        setCities(stateCities);
+      }
+    }
+  }, [selectedBranch, reset]);
+
+  useEffect(() => {
+    register("state", {
+      required: "State is required",
+      validate: (value) => value !== "" || "State is required"
+    });
+    if (state) {
+      const stateData = State.getStateByCodeAndCountry(state, indiaCountryCode);
+      setSelectedState(stateData || null);
+      const stateCities = City.getCitiesOfState(indiaCountryCode, state);
+      setCities(stateCities);
+    } else {
+      setCities([]);
+      setValue("city", "");
+    }
+  }, [state, setValue]);
+
 
   const handleClose = () => {
     setIsVisible(false);
@@ -158,53 +207,69 @@ const AddBranch = ({ onClose }) => {
                 )}
               </div>
 
+              {/* State Select */}
               <div className="w-full">
                 <label
-                  htmlFor="branchLocation"
-                  className="block text-sm font-medium text-gray-700"
+                    htmlFor="state"
+                    className="block text-sm font-medium text-gray-700"
                 >
-                  {branchStrings.addBranch.formLabels.branchLocation}
+                  State
                   <span className="text-red-500">*</span>
                 </label>
-                <input
-                  {...register("branchLocation", {
-                    required:
-                      branchStrings.addBranch.validation.branchLocationRequired,
-                    minLength: {
-                      value: 3,
-                      message:
-                        branchStrings.addBranch.validation
-                          .branchLocationMinLength,
-                    },
-                    maxLength: {
-                      value: 25,
-                      message:
-                        branchStrings.addBranch.validation
-                          .branchLocationMaxLength,
-                    },
-                  })}
-                  type="text"
-                  maxLength={25}
-                  id="branchLocation"
-                  placeholder={
-                    branchStrings.addBranch.placeholders.branchLocation
-                  }
-                  className={`mt-1 p-2 w-full border ${
-                    errors.branchLocation ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                />
-                {errors.branchLocation && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.branchLocation.message}
-                  </p>
-                )}
-                {branchLocation?.length === 25 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 25 characters allowed
-                  </p>
+                <select
+                    {...register("state", { required: "State is required" })}
+                    id="state"
+                    className={`mt-1 p-2 w-full border ${
+                        errors.state ? "border-red-500" : "border-gray-300"
+                    } outline-none rounded-md`}
+                >
+                  <option value="">Select State</option>
+                  {states.map((state) => (
+                      <option key={state.isoCode} value={state.isoCode}>
+                        {state.name}
+                      </option>
+                  ))}
+                </select>
+                {errors.state && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.state.message}
+                    </p>
                 )}
               </div>
 
+              {/* City Select */}
+              <div className="w-full">
+                <label
+                    htmlFor="city"
+                    className="block text-sm font-medium text-gray-700"
+                >
+                  City
+                  <span className="text-red-500">*</span>
+                </label>
+                <select
+                    {...register("city", {
+                      required: "City is required",
+                      disabled: !state
+                    })}
+                    id="city"
+                    className={`mt-1 p-2 w-full border ${
+                        errors.city ? "border-red-500" : "border-gray-300"
+                    } outline-none rounded-md`}
+                    disabled={!state}
+                >
+                  <option value="">Select City</option>
+                  {cities.map((city) => (
+                      <option key={city.name} value={city.name}>
+                        {city.name}
+                      </option>
+                  ))}
+                </select>
+                {errors.city && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.city.message}
+                    </p>
+                )}
+              </div>
             </div>
 
             <hr className="mt-4" />

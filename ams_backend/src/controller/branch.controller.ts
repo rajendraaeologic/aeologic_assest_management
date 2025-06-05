@@ -84,15 +84,19 @@ import pick from "@/lib/pick";
  *             type: object
  *             required:
  *               - branchName
- *               - branchLocation
+ *               - state
+ *               - city
  *               - companyId
  *             properties:
  *               branchName:
  *                 type: string
  *                 example: "Downtown Office"
- *               branchLocation:
+ *               state:
  *                 type: string
- *                 example: "123 Main Street"
+ *                 example: "Delhi"
+ *                 city:
+ *                 type: string
+ *                 example: "noida"
  *               companyId:
  *                 type: string
  *                 example: "comp123"
@@ -119,7 +123,8 @@ const createBranch = catchAsync(async (req, res) => {
   try {
     const branch = await branchService.createBranch({
       branchName: req.body.branchName,
-      branchLocation: req.body.branchLocation,
+      state: req.body.state,
+      city: req.body.city,
       companyId: user.companyId,
     } as Branch);
 
@@ -211,6 +216,8 @@ export const getAllBranches = catchAsync(async (req, res) => {
   const user = req.user as User;
   const rawFilters = pick(req.query, [
     "branchName",
+    "state",
+    "city",
     "createdAtFrom",
     "createdAtTo",
     "searchTerm",
@@ -246,6 +253,19 @@ export const getAllBranches = catchAsync(async (req, res) => {
   if (rawFilters.companyId) {
     filters.companyId = rawFilters.companyId;
   }
+  if (rawFilters.state) {
+    filters.state = {
+      contains: rawFilters.state,
+      mode: "insensitive",
+    };
+  }
+
+  if (rawFilters.city) {
+    filters.city = {
+      contains: rawFilters.city,
+      mode: "insensitive",
+    };
+  }
 
   const searchTerm = (rawFilters.searchTerm as string)?.trim();
   const isSearchMode = !!searchTerm;
@@ -261,6 +281,14 @@ export const getAllBranches = catchAsync(async (req, res) => {
         OR: [
           {
             branchName: {
+              contains: searchTerm,
+              mode: "insensitive",
+            },
+            state: {
+              contains: searchTerm,
+              mode: "insensitive",
+            },
+            city: {
               contains: searchTerm,
               mode: "insensitive",
             },

@@ -23,7 +23,7 @@ const UserDashboard = () => {
         console.log(response);
 
         if (response.data?.success) {
-          setData(response.data.assignments);
+          setData(response.data.data.assignments);
         } else {
           throw new Error(response.data?.message || "Failed to fetch data");
         }
@@ -65,7 +65,7 @@ const UserDashboard = () => {
     );
   }
 
-  if (!data?.data?.length) {
+  if (!data?.length) {
     return (
       <div className="bg-slate-100 min-h-screen pt-24 px-6">
         {userDashboardStrings.noAssets}
@@ -76,7 +76,7 @@ const UserDashboard = () => {
   return (
     <div className="bg-slate-100 min-h-screen pb-4 pt-24 px-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {data.data.map((asset) => (
+        {data.map((asset) => (
           <div
             key={asset.id}
             className="bg-white rounded-lg shadow-md p-6 self-start"

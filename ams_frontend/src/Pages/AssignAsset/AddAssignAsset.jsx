@@ -19,7 +19,7 @@ const AddAssignAsset = ({ onClose }) => {
   const [noBranchesFound, setNoBranchesFound] = useState(false);
   const [noDeptsFound, setNoDeptsFound] = useState(false);
   const [noUsersFound, setNoUsersFound] = useState(false);
-  const [setNoAssetsFound] = useState(false);
+  const [noAssetsFound, setNoAssetsFound] = useState(false);
 
   // State variables for dropdowns
   const [users, setUsers] = useState([]);
@@ -120,31 +120,35 @@ const AddAssignAsset = ({ onClose }) => {
 
   // Fetch assets by department
   const fetchAssetsByDepartmentId = async (page, search = "") => {
-    if (!departmentId) return;
+    if (!departmentId) {
+      setAssets([]);
+      return;
+    }
+
     try {
       setLoadingAssets(true);
       const response = await API.get(
         `/assignAsset/${departmentId}/assets?page=${page}&limit=5&searchTerm=${search}`
       );
-      console.log("Assetbydept",response)
-      const {
-        data: {
-          data: { assets,pagination },
-        },
-      } = response;
-      setNoAssetsFound(assets.length === 0 && search !== "");
-      setAssets((prev) =>
-          page === 1 ? assets : [...prev, ...assets]
-      );
-      setAssetPage(page);
-      setHasMoreAssets(page < pagination.totalPages);
+
+      const { data } = response;
+
+      if (data && data.data) {
+        setNoAssetsFound(data.data.assets.length === 0 && search !== "");
+        setAssets(prev =>
+            page === 1 ? data.data.assets : [...prev, ...data.data.assets]
+        );
+        setAssetPage(page);
+        setHasMoreAssets(page < data.data.pagination.totalPages);
+      }
     } catch (error) {
       console.error("Error fetching assets", error);
+      setNoAssetsFound(true);
+      toast.error("Failed to fetch assets");
     } finally {
       setLoadingAssets(false);
     }
   };
-
   useEffect(() => {
     if (departmentId) {
       setAssetSearchTerm("");
@@ -154,7 +158,7 @@ const AddAssignAsset = ({ onClose }) => {
       setAssets([]);
       setValue("assetId", "");
     }
-  }, [departmentId]);
+  }, [departmentId, setValue]);
 
   useEffect(() => {
     firstInputRef.current?.focus();

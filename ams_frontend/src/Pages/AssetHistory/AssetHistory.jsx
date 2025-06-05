@@ -25,7 +25,7 @@ import {
   resetAssetHistoryTableState,
   setCurrentPage,
   setRowsPerPage,
-    setSearchTerm
+  setSearchTerm
 } from "../../Features/slices/assetHistorySlice.js";
 import PaginationControls from "../../components/common/PaginationControls.jsx";
 const options = ["5", "10", "25", "50", "100"];
@@ -122,7 +122,57 @@ const statusConfig = {
     icon: <FiInfo className="text-gray-600" />,
   },
 };
+// 2. Enhanced function to find creation date with more debugging
+const getAssetCreationInfo = (asset, histories) => {
+  console.log('=== SEARCHING FOR CREATION DATE ===');
 
+  // Check asset fields
+  const dateFields = ['createdAt', 'created_at', 'createDate', 'date_created', 'dateCreated', 'timestamp'];
+  for (const field of dateFields) {
+    if (asset[field]) {
+      console.log(`Found creation date in asset.${field}:`, asset[field]);
+      return {date: asset[field], source: `asset.${field}`};
+    }
+  }
+// Check histories for CREATED action
+  if (histories && histories.length > 0) {
+    console.log('Checking histories for CREATED action...');
+    const createdHistory = histories.find(h => h.action === 'CREATED');
+    if (createdHistory) {
+      console.log('Found CREATED history:', createdHistory);
+      return { date: createdHistory.timestamp, source: 'history.CREATED' };
+    }
+
+    // Check for any creation-related actions
+    const creationActions = ['CREATED', 'CREATE', 'ADDED', 'REGISTERED'];
+    for (const action of creationActions) {
+      const history = histories.find(h => h.action === action);
+      if (history) {
+        console.log(`Found creation-related action ${action}:`, history);
+        return { date: history.timestamp, source: `history.${action}` };
+      }
+    }
+
+    // Use the oldest history as fallback
+    const sortedHistories = [...histories].sort((a, b) =>
+        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    );
+    console.log('Using oldest history as fallback:', sortedHistories[0]);
+    return { date: sortedHistories[0].timestamp, source: 'history.oldest' };
+  }
+
+  console.log('No creation date found anywhere');
+  return null;
+};
+
+const formatDate = (dateString) => {
+  if (!dateString) return "Date not available";
+
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return "Date not available";
+
+  return date.toLocaleString();
+};
 
 const TimelineEvent = ({ event, isLast, index }) => {
   const config =
@@ -167,7 +217,7 @@ const TimelineEvent = ({ event, isLast, index }) => {
               className="flex items-center text-xs text-gray-500"
           >
             <FiCalendar className="mr-1" />
-            {new Date(event.timestamp).toLocaleString()}
+            {formatDate(event.timestamp)}
           </motion.div>
 
           <motion.div
@@ -212,7 +262,7 @@ const TimelineEvent = ({ event, isLast, index }) => {
                 </motion.div>
                 <div>
               <span className="text-sm text-gray-600 block">
-                {event.user.name} {/* Corrected from userName to name */}
+                {event.user.userName}
               </span>
                   <span className="text-xs text-gray-400">{event.user.email}</span>
                 </div>
@@ -335,7 +385,7 @@ const AssetHistory = () => {
         return "Unassigned from previous user";
       case "STATUS_CHANGE":
         return `Status changed to ${
-          latestHistory.status?.toLowerCase() || "new status"
+            latestHistory.status?.toLowerCase() || "new status"
         }`;
       case "CREATED":
         return "Asset created";
@@ -383,7 +433,7 @@ const AssetHistory = () => {
           }`}
       >
         <div
-            className={`mx-auto min-h-screen ${
+            className={`mx-auto min-h-screen transition-all duration-300 ${
                 isSidebarOpen
                     ? "pl-0 md:pl-[250px] lg:pl-[250px]"
                     : "pl-0 md:pl-[90px] lg:pl-[90px]"
@@ -667,23 +717,26 @@ const AssetHistory = () => {
                                     index={index}
                                 />
                             ))}
-                            <div className="relative">
-                              <div className="absolute left-[-26px] top-1 h-5 w-5 rounded-full bg-indigo-500 flex items-center justify-center">
-                                <FiLayers className="h-3 w-3 text-white" />
-                              </div>
-                              <div className="pl-6">
-                                <p className="text-xs text-gray-500 flex items-center">
-                                  <FiCalendar className="mr-1" />
-                                  {new Date(
-                                      selectedAsset.asset.createdAt
-                                  ).toLocaleString()}
-                                </p>
-                                <p className="font-medium flex items-center">
-                                  <FiLayers className="mr-2" />
-                                  ASSET CREATED
-                                </p>
-                              </div>
-                            </div>
+                            {(() => {
+                              const creationDate = getAssetCreationInfo(selectedAsset.asset, selectedAsset.histories);
+                              return creationDate ? (
+                                  <div className="relative">
+                                    <div className="absolute left-[-26px] top-1 h-5 w-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                                      <FiLayers className="h-3 w-3 text-white" />
+                                    </div>
+                                    <div className="pl-6">
+                                      <p className="text-xs text-gray-500 flex items-center">
+                                        <FiCalendar className="mr-1" />
+                                        {formatDate(creationDate)}
+                                      </p>
+                                      <p className="font-medium flex items-center">
+                                        <FiLayers className="mr-2" />
+                                        ASSET CREATED
+                                      </p>
+                                    </div>
+                                  </div>
+                              ) : null;
+                            })()}
                           </>
                       ) : (
                           <p className="text-gray-500 text-sm italic">

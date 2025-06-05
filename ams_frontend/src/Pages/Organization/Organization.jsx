@@ -332,7 +332,8 @@ const Organization = () => {
                   {[
                     table.headers.orgName,
                     table.headers.branchName,
-                    table.headers.branchLocation,
+                    table.headers.state,
+                    table.headers.city,
                     table.headers.departmentName,
                     table.headers.action,
                   ].map((header, idx) => (
@@ -404,10 +405,18 @@ const Organization = () => {
                       <td className="px-2 py-2 border border-gray-300 break-words align-top">
                         <ChipsList
                           items={org.branches}
-                          labelKey="branchLocation"
+                          labelKey="state"
                           emptyText={notAvailable.emptyText}
                         />
                       </td>
+                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                        <ChipsList
+                            items={org.branches}
+                            labelKey="city"
+                            emptyText={notAvailable.emptyText}
+                        />
+                      </td>
+
 
                       {/* Departments Chip List */}
                       <td className="px-2 py-2 border border-gray-300 break-words align-top">

@@ -19,7 +19,8 @@ const organizationStrings = {
       headers: {
         orgName: "Organization Name",
         branchName: "Branch Name",
-        branchLocation: "Branch Location",
+        state: "State",
+        city: "City",
         departmentName: "Department Name",
         action: "Action",
         deleteAll: "Delete All",
@@ -27,7 +28,8 @@ const organizationStrings = {
       searchPlaceholders: {
         orgName: "Organization Name",
         branchName: "Branch Name",
-        branchLocation: "Branch Location",
+        state: "State",
+        city: "City",
         departmentName: "Department Name",
       },
       showEntries: "Show",

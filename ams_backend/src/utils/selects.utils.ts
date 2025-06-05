@@ -77,7 +77,8 @@ export const OrganizationKeys: Prisma.OrganizationSelect = {
     select: {
       id: true,
       branchName: true,
-      branchLocation: true,
+      state: true,
+      city: true,
       // companyId: true,
       departments: {
         select: {
@@ -113,7 +114,8 @@ export const DepartmentKeys: Prisma.DepartmentSelect = {
     select: {
       id: true,
       branchName: true,
-      branchLocation: true,
+      state: true,
+      city: true,
       companyId:true,
     },
   },
@@ -138,7 +140,8 @@ export const DepartmentKeys: Prisma.DepartmentSelect = {
 export const BranchKeys: Prisma.BranchSelect = {
   id: true,
   branchName: true,
-  branchLocation: true,
+  state: true,
+  city: true,
   createdAt: true,
   updatedAt: true,
   company: {
@@ -208,7 +211,8 @@ export const AssetKeys: Prisma.AssetSelect = {
     select: {
       id: true,
       branchName: true,
-      branchLocation: true,
+      state: true,
+      city:true,
     },
   },
   department: {
@@ -295,7 +299,8 @@ export const AssetHistoryKeys: Prisma.AssetHistorySelect = {
         select: {
           id: true,
           branchName: true,
-          branchLocation: true,
+          state: true,
+          city: true,
         },
       },
       department: {

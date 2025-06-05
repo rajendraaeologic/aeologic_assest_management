@@ -329,7 +329,8 @@ const Branch = () => {
                 <tr>
                   {[
                     branchStrings.branch.table.headers.branchName,
-                    branchStrings.branch.table.headers.branchLocation,
+                    branchStrings.branch.table.headers.state,
+                    branchStrings.branch.table.headers.city,
                     branchStrings.branch.table.headers.organizationName,
                     branchStrings.branch.table.headers.departmentName,
                     branchStrings.branch.table.headers.action,
@@ -367,37 +368,41 @@ const Branch = () => {
 
               <tbody>
                 {loading ? (
-                  <SkeletonLoader rows={5} columns={6} />
+                    <SkeletonLoader rows={5} columns={7} />
                 ) : branches.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="6"
-                      className="px-2 py-4 text-center border border-gray-300"
-                    >
-                      {branchStrings.branch.table.noData}
-                    </td>
-                  </tr>
+                    <tr>
+                      <td
+                          colSpan="7"
+                          className="px-2 py-4 text-center border border-gray-300"
+                      >
+                        {branchStrings.branch.table.noData}
+                      </td>
+                    </tr>
                 ) : (
-                  branches.map((branch, index) => (
-                    <tr
-                      key={branch.id || index}
-                      className={`${
-                        index % 2 === 0 ? "bg-gray-50" : "bg-white"
-                      } hover:bg-gray-200 divide-y divide-gray-300`}
-                    >
-                      {/* Main Data Columns */}
-                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                        {toSentenceCase(branch.branchName) ||
-                            branchStrings.branch.notAvailable.emptyText}
-                      </td>
-                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                        {branch.branchLocation ||
-                            branchStrings.branch.notAvailable.emptyText}
-                      </td>
-                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                        {toSentenceCase(branch.company?.organizationName) ||
-                            branchStrings.branch.notAvailable.emptyText}
-                      </td>
+                    branches.map((branch, index) => (
+                        <tr
+                            key={branch.id || index}
+                            className={`${
+                                index % 2 === 0 ? "bg-gray-50" : "bg-white"
+                            } hover:bg-gray-200 divide-y divide-gray-300`}
+                        >
+                          {/* Main Data Columns */}
+                          <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                            {toSentenceCase(branch.branchName) ||
+                                branchStrings.branch.notAvailable.emptyText}
+                          </td>
+                          <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                            {toSentenceCase(branch.state) ||
+                                branchStrings.branch.notAvailable.emptyText}
+                          </td>
+                          <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                            {toSentenceCase(branch.city) ||
+                                branchStrings.branch.notAvailable.emptyText}
+                          </td>
+                          <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                            {toSentenceCase(branch.company?.organizationName) ||
+                                branchStrings.branch.notAvailable.emptyText}
+                          </td>
 
                       {/* Departments Chip List */}
                       <td className="px-2 py-2 border border-gray-300 break-words align-top">

@@ -5,7 +5,7 @@ import ApiError from "@/lib/ApiError";
 import { BranchKeys } from "@/utils/selects.utils";
 // createBranch
 const createBranch = async (
-  branch: Pick<Branch, "branchName" | "branchLocation" | "companyId">
+    branch: Pick<Branch, "branchName" | "state" | "city" | "companyId">
 ): Promise<Omit<Branch, "id"> | null> => {
   if (!branch) {
     return null;
@@ -35,7 +35,8 @@ const createBranch = async (
   return await db.branch.create({
     data: {
       branchName: lowerCaseBranchName,
-      branchLocation: branch.branchLocation,
+      state: branch.state,
+      city: branch.city,
       companyId: branch.companyId,
     },
   });
@@ -404,80 +405,42 @@ const getBranchesByOrganizationId = async (
     deleted: false,
   };
 
-  if (options.status) filters.status = options.status;
+  if (options.status) {
+    filters.status = options.status;
+  }
 
   if (options.createdAtFrom || options.createdAtTo) {
     filters.createdAt = {};
-    if (options.createdAtFrom) filters.createdAt.gte = options.createdAtFrom;
-    if (options.createdAtTo) filters.createdAt.lte = options.createdAtTo;
+    if (options.createdAtFrom) {
+      filters.createdAt.gte = options.createdAtFrom;
+    }
+    if (options.createdAtTo) {
+      filters.createdAt.lte = options.createdAtTo;
+    }
   }
 
-  const searchConditions = options.searchTerm?.trim()
-    ? {
-        OR: [
-          {
-            branchName: {
-              contains: options.searchTerm,
-              mode: "insensitive" as const,
-            },
-          },
-          {
-            branchLocation: {
-              contains: options.searchTerm,
-              mode: "insensitive" as const,
-            },
-          },
-        ],
-      }
-    : {};
-
-  const where = {
-    ...filters,
-    ...searchConditions,
-  };
-
-  const finalLimit = options.searchTerm ? 5 : limit;
+  if (options.searchTerm) {
+    filters.OR = [
+      { branchName: { contains: options.searchTerm, mode: "insensitive" } },
+      { city: { contains: options.searchTerm, mode: "insensitive" } },
+      { state: { contains: options.searchTerm, mode: "insensitive" } },
+    ];
+  }
 
   const [data, total] = await Promise.all([
     db.branch.findMany({
-      where,
-      select: {
-        id: true,
-        branchName: true,
-        branchLocation: true,
-        createdAt: true,
-        departments: {
-          select: {
-            id: true,
-            departmentName: true,
-          },
-        },
-        users: {
-          select: {
-            id: true,
-            userName: true,
-            email: true,
-          },
-        },
-        assets: {
-          select: {
-            id: true,
-            assetName: true,
-            status: true,
-          },
-        },
-      },
+      where: filters,
       skip,
-      take: finalLimit,
-      orderBy: {
-        [sortBy]: sortType,
-      },
+      take: limit,
+      orderBy: { [sortBy]: sortType },
+      select: BranchKeys,
     }),
-    db.branch.count({ where }),
+    db.branch.count({ where: filters }),
   ]);
 
   return { data, total };
 };
+
 
 export default {
   createBranch,

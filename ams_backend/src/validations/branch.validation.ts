@@ -11,8 +11,11 @@ const createBranchValidation = {
       branchName: Joi.string().min(3).max(25).required().messages({
         "string.empty": "Branch name is required",
       }),
-      branchLocation: Joi.string().min(3).max(25).required().messages({
-        "string.empty": "Branch location is required",
+      state: Joi.string().min(2).max(25).required().messages({
+        "string.empty": "State is required",
+      }),
+      city: Joi.string().min(2).max(25).required().messages({
+        "string.empty": "City is required",
       }),
     })
     .min(1),
@@ -21,7 +24,8 @@ const createBranchValidation = {
 const getAllBranchesValidation = {
   query: Joi.object().keys({
     branchName: Joi.string().optional(),
-    branchLocation: Joi.string().optional(),
+    state: Joi.string().optional(),
+    city: Joi.string().optional(),
     branchId: Joi.string()
       .optional()
       .custom(isValidMongoDBObjectId)
@@ -56,7 +60,8 @@ const updateBranchValidation = {
   body: Joi.object()
     .keys({
       branchName: Joi.string().min(3).max(25).optional(),
-      branchLocation: Joi.string().min(3).max(25).optional(),
+      state: Joi.string().min(2).max(25).optional(),
+      city: Joi.string().min(2).max(25).optional(),
     })
     .min(1),
 };

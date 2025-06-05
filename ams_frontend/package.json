@@ -19,6 +19,7 @@
     "@mui/material": "^7.0.1",
     "@reduxjs/toolkit": "^2.5.0",
     "axios": "^1.7.9",
+    "country-state-city": "^3.2.1",
     "framer-motion": "^12.7.3",
     "lodash.debounce": "^4.0.8",
     "react": "^19.0.0",

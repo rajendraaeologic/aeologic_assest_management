@@ -19,7 +19,8 @@ const departmentStrings = {
       headers: {
         departmentName: "Department Name",
         branchName: "Branch Name",
-        branchLocation: "Branch Location",
+        state: "State",
+        city: "City",
         userName: "User Name",
         assetName: "Asset Name",
         assetStatus: "Asset Status",
@@ -29,7 +30,8 @@ const departmentStrings = {
       searchPlaceholders: {
         departmentName: "Department Name",
         branchName: "Branch Name",
-        branchLocation: "Branch Location",
+        state: "State",
+        city: "City",
         userName: "User Name",
         assetName: "Asset Name",
         status: "Asset Status",

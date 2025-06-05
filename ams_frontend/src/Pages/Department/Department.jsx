@@ -333,7 +333,8 @@ console.log(departments);
                   {[
                     departmentStrings.department.table.headers.departmentName,
                     departmentStrings.department.table.headers.branchName,
-                    departmentStrings.department.table.headers.branchLocation,
+                    departmentStrings.department.table.headers.state,
+                    departmentStrings.department.table.headers.city,
                     departmentStrings.department.table.headers.action,
                   ].map((header, idx) => (
                     <th
@@ -397,7 +398,11 @@ console.log(departments);
                               departmentStrings.department.notAvailable.emptyText}
                         </td>
                         <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                          {toSentenceCase(department.branch?.branchLocation) ||
+                          {toSentenceCase(department.branch?.state) ||
+                              departmentStrings.department.notAvailable.emptyText}
+                        </td>
+                        <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                          {toSentenceCase(department.branch?.city) ||
                               departmentStrings.department.notAvailable.emptyText}
                         </td>
 

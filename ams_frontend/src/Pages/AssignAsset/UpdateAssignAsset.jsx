@@ -25,7 +25,7 @@ const UpdateAssignAsset = ({ onClose }) => {
   const [noBranchesFound, setNoBranchesFound] = useState(false);
   const [noDeptsFound, setNoDeptsFound] = useState(false);
   const [noUsersFound, setNoUsersFound] = useState(false);
-  const [setNoAssetsFound] = useState(false);
+  const [noAssetsFound, setNoAssetsFound] = useState(false);
 
   // User dropdown state
   const [users, setUsers] = useState([]);
@@ -157,26 +157,31 @@ const UpdateAssignAsset = ({ onClose }) => {
   };
 
   const fetchAssetsByDepartmentId = async (page, search = "") => {
-    if (!departmentId) return;
+    if (!departmentId) {
+      setAssets([]);
+      return;
+    }
+
     try {
       setLoadingAssets(true);
       const response = await API.get(
-        `/assignAsset/${departmentId}/assets?page=${page}&limit=5&searchTerm=${search}`
+          `/assignAsset/${departmentId}/assets?page=${page}&limit=5&searchTerm=${search}`
       );
-      console.log("Assetbydept",response)
-      const {
-        data: {
-          data: { assets,pagination },
-        },
-      } = response;
-      setNoAssetsFound(assets.length === 0 && search !== "");
-      setAssets((prev) =>
-          page === 1 ? assets : [...prev, ...assets]
-      );
-      setAssetPage(page);
-      setHasMoreAssets(page < pagination.totalPages);
+
+      const { data } = response;
+
+      if (data && data.data) {
+        setNoAssetsFound(data.data.assets.length === 0 && search !== "");
+        setAssets(prev =>
+            page === 1 ? data.data.assets : [...prev, ...data.data.assets]
+        );
+        setAssetPage(page);
+        setHasMoreAssets(page < data.data.pagination.totalPages);
+      }
     } catch (error) {
       console.error("Error fetching assets", error);
+      setNoAssetsFound(true);
+      toast.error("Failed to fetch assets");
     } finally {
       setLoadingAssets(false);
     }

@@ -149,6 +149,7 @@ const AddAssignAsset = ({ onClose }) => {
       setLoadingAssets(false);
     }
   };
+
   useEffect(() => {
     if (departmentId) {
       setAssetSearchTerm("");

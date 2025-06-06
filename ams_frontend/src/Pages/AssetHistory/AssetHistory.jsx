@@ -15,7 +15,7 @@ import {
   FiHardDrive,
   FiInfo,
   FiChevronRight,
-  FiX,
+  FiX, FiRefreshCw,
 } from "react-icons/fi";
 import debounce from "lodash.debounce";
 import { useSelector, useDispatch } from "react-redux";
@@ -122,48 +122,6 @@ const statusConfig = {
     icon: <FiInfo className="text-gray-600" />,
   },
 };
-// 2. Enhanced function to find creation date with more debugging
-const getAssetCreationInfo = (asset, histories) => {
-  console.log('=== SEARCHING FOR CREATION DATE ===');
-
-  // Check asset fields
-  const dateFields = ['createdAt', 'created_at', 'createDate', 'date_created', 'dateCreated', 'timestamp'];
-  for (const field of dateFields) {
-    if (asset[field]) {
-      console.log(`Found creation date in asset.${field}:`, asset[field]);
-      return {date: asset[field], source: `asset.${field}`};
-    }
-  }
-// Check histories for CREATED action
-  if (histories && histories.length > 0) {
-    console.log('Checking histories for CREATED action...');
-    const createdHistory = histories.find(h => h.action === 'CREATED');
-    if (createdHistory) {
-      console.log('Found CREATED history:', createdHistory);
-      return { date: createdHistory.timestamp, source: 'history.CREATED' };
-    }
-
-    // Check for any creation-related actions
-    const creationActions = ['CREATED', 'CREATE', 'ADDED', 'REGISTERED'];
-    for (const action of creationActions) {
-      const history = histories.find(h => h.action === action);
-      if (history) {
-        console.log(`Found creation-related action ${action}:`, history);
-        return { date: history.timestamp, source: `history.${action}` };
-      }
-    }
-
-    // Use the oldest history as fallback
-    const sortedHistories = [...histories].sort((a, b) =>
-        new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
-    );
-    console.log('Using oldest history as fallback:', sortedHistories[0]);
-    return { date: sortedHistories[0].timestamp, source: 'history.oldest' };
-  }
-
-  console.log('No creation date found anywhere');
-  return null;
-};
 
 const formatDate = (dateString) => {
   if (!dateString) return "Date not available";
@@ -205,7 +163,7 @@ const TimelineEvent = ({ event, isLast, index }) => {
                 initial={{ height: 0 }}
                 animate={{ height: "100%" }}
                 transition={{ duration: 0.5, delay: index * 0.1 + 0.3 }}
-                className="absolute left-[-16px] top-6 w-0.5 bg-gradient-to-b from-gray-200 to-transparent"
+                className="absolute left-[-16px] top-6 w-0.5 bg-gray-300"
             />
         )}
 
@@ -229,8 +187,8 @@ const TimelineEvent = ({ event, isLast, index }) => {
             <div className="inline-block">
             <span className="font-medium capitalize flex items-center">
               {React.cloneElement(config.icon, { className: "mr-2" })}
-              {event.action.toLowerCase()}
-              {event.status && (
+              {event.action ? event.action.toLowerCase() : event.status.toLowerCase()}
+              {event.status && event.action !== event.status && (
                   <span
                       className={`ml-2 text-xs px-2 py-1 rounded-full ${config.bgColor} ${config.textColor}`}
                   >
@@ -262,10 +220,21 @@ const TimelineEvent = ({ event, isLast, index }) => {
                 </motion.div>
                 <div>
               <span className="text-sm text-gray-600 block">
-                {event.user.userName}
+                {event.user.userName || event.user.userName || "Unknown User"}
               </span>
-                  <span className="text-xs text-gray-400">{event.user.email}</span>
+                  <span className="text-xs text-gray-400">{event.user.email || "No email"}</span>
                 </div>
+              </motion.div>
+          )}
+
+          {event.description && (
+              <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: index * 0.1 + 0.35 }}
+                  className="mt-2 text-sm text-gray-600 bg-gray-50 p-2 rounded"
+              >
+                {event.description}
               </motion.div>
           )}
         </div>
@@ -353,7 +322,9 @@ const AssetHistory = () => {
 
   const groupedHistories = useCallback(() => {
     if (!histories || histories.length === 0) return [];
+
     const grouped = {};
+
     histories.forEach((history) => {
       if (!history.asset || !history.asset.id) return;
 
@@ -365,28 +336,59 @@ const AssetHistory = () => {
       }
       grouped[history.asset.id].histories.push(history);
     });
-    Object.keys(grouped).forEach((assetId) => {
-      grouped[assetId].histories.sort(
-          (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+
+    // Sort each asset's histories by timestamp (oldest first for timeline)
+    Object.values(grouped).forEach(group => {
+      group.histories.sort((a, b) =>
+          new Date(a.timestamp || a.createdAt).getTime() - new Date(b.timestamp || b.createdAt).getTime()
       );
     });
+
     return Object.values(grouped);
   }, [histories]);
 
   const displayedGroupedHistories = groupedHistories();
 
-
-  const getLatestAction = (latestHistory) => {
+  const getLatestAction = (latestHistory, currentStatus) => {
     if (!latestHistory) return "No recent actions";
+
+    // If current status exists, use that to determine the last action
+    if (currentStatus) {
+      switch (currentStatus) {
+        case "LOST":
+          return "Asset marked as lost";
+        case "UNASSIGNED":
+          return `Asset unassigned from ${latestHistory.user.userName}`;
+        case "ASSIGNED":
+          return `Assigned to ${latestHistory.user.userName}`;
+        case "ACTIVE":
+          return "Asset activated";
+        case "IN_ACTIVE":
+          return "Asset deactivated";
+        case "IN_USE":
+          return "Asset put in use";
+        case "UNDER_MAINTENANCE":
+          return "Asset marked as under maintenance";
+        case "RETIRED":
+          return "Asset retired";
+        case "DAMAGED":
+          return "Asset marked as damaged";
+        case "IN_REPAIR":
+          return "Asset sent for repair";
+        case "DISPOSED":
+          return "Asset disposed";
+        default:
+          return currentStatus.toLowerCase();
+      }
+    }
+
     switch (latestHistory.action) {
       case "ASSIGNED":
-        return `Assigned to ${latestHistory.user?.name || "user"}`;
+        return `Assigned to ${latestHistory.user?.userName || latestHistory.user?.name || "user"}`;
       case "UNASSIGNED":
         return "Unassigned from previous user";
       case "STATUS_CHANGE":
-        return `Status changed to ${
-            latestHistory.status?.toLowerCase() || "new status"
-        }`;
+        return `Status changed to ${latestHistory.status?.toLowerCase() || "new status"}`;
       case "CREATED":
         return "Asset created";
       case "UPDATED":
@@ -404,19 +406,53 @@ const AssetHistory = () => {
       case "UNDER_MAINTENANCE":
         return "Asset marked as under_maintenance";
       default:
-        return latestHistory.action.toLowerCase();
+        return latestHistory.action?.toLowerCase() || "Unknown action";
+    }
+  };
+  const handleViewDetails = async (assetData) => {
+    try {
+      setShowTimeline(true);
+      setSelectedAsset(assetData); // Show existing data immediately
+
+      const result = await dispatch(getAssetHistoriesByAssetId({
+        assetId: assetData.asset.id,
+        limit: 100,
+        page: 1,
+      }));
+
+      if (result.payload && result.payload.data) {
+        setSelectedAsset(prev => ({
+          ...prev,
+          histories: Array.isArray(result.payload.data) ?
+              result.payload.data :
+              result.payload.data.histories || []
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching asset histories:", error);
     }
   };
 
-  const handleViewDetails = (assetData) => {
-    setSelectedAsset(assetData);
-    setShowTimeline(true);
-    dispatch(getAssetHistoriesByAssetId({
-      assetId: assetData.asset.id,
-      limit: 5,
-      page: 1,
-    }));
-  };
+  useEffect(() => {
+    if (selectedAsset && showTimeline) {
+      const updatedAsset = histories.find(
+          h => h.asset?.id === selectedAsset.asset.id
+      )?.asset;
+
+      if (updatedAsset) {
+        setSelectedAsset(prev => {
+          if (prev.asset.id === updatedAsset.id &&
+              JSON.stringify(prev.asset) === JSON.stringify(updatedAsset)) {
+            return prev;
+          }
+          return {
+            ...prev,
+            asset: updatedAsset
+          };
+        });
+      }
+    }
+  }, [histories, selectedAsset?.asset.id, showTimeline]);
 
   const closeTimeline = () => {
     setShowTimeline(false);
@@ -426,6 +462,7 @@ const AssetHistory = () => {
   const handlePageChange = (newPage) => {
     dispatch(setCurrentPage(newPage));
   };
+
   return (
       <div
           className={`w-full min-h-screen bg-slate-100 px-2 ${
@@ -568,19 +605,29 @@ const AssetHistory = () => {
                             } hover:bg-gray-200 divide-y divide-gray-300`}
                         >
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {asset.assetName }
+                            {asset.assetName}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {asset.status}
+                            <span
+                                className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                    statusConfig[asset.status]?.bgColor ||
+                                    "bg-gray-100"
+                                } ${
+                                    statusConfig[asset.status]?.textColor ||
+                                    "text-gray-800"
+                                }`}
+                            >
+                              {asset.status}
+                            </span>
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {asset.branch?.branchName }
+                            {asset.branch?.branchName || "N/A"}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {asset.department?.departmentName }
+                            {asset.department?.departmentName || "N/A"}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {getLatestAction(histories[0])}
+                            {getLatestAction(histories[0], asset.status)}
                           </td>
                           {/* Action Buttons */}
                           <td className="px-2 py-2 border border-gray-300 text-center">
@@ -593,7 +640,6 @@ const AssetHistory = () => {
                               </button>
                             </div>
                           </td>
-
                         </tr>
                     ))
                 )}
@@ -633,20 +679,30 @@ const AssetHistory = () => {
                       <FiClock className="mr-2" />
                       Timeline History
                     </h2>
-                    <button
-                        onClick={closeTimeline}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                    >
-                      <FiX className="h-5 w-5 text-gray-500" />
-                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                          onClick={() => handleViewDetails(selectedAsset)}
+                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                          title="Refresh"
+                      >
+                        <FiRefreshCw className="h-5 w-5 text-gray-500" />
+                      </button>
+                      <button
+                          onClick={closeTimeline}
+                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                      >
+                        <FiX className="h-5 w-5 text-gray-500" />
+                      </button>
+                    </div>
                   </div>
                   <div className="mt-2">
                     <h3 className="font-medium text-gray-800 flex items-center">
                       <FiTag className="mr-2" />
-                      {selectedAsset.asset.assetName}
+                      Asset Name: {selectedAsset.asset.assetName}
                     </h3>
                     <p className="text-sm text-gray-500">
-                      ID: {selectedAsset.asset.uniqueId}
+                      Unique ID: {selectedAsset.asset.uniqueId}
                     </p>
                   </div>
                 </div>
@@ -659,14 +715,7 @@ const AssetHistory = () => {
                       Asset Details
                     </h4>
                     <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-                      {selectedAsset.asset.company?.organizationName && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Organization:</span>
-                            <span className="text-gray-800 font-medium">
-                        {selectedAsset.asset.company.organizationName}
-                      </span>
-                          </div>
-                      )}
+
                       {selectedAsset.asset.branch?.branchName && (
                           <div className="flex justify-between text-sm">
                             <span className="text-gray-600">Branch:</span>
@@ -707,36 +756,16 @@ const AssetHistory = () => {
                       History Timeline
                     </h4>
                     <div className="border-l-2 border-gray-200 pl-4 ml-2">
-                      {selectedAsset.histories.length > 0 ? (
+                      {selectedAsset.histories && selectedAsset.histories.length > 0 ? (
                           <>
                             {selectedAsset.histories.map((history, index) => (
                                 <TimelineEvent
-                                    key={history.id}
+                                    key={history.id || index}
                                     event={history}
                                     isLast={index === selectedAsset.histories.length - 1}
                                     index={index}
                                 />
                             ))}
-                            {(() => {
-                              const creationDate = getAssetCreationInfo(selectedAsset.asset, selectedAsset.histories);
-                              return creationDate ? (
-                                  <div className="relative">
-                                    <div className="absolute left-[-26px] top-1 h-5 w-5 rounded-full bg-indigo-500 flex items-center justify-center">
-                                      <FiLayers className="h-3 w-3 text-white" />
-                                    </div>
-                                    <div className="pl-6">
-                                      <p className="text-xs text-gray-500 flex items-center">
-                                        <FiCalendar className="mr-1" />
-                                        {formatDate(creationDate)}
-                                      </p>
-                                      <p className="font-medium flex items-center">
-                                        <FiLayers className="mr-2" />
-                                        ASSET CREATED
-                                      </p>
-                                    </div>
-                                  </div>
-                              ) : null;
-                            })()}
                           </>
                       ) : (
                           <p className="text-gray-500 text-sm italic">

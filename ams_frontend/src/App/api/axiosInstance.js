@@ -1,6 +1,5 @@
 import axios from "axios";
 import { setCredentials, logOut } from "../../Features/auth/authSlice";
-import {API_URL} from "./config.js";
 
 let storeInstance;
 
@@ -9,59 +8,76 @@ export const injectStore = (store) => {
 };
 
 const API = axios.create({
-  baseURL: API_URL,
+  // baseURL: "http://localhost:3000/api/v1",
+    baseURL: "http://ec2-3-93-185-33.compute-1.amazonaws.com:3000/api/v1",
+    withCredentials: true,
 });
 
 API.interceptors.request.use(
-  (config) => {
-    if (storeInstance) {
-      const state = storeInstance.getState();
-      const token = state.auth.token;
-      if (token) {
-        config.headers["Authorization"] = `Bearer ${token}`;
-      }
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
+    async (config) => {
+        if (storeInstance) {
+            let token = storeInstance.getState().auth.token;
+            if (!token) {
+                token = localStorage.getItem('accessToken');
+                if (token) {
+                    storeInstance.dispatch(setCredentials({ accessToken: token }));
+                }
+            }
+
+            if (token) {
+                config.headers["Authorization"] = `Bearer ${token}`;
+            }
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
 );
 
 API.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    if (!storeInstance) return Promise.reject(error);
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
 
-    const originalRequest = error.config;
+        if ([401, 403].includes(error.response?.status) && !originalRequest._retry) {
+            originalRequest._retry = true;
 
-    if (error.response?.status === 403 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      try {
+            try {
+                // Attempt to refresh tokens
+        // const refreshResponse = await axios.get(
+        //   "http://localhost:3000/api/v1/auth/refresh",
+        //   { withCredentials: true }
+        // );
         const refreshResponse = await axios.get(
-          `${API_URL}/auth/refresh`,
+          "http://ec2-3-93-185-33.compute-1.amazonaws.com:3000/api/v1/auth/refresh",
           { withCredentials: true }
         );
 
-        if (!refreshResponse.data.accessToken) {
-          throw new Error("Refresh token expired");
+            if (!refreshResponse.data?.access?.token) {
+                throw new Error("Invalid refresh response");
+            }
+
+            const newAccessToken = refreshResponse.data.access.token;
+
+            storeInstance.dispatch(
+                setCredentials({
+                    accessToken: newAccessToken,
+                    user: storeInstance.getState().auth.user
+                })
+            );
+            localStorage.setItem('accessToken', newAccessToken);
+
+                originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+                return API(originalRequest);
+            } catch (refreshError) {
+                localStorage.removeItem('accessToken');
+                storeInstance.dispatch(logOut());
+                window.location.href = '/login';
+                return Promise.reject(refreshError);
+            }
         }
 
-        const newAccessToken = refreshResponse.data.accessToken;
-        const state = storeInstance.getState();
-
-        storeInstance.dispatch(
-          setCredentials({ accessToken: newAccessToken, user: state.auth.user })
-        );
-
-        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
-        return API(originalRequest);
-      } catch (refreshError) {
-        storeInstance.dispatch(logOut());
-        return Promise.reject(refreshError);
-      }
+        return Promise.reject(error);
     }
-
-    return Promise.reject(error);
-  }
 );
 
 export default API;

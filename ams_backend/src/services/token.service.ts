@@ -54,10 +54,18 @@ const verifyToken = async (token: string, type: TokenType): Promise<Token> => {
 };
 
 const generateAuthTokens = async (user: { id: string }): Promise<AuthTokensResponse> => {
-  const accessTokenExpires = moment().add(config.jwt.accessExpirationDays, 'days');
+  // const accessTokenExpires = moment().add(config.jwt.accessExpirationDays, 'days');
+  // const accessToken = generateToken(user.id, accessTokenExpires, TokenType.ACCESS);
+  //
+  // const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
+  // const refreshToken = generateToken(user.id, refreshTokenExpires, TokenType.REFRESH);
+
+  // Access token expires in 5 minutes
+  const accessTokenExpires = moment().add(5, 'minutes');
   const accessToken = generateToken(user.id, accessTokenExpires, TokenType.ACCESS);
 
-  const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, 'days');
+  // Refresh token expires in 7 days
+  const refreshTokenExpires = moment().add(7, 'days');
   const refreshToken = generateToken(user.id, refreshTokenExpires, TokenType.REFRESH);
   await saveToken(refreshToken, user.id, refreshTokenExpires, TokenType.REFRESH);
 

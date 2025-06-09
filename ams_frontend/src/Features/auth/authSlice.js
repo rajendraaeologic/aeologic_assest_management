@@ -1,74 +1,56 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import API from "../../App/api/axiosInstance";
 
-//loginUser
 
+// Login User
 export const loginUser = createAsyncThunk(
-  "auth/login",
-  async (credentials, { rejectWithValue, dispatch }) => {
-    try {
-      const response = await API.post("/auth/login", credentials);
-      console.log("Login API Response:", response);
+    "auth/login",
+    async (credentials, { rejectWithValue, dispatch }) => {
+      try {
+        const response = await API.post("/auth/login", credentials);
+        console.log(response);
 
-      if (
-        !response.data ||
-        !response.data.data.tokens ||
-        !response.data.data.tokens.access ||
-        !response.data.data.tokens.refresh
-      ) {
-        return rejectWithValue("Invalid login response");
+        if (!response.data?.data?.tokens?.access) {
+          return rejectWithValue("Invalid login response");
+        }
+
+        const { tokens, user } = response.data.data;
+        const { access } = tokens;
+
+        localStorage.setItem('accessToken', access.token);
+        dispatch(setCredentials({
+          accessToken: access.token,
+          user
+        }));
+
+        return access.token;
+      } catch (error) {
+        return rejectWithValue(error.response?.data?.message || "Login failed");
       }
-
-      const { tokens, user } = response.data.data;
-
-      dispatch(
-        setCredentials({
-          accessToken: tokens.access.token,
-          refreshToken: tokens.refresh.token,
-          user,
-        })
-      );
-
-      return tokens.access.token;
-    } catch (error) {
-      console.error("Login Thunk Error:", error);
-      return rejectWithValue(error.response?.data?.message || "Login failed");
     }
-  }
 );
-//logoutUser
+
+
+// Logout User
 export const logoutUser = createAsyncThunk(
-  "auth/logout",
-  async (persistor, { rejectWithValue, dispatch, getState }) => {
-    try {
-      const { refreshToken } = getState().auth;
+    "auth/logout",
+    async (_, { rejectWithValue, dispatch }) => {
+      try {
+        await API.post("/auth/logout");
 
-      if (!refreshToken) {
-        throw new Error("No refresh token available");
+        localStorage.removeItem('accessToken');
+        dispatch(logOut());
+
+        return true;
+      } catch (error) {
+        localStorage.removeItem('accessToken');
+        dispatch(logOut());
+        return rejectWithValue(error.message);
       }
-
-      await API.post("/auth/logout", {
-        refreshToken: refreshToken,
-      });
-
-      dispatch(logOut());
-
-      await persistor.purge();
-
-      delete API.defaults.headers.common["Authorization"];
-
-      return true;
-    } catch (error) {
-      console.error("Logout error:", error);
-
-      dispatch(logOut());
-      await persistor.purge();
-      delete API.defaults.headers.common["Authorization"];
-
-      return rejectWithValue(error.response?.data?.message || error.message);
     }
-  }
 );
+
+
 //refreshToken
 export const refreshToken = createAsyncThunk(
   "auth/refreshToken",
@@ -84,27 +66,30 @@ export const refreshToken = createAsyncThunk(
   }
 );
 
+
+// Initialize auth state from localStorage
+const initializeState = () => {
+  const accessToken = localStorage.getItem('accessToken');
+  return {
+    user: null,
+    token: accessToken,
+    loading: false,
+    error: null
+  };
+};
+
 const authSlice = createSlice({
   name: "auth",
-  initialState: {
-    user: null,
-    token: null,
-    refreshToken: null,
-    loading: false,
-    error: null,
-  },
+  initialState: initializeState(),
   reducers: {
     setCredentials: (state, action) => {
       state.user = action.payload.user;
       state.token = action.payload.accessToken;
-      state.refreshToken = action.payload.refreshToken;
-      console.log("user", state.user);
     },
     logOut: (state) => {
       state.user = null;
       state.token = null;
-      state.refreshToken = null;
-    },
+    }
   },
   extraReducers: (builder) => {
     builder

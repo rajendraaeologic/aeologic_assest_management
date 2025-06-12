@@ -78,30 +78,20 @@ const logout = catchAsync(async (req, res) => {
 // });
 
 const refreshTokens = catchAsync(async (req, res) => {
-  const refreshToken = req.cookies.refreshToken;
+  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
+
+  console.log('Received cookies:', req.cookies);
+
   if (!refreshToken) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Authentication required');
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'No refresh token provided');
   }
 
-  try {
-    const tokens = await authService.refreshAuth(refreshToken);
+  const tokens = await authService.refreshAuth(refreshToken);
 
-    res.cookie('refreshToken', tokens.refresh.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.send({
-      access: tokens.access
-    });
-  } catch (error) {
-    res.clearCookie('refreshToken');
-    throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid or expired refresh token');
-  }
+  res.status(httpStatus.OK).send({
+    access: tokens.access,
+  });
 });
-
 
 const forgotPassword = catchAsync(async (req, res) => {
   const resetPasswordToken = await tokenService.generateResetPasswordToken(

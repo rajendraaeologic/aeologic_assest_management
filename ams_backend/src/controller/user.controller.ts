@@ -471,6 +471,9 @@ export const getUsers = catchAsync(async (req, res) => {
     "from_date",
     "to_date",
     "searchTerm",
+    "department",
+    "organization",
+    "branch"
   ]);
 
   let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 5;
@@ -486,6 +489,31 @@ export const getUsers = catchAsync(async (req, res) => {
   if (rawFilters.userName) {
     filters.userName = { contains: rawFilters.userName, mode: "insensitive" };
   }
+  if (rawFilters.userRole) {
+    filters.userRole = rawFilters.userRole;
+  }
+  if (rawFilters.status) {
+    filters.status = rawFilters.status;
+  }
+
+  if (rawFilters.organization) {
+    filters.company = {
+      organizationName: { contains: rawFilters.organization, mode: "insensitive" },
+    };
+  }
+
+  if (rawFilters.branch) {
+    filters.branch = {
+      branchName: { contains: rawFilters.branch, mode: "insensitive" },
+    };
+  }
+
+  if (rawFilters.department) {
+    filters.department = {
+      departmentName: { contains: rawFilters.department, mode: "insensitive" },
+    };
+  }
+
 
   const searchTerm = (rawFilters.searchTerm as string)?.trim();
   const isSearchMode = !!searchTerm;

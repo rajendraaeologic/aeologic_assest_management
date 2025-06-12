@@ -53,10 +53,11 @@ export const logoutUser = createAsyncThunk(
 
 //refreshToken
 export const refreshToken = createAsyncThunk(
-  "auth/refreshToken",
+  "auth/refresh-tokens",
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      const response = await API.get("/refresh");
+      console.log("ssdfsdfds")
+      const response = await API.get("/refresh-tokens");
       dispatch(setCredentials(response.data));
       return response.data.accessToken;
     } catch (error) {

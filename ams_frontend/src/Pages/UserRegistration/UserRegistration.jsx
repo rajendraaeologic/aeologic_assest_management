@@ -35,7 +35,10 @@ import { deleteUser, setSearchTerm } from "../../Features/slices/userSlice";
 import userStrings from "../../locales/userStrings";
 import DownloadTemplateButton from "./DownloadTemplateButton";
 import debounce from "lodash.debounce";
-import {resetBranchTableState} from "../../Features/slices/branchSlice.js";
+import TableFilterDropdown from "../../components/common/TableFilterDropdown.jsx";
+import {getAllOrganizations} from "../../Features/slices/organizationSlice.js";
+import {getAllBranches} from "../../Features/slices/branchSlice.js";
+import {getAllDepartments} from "../../Features/slices/departmentSlice.js";
 
 const UserRegistration = () => {
   const dispatch = useDispatch();
@@ -53,6 +56,7 @@ const UserRegistration = () => {
     searchTerm,
     loading,
     error,
+    filters
   } = useSelector((state) => state.usersData);
 
   const [isAddUserFormOpen, setIsAddUserFormOpen] = useState(false);
@@ -68,6 +72,9 @@ const UserRegistration = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const [isSearching, setIsSearching] = useState(false);
+  const { organizations } = useSelector((state) => state.organizationData);
+  const { branches } = useSelector((state) => state.branchData);
+  const { departments } = useSelector((state) => state.departmentData);
 
   const options = ["5", "10", "25", "50", "100"];
 
@@ -90,14 +97,18 @@ const UserRegistration = () => {
   }, [searchTerm]);
 
   useEffect(() => {
-    dispatch(
-      getAllUsers({
-        page: currentPage,
-        limit: rowsPerPage,
-        searchTerm: searchTerm.trim(),
-      })
-    );
-  }, [dispatch, currentPage, rowsPerPage, searchTerm]);
+    const commonPayload = {
+      page: currentPage,
+      limit: rowsPerPage,
+      searchTerm: searchTerm.trim(),
+      filters: filters,
+    };
+
+    dispatch(getAllUsers(commonPayload));
+    dispatch(getAllOrganizations(commonPayload));
+    dispatch(getAllDepartments(commonPayload));
+    dispatch(getAllBranches(commonPayload));
+  }, [dispatch, currentPage, rowsPerPage, searchTerm, filters]);
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -353,6 +364,48 @@ const UserRegistration = () => {
               <p>{userStrings.user.table.entries}</p>
             </div>
 
+            <div className="flex items-center gap-2">
+              {/* Status Filter */}
+              <TableFilterDropdown
+                  filterType="status"
+                  options={['ACTIVE', 'IN_ACTIVE']}
+              />
+
+              {/* User Role Filter */}
+              <TableFilterDropdown
+                  filterType="userRole"
+                  options={['USER', 'MANAGER', 'ADMIN']}
+              />
+
+              {/* Organization Filter */}
+              <TableFilterDropdown
+                  filterType="organization"
+                  options={organizations?.map(org => ({
+                    value: org.id,
+                    label: org.organizationName
+                  }))}
+              />
+
+              {/* Branch Filter */}
+              <TableFilterDropdown
+                  filterType="branch"
+                  options={branches?.map(branch => ({
+                    value: branch.id,
+                    label: branch.branchName
+                  }))}
+              />
+
+              {/* Department Filter */}
+              <TableFilterDropdown
+                  filterType="department"
+                  options={departments?.map(dept => ({
+                    value: dept.id,
+                    label: dept.departmentName
+                  }))}
+              />
+
+
+            </div>
             {/* Right side: Search bar */}
             <div className="relative">
               <input

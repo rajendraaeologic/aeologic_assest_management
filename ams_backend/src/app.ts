@@ -19,6 +19,8 @@ import { morganLogger } from "@/middleware/morganLogger.middleware";
 import path from "path";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "@/config/swagger";
+import cookieParser from "cookie-parser";
+
 
 const app = express();
 app.set("trust proxy", 1);
@@ -32,8 +34,8 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(express.urlencoded({ extended: true }));
 
 app.use(express.json());
-
-// gzip compression
+app.use(cookieParser());
+// gzip compressionx
 app.use(compression());
 
 // enable cors

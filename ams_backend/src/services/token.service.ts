@@ -30,7 +30,7 @@ const saveToken = async (
   type: TokenType,
   blacklisted: boolean = false
 ): Promise<Token> => {
-  return db.token.create({
+  const createdToken = await db.token.create({
     data: {
       token,
       userId: userId,
@@ -39,16 +39,42 @@ const saveToken = async (
       blacklisted
     }
   });
+
+  if (type === TokenType.REFRESH) {
+    await db.token.deleteMany({
+      where: {
+        userId,
+        type: TokenType.REFRESH,
+        id: { not: createdToken.id },
+        expires: { lt: new Date() }
+      }
+    });
+  }
+
+  return createdToken;
 };
 
 const verifyToken = async (token: string, type: TokenType): Promise<Token> => {
-  const payload = jwt.verify(token, config.jwt.secret);
+  let payload: any;
+  try {
+    payload = jwt.verify(token, config.jwt.secret);
+  } catch (error) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Invalid token');
+  }
+
   const userId = String(payload.sub);
   const tokenData = await db.token.findFirst({
-    where: { token, type, userId, blacklisted: false }
+    where: {
+      token,
+      type,
+      userId,
+      blacklisted: false,
+      expires: { gt: new Date() }
+    }
   });
+
   if (!tokenData) {
-    throw new Error('Token not found');
+    throw new ApiError(httpStatus.UNAUTHORIZED, 'Token not found or expired');
   }
   return tokenData;
 };

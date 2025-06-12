@@ -23,20 +23,18 @@ export const createUser = createAsyncThunk(
 // Get All Users
 
 export const getAllUsers = createAsyncThunk(
-  "user/getAll",
-  async ({ limit = 5, page = 1, searchTerm = "" }, { rejectWithValue }) => {
-    try {
-      const response = await getAllUsersService({ limit, page, searchTerm });
-     console.log(response);
-      return response.data.data || [];
-    } catch (error) {
-      return rejectWithValue(
-        error.response?.data?.message || "Failed to fetch users"
-      );
+    "user/getAll",
+    async ({ limit = 5, page = 1, searchTerm = "", filters = {} }, { rejectWithValue }) => {
+      try {
+        const response = await getAllUsersService({ limit, page, searchTerm, ...filters });
+        return response.data.data || [];
+      } catch (error) {
+        return rejectWithValue(
+            error.response?.data?.message || "Failed to fetch users"
+        );
+      }
     }
-  }
 );
-
 // Update User
 export const updateUser = createAsyncThunk(
   "user/update",
@@ -84,6 +82,9 @@ const userSlice = createSlice({
   name: "user",
   initialState: {
     users: [],
+    organizations: [],
+    branches: [],
+    departments: [],
     loading: false,
     error: null,
     selectedUser: null,
@@ -93,8 +94,14 @@ const userSlice = createSlice({
     totalUsers: 0,
     totalPages: 0,
     searchTerm: "",
+    filters: {},
   },
   reducers: {
+    setFilters: (state, action) => {
+      state.filters = action.payload;
+      state.currentPage = 1;
+    },
+
     setSelectedUser: (state, action) => {
       state.selectedUser = action.payload;
     },
@@ -180,6 +187,9 @@ const userSlice = createSlice({
       .addCase(getAllUsers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        state.users = [];
+        state.totalUsers = 0;
+        state.totalPages = 1;
       })
       .addCase(updateUser.pending, (state) => {
         state.loading = true;
@@ -217,6 +227,7 @@ const userSlice = createSlice({
 });
 
 export const {
+  setFilters,
   setSelectedUser,
   setCurrentPage,
   setRowsPerPage,

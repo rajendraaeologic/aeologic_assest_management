@@ -102,25 +102,54 @@ import db from "@/lib/db";
 
 const createDepartment = catchAsync(async (req, res) => {
   const user = req.user as User;
+
+  if (!user) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "User not authenticated");
+  }
+
+  if (!req.body.departmentName || !req.body.branchId) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Missing required fields");
+  }
+
+  const branch = await db.branch.findUnique({
+    where: { id: req.body.branchId, deleted: false },
+  });
+
+  if (!branch) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid Branch ID");
+  }
+
+  let companyId: string;
+  if (user.userRole === UserRole.SUPERADMIN) {
+    companyId = req.body.companyId || branch.companyId;
+  } else {
+    if (!user.companyId) {
+      throw new ApiError(httpStatus.FORBIDDEN, "User is not associated with any company");
+    }
+    if (branch.companyId !== user.companyId) {
+      throw new ApiError(httpStatus.FORBIDDEN, "Branch doesn't belong to your company");
+    }
+    companyId = user.companyId;
+  }
+
   try {
     const department = await departmentService.createDepartment({
       departmentName: req.body.departmentName,
       branchId: req.body.branchId,
-      companyId: user.companyId,
+      companyId: companyId,
     } as Department);
 
     res.status(httpStatus.CREATED).send({
       status: httpStatus.CREATED,
       success: true,
       message: "Department Created Successfully",
-      data: {
-        department,
-      },
+      data: department,
     });
   } catch (error) {
-    throw new ApiError(httpStatus.BAD_REQUEST, error.message);
+    throw new ApiError(httpStatus.CONFLICT, error.message);
   }
 });
+
 /**
  * @swagger
  * /department/getAllDepartments:
@@ -193,15 +222,19 @@ const createDepartment = catchAsync(async (req, res) => {
  *         description: No departments found
  */
 
-export const getAllDepartments = catchAsync(async (req, res) => {
+const getAllDepartments = catchAsync(async (req, res) => {
   const user = req.user as User;
+
+  if (!user) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "User not authenticated");
+  }
+
   const rawFilters = pick(req.query, [
     "departmentName",
-    "location",
-    "branchId",
     "companyId",
-    "from_date",
-    "to_date",
+    "branchId",
+    "createdAtFrom",
+    "createdAtTo",
     "searchTerm",
   ]);
 
@@ -214,10 +247,11 @@ export const getAllDepartments = catchAsync(async (req, res) => {
 
   const filters: any = {};
 
-  if (rawFilters.from_date || rawFilters.to_date) {
+  if (rawFilters.createdAtFrom || rawFilters.createdAtTo) {
     filters.createdAt = {};
-    if (rawFilters.from_date) filters.createdAt.gte = rawFilters.from_date;
-    if (rawFilters.to_date) filters.createdAt.lte = rawFilters.to_date;
+    if (rawFilters.createdAtFrom)
+      filters.createdAt.gte = rawFilters.createdAtFrom;
+    if (rawFilters.createdAtTo) filters.createdAt.lte = rawFilters.createdAtTo;
   }
 
   if (rawFilters.departmentName) {
@@ -228,6 +262,21 @@ export const getAllDepartments = catchAsync(async (req, res) => {
     limit = 1;
     sortBy = "createdAt";
     sortType = "desc";
+  }
+
+  if (user.userRole === UserRole.SUPERADMIN) {
+    if (rawFilters.companyId) {
+      filters.companyId = rawFilters.companyId;
+    }
+  } else {
+    if (!user.companyId) {
+      throw new ApiError(httpStatus.FORBIDDEN, "User is not associated with any company");
+    }
+    filters.companyId = user.companyId;
+
+    if (rawFilters.companyId && rawFilters.companyId !== user.companyId) {
+      throw new ApiError(httpStatus.FORBIDDEN, "Access to this company's data is forbidden");
+    }
   }
 
   if (rawFilters.branchId) {
@@ -244,7 +293,7 @@ export const getAllDepartments = catchAsync(async (req, res) => {
   }
 
   const searchConditions = searchTerm
-    ? {
+      ? {
         OR: [
           {
             departmentName: {
@@ -254,21 +303,12 @@ export const getAllDepartments = catchAsync(async (req, res) => {
           },
         ],
       }
-    : {};
-
-  let branchIds: string[] = [];
-  if (user.userRole !== UserRole.SUPERADMIN) {
-    const companyBranches = await db.branch.findMany({
-      where: { companyId: user.companyId },
-      select: { id: true }
-    });
-    branchIds = companyBranches.map(branch => branch.id);
-  }
+      : {};
 
   const where = {
     ...filters,
     ...searchConditions,
-    ...(user.userRole !== UserRole.SUPERADMIN ? { branchId: { in: branchIds } } : {})
+    deleted: false,
   };
 
   const options = {
@@ -352,7 +392,8 @@ export const getAllDepartments = catchAsync(async (req, res) => {
  */
 
 const getDepartmentById = catchAsync(async (req, res) => {
-  const department = await departmentService.getDepartmentById(req.params.id);
+  const user = req.user as User;
+  const department = await departmentService.getDepartmentById(req.params.departmentId);
 
   if (!department) {
     res.status(httpStatus.OK).json({
@@ -365,6 +406,11 @@ const getDepartmentById = catchAsync(async (req, res) => {
     });
     return;
   }
+
+  if (user.userRole !== UserRole.SUPERADMIN && department.companyId !== user.companyId) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Access to this department is forbidden");
+  }
+
   res.status(httpStatus.OK).json({
     status: httpStatus.OK,
     success: true,

@@ -5,6 +5,7 @@ import {Branch, User, UserRole} from "@prisma/client";
 import branchService from "@/services/branch.service";
 import { applyDateFilter } from "@/utils/filters.utils";
 import pick from "@/lib/pick";
+import db from "@/lib/db";
 
 /**
  * @swagger
@@ -120,21 +121,38 @@ import pick from "@/lib/pick";
  */
 const createBranch = catchAsync(async (req, res) => {
   const user = req.user as User;
+
+  if (!user) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "User not authenticated");
+  }
+
+  let companyId = user.companyId;
+  if (user.userRole === UserRole.SUPERADMIN && req.body.companyId) {
+    companyId = req.body.companyId;
+  } else if (user.userRole !== UserRole.SUPERADMIN) {
+    if (!user.companyId) {
+      throw new ApiError(httpStatus.FORBIDDEN, "User is not associated with any company");
+    }
+    companyId = user.companyId;
+  }
+
+  if (!req.body.branchName || !req.body.state || !req.body.city) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Missing required fields");
+  }
+
   try {
     const branch = await branchService.createBranch({
       branchName: req.body.branchName,
       state: req.body.state,
       city: req.body.city,
-      companyId: user.companyId,
+      companyId: companyId,
     } as Branch);
 
     res.status(httpStatus.CREATED).send({
       status: httpStatus.CREATED,
       success: true,
       message: "Branch Created Successfully",
-      data: {
-        branch,
-      },
+      data: branch,
     });
   } catch (error) {
     throw new ApiError(httpStatus.CONFLICT, error.message);
@@ -214,6 +232,11 @@ const createBranch = catchAsync(async (req, res) => {
  */
 export const getAllBranches = catchAsync(async (req, res) => {
   const user = req.user as User;
+
+  if (!user) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "User not authenticated");
+  }
+
   const rawFilters = pick(req.query, [
     "branchName",
     "state",
@@ -250,9 +273,21 @@ export const getAllBranches = catchAsync(async (req, res) => {
     sortType = "desc";
   }
 
-  if (rawFilters.companyId) {
-    filters.companyId = rawFilters.companyId;
+  if (user.userRole === UserRole.SUPERADMIN) {
+    if (rawFilters.companyId) {
+      filters.companyId = rawFilters.companyId;
+    }
+  } else {
+    if (!user.companyId) {
+      throw new ApiError(httpStatus.FORBIDDEN, "User is not associated with any company");
+    }
+    filters.companyId = user.companyId;
+
+    if (rawFilters.companyId && rawFilters.companyId !== user.companyId) {
+      throw new ApiError(httpStatus.FORBIDDEN, "Access to this company's data is forbidden");
+    }
   }
+
   if (rawFilters.state) {
     filters.state = {
       contains: rawFilters.state,
@@ -277,17 +312,21 @@ export const getAllBranches = catchAsync(async (req, res) => {
   }
 
   const searchConditions = searchTerm
-    ? {
+      ? {
         OR: [
           {
             branchName: {
               contains: searchTerm,
               mode: "insensitive",
             },
+          },
+          {
             state: {
               contains: searchTerm,
               mode: "insensitive",
             },
+          },
+          {
             city: {
               contains: searchTerm,
               mode: "insensitive",
@@ -295,12 +334,12 @@ export const getAllBranches = catchAsync(async (req, res) => {
           },
         ],
       }
-    : {};
+      : {};
 
   const where = {
     ...filters,
     ...searchConditions,
-    ...(user.userRole !== UserRole.SUPERADMIN ? { companyId: user.companyId } : {})
+    deleted: false,
   };
 
   const options = {
@@ -383,6 +422,7 @@ export const getAllBranches = catchAsync(async (req, res) => {
  *         description: Branch not found
  */
 const getBranchById = catchAsync(async (req, res) => {
+  const user = req.user as User;
   const branch = await branchService.getBranchById(req.params.branchId);
 
   if (!branch) {
@@ -396,6 +436,11 @@ const getBranchById = catchAsync(async (req, res) => {
     });
     return;
   }
+
+  if (user.userRole !== UserRole.SUPERADMIN && branch.companyId !== user.companyId) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Access to this branch is forbidden");
+  }
+
   res.status(httpStatus.OK).json({
     status: httpStatus.OK,
     success: true,
@@ -557,7 +602,6 @@ const deleteBranch = catchAsync(async (req, res) => {
 const deleteBranches = catchAsync(async (req, res) => {
   try {
     await branchService.deleteBranchesByIds(req.body.branchIds);
-    res.status(httpStatus.NO_CONTENT);
     res.status(httpStatus.OK).json({
       status: httpStatus.OK,
       success: true,
@@ -659,9 +703,13 @@ const deleteBranches = catchAsync(async (req, res) => {
  *         description: No branches found for this organization
  */
 export const getBranchesByOrganizationId = catchAsync(async (req, res) => {
+  const user = req.user as User;
   const { organizationId } = req.params;
 
-  // Extracting query parameters from the request
+  if (user.userRole !== UserRole.SUPERADMIN && organizationId !== user.companyId) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Access to this organization's data is forbidden");
+  }
+
   const rawOptions = pick(req.query, [
     "limit",
     "page",
@@ -673,31 +721,30 @@ export const getBranchesByOrganizationId = catchAsync(async (req, res) => {
     "searchTerm",
   ]);
 
-  // Setting options for pagination, sorting, and filtering
   const options = {
     limit: rawOptions.searchTerm
-      ? 5
-      : rawOptions.limit
-      ? parseInt(rawOptions.limit as string, 10)
-      : 10,
+        ? 5
+        : rawOptions.limit
+            ? parseInt(rawOptions.limit as string, 10)
+            : 10,
     page: rawOptions.page ? parseInt(rawOptions.page as string, 10) : 1,
     sortBy: rawOptions.sortBy as string,
     sortType: rawOptions.sortType as "asc" | "desc",
     status: rawOptions.status as string,
     createdAtFrom: rawOptions.createdAtFrom
-      ? new Date(rawOptions.createdAtFrom as string)
-      : undefined,
+        ? new Date(rawOptions.createdAtFrom as string)
+        : undefined,
     createdAtTo: rawOptions.createdAtTo
-      ? new Date(rawOptions.createdAtTo as string)
-      : undefined,
+        ? new Date(rawOptions.createdAtTo as string)
+        : undefined,
     searchTerm: rawOptions.searchTerm as string,
   };
 
-  // Fetching branches from the service
   const result = await branchService.getBranchesByOrganizationId(
-    organizationId,
-    options
+      organizationId,
+      options
   );
+
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
       status: httpStatus.OK,

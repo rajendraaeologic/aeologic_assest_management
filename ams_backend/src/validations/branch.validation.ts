@@ -11,12 +11,16 @@ const createBranchValidation = {
       branchName: Joi.string().min(3).max(25).required().messages({
         "string.empty": "Branch name is required",
       }),
-      state: Joi.string().min(2).max(25).required().messages({
+      state: Joi.string().min(2).max(99).required().messages({
         "string.empty": "State is required",
       }),
-      city: Joi.string().min(2).max(25).required().messages({
+      city: Joi.string().min(2).max(99).required().messages({
         "string.empty": "City is required",
       }),
+      companyId: Joi.string()
+          .optional()
+          .custom(isValidMongoDBObjectId)
+          .messages(isValidMongoDBObjectIdCustomMessages),
     })
     .min(1),
 };

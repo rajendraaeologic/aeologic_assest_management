@@ -14,16 +14,10 @@ const API = axios.create({
 });
 
 API.interceptors.request.use(
-    async (config) => {
+    (config) => {
         if (storeInstance) {
-            let token = storeInstance.getState().auth.token;
-            if (!token) {
-                token = localStorage.getItem('accessToken');
-                if (token) {
-                    storeInstance.dispatch(setCredentials({ accessToken: token }));
-                }
-            }
-
+            const state = storeInstance.getState();
+            const token = state.auth.token;
             if (token) {
                 config.headers["Authorization"] = `Bearer ${token}`;
             }
@@ -32,48 +26,52 @@ API.interceptors.request.use(
     },
     (error) => Promise.reject(error)
 );
-
 API.interceptors.response.use(
     (response) => response,
     async (error) => {
+     console.log(error);
+        if (!storeInstance) return Promise.reject(error);
+
         const originalRequest = error.config;
 
-        if ([401, 403].includes(error.response?.status) && !originalRequest._retry) {
+        if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
-
             try {
-                // Attempt to refresh tokens
         // const refreshResponse = await axios.get(
-        //   "http://localhost:3000/api/v1/auth/refresh",
+        //   "http://localhost:3000/api/v1/auth/refresh-tokens",
         //   { withCredentials: true }
         // );
         const refreshResponse = await axios.get(
-          "http://ec2-3-93-185-33.compute-1.amazonaws.com:3000/api/v1/auth/refresh",
+          "http://ec2-3-93-185-33.compute-1.amazonaws.com:3000/api/v1/auth/refresh-tokens",
           { withCredentials: true }
         );
+                console.log(refreshResponse);
 
-            if (!refreshResponse.data?.access?.token) {
-                throw new Error("Invalid refresh response");
-            }
+                if (!refreshResponse.data.access.token) {
+                    throw new Error("No new access token received");
+                }
 
-            const newAccessToken = refreshResponse.data.access.token;
+                const newAccessToken = refreshResponse.data.access.token;
+                const state = storeInstance.getState();
 
-            storeInstance.dispatch(
-                setCredentials({
-                    accessToken: newAccessToken,
-                    user: storeInstance.getState().auth.user
-                })
-            );
-            localStorage.setItem('accessToken', newAccessToken);
+                storeInstance.dispatch(
+                    setCredentials({ accessToken: newAccessToken, user: state.auth.user })
+                );
 
                 originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
                 return API(originalRequest);
             } catch (refreshError) {
-                localStorage.removeItem('accessToken');
-                storeInstance.dispatch(logOut());
-                window.location.href = '/login';
+                // Only logout if refresh token is invalid or expired
+                if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
+                    storeInstance.dispatch(logOut());
+                }
                 return Promise.reject(refreshError);
             }
+        }
+
+        if (error.response?.status === 403) {
+            console.warn("Access forbidden. Logging out.");
+            storeInstance.dispatch(logOut());
         }
 
         return Promise.reject(error);

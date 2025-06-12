@@ -20,17 +20,20 @@ const loginUserWithEmailAndPassword = async (
 };
 
 const logout = async (refreshToken: string): Promise<void> => {
-  const refreshTokenData = await db.token.findFirst({
-    where: {
-      token: refreshToken,
-      type: TokenType.REFRESH,
-      blacklisted: false,
-    },
-  });
-  if (!refreshTokenData) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Not found");
+  try {
+    const refreshTokenData = await db.token.findFirst({
+      where: {
+        token: refreshToken,
+        type: TokenType.REFRESH,
+      },
+    });
+
+    if (refreshTokenData) {
+      await db.token.delete({ where: { id: refreshTokenData.id } });
+    }
+  } catch (error) {
+    throw new ApiError(httpStatus.INTERNAL_SERVER_ERROR, 'Logout failed');
   }
-  await db.token.delete({ where: { id: refreshTokenData.id } });
 };
 
 const refreshAuth = async (
@@ -41,9 +44,15 @@ const refreshAuth = async (
       refreshToken,
       TokenType.REFRESH
     );
-    const { userId } = refreshTokenData;
+
+    const user = await userService.getUserById(refreshTokenData.userId);
+    if (!user) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'User not found');
+    }
+
     await db.token.delete({ where: { id: refreshTokenData.id } });
-    return tokenService.generateAuthTokens({ id: userId });
+
+    return tokenService.generateAuthTokens({ id: user.id });
   } catch (error) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Please authenticate");
   }

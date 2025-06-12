@@ -13,7 +13,8 @@ const userDashboardStrings = {
   assetDetails: "Asset Details",
   company: "Company",
   branch: "Branch",
-  location: "Location",
+  state: "State",
+  city: "City",
   department: "Department",
 
   assignedTo: "Assigned To",

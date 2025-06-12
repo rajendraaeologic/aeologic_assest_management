@@ -123,8 +123,11 @@ const UserDashboard = () => {
                       value={asset.asset.branch.branchName}
                     />
                     <DetailItem
-                      label={userDashboardStrings.location}
-                      value={asset.asset.branch.branchLocation}
+                      label={userDashboardStrings.state}
+                      value={asset.asset.branch.state}
+                    /> <DetailItem
+                      label={userDashboardStrings.city}
+                      value={asset.asset.branch.city}
                     />
                     <DetailItem
                       label={userDashboardStrings.department}

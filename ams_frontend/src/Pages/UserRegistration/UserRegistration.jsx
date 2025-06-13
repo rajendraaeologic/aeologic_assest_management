@@ -8,7 +8,7 @@ import React, {
 import { useDispatch, useSelector } from "react-redux";
 import SliderContext from "../../components/ContexApi";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen } from "@fortawesome/free-solid-svg-icons";
+import {faPen, faSyncAlt} from "@fortawesome/free-solid-svg-icons";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader";
@@ -22,7 +22,7 @@ import {
   toggleSelectUser,
   selectAllUsers,
   deselectAllUsers,
-  setSelectedUser, resetUserTableState,
+  setSelectedUser, resetUserTableState, clearFilters,
 } from "../../Features/slices/userSlice";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import { CiSaveUp2 } from "react-icons/ci";
@@ -277,6 +277,10 @@ const UserRegistration = () => {
     }
   };
 
+  const handleClearFilters = () => {
+    dispatch(clearFilters());
+  };
+
   const handleClosePopup = () => {
     setUploadSuccess(null);
     setUploadError(null);
@@ -348,36 +352,43 @@ const UserRegistration = () => {
               <p>{userStrings.user.table.showEntries}</p>
               <div className="border-2 flex justify-evenly">
                 <select
-                  value={rowsPerPage}
-                  onChange={(e) =>
-                    dispatch(setRowsPerPage(parseInt(e.target.value)))
-                  }
-                  className="outline-none px-1"
+                    value={rowsPerPage}
+                    onChange={(e) =>
+                        dispatch(setRowsPerPage(parseInt(e.target.value)))
+                    }
+                    className="outline-none px-1"
                 >
                   {options.map((option, index) => (
-                    <option key={index} value={option}>
-                      {option}
-                    </option>
+                      <option key={index} value={option}>
+                        {option}
+                      </option>
                   ))}
                 </select>
               </div>
               <p>{userStrings.user.table.entries}</p>
             </div>
+            {/* Right side: Search and filters */}
+            <div className="flex items-center gap-4">
+              <span className="text-gray-600 whitespace-nowrap">Sort by</span>
+              <button
+                  onClick={handleClearFilters}
+                  className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
+                  title="Clear all filters"
+              >
+                <FontAwesomeIcon icon={faSyncAlt} className="text-gray-600" />
+                <span className="hidden md:inline">Clear Filters</span>
+              </button>
 
-            <div className="flex items-center gap-2">
-              {/* Status Filter */}
               <TableFilterDropdown
                   filterType="status"
                   options={['ACTIVE', 'IN_ACTIVE']}
               />
 
-              {/* User Role Filter */}
               <TableFilterDropdown
                   filterType="userRole"
                   options={['USER', 'MANAGER', 'ADMIN']}
               />
 
-              {/* Organization Filter */}
               <TableFilterDropdown
                   filterType="organization"
                   options={organizations?.map(org => ({
@@ -386,7 +397,6 @@ const UserRegistration = () => {
                   }))}
               />
 
-              {/* Branch Filter */}
               <TableFilterDropdown
                   filterType="branch"
                   options={branches?.map(branch => ({
@@ -395,7 +405,6 @@ const UserRegistration = () => {
                   }))}
               />
 
-              {/* Department Filter */}
               <TableFilterDropdown
                   filterType="department"
                   options={departments?.map(dept => ({
@@ -404,22 +413,20 @@ const UserRegistration = () => {
                   }))}
               />
 
-
-            </div>
-            {/* Right side: Search bar */}
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search"
-                className="border p-2 rounded w-64"
-                value={localSearchTerm}
-                onChange={handleSearchChange}
-              />
-              {isSearching && (
-                <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
-                  Searching...
-                </span>
-              )}
+              <div className="relative">
+                <input
+                    type="text"
+                    placeholder="Search"
+                    className="border p-2 rounded w-64"
+                    value={localSearchTerm}
+                    onChange={handleSearchChange}
+                />
+                {isSearching && (
+                    <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
+          Searching...
+        </span>
+                )}
+              </div>
             </div>
           </div>
 

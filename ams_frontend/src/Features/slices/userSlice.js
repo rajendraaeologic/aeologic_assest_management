@@ -97,6 +97,11 @@ const userSlice = createSlice({
     filters: {},
   },
   reducers: {
+    clearFilters: (state) => {
+      state.filters = {};
+      state.currentPage = 1;
+    },
+
     setFilters: (state, action) => {
       state.filters = action.payload;
       state.currentPage = 1;
@@ -227,6 +232,7 @@ const userSlice = createSlice({
 });
 
 export const {
+  clearFilters,
   setFilters,
   setSelectedUser,
   setCurrentPage,

@@ -1,4 +1,4 @@
-import { Asset, Prisma } from "@prisma/client";
+import {Asset, AssetStatus, Prisma} from "@prisma/client";
 import db from "@/lib/db";
 import httpStatus from "http-status";
 import ApiError from "@/lib/ApiError";
@@ -6,19 +6,19 @@ import { AssetKeys } from "@/utils/selects.utils";
 
 // createAsset
 const createAsset = async (
-  asset: Pick<
-    Asset,
-    | "assetName"
-    | "uniqueId"
-    | "brand"
-    | "model"
-    | "serialNumber"
-    | "status"
-    | "description"
-    | "branchId"
-    | "departmentId"
-    | "companyId"
-  >
+    asset: Pick<
+        Asset,
+        | "assetName"
+        | "uniqueId"
+        | "brand"
+        | "model"
+        | "serialNumber"
+        | "status"
+        | "description"
+        | "branchId"
+        | "departmentId"
+        | "companyId"
+    > & { createdById: string }
 ): Promise<Omit<Asset, "id"> | null> => {
   if (!asset.companyId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Company ID is required");
@@ -73,25 +73,42 @@ const createAsset = async (
     );
   }
 
-  return db.asset.create({
-    data: {
-      assetName: lowerCaseAssetName,
-      uniqueId: asset.uniqueId,
-      brand: asset.brand,
-      model: asset.model,
-      serialNumber: asset.serialNumber,
-      status: asset.status,
-      description: asset.description,
-      company: {
-        connect: { id: asset.companyId },
+  return db.$transaction(async (tx) => {
+    const createdAsset = await tx.asset.create({
+      data: {
+        assetName: lowerCaseAssetName,
+        uniqueId: asset.uniqueId,
+        brand: asset.brand,
+        model: asset.model,
+        serialNumber: asset.serialNumber,
+        status: asset.status || AssetStatus.UNASSIGNED,
+        description: asset.description,
+        company: {
+          connect: { id: asset.companyId },
+        },
+        branch: {
+          connect: { id: asset.branchId },
+        },
+        department: {
+          connect: { id: asset.departmentId },
+        },
       },
-      branch: {
-        connect: { id: asset.branchId },
+    });
+
+    await tx.assetHistory.create({
+      data: {
+        action: AssetStatus.UNASSIGNED,
+        asset: {
+          connect: { id: createdAsset.id },
+        },
+        user: {
+          connect: { id: asset.createdById },
+        },
+        timestamp: new Date(),
       },
-      department: {
-        connect: { id: asset.departmentId },
-      },
-    },
+    });
+
+    return createdAsset;
   });
 };
 

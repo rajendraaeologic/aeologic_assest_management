@@ -3,7 +3,7 @@ import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
 import pick from "@/lib/pick";
 import { applyDateFilter } from "@/utils/filters.utils";
-import {PrismaClient, User, UserRole} from "@prisma/client";
+import {AssetStatus, PrismaClient, User, UserRole} from "@prisma/client";
 import {
   AssetKeys,
   AssetAssignmentKeys,
@@ -183,11 +183,13 @@ const createAsset = catchAsync(async (req, res) => {
       brand: req.body.brand,
       model: req.body.model,
       serialNumber: req.body.serialNumber,
-      status: req.body.status,
+      status: req.body.status || AssetStatus.UNASSIGNED,
       description: req.body.description,
       branchId: req.body.branchId,
       departmentId: req.body.departmentId,
       companyId: user.companyId,
+      createdById: user.id, // Pass the user's ID
+
     });
 
     res.status(httpStatus.CREATED).json({

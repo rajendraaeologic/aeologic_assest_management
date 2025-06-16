@@ -16,9 +16,9 @@ const UpdateBranch = ({ onClose }) => {
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
-  const [selectedState, setSelectedState] = useState(null);
   const [states, setStates] = useState([]);
   const [cities, setCities] = useState([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const indiaCountryCode = 'IN';
 
   const { selectedBranch, currentPage, rowsPerPage } = useSelector(
@@ -30,6 +30,7 @@ const UpdateBranch = ({ onClose }) => {
     handleSubmit,
     reset,
     setValue,
+    setError,
     watch,
     formState: { errors, isSubmitting },
   } = useForm({
@@ -53,39 +54,48 @@ const UpdateBranch = ({ onClose }) => {
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [dispatch]);
+  }, []);
 
   useEffect(() => {
-    if (selectedBranch) {
-      // Find the state ISO code by name
-      const stateCode = State.getStatesOfCountry(indiaCountryCode)
-          .find(s => s.name === selectedBranch.state)?.isoCode || '';
+    if (selectedBranch && states.length > 0) {
+      const selectedStateData = states.find(s => s.name === selectedBranch.state);
+      const stateCode = selectedStateData?.isoCode || '';
 
-      reset({
-        branchName: selectedBranch.branchName,
-        state: stateCode,
-        city: selectedBranch.city,
-      });
-
-      // Load cities for the state if it exists
       if (stateCode) {
         const stateCities = City.getCitiesOfState(indiaCountryCode, stateCode);
         setCities(stateCities);
+        setTimeout(() => {
+          reset({
+            branchName: selectedBranch.branchName,
+            state: stateCode,
+            city: selectedBranch.city,
+          });
+          setIsDataLoaded(true);
+        }, 100);
+      } else {
+        reset({
+          branchName: selectedBranch.branchName,
+          state: '',
+          city: '',
+        });
+        setIsDataLoaded(true);
       }
     }
-  }, [selectedBranch, reset]);
+  }, [selectedBranch, states, reset]);
 
   useEffect(() => {
-    if (state) {
-      const stateData = State.getStateByCodeAndCountry(state, indiaCountryCode);
-      setSelectedState(stateData || null);
+    if (state && isDataLoaded) {
       const stateCities = City.getCitiesOfState(indiaCountryCode, state);
       setCities(stateCities);
-    } else {
+
+      if (!cities.some(city => city.name === watch("city"))) {
+        setValue("city", "");
+      }
+    } else if (!state) {
       setCities([]);
       setValue("city", "");
     }
-  }, [state, setValue]);
+  }, [state, setValue, isDataLoaded]);
 
   const handleClose = () => {
     setIsVisible(false);
@@ -211,7 +221,7 @@ const UpdateBranch = ({ onClose }) => {
                       </p>
                   )}
                   {branchName.length === 25 && (
-                      <p className="text-red-500  text-sm mt-1">
+                      <p className="text-red-500 text-sm mt-1">
                         Maximum 25 characters allowed
                       </p>
                   )}
@@ -233,9 +243,9 @@ const UpdateBranch = ({ onClose }) => {
                       } outline-none rounded-md`}
                   >
                     <option value="">Select State</option>
-                    {states.map((state) => (
-                        <option key={state.isoCode} value={state.isoCode}>
-                          {state.name}
+                    {states.map((stateOption) => (
+                        <option key={stateOption.isoCode} value={stateOption.isoCode}>
+                          {stateOption.name}
                         </option>
                     ))}
                   </select>
@@ -257,7 +267,6 @@ const UpdateBranch = ({ onClose }) => {
                   <select
                       {...register("city", {
                         required: "City is required",
-                        disabled: !state
                       })}
                       id="city"
                       className={`mt-1 p-2 w-full border ${
@@ -265,10 +274,12 @@ const UpdateBranch = ({ onClose }) => {
                       } outline-none rounded-md`}
                       disabled={!state}
                   >
-                    <option value="">Select City</option>
-                    {cities.map((city) => (
-                        <option key={city.name} value={city.name}>
-                          {city.name}
+                    <option value="">
+                      {!state ? "Select State First" : "Select City"}
+                    </option>
+                    {cities.map((cityOption) => (
+                        <option key={cityOption.name} value={cityOption.name}>
+                          {cityOption.name}
                         </option>
                     ))}
                   </select>

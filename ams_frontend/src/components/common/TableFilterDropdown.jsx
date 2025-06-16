@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setFilters } from '../../Features/slices/userSlice';
 
 const TableFilterDropdown = ({ filterType, options }) => {
     const dispatch = useDispatch();
     const [isOpen, setIsOpen] = useState(false);
+    const dropdownRef = useRef(null);
+
     const filters = useSelector((state) => state.usersData.filters || {});
     const selectedValue = filters[filterType] || null;
 
@@ -16,18 +18,31 @@ const TableFilterDropdown = ({ filterType, options }) => {
         setIsOpen(false);
     };
 
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
     return (
-        <div className="relative inline-block text-left mr-2">
+        <div className="relative  inline-block text-left pr-4" ref={dropdownRef}>
             <button
                 type="button"
                 onClick={toggleDropdown}
-                className={`inline-flex justify-center w-full rounded-md px-4 py-2 text-sm font-medium ${
-                    selectedValue ? 'bg-[#3BC0C3] text-white' : 'bg-white text-gray-700 border'
-                } hover:bg-[#3BC0C3] hover:text-white focus:outline-none`}
+                className={`w-full p-2 text-sm font-medium border rounded-md flex justify-between items-center cursor-pointer ${
+                    selectedValue ? 'bg-[#3BC0C3] text-white' : 'bg-white text-gray-700 border-gray-300'
+                } hover:bg-[#3BC0C3] hover:text-white transition`}
             >
                 {selectedValue || filterType.charAt(0).toUpperCase() + filterType.slice(1)}
                 <svg
-                    className="-mr-1 ml-2 h-5 w-5"
+                    className="ml-2 h-5 w-5"
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 20 20"
                     fill="currentColor"
@@ -41,18 +56,18 @@ const TableFilterDropdown = ({ filterType, options }) => {
             </button>
 
             {isOpen && (
-                <div className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
-                    <div className="py-1">
+                <div className="absolute z-50 mt-1 w-full border border-gray-300 bg-white rounded-md shadow max-h-40 overflow-auto">
+                    <ul>
                         {options.map((option) => (
-                            <button
+                            <li
                                 key={option.value || option}
                                 onClick={() => handleFilterChange(option.label || option)}
-                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                                className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer"
                             >
                                 {option.label || option}
-                            </button>
+                            </li>
                         ))}
-                    </div>
+                    </ul>
                 </div>
             )}
         </div>

@@ -17,7 +17,7 @@ import { MdPersonAdd } from "react-icons/md";
 import { MdHistory } from "react-icons/md";
 import { NavLink } from "react-router-dom";
 import SliderContext from "../ContexApi";
-import ReactTooltip from "react-tooltip";
+import { Tooltip } from 'react-tooltip';
 import {useSelector} from "react-redux";
 import {selectCurrentUser} from "../../Features/auth/authSlice.js";
 
@@ -129,7 +129,7 @@ const Sidebar = () => {
               </NavLink>
 
               {!isSidebarOpen && (
-                <ReactTooltip
+                <Tooltip
                   id={`tooltip-${index}`}
                   place="right"
                   effect="solid"
@@ -163,7 +163,7 @@ const Sidebar = () => {
             </div>
 
             {!isSidebarOpen && (
-              <ReactTooltip
+              <Tooltip
                 id="reports-tooltip"
                 place="right"
                 effect="solid"

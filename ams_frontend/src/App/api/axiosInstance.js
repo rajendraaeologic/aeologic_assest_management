@@ -8,8 +8,8 @@ export const injectStore = (store) => {
 };
 
 const API = axios.create({
-  // baseURL: "http://localhost:3000/api/v1",
-    baseURL: "http://ec2-3-93-185-33.compute-1.amazonaws.com:3000/api/v1",
+   //baseURL: "http://localhost:3000/api/v1",
+    baseURL: "https://us-central1-asset-management-83e3b.cloudfunctions.net/ams_api/api/v1",
     withCredentials: true,
 });
 
@@ -42,7 +42,7 @@ API.interceptors.response.use(
         //   { withCredentials: true }
         // );
         const refreshResponse = await axios.get(
-          "http://ec2-3-93-185-33.compute-1.amazonaws.com:3000/api/v1/auth/refresh-tokens",
+          "https://us-central1-asset-management-83e3b.cloudfunctions.net/ams_api/api/v1/auth/refresh-tokens",
           { withCredentials: true }
         );
                 console.log(refreshResponse);

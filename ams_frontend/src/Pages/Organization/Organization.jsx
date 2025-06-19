@@ -369,7 +369,7 @@ const Organization = () => {
 
               <tbody>
                 {loading ? (
-                  <SkeletonLoader rows={5} columns={6} />
+                  <SkeletonLoader rows={5} columns={7} />
                 ) : organizations.length === 0 ? (
                   <tr>
                     <td

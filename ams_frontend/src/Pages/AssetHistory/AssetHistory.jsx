@@ -28,6 +28,7 @@ import {
   setSearchTerm
 } from "../../Features/slices/assetHistorySlice.js";
 import PaginationControls from "../../components/common/PaginationControls.jsx";
+import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader.jsx";
 const options = ["5", "10", "25", "50", "100"];
 
 const statusConfig = {
@@ -414,11 +415,11 @@ const AssetHistory = () => {
       setShowTimeline(true);
       setSelectedAsset(assetData); // Show existing data immediately
 
-      const result = await dispatch(getAssetHistoriesByAssetId({
-        assetId: assetData.asset.id,
-        limit: 100,
-        page: 1,
-      }));
+      // const result = await dispatch(getAssetHistoriesByAssetId({
+      //   assetId: assetData.asset.id,
+      //   limit: 5,
+      //   page: 1,
+      // }));
 
       if (result.payload && result.payload.data) {
         setSelectedAsset(prev => ({
@@ -576,11 +577,7 @@ const AssetHistory = () => {
 
                 <tbody>
                 {loading ? (
-                    <tr>
-                      <td colSpan="6" className="px-2 py-4 text-center border border-gray-300">
-                        {strings.loading}
-                      </td>
-                    </tr>
+                    <SkeletonLoader rows={5} columns={6} />
                 ) : error ? (
                     <tr>
                       <td colSpan="6" className="px-2 py-4 text-center border border-gray-300 text-red-500">
@@ -608,17 +605,15 @@ const AssetHistory = () => {
                             {asset.assetName}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            <span
-                                className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                    statusConfig[asset.status]?.bgColor ||
-                                    "bg-gray-100"
-                                } ${
-                                    statusConfig[asset.status]?.textColor ||
-                                    "text-gray-800"
-                                }`}
-                            >
-                              {asset.status}
-                            </span>
+          <span
+              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                  statusConfig[asset.status]?.bgColor || "bg-gray-100"
+              } ${
+                  statusConfig[asset.status]?.textColor || "text-gray-800"
+              }`}
+          >
+            {asset.status}
+          </span>
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
                             {asset.branch?.branchName || "N/A"}
@@ -629,7 +624,6 @@ const AssetHistory = () => {
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
                             {getLatestAction(histories[0], asset.status)}
                           </td>
-                          {/* Action Buttons */}
                           <td className="px-2 py-2 border border-gray-300 text-center">
                             <div className="flex justify-center gap-2">
                               <button
@@ -644,6 +638,7 @@ const AssetHistory = () => {
                     ))
                 )}
                 </tbody>
+
               </table>
             </div>
             {/* Pagination Controls */}
@@ -681,13 +676,13 @@ const AssetHistory = () => {
                     </h2>
 
                     <div className="flex items-center gap-2">
-                      <button
-                          onClick={() => handleViewDetails(selectedAsset)}
-                          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                          title="Refresh"
-                      >
-                        <FiRefreshCw className="h-5 w-5 text-gray-500" />
-                      </button>
+                      {/*<button*/}
+                      {/*    onClick={() => handleViewDetails(selectedAsset)}*/}
+                      {/*    className="p-2 hover:bg-gray-100 rounded-full transition-colors"*/}
+                      {/*    title="Refresh"*/}
+                      {/*>*/}
+                      {/*  <FiRefreshCw className="h-5 w-5 text-gray-500" />*/}
+                      {/*</button>*/}
                       <button
                           onClick={closeTimeline}
                           className="p-2 hover:bg-gray-100 rounded-full transition-colors"

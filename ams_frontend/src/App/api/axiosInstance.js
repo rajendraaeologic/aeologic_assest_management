@@ -8,7 +8,7 @@ export const injectStore = (store) => {
 };
 
 const API = axios.create({
-   //baseURL: "http://localhost:3000/api/v1",
+   // baseURL: "http://localhost:3000/api/v1",
     baseURL: "https://us-central1-asset-management-83e3b.cloudfunctions.net/ams_api/api/v1",
     withCredentials: true,
 });
@@ -29,7 +29,6 @@ API.interceptors.request.use(
 API.interceptors.response.use(
     (response) => response,
     async (error) => {
-     console.log(error);
         if (!storeInstance) return Promise.reject(error);
 
         const originalRequest = error.config;
@@ -47,7 +46,7 @@ API.interceptors.response.use(
         );
                 console.log(refreshResponse);
 
-                if (!refreshResponse.data.access.token) {
+                if (!refreshResponse.data?.access?.token) {
                     throw new Error("No new access token received");
                 }
 
@@ -55,20 +54,28 @@ API.interceptors.response.use(
                 const state = storeInstance.getState();
 
                 storeInstance.dispatch(
-                    setCredentials({ accessToken: newAccessToken, user: state.auth.user })
+                    setCredentials({
+                        accessToken: newAccessToken,
+                        user: state.auth.user
+                    })
                 );
 
+                // Update the original request with new token
                 originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+
+                // Retry the original request with new token
                 return API(originalRequest);
             } catch (refreshError) {
                 // Only logout if refresh token is invalid or expired
                 if (refreshError.response?.status === 401 || refreshError.response?.status === 403) {
+                    // Clear any stored tokens
                     storeInstance.dispatch(logOut());
                 }
                 return Promise.reject(refreshError);
             }
         }
 
+        // Handle 403 errors (forbidden)
         if (error.response?.status === 403) {
             console.warn("Access forbidden. Logging out.");
             storeInstance.dispatch(logOut());
@@ -77,5 +84,4 @@ API.interceptors.response.use(
         return Promise.reject(error);
     }
 );
-
 export default API;

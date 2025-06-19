@@ -78,15 +78,20 @@ const logout = catchAsync(async (req, res) => {
 // });
 
 const refreshTokens = catchAsync(async (req, res) => {
-  const refreshToken = req.cookies?.refreshToken || req.body?.refreshToken;
-
-  console.log('Received cookies:', req.cookies);
+  const refreshToken = req.cookies?.refreshToken;
 
   if (!refreshToken) {
     throw new ApiError(httpStatus.UNAUTHORIZED, 'No refresh token provided');
   }
 
   const tokens = await authService.refreshAuth(refreshToken);
+
+  res.cookie('refreshToken', tokens.refresh.token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  });
 
   res.status(httpStatus.OK).send({
     access: tokens.access,

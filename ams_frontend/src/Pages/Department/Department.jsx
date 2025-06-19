@@ -370,7 +370,7 @@ console.log(departments);
 
               <tbody>
                 {loading ? (
-                  <SkeletonLoader rows={5} columns={5} />
+                  <SkeletonLoader rows={5} columns={6} />
                 ) : departments.length === 0 ? (
                   <tr>
                     <td

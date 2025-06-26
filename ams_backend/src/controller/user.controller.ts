@@ -10,13 +10,404 @@ import xlsx from "xlsx";
 import { userValidation } from "@/validations";
 import { generateRandomPassword } from "@/utils/passwordGenerator";
 import * as fs from "fs";
+
+export const createUser = catchAsync(async (req, res) => {
+  try {
+    const plainPassword = req.body.password || generateRandomPassword();
+    const requestingUser = req.user as User;
+
+    const user = await userService.createUser({
+      userName: req.body.userName,
+      phone: req.body.phone,
+      email: req.body.email,
+      password: await encryptPassword(plainPassword),
+      status: req.body.status,
+      userRole: req.body.userRole,
+      branchId: req.body.branchId,
+      departmentId: req.body.departmentId,
+      companyId: req.body.companyId,
+      plainPassword,
+    } as User & { plainPassword: string }, requestingUser);
+
+    res.status(httpStatus.CREATED).send({
+      statusCode: httpStatus.CREATED,
+      message: "User created successfully",
+      data: {
+        user
+      }
+    });
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+  }
+});
+
+const uploadUsersFromExcel = catchAsync(async (req, res) => {
+  const { error } = userValidation.uploadUsers.file.validate(req.file);
+  if (error) {
+    throw new ApiError(httpStatus.BAD_REQUEST, error.details[0].message);
+  }
+
+  const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
+  const sheetName = workbook.SheetNames[0];
+  const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+  if (!sheetData || sheetData.length === 0) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Excel sheet is empty");
+  }
+
+  const sheetDataWithPassword = sheetData.map((row: any) => ({
+    ...row,
+    plainPassword: row.password,
+  }));
+
+  const { createdUsers, failedUsers } = await userService.createUsersFromExcel(
+    sheetDataWithPassword
+  );
+
+  if (failedUsers.length > 0) {
+    const hasMissingFields = failedUsers.some((user) =>
+      user.error.includes("Missing fields")
+    );
+    const hasDuplicates = failedUsers.some(
+      (user) =>
+        user.error.includes("Email exists") ||
+        user.error.includes("Phone exists")
+    );
+    const hasValidationErrors = failedUsers.some((user) =>
+      user.error.includes("must be a")
+    );
+    const hasInvalidIds = failedUsers.some((user) =>
+      user.error.includes("does not exist")
+    );
+
+    let statusCode: 400 | 404 | 409 = httpStatus.BAD_REQUEST;
+    let message = "Some users failed to process";
+
+    if (hasMissingFields || hasValidationErrors) {
+      statusCode = httpStatus.BAD_REQUEST;
+      message = hasMissingFields
+        ? "Missing required fields in some users"
+        : "Validation errors in user data";
+    } else if (hasDuplicates) {
+      statusCode = httpStatus.CONFLICT;
+
+      message = "Duplicate email or phone number found";
+    } else if (hasInvalidIds && Array.isArray(failedUsers)) {
+      statusCode = httpStatus.NOT_FOUND;
+      const errors = failedUsers
+        .map((user) => {
+          const [mainMessage] = (user?.error || "").split(":");
+          return mainMessage.trim();
+        })
+        .filter(Boolean);
+      const uniqueErrors = [...new Set(errors)];
+      message = uniqueErrors.join(", ");
+    }
+
+    res.status(statusCode).json({
+      statusCode: statusCode,
+      message,
+      data: {
+        successCount: createdUsers.length,
+        failedCount: failedUsers.length,
+        createdUsers,
+        failedUsers,
+      }
+    });
+    return;
+  }
+
+  // Only send success response if no failures
+  res.status(httpStatus.CREATED).json({
+    statusCode: httpStatus.CREATED,
+    message: "All users processed successfully",
+    data: {
+      successCount: createdUsers.length,
+      failedCount: 0,
+      createdUsers,
+      failedUsers: [],
+    }
+  });
+});
+
+const downloadUserExcelTemplate = catchAsync(async (req, res) => {
+  try {
+    const filePath = await userService.getUserExcelTemplateDowndload();
+
+    if (!fs.existsSync(filePath)) {
+      res.status(404).json({
+        statusCode: httpStatus.NOT_FOUND,
+        message: "Template file not found",
+        data: null
+      });
+    }
+
+    const fileName = "UserTemplate.csv";
+    res.download(filePath, fileName);
+  } catch (error) {
+    res.status(500).json({
+      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+      message: "Failed to download template",
+      data: { error: error.message }
+    });
+  }
+});
+
+export const getUsers = catchAsync(async (req, res) => {
+  const user = req.user as User;
+  const rawFilters = pick(req.query, [
+    "userName",
+    "phone",
+    "userRole",
+    "status",
+    "isEmailVerified",
+    "email",
+    "from_date",
+    "to_date",
+    "selectedDate",
+    "searchTerm",
+    "department",
+    "organization",
+    "branch"
+  ]);
+
+  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 5;
+
+  const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
+  let sortBy = (req.query.sortBy as string) || "createdAt";
+  let sortType = (req.query.sortType as "asc" | "desc") || "desc";
+
+  let dateFilter = {};
+  if (rawFilters.selectedDate) {
+    const selectedDate = new Date(rawFilters.selectedDate as string);
+    const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
+
+    dateFilter = {
+      createdAt: {
+        gte: startOfDay,
+        lte: endOfDay
+      }
+    };
+  } else if (rawFilters.from_date && rawFilters.to_date) {
+    const fromDate = new Date(rawFilters.from_date as string);
+    const toDate = new Date(rawFilters.to_date as string);
+
+    toDate.setHours(23, 59, 59, 999);
+
+    dateFilter = {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate
+      }
+    };
+  }
+
+  const filters: any = {
+    ...dateFilter,
+    deleted: false
+  };
+
+  if (rawFilters.userName) {
+    filters.userName = { contains: rawFilters.userName, mode: "insensitive" };
+  }
+  if (rawFilters.userRole) {
+    filters.userRole = rawFilters.userRole;
+  }
+  if (rawFilters.status) {
+    filters.status = rawFilters.status;
+  }
+
+  if (rawFilters.organization) {
+    filters.company = {
+      organizationName: { contains: rawFilters.organization, mode: "insensitive" },
+    };
+  }
+
+  if (rawFilters.branch) {
+    filters.branch = {
+      branchName: { contains: rawFilters.branch, mode: "insensitive" },
+    };
+  }
+
+  if (rawFilters.department) {
+    filters.department = {
+      departmentName: { contains: rawFilters.department, mode: "insensitive" },
+    };
+  }
+
+
+  const searchTerm = (rawFilters.searchTerm as string)?.trim();
+  const isSearchMode = !!searchTerm;
+
+  // Search mode adjustments
+  if (isSearchMode) {
+    limit = 5;
+    sortBy = "createdAt";
+    sortType = "desc";
+  }
+
+  // Search conditions
+  const searchConditions = searchTerm
+    ? {
+        OR: [
+          { userName: { contains: searchTerm, mode: "insensitive" } },
+          { email: { contains: searchTerm, mode: "insensitive" } },
+          { phone: { contains: searchTerm, mode: "insensitive" } },
+        ],
+      }
+    : {};
+
+  const where = {
+    ...filters,
+    ...searchConditions,
+    NOT: { userRole: "SUPERADMIN" },
+    ...(user.userRole !== UserRole.SUPERADMIN ? { companyId: user.companyId } : {}),
+  };
+
+  const options = {
+    limit,
+    page,
+    sortBy,
+    sortType,
+  };
+
+  const result = await userService.queryUsers(where, options);
+console.log(result)
+  if (!result || result.data.length === 0) {
+    const message = (rawFilters.selectedDate || (rawFilters.from_date && rawFilters.to_date))
+        ? "No users found for the selected date range"
+        : "Users not found";
+
+    res.status(httpStatus.OK).json({
+      success: false,
+      status: 404,
+      message,
+      data: {
+        users: [],
+        pagination:{
+          totalData: 0,
+          page,
+          limit,
+          totalPages: 0,
+          mode: isSearchMode ? "search" : "pagination",
+        }
+      },
+    });
+    return;
+  }
+
+  const users = result.data.map((user) => ({
+    ...user,
+    updatedAt: user.updatedAt,
+  }));
+
+  res.status(httpStatus.OK).json({
+    status: 200,
+    success: true,
+    message: "Users fetched successfully",
+    data: {
+      users,
+      pagination:{
+        totalData: result.total,
+        page,
+        limit,
+        totalPages: Math.ceil(result.total / limit),
+        mode: isSearchMode ? "search" : "pagination",
+      }
+    },
+  });
+});
+
+const getUser = catchAsync(async (req, res) => {
+  const user = await userService.getUserById(req.params.userId);
+
+  if (!user) {
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
+      message: "User not found",
+      data: []
+    });
+    return;
+  }
+
+  res.status(httpStatus.OK).json({
+    statusCode: httpStatus.OK,
+    message: "User fetched successfully",
+    data: { user }
+  });
+});
+
+const updateUser = catchAsync(async (req, res) => {
+  try {
+    const user = await userService.updateUserById(req.params.userId, req.body);
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "User updated successfully",
+      data: { user }
+    });
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+  }
+});
+
+const deleteUser = catchAsync(async (req, res) => {
+  try {
+    await userService.deleteUserById(req.params.userId);
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "User deleted successfully",
+      data: null
+    });
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+  }
+});
+
+const deleteUsers = catchAsync(async (req, res) => {
+  try {
+    await userService.deleteUsersByIds(req.body.userIds);
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "Users deleted successfully",
+      data: {
+        deletedCount: req.body.userIds.length
+      }
+    });
+  } catch (error) {
+    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+  }
+});
+
+export const exportUsersToExcel = catchAsync(async (req , res) => {
+  const user = req.user as User;
+  const filters = {
+    userName: req.query.userName as string,
+    phone: req.query.phone as string,
+    userRole: req.query.userRole as string,
+    status: req.query.status as string,
+    email: req.query.email as string,
+    from_date: req.query.from_date as string,
+    to_date: req.query.to_date as string,
+    selectedDate: req.query.selectedDate as string,
+    searchTerm: req.query.searchTerm as string,
+    department: req.query.department as string,
+    organization: req.query.organization as string,
+    branch: req.query.branch as string,
+  };
+
+  const buffer = await userService.exportUsersToExcelService(user, filters);
+
+  res.setHeader('Content-Disposition', 'attachment; filename="users_export.xlsx"');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.status(httpStatus.OK).send(buffer);
+});
 /**
  * @swagger
  * tags:
  *   name: Users
  *   description: User management
  */
-
 /**
  * @swagger
  * components:
@@ -117,7 +508,6 @@ import * as fs from "fs";
  *                   error:
  *                     type: string
  */
-
 /**
  * @swagger
  * /users/:
@@ -179,35 +569,6 @@ import * as fs from "fs";
  *       "404":
  *         description: Not found
  */
-export const createUser = catchAsync(async (req, res) => {
-  try {
-    const plainPassword = req.body.password || generateRandomPassword();
-    const requestingUser = req.user as User;
-
-    const user = await userService.createUser({
-      userName: req.body.userName,
-      phone: req.body.phone,
-      email: req.body.email,
-      password: await encryptPassword(plainPassword),
-      status: req.body.status,
-      userRole: req.body.userRole,
-      branchId: req.body.branchId,
-      departmentId: req.body.departmentId,
-      companyId: req.body.companyId,
-      plainPassword,
-    } as User & { plainPassword: string }, requestingUser);
-
-    res.status(httpStatus.CREATED).send({
-      statusCode: httpStatus.CREATED,
-      message: "User created successfully",
-      data: {
-        user
-      }
-    });
-  } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
-  }
-});
 /**
  * @swagger
  * /users/upload:
@@ -240,95 +601,6 @@ export const createUser = catchAsync(async (req, res) => {
  *       "404":
  *         description: Not found (invalid references)
  */
-
-const uploadUsersFromExcel = catchAsync(async (req, res) => {
-  const { error } = userValidation.uploadUsers.file.validate(req.file);
-  if (error) {
-    throw new ApiError(httpStatus.BAD_REQUEST, error.details[0].message);
-  }
-
-  const workbook = xlsx.read(req.file.buffer, { type: "buffer" });
-  const sheetName = workbook.SheetNames[0];
-  const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-  if (!sheetData || sheetData.length === 0) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Excel sheet is empty");
-  }
-
-  const sheetDataWithPassword = sheetData.map((row: any) => ({
-    ...row,
-    plainPassword: row.password,
-  }));
-
-  const { createdUsers, failedUsers } = await userService.createUsersFromExcel(
-    sheetDataWithPassword
-  );
-
-  if (failedUsers.length > 0) {
-    const hasMissingFields = failedUsers.some((user) =>
-      user.error.includes("Missing fields")
-    );
-    const hasDuplicates = failedUsers.some(
-      (user) =>
-        user.error.includes("Email exists") ||
-        user.error.includes("Phone exists")
-    );
-    const hasValidationErrors = failedUsers.some((user) =>
-      user.error.includes("must be a")
-    );
-    const hasInvalidIds = failedUsers.some((user) =>
-      user.error.includes("does not exist")
-    );
-
-    let statusCode: 400 | 404 | 409 = httpStatus.BAD_REQUEST;
-    let message = "Some users failed to process";
-
-    if (hasMissingFields || hasValidationErrors) {
-      statusCode = httpStatus.BAD_REQUEST;
-      message = hasMissingFields
-        ? "Missing required fields in some users"
-        : "Validation errors in user data";
-    } else if (hasDuplicates) {
-      statusCode = httpStatus.CONFLICT;
-
-      message = "Duplicate email or phone number found";
-    } else if (hasInvalidIds && Array.isArray(failedUsers)) {
-      statusCode = httpStatus.NOT_FOUND;
-      const errors = failedUsers
-        .map((user) => {
-          const [mainMessage] = (user?.error || "").split(":");
-          return mainMessage.trim();
-        })
-        .filter(Boolean);
-      const uniqueErrors = [...new Set(errors)];
-      message = uniqueErrors.join(", ");
-    }
-
-    res.status(statusCode).json({
-      statusCode: statusCode,
-      message,
-      data: {
-        successCount: createdUsers.length,
-        failedCount: failedUsers.length,
-        createdUsers,
-        failedUsers,
-      }
-    });
-    return;
-  }
-
-  // Only send success response if no failures
-  res.status(httpStatus.CREATED).json({
-    statusCode: httpStatus.CREATED,
-    message: "All users processed successfully",
-    data: {
-      successCount: createdUsers.length,
-      failedCount: 0,
-      createdUsers,
-      failedUsers: [],
-    }
-  });
-});
 /**
  * @swagger
  * /users/template:
@@ -350,29 +622,6 @@ const uploadUsersFromExcel = catchAsync(async (req, res) => {
  *       "500":
  *         description: Internal server error
  */
-
-const downloadUserExcelTemplate = catchAsync(async (req, res) => {
-  try {
-    const filePath = await userService.getUserExcelTemplateDowndload();
-
-    if (!fs.existsSync(filePath)) {
-      res.status(404).json({
-        statusCode: httpStatus.NOT_FOUND,
-        message: "Template file not found",
-        data: null
-      });
-    }
-
-    const fileName = "UserTemplate.csv";
-    res.download(filePath, fileName);
-  } catch (error) {
-    res.status(500).json({
-      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
-      message: "Failed to download template",
-      data: { error: error.message }
-    });
-  }
-});
 /**
  * @swagger
  * /users:
@@ -459,139 +708,6 @@ const downloadUserExcelTemplate = catchAsync(async (req, res) => {
  *       "404":
  *         description: No users found
  */
-export const getUsers = catchAsync(async (req, res) => {
-  const user = req.user as User;
-  const rawFilters = pick(req.query, [
-    "userName",
-    "phone",
-    "userRole",
-    "status",
-    "isEmailVerified",
-    "email",
-    "from_date",
-    "to_date",
-    "searchTerm",
-    "department",
-    "organization",
-    "branch"
-  ]);
-
-  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 5;
-
-  const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
-  let sortBy = (req.query.sortBy as string) || "createdAt";
-  let sortType = (req.query.sortType as "asc" | "desc") || "desc";
-
-  applyDateFilter(rawFilters);
-
-  const filters: any = {};
-
-  if (rawFilters.userName) {
-    filters.userName = { contains: rawFilters.userName, mode: "insensitive" };
-  }
-  if (rawFilters.userRole) {
-    filters.userRole = rawFilters.userRole;
-  }
-  if (rawFilters.status) {
-    filters.status = rawFilters.status;
-  }
-
-  if (rawFilters.organization) {
-    filters.company = {
-      organizationName: { contains: rawFilters.organization, mode: "insensitive" },
-    };
-  }
-
-  if (rawFilters.branch) {
-    filters.branch = {
-      branchName: { contains: rawFilters.branch, mode: "insensitive" },
-    };
-  }
-
-  if (rawFilters.department) {
-    filters.department = {
-      departmentName: { contains: rawFilters.department, mode: "insensitive" },
-    };
-  }
-
-
-  const searchTerm = (rawFilters.searchTerm as string)?.trim();
-  const isSearchMode = !!searchTerm;
-
-  // Search mode adjustments
-  if (isSearchMode) {
-    limit = 5;
-    sortBy = "createdAt";
-    sortType = "desc";
-  }
-
-  // Search conditions
-  const searchConditions = searchTerm
-    ? {
-        OR: [
-          { userName: { contains: searchTerm, mode: "insensitive" } },
-          { email: { contains: searchTerm, mode: "insensitive" } },
-          { phone: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }
-    : {};
-
-  const where = {
-    ...filters,
-    ...searchConditions,
-    NOT: { userRole: "SUPERADMIN" },
-    ...(user.userRole !== UserRole.SUPERADMIN ? { companyId: user.companyId } : {}),
-  };
-
-  const options = {
-    limit,
-    page,
-    sortBy,
-    sortType,
-  };
-
-  const result = await userService.queryUsers(where, options);
-console.log(result)
-  if (!result || result.data.length === 0) {
-    res.status(httpStatus.OK).json({
-      success: false,
-      status: 404,
-      message: "Users not found",
-      data: {
-        users: [],
-        pagination:{
-          totalData: 0,
-          page,
-          limit,
-          totalPages: 0,
-          mode: isSearchMode ? "search" : "pagination",
-        }
-      },
-    });
-    return;
-  }
-
-  const users = result.data.map((user) => ({
-    ...user,
-    updatedAt: user.updatedAt,
-  }));
-
-  res.status(httpStatus.OK).json({
-    status: 200,
-    success: true,
-    message: "Users fetched successfully",
-    data: {
-      users,
-      pagination:{
-        totalData: result.total,
-        page,
-        limit,
-        totalPages: Math.ceil(result.total / limit),
-        mode: isSearchMode ? "search" : "pagination",
-      }
-    },
-  });
-});
 /**
  * @swagger
  * /users/{userId}:
@@ -617,25 +733,6 @@ console.log(result)
  *       "404":
  *         description: User not found
  */
-
-const getUser = catchAsync(async (req, res) => {
-  const user = await userService.getUserById(req.params.userId);
-
-  if (!user) {
-    res.status(httpStatus.NOT_FOUND).json({
-      statusCode: httpStatus.NOT_FOUND,
-      message: "User not found",
-      data: []
-    });
-    return;
-  }
-
-  res.status(httpStatus.OK).json({
-    statusCode: httpStatus.OK,
-    message: "User fetched successfully",
-    data: { user }
-  });
-});
 /**
  * @swagger
  * /users/{userId}:
@@ -684,18 +781,6 @@ const getUser = catchAsync(async (req, res) => {
  *       "404":
  *         description: User not found
  */
-const updateUser = catchAsync(async (req, res) => {
-  try {
-    const user = await userService.updateUserById(req.params.userId, req.body);
-    res.status(httpStatus.OK).json({
-      statusCode: httpStatus.OK,
-      message: "User updated successfully",
-      data: { user }
-    });
-  } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
-  }
-});
 /**
  * @swagger
  * /users/{userId}:
@@ -728,19 +813,6 @@ const updateUser = catchAsync(async (req, res) => {
  *       "404":
  *         description: User not found
  */
-const deleteUser = catchAsync(async (req, res) => {
-  try {
-    await userService.deleteUserById(req.params.userId);
-    res.status(httpStatus.OK).json({
-      statusCode: httpStatus.OK,
-      message: "User deleted successfully",
-      data: null
-    });
-  } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
-  }
-});
-
 /**
  * @swagger
  * /users/bulk-delete:
@@ -783,20 +855,6 @@ const deleteUser = catchAsync(async (req, res) => {
  *       "404":
  *         description: Users not found
  */
-const deleteUsers = catchAsync(async (req, res) => {
-  try {
-    await userService.deleteUsersByIds(req.body.userIds);
-    res.status(httpStatus.OK).json({
-      statusCode: httpStatus.OK,
-      message: "Users deleted successfully",
-      data: {
-        deletedCount: req.body.userIds.length
-      }
-    });
-  } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
-  }
-});
 
 export default {
   createUser,
@@ -807,4 +865,5 @@ export default {
   deleteUsers,
   uploadUsersFromExcel,
   downloadUserExcelTemplate,
+  exportUsersToExcel
 };

@@ -56,7 +56,7 @@ const TableFilterDropdown = ({ filterType, options }) => {
             </button>
 
             {isOpen && (
-                <div className="absolute z-50 mt-1 w-full border border-gray-300 bg-white rounded-md shadow max-h-40 overflow-auto">
+                <div className="absolute z-50 mt-2 w-full border border-gray-300 bg-white rounded-md shadow max-h-40 overflow-auto">
                     <ul>
                         {options.map((option) => (
                             <li

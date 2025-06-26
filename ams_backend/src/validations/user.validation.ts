@@ -25,6 +25,7 @@ const getUsers = {
     departmentName: Joi.string().optional().trim(),
     from_date: Joi.string().optional().isoDate(),
     to_date: Joi.string().optional().isoDate(),
+    selectedDate: Joi.string().optional().isoDate(),
     sortBy: Joi.string()
       .valid("userName", "email", "status", "userRole", "createdAt")
       .optional(),
@@ -193,6 +194,25 @@ export const validateExcelUser = (user: any) => {
     throw new Error(messages);
   }
 };
+export const exportUsersToExcel = {
+  query: Joi.object({
+    selectedDate: Joi.date().iso().optional(),
+    from_date: Joi.date().iso().optional(),
+    to_date: Joi.date().iso().optional(),
+    searchTerm: Joi.string().optional().allow(""),
+    userName: Joi.string().optional(),
+    phone: Joi.string().optional(),
+    userRole: Joi.string().valid(...Object.values(UserRole)).optional(),
+    status: Joi.string().valid('ACTIVE', 'INACTIVE').optional(),
+    department: Joi.string().optional(),
+    organization: Joi.string().optional(),
+    branch: Joi.string().optional(),
+    email: Joi.string().email().optional(),
+  })
+      .with('from_date', 'to_date') // if from_date exists, to_date must exist and vice versa
+      .without('selectedDate', ['from_date', 'to_date']), // selectedDate cannot exist with from_date or to_date
+};
+
 export default {
   createUsers,
   getUsers,
@@ -203,4 +223,5 @@ export default {
   uploadUsers,
   excelUserSchema,
   validateExcelUser,
+  exportUsersToExcel
 };

@@ -1,11 +1,10 @@
 import React from "react";
-import {API_URL} from "../../App/api/config.js";
+import API from "../../App/api/axiosInstance.js";
 
 const DownloadTemplateButton = () => {
   const handleDownload = async () => {
     try {
-        const response = await fetch(
-            `${API_URL}/users/download-excel-template`, {
+      const response = await API.get("/users/download-excel-template", {
                 responseType: "blob",
             }
         );

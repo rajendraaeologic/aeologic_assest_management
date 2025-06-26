@@ -10,6 +10,7 @@ import { userValidation } from "@/validations";
 import { generateRandomPassword } from "@/utils/passwordGenerator";
 import { generateUserEmailUpdateNotification } from "@/utils/emailTemplate";
 import path from "path";
+import xlsx from "xlsx";
 
 const createUser = async (
     user: User & { plainPassword?: string },
@@ -636,6 +637,135 @@ const checkUserExists = async (userId: string) => {
   return user !== null;
 };
 
+type ExportFilters = {
+  userName?: string;
+  phone?: string;
+  userRole?: string;
+  status?: string;
+  email?: string;
+  from_date?: string;
+  to_date?: string;
+  selectedDate?: string;
+  searchTerm?: string;
+  department?: string;
+  organization?: string;
+  branch?: string;
+};
+const exportUsersToExcelService = async (user: User, filters: ExportFilters): Promise<Buffer> => {
+  let dateFilter = {};
+
+  if (filters.selectedDate) {
+    const selectedDate = new Date(filters.selectedDate);
+    if (isNaN(selectedDate.getTime())) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid selectedDate format. Use YYYY-MM-DD");
+    }
+    dateFilter = {
+      createdAt: {
+        gte: new Date(selectedDate.setHours(0, 0, 0, 0)),
+        lte: new Date(selectedDate.setHours(23, 59, 59, 999)),
+      },
+    };
+  } else if (filters.from_date && filters.to_date) {
+    const fromDate = new Date(filters.from_date);
+    const toDate = new Date(filters.to_date);
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid date format. Use YYYY-MM-DD");
+    }
+    toDate.setHours(23, 59, 59, 999);
+    dateFilter = {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate,
+      },
+    };
+  }
+
+  const where: any = {
+    ...dateFilter,
+    deleted: false,
+    NOT: { userRole: "SUPERADMIN" },
+  };
+
+  if (user.userRole !== UserRole.SUPERADMIN) {
+    where.companyId = user.companyId;
+  }
+
+  if (filters.userName) {
+    where.userName = { contains: filters.userName, mode: "insensitive" };
+  }
+  if (filters.userRole) {
+    where.userRole = filters.userRole;
+  }
+  if (filters.status) {
+    where.status = filters.status;
+  }
+
+  if (filters.organization) {
+    where.company = {
+      organizationName: {
+        contains: filters.organization,
+        mode: "insensitive",
+      },
+    };
+  }
+  if (filters.branch) {
+    where.branch = {
+      branchName: {
+        contains: filters.branch,
+        mode: "insensitive",
+      },
+    };
+  }
+  if (filters.department) {
+    where.department = {
+      departmentName: {
+        contains: filters.department,
+        mode: "insensitive",
+      },
+    };
+  }
+
+  if (filters.searchTerm?.trim()) {
+    where.OR = [
+      { userName: { contains: filters.searchTerm, mode: "insensitive" } },
+      { email: { contains: filters.searchTerm, mode: "insensitive" } },
+      { phone: { contains: filters.searchTerm, mode: "insensitive" } },
+    ];
+  }
+
+  const users = await db.user.findMany({
+    where,
+    include: {
+      company: { select: { organizationName: true } },
+      branch: { select: { branchName: true } },
+      department: { select: { departmentName: true } },
+    },
+  });
+
+  if (!users.length) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No users found matching the criteria");
+  }
+
+  const excelData = users.map(u => ({
+    "User Name": u.userName,
+    "Email": u.email,
+    "Phone": u.phone,
+    "Status": u.status,
+    "Role": u.userRole,
+    "Organization": u.company?.organizationName || "N/A",
+    "Branch": u.branch?.branchName || "N/A",
+    "Department": u.department?.departmentName || "N/A",
+    "Created At": u.createdAt.toISOString(),
+  }));
+
+  const workbook = xlsx.utils.book_new();
+  const worksheet = xlsx.utils.json_to_sheet(excelData);
+  xlsx.utils.book_append_sheet(workbook, worksheet, "Users");
+
+  const buffer = xlsx.write(workbook, { type: "buffer", bookType: "xlsx" });
+  return buffer;
+};
+
 export default {
   createUser,
   registerUser,
@@ -651,4 +781,5 @@ export default {
   deleteUsersByIds,
   createUsersFromExcel,
   getUserExcelTemplateDowndload,
+  exportUsersToExcelService
 };

@@ -15,6 +15,7 @@ import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoade
 import PaginationControls from "../../components/common/PaginationControls";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
+import "react-toastify/dist/ReactToastify.css";
 
 import {
   setCurrentPage,
@@ -39,6 +40,8 @@ import TableFilterDropdown from "../../components/common/TableFilterDropdown.jsx
 import {getAllOrganizations} from "../../Features/slices/organizationSlice.js";
 import {getAllBranches} from "../../Features/slices/branchSlice.js";
 import {getAllDepartments} from "../../Features/slices/departmentSlice.js";
+import DateFilterDropdown from "../../components/common/DateFilterDropdown.jsx";
+import API from "../../App/api/axiosInstance.js";
 
 const UserRegistration = () => {
   const dispatch = useDispatch();
@@ -55,9 +58,13 @@ const UserRegistration = () => {
     totalPages,
     searchTerm,
     loading,
-    error,
     filters
   } = useSelector((state) => state.usersData);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportType, setReportType] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
 
   const [isAddUserFormOpen, setIsAddUserFormOpen] = useState(false);
   const [isUpdateUserFormOpen, setIsUpdateUserFormOpen] = useState(false);
@@ -286,6 +293,66 @@ const UserRegistration = () => {
     setUploadError(null);
   };
 
+  const handleGenerateReport = async () => {
+    if (!reportType) {
+      toast.error("Please select a report type");
+      return;
+    }
+    if (reportType === 'date' && !selectedDate) {
+      toast.error("Please select a date");
+      return;
+    }
+    if (reportType === 'range' && (!fromDate || !toDate)) {
+      toast.error("Please select both dates");
+      return;
+    }
+    if (reportType === 'range' && fromDate > toDate) {
+      toast.error("From date cannot be after To date");
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      const params = new URLSearchParams();
+
+      if (reportType === 'date') {
+        params.append('selectedDate', selectedDate);
+      } else if (reportType === 'range') {
+        params.append('from_date', fromDate);
+        params.append('to_date', toDate);
+      }
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) params.append(key, value);
+      });
+      const response = await API.get("/users/export-excel", {
+        params,
+        responseType: "blob",
+      });
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `users_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Report generated and downloaded successfully");
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error(error.response.data.message || "No users found on matching date ");
+    } finally {
+      setIsProcessing(false);
+      setShowReportDialog(false);
+      setReportType(null);
+      setSelectedDate(null);
+      setFromDate(null);
+      setToDate(null);
+    }
+  };
+
+
   return (
     <div
       className={`w-full min-h-screen bg-slate-100 px-2 ${
@@ -312,6 +379,12 @@ const UserRegistration = () => {
                 onChange={handleFileChange}
                 style={{ display: "none" }}
               />
+              <button
+                  className="px-4 py-2 bg-[#3BC0C3] flex justify-between gap-1 text-white rounded-lg"
+                  onClick={() => setShowReportDialog(true)}
+              >
+                Generate Report
+              </button>
               <div className="flex gap-2">
                 <DownloadTemplateButton />
                 <button
@@ -346,30 +419,9 @@ const UserRegistration = () => {
         </div>
 
         <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex items-center justify-between pt-8 px-6">
-            {/* Left side: Show entries dropdown */}
+          <div className="flex items-center justify-between px-6 pt-4 pb-2">
             <div className="flex items-center gap-2">
-              <p>{userStrings.user.table.showEntries}</p>
-              <div className="border-2 flex justify-evenly">
-                <select
-                    value={rowsPerPage}
-                    onChange={(e) =>
-                        dispatch(setRowsPerPage(parseInt(e.target.value)))
-                    }
-                    className="outline-none px-1"
-                >
-                  {options.map((option, index) => (
-                      <option key={index} value={option}>
-                        {option}
-                      </option>
-                  ))}
-                </select>
-              </div>
-              <p>{userStrings.user.table.entries}</p>
-            </div>
-            {/* Right side: Search and filters */}
-            <div className="flex items-center gap-4">
-              <span className="text-gray-600 whitespace-nowrap">Sort by</span>
+              <span className="text-gray-600 whitespace-nowrap">Filters:</span>
               <button
                   onClick={handleClearFilters}
                   className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 transition"
@@ -378,7 +430,11 @@ const UserRegistration = () => {
                 <FontAwesomeIcon icon={faSyncAlt} className="text-gray-600" />
                 <span className="hidden md:inline">Clear Filters</span>
               </button>
+            </div>
 
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {/* DateWise filter dropdown */}
+              <DateFilterDropdown />
               <TableFilterDropdown
                   filterType="status"
                   options={['ACTIVE', 'IN_ACTIVE']}
@@ -412,24 +468,44 @@ const UserRegistration = () => {
                     label: dept.departmentName
                   }))}
               />
-
-              <div className="relative">
-                <input
-                    type="text"
-                    placeholder="Search"
-                    className="border p-2 rounded w-64"
-                    value={localSearchTerm}
-                    onChange={handleSearchChange}
-                />
-                {isSearching && (
-                    <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
-          Searching...
-        </span>
-                )}
-              </div>
             </div>
           </div>
-
+          <div className="flex items-center justify-between pt-8 px-6">
+            {/* Left side: Show entries dropdown */}
+            <div className="flex items-center gap-2">
+              <p>{userStrings.user.table.showEntries}</p>
+              <div className="border-2 flex justify-evenly">
+                <select
+                    value={rowsPerPage}
+                    onChange={(e) =>
+                        dispatch(setRowsPerPage(parseInt(e.target.value)))
+                    }
+                    className="outline-none px-1"
+                >
+                  {options.map((option, index) => (
+                      <option key={index} value={option}>
+                        {option}
+                      </option>
+                  ))}
+                </select>
+              </div>
+              <p>{userStrings.user.table.entries}</p>
+            </div>
+            <div className="relative">
+              <input
+                  type="text"
+                  placeholder="Search"
+                  className="border p-2 rounded w-64"
+                  value={localSearchTerm}
+                  onChange={handleSearchChange}
+              />
+              {isSearching && (
+                  <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
+          Searching...
+        </span>
+              )}
+            </div>
+          </div>
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">
             <table className="table-auto w-full text-left border-collapse">
               <thead className="bg-[#3bc0c3] text-white divide-y divide-gray-200 sticky top-0 z-10">
@@ -564,6 +640,89 @@ const UserRegistration = () => {
           />
         </div>
       </div>
+      {showReportDialog && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold mb-4">Generate Report</h3>
+
+              {/* Report Type Selection Dropdown */}
+              <div className="mb-4">
+                <label htmlFor="reportType" className="block mb-2">Report Type:</label>
+                <select
+                    id="reportType"
+                    value={reportType || ''}
+                    onChange={(e) => setReportType(e.target.value)}
+                    className="w-full border p-2 rounded"
+                >
+                  <option value="">Select Report Type</option>
+                  <option value="date">Date Wise Report</option>
+                  <option value="range">Range Wise Report</option>
+                </select>
+              </div>
+
+              {/* Date Wise Report */}
+              {reportType === 'date' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <label>Select Date:</label>
+                      <input
+                          type="date"
+                          value={selectedDate || ''}
+                          onChange={(e) => setSelectedDate(e.target.value)}
+                          className="border p-2 rounded"
+                      />
+                    </div>
+                  </div>
+              )}
+
+              {/* Range Wise Report */}
+              {reportType === 'range' && (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-4">
+                      <label>From Date:</label>
+                      <input
+                          type="date"
+                          value={fromDate || ''}
+                          onChange={(e) => setFromDate(e.target.value)}
+                          className="border p-2 rounded"
+                      />
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <label>To Date:</label>
+                      <input
+                          type="date"
+                          value={toDate || ''}
+                          onChange={(e) => setToDate(e.target.value)}
+                          className="border p-2 rounded"
+                      />
+                    </div>
+                  </div>
+              )}
+
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                    onClick={() => {
+                      setShowReportDialog(false);
+                      setReportType(null);
+                      setSelectedDate(null);
+                      setFromDate(null);
+                      setToDate(null);
+                    }}
+                    className="px-4 py-2 bg-gray-300 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                    className="px-4 py-2 bg-[#3BC0C3] flex justify-between gap-1 text-white rounded-lg"
+                    onClick={() => handleGenerateReport(true)}
+                    disabled={isProcessing}
+                >
+                  {isProcessing ? 'Exporting...' : 'Export to Excel'}
+                </button>
+              </div>
+            </div>
+          </div>
+      )}
       {isAddUserFormOpen && (
         <UserAddForm onClose={() => setIsAddUserFormOpen(false)} />
       )}

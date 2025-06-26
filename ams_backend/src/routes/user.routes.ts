@@ -6,6 +6,12 @@ import { userController } from "@/controller";
 import { upload } from "@/middleware/upload";
 
 const router = express.Router();
+router.get(
+    "/export-excel",
+    auth("manageUsers"),
+    validate(userValidation.exportUsersToExcel),
+    userController.exportUsersToExcel
+);
 
 router
   .get(

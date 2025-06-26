@@ -6,15 +6,22 @@ export const createUserService = async (data) => {
 };
 
 export const getAllUsersService = async ({
-  limit = 5,
-  page = 1,
-  searchTerm = "", ...filters
-}) => {
+     limit = 5,
+     page = 1,
+     searchTerm = "",
+     selectedDate,
+     fromDate,
+     toDate,
+     ...filters
+   }) => {
   const response = await API.get("/users", {
     params: {
       limit,
       page,
       searchTerm: searchTerm.trim(),
+      selectedDate,
+      fromDate,
+      toDate,
       ...filters
     },
   });

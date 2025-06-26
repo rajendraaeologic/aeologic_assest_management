@@ -137,18 +137,6 @@ export const getAllBranches = catchAsync(async (req, res) => {
               mode: "insensitive",
             },
           },
-          {
-            state: {
-              contains: searchTerm,
-              mode: "insensitive",
-            },
-          },
-          {
-            city: {
-              contains: searchTerm,
-              mode: "insensitive",
-            },
-          },
         ],
       }
       : {};

@@ -48,7 +48,12 @@ const createUsers = {
   body: Joi.object()
     .keys({
       userName: Joi.string().min(3).max(25).required(),
-      phone: Joi.string().required().min(7).max(10),
+      phone: Joi.string()
+          .pattern(/^(?!0+$)\d{7,10}$/)
+          .required()
+          .messages({
+            'string.pattern.base': 'Phone number must be 7 to 10 digits and cannot be all zeros.',
+          }),
       email: Joi.string().email().required(),
 
       userRole: Joi.string()

@@ -247,13 +247,10 @@ export const getUsers = catchAsync(async (req, res) => {
     sortType = "desc";
   }
 
-  // Search conditions
   const searchConditions = searchTerm
     ? {
         OR: [
           { userName: { contains: searchTerm, mode: "insensitive" } },
-          { email: { contains: searchTerm, mode: "insensitive" } },
-          { phone: { contains: searchTerm, mode: "insensitive" } },
         ],
       }
     : {};

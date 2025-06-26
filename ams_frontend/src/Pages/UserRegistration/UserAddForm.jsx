@@ -486,6 +486,12 @@ const AddUserForm = ({ onClose }) => {
                       value: /^[0-9]{10}$/,
                       message: userStrings.addUser.validation.phoneInvalid,
                     },
+                    validate: (value) => {
+                      if (/^0{10}$/.test(value)) {
+                        return "Phone number cannot be all zeros.";
+                      }
+                      return true;
+                    }
                   })}
                   type="tel"
                   maxLength={10}
@@ -525,7 +531,7 @@ const AddUserForm = ({ onClose }) => {
                       message: userStrings.addUser.validation.emailInvalid,
                     },
                   })}
-                  type="email"
+                  type="text"
                   id="email"
                   placeholder={userStrings.addUser.placeholders.email}
                   className={`mt-1 p-2 w-full border ${

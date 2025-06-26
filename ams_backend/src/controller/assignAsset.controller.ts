@@ -9,137 +9,6 @@ import db from "@/lib/db";
 
 const prisma = new PrismaClient();
 
-/**
- * @swagger
- * tags:
- *   name: Asset Assignments
- *   description: Asset assignment management
- */
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     AssetAssignment:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *         assetId:
- *           type: string
- *         userId:
- *           type: string
- *         status:
- *           type: string
- *           enum: [ASSIGNED, UNASSIGNED, IN_USE]
- *         assignedAt:
- *           type: string
- *           format: date-time
- *         unassignedAt:
- *           type: string
- *           format: date-time
- *         asset:
- *           $ref: '#/components/schemas/Asset'
- *         user:
- *           $ref: '#/components/schemas/User'
- *     AssetAssignmentResponse:
- *       type: object
- *       properties:
- *         success:
- *           type: boolean
- *         message:
- *           type: string
- *         data:
- *           $ref: '#/components/schemas/AssetAssignment'
- *     AssetAssignmentsListResponse:
- *       type: object
- *       properties:
- *         status:
- *           type: number
- *         success:
- *           type: boolean
- *         message:
- *           type: string
- *         data:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/AssetAssignment'
- *         totalData:
- *           type: number
- *         page:
- *           type: number
- *         limit:
- *           type: number
- *         totalPages:
- *           type: number
- *         mode:
- *           type: string
- *     AvailableAssetsResponse:
- *       type: object
- *       properties:
- *         status:
- *           type: number
- *         success:
- *           type: boolean
- *         message:
- *           type: string
- *         data:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Asset'
- *     UsersForAssignmentResponse:
- *       type: object
- *       properties:
- *         status:
- *           type: number
- *         success:
- *           type: boolean
- *         message:
- *           type: string
- *         data:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/User'
- */
-
-/**
- * @swagger
- * /assignAsset/asset-assignments:
- *   post:
- *     summary: Assign asset to user
- *     tags: [Asset Assignments]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - assetId
- *               - userId
- *             properties:
- *               assetId:
- *                 type: string
- *                 example: "asset123"
- *               userId:
- *                 type: string
- *                 example: "user456"
- *     responses:
- *       "201":
- *         description: Created
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AssetAssignmentResponse'
- *       "400":
- *         description: Bad Request
- *       "404":
- *         description: Asset or User not found
- *       "409":
- *         description: Asset is not available for assignment
- */
 const assignAsset = catchAsync(async (req, res) => {
   const { assetId, userId } = req.body;
 
@@ -190,83 +59,6 @@ const unassignAsset = catchAsync(async (req, res) => {
   });
 });
 
-/**
- * @swagger
- * /assignAsset/asset-assignments:
- *   get:
- *     summary: Get all asset assignments with filtering
- *     tags: [Asset Assignments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: assetId
- *         schema:
- *           type: string
- *         description: Filter by asset ID
- *       - in: query
- *         name: userId
- *         schema:
- *           type: string
- *         description: Filter by user ID
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *           enum: [ASSIGNED, UNASSIGNED, IN_USE]
- *         description: Filter by assignment status
- *       - in: query
- *         name: from_date
- *         schema:
- *           type: string
- *           format: date
- *         description: Filter assignments after this date
- *       - in: query
- *         name: to_date
- *         schema:
- *           type: string
- *           format: date
- *         description: Filter assignments before this date
- *       - in: query
- *         name: searchTerm
- *         schema:
- *           type: string
- *         description: Search term for asset name
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Limit number of results
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number
- *       - in: query
- *         name: sortBy
- *         schema:
- *           type: string
- *           default: assignedAt
- *         description: Field to sort by
- *       - in: query
- *         name: sortType
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           default: desc
- *         description: Sort order
- *     responses:
- *       "200":
- *         description: OK
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AssetAssignmentsListResponse'
- *       "404":
- *         description: No assignments found
- */
 export const getAssetAssignments = catchAsync(async (req, res) => {
   const user = req.user as User;
   const rawFilters = pick(req.query, [
@@ -406,35 +198,6 @@ export const getAssetAssignments = catchAsync(async (req, res) => {
   });
 });
 
-/**
- * @swagger
- * /assignAsset/available-assets:
- *   get:
- *     summary: Get available assets for assignment
- *     tags: [Asset Assignments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: branchId
- *         schema:
- *           type: string
- *         description: Filter by branch ID
- *       - in: query
- *         name: departmentId
- *         schema:
- *           type: string
- *         description: Filter by department ID
- *     responses:
- *       "200":
- *         description: OK
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AvailableAssetsResponse'
- *       "404":
- *         description: No available assets found
- */
 const getAvailableAssets = catchAsync(async (req, res) => {
   const assets = await assignAssetService.getAvailableAssets(
     req.query.branchId as string,
@@ -459,33 +222,6 @@ const getAvailableAssets = catchAsync(async (req, res) => {
   });
 });
 
-/**
- * @swagger
- * /assignAsset/assignable-users:
- *   get:
- *     summary: Get users available for asset assignment
- *     tags: [Asset Assignments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: branchId
- *         schema:
- *           type: string
- *         description: Filter by branch ID
- *       - in: query
- *         name: departmentId
- *         schema:
- *           type: string
- *         description: Filter by department ID
- *     responses:
- *       "200":
- *         description: OK
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/UsersForAssignmentResponse'
- */
 const getUsersForAssignment = catchAsync(async (req, res) => {
   const users = await assignAssetService.getUsersForAssignment(
     req.query.branchId as string,
@@ -500,78 +236,6 @@ const getUsersForAssignment = catchAsync(async (req, res) => {
   });
 });
 
-/**
- * @swagger
- * /assignAsset/{departmentId}/assets:
- *   get:
- *     summary: Get assets by department ID
- *     tags: [Asset Assignments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: departmentId
- *         required: true
- *         schema:
- *           type: string
- *         description: Department ID
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Limit number of results
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number
- *       - in: query
- *         name: sortBy
- *         schema:
- *           type: string
- *           default: createdAt
- *         description: Field to sort by
- *       - in: query
- *         name: sortType
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           default: desc
- *         description: Sort order
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *         description: Filter by status
- *       - in: query
- *         name: createdAtFrom
- *         schema:
- *           type: string
- *           format: date-time
- *         description: Filter by creation date from
- *       - in: query
- *         name: createdAtTo
- *         schema:
- *           type: string
- *           format: date-time
- *         description: Filter by creation date to
- *       - in: query
- *         name: searchTerm
- *         schema:
- *           type: string
- *         description: Search term
- *     responses:
- *       "200":
- *         description: OK
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AvailableAssetsResponse'
- *       "404":
- *         description: No assets found for this department
- */
 export const getAssetsByDepartmentId = catchAsync(async (req, res) => {
   const { departmentId } = req.params;
 
@@ -644,78 +308,6 @@ export const getAssetsByDepartmentId = catchAsync(async (req, res) => {
   });
 });
 
-/**
- * @swagger
- * /assignAsset/{departmentId}/users:
- *   get:
- *     summary: Get users by department ID
- *     tags: [Asset Assignments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: departmentId
- *         required: true
- *         schema:
- *           type: string
- *         description: Department ID
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Limit number of results
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number
- *       - in: query
- *         name: sortBy
- *         schema:
- *           type: string
- *           default: createdAt
- *         description: Field to sort by
- *       - in: query
- *         name: sortType
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           default: desc
- *         description: Sort order
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *         description: Filter by status
- *       - in: query
- *         name: createdAtFrom
- *         schema:
- *           type: string
- *           format: date-time
- *         description: Filter by creation date from
- *       - in: query
- *         name: createdAtTo
- *         schema:
- *           type: string
- *           format: date-time
- *         description: Filter by creation date to
- *       - in: query
- *         name: searchTerm
- *         schema:
- *           type: string
- *         description: Search term
- *     responses:
- *       "200":
- *         description: OK
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/UsersForAssignmentResponse'
- *       "404":
- *         description: No users found for this department
- */
 export const getUsersByDepartmentId = catchAsync(async (req, res) => {
   const { departmentId } = req.params;
 
@@ -788,31 +380,6 @@ export const getUsersByDepartmentId = catchAsync(async (req, res) => {
   });
 });
 
-/**
- * @swagger
- * /assignAsset/{assignmentId}:
- *   get:
- *     summary: Get asset assignment by ID
- *     tags: [Asset Assignments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: assignmentId
- *         required: true
- *         schema:
- *           type: string
- *         description: Assignment ID
- *     responses:
- *       "200":
- *         description: OK
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AssetAssignmentResponse'
- *       "404":
- *         description: Assignment not found
- */
 const getAssetAssignmentById = catchAsync(async (req, res) => {
   const assignment = await assignAssetService.getAssetAssignmentById(
       req.params.assignmentId
@@ -840,45 +407,6 @@ const getAssetAssignmentById = catchAsync(async (req, res) => {
   });
 });
 
-
-/**
- * @swagger
- * /assignAsset/{assignmentId}:
- *   put:
- *     summary: Update asset assignment
- *     tags: [Asset Assignments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: assignmentId
- *         required: true
- *         schema:
- *           type: string
- *         description: Assignment ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               assetId:
- *                 type: string
- *                 example: "newAsset123"
- *               userId:
- *                 type: string
- *                 example: "newUser456"
- *     responses:
- *       "200":
- *         description: OK
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AssetAssignmentResponse'
- *       "404":
- *         description: Assignment not found
- */
 const updateAssetAssignment = catchAsync(async (req, res) => {
   const { assignmentId } = req.params;
   const { assetId, userId } = req.body;
@@ -898,35 +426,6 @@ const updateAssetAssignment = catchAsync(async (req, res) => {
   });
 });
 
-/**
- * @swagger
- * /assignAsset/{assignmentId}:
- *   delete:
- *     summary: Delete asset assignment
- *     tags: [Asset Assignments]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: assignmentId
- *         required: true
- *         schema:
- *           type: string
- *         description: Assignment ID
- *     responses:
- *       "204":
- *         description: No Content *         :
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 message:
- *                   type: string
- *       "404":
- *         description: Assignment not found
- */
 const deleteAssignment = catchAsync(async (req, res) => {
   const assignmentId = req.params.assignmentId;
 
@@ -942,12 +441,639 @@ const deleteAssignment = catchAsync(async (req, res) => {
   });
 });
 
+const bulkDeleteAssignments = catchAsync(async (req, res) => {
+  const assignmentIds = req.body.assignmentIds;
+
+  const result = await assignAssetService.deleteAssignmentsByIds(assignmentIds);
+
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
+    success: true,
+    message: "Assignments deleted successfully",
+    data: {
+      assignments: result,
+    },
+  });
+});
+
 /**
  * @swagger
- * /assignAsset/bulk-delete:
+ * tags:
+ *   name: Asset Assignment
+ *   description: Asset assignment management
+ */
+
+/**
+ * @swagger
+ * /assignments/assign:
  *   post:
- *     summary: Bulk delete asset assignments
- *     tags: [Asset Assignments]
+ *     summary: Assign an asset to a user
+ *     tags: [Asset Assignment]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - assetId
+ *               - userId
+ *             properties:
+ *               assetId:
+ *                 type: string
+ *               userId:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Asset assigned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 201
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Asset assigned successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     assignment:
+ *                       $ref: '#/components/schemas/AssetAssignment'
+ *       409:
+ *         description: Asset is not available for assignment
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /assignments/unassign/{assignmentId}:
+ *   patch:
+ *     summary: Unassign an asset
+ *     tags: [Asset Assignment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assignmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Asset unassigned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 200
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Asset unassigned successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     assignment:
+ *                       $ref: '#/components/schemas/AssetAssignment'
+ *       404:
+ *         description: Assignment not found
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /assignments:
+ *   get:
+ *     summary: Get all asset assignments
+ *     tags: [Asset Assignment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: assetId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: userId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: from_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: to_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortType
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *     responses:
+ *       200:
+ *         description: Asset assignments fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 200
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Asset assignments fetched successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     assignments:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/AssetAssignment'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: number
+ *                         page:
+ *                           type: number
+ *                         limit:
+ *                           type: number
+ *                         totalPages:
+ *                           type: number
+ *                         mode:
+ *                           type: string
+ *                           enum: [search, pagination]
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /assignments/available-assets:
+ *   get:
+ *     summary: Get available assets for assignment
+ *     tags: [Asset Assignment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: departmentId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Available assets fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 200
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Available assets fetched successfully"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Asset'
+ *       404:
+ *         description: No available assets found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /assignments/available-users:
+ *   get:
+ *     summary: Get users available for asset assignment
+ *     tags: [Asset Assignment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: departmentId
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Users fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 200
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Users fetched successfully"
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /assignments/department-assets/{departmentId}:
+ *   get:
+ *     summary: Get assets by department ID
+ *     tags: [Asset Assignment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: departmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortType
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: createdAtFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: createdAtTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Assets fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 200
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Assets fetched successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     assets:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Asset'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         totalData:
+ *                           type: number
+ *                         page:
+ *                           type: number
+ *                         limit:
+ *                           type: number
+ *                         totalPages:
+ *                           type: number
+ *       404:
+ *         description: No assets found for this department
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /assignments/department-users/{departmentId}:
+ *   get:
+ *     summary: Get users by department ID
+ *     tags: [Asset Assignment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: departmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: number
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortType
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: createdAtFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: createdAtTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Users fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 200
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Users fetched successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     users:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/User'
+ *                     pagination:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: number
+ *                         page:
+ *                           type: number
+ *                         limit:
+ *                           type: number
+ *                         totalPages:
+ *                           type: number
+ *       404:
+ *         description: No users found for this department
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /assignments/{assignmentId}:
+ *   get:
+ *     summary: Get asset assignment by ID
+ *     tags: [Asset Assignment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assignmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Assignment fetched successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 200
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Assignment fetched successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     assignment:
+ *                       $ref: '#/components/schemas/AssetAssignment'
+ *       404:
+ *         description: Assignment not found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ *   patch:
+ *     summary: Update asset assignment
+ *     tags: [Asset Assignment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assignmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               assetId:
+ *                 type: string
+ *               userId:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Asset assignment updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 200
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Asset assignment updated successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     assignment:
+ *                       $ref: '#/components/schemas/AssetAssignment'
+ *       404:
+ *         description: Assignment not found
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ *   delete:
+ *     summary: Delete an assignment
+ *     tags: [Asset Assignment]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: assignmentId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Assignment deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 200
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "Assignment deleted successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     assignment:
+ *                       $ref: '#/components/schemas/AssetAssignment'
+ *       404:
+ *         description: Assignment not found
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
+ */
+
+/**
+ * @swagger
+ * /assignments/bulk-delete:
+ *   post:
+ *     summary: Bulk delete assignments
+ *     tags: [Asset Assignment]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -963,33 +1089,96 @@ const deleteAssignment = catchAsync(async (req, res) => {
  *                 type: array
  *                 items:
  *                   type: string
- *                 example: ["assign1", "assign2"]
  *     responses:
- *       "204":
- *         description: No Content *         :
+ *       200:
+ *         description: Assignments deleted successfully
+ *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
+ *                 status:
+ *                   type: number
+ *                   example: 200
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
+ *                   example: "Assignments deleted successfully"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     assignments:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/AssetAssignment'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Internal server error
  */
-const bulkDeleteAssignments = catchAsync(async (req, res) => {
-  const assignmentIds = req.body.assignmentIds;
 
-  const result = await assignAssetService.deleteAssignmentsByIds(assignmentIds);
-
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Assignments deleted successfully",
-    data: {
-      assignments: result,
-    },
-  });
-});
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     AssetAssignment:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         assetId:
+ *           type: string
+ *         userId:
+ *           type: string
+ *         assignedAt:
+ *           type: string
+ *           format: date-time
+ *         returnedAt:
+ *           type: string
+ *           format: date-time
+ *         status:
+ *           type: string
+ *           enum: [IN_USE, RETURNED]
+ *         asset:
+ *           $ref: '#/components/schemas/Asset'
+ *         user:
+ *           $ref: '#/components/schemas/User'
+ *     Asset:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         assetName:
+ *           type: string
+ *         assetTag:
+ *           type: string
+ *         serialNumber:
+ *           type: string
+ *         status:
+ *           type: string
+ *           enum: [UNASSIGNED, IN_USE, MAINTENANCE, RETIRED, LOST, STOLEN]
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         email:
+ *           type: string
+ *         userRole:
+ *           type: string
+ *           enum: [SUPERADMIN, ADMIN, USER]
+ *   securitySchemes:
+ *     bearerAuth:
+ *       type: http
+ *       scheme: bearer
+ *       bearerFormat: JWT
+ */
 
 export default {
   assignAsset,

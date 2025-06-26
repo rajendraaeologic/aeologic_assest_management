@@ -432,9 +432,9 @@ const UserRegistration = () => {
               </button>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap justify-end">
-              {/* DateWise filter dropdown */}
-              <DateFilterDropdown />
+            <div className="flex items-center gap-2 flex-wrap justify-end ">
+              <DateFilterDropdown/>
+
               <TableFilterDropdown
                   filterType="status"
                   options={['ACTIVE', 'IN_ACTIVE']}

@@ -369,12 +369,6 @@ export const getAllAssets = catchAsync(async (req, res) => {
           {
             assetName: { contains: searchTerm, mode: "insensitive" },
           },
-          {
-            serialNumber: { contains: searchTerm, mode: "insensitive" },
-          },
-          {
-            uniqueId: { contains: searchTerm, mode: "insensitive" },
-          },
         ],
       }
     : {};

@@ -92,11 +92,11 @@ const DateFilterDropdown = () => {
     };
 
     return (
-        <div className="relative" ref={dropdownRef}>
+        <div className="relative mr-3"  ref={dropdownRef}>
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`p-2 text-sm border rounded-md flex items-center gap-2 cursor-pointer ${
+                className={`p-2 text-sm  font-medium  border rounded-md flex items-center gap-2 cursor-pointer ${
                     activeFilter
                         ? 'bg-[#3BC0C3] text-white'
                         : 'bg-white text-gray-700 border-gray-300'
@@ -104,7 +104,7 @@ const DateFilterDropdown = () => {
             >
 
             <FaCalendarAlt className="text-lg" />
-                <span className="text-base md:text-lg">{getDisplayText()}</span>
+                <span className="text-base md:text-sm">{getDisplayText()}</span>
                 {activeFilter && (
                     <button
                         onClick={(e) => {

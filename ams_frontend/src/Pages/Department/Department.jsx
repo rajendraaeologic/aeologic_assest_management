@@ -13,7 +13,6 @@ import {
   deselectAllDepartments,
   setSelectedDepartment, resetDeptTableState,
 } from "../../Features/slices/departmentSlice";
-import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import AddDepartment from "./AddDepartment";
 import UpdateDepartment from "./UpdateDepartment";
@@ -30,8 +29,9 @@ import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoade
 import PaginationControls from "../../components/common/PaginationControls";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
-import {resetOrgTableState} from "../../Features/slices/organizationSlice.js";
 import {toSentenceCase} from "../../utils/string.js";
+import ReportDialog from "../../components/common/ReportDialog.jsx";
+import {handleReportGeneration} from "../../utils/excelExport.js";
 const UserDepartment = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -46,9 +46,11 @@ const UserDepartment = () => {
     totalDepartments,
     searchTerm,
     loading,
-    error,
   } = useSelector((state) => state.departmentData);
-console.log(departments);
+
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
   const [isAddDepartment, setIsAddDepartment] = useState(false);
   const [isUpdateDepartment, setIsUpdateDepartment] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -244,6 +246,27 @@ console.log(departments);
     setShowSelectFirstPopup(false);
   };
 
+  const handleGenerateReport = async (dateFilters) => {
+    setIsExporting(true);
+
+    const success = await handleReportGeneration({
+      reportType: dateFilters.reportType,
+      dateFilters: {
+        selectedDate: dateFilters.selectedDate,
+        fromDate: dateFilters.fromDate,
+        toDate: dateFilters.toDate,
+      },
+      endpoint: "/department/export-excel",
+      defaultFileName: "Department_report",
+      successMessage: "Departments report generated successfully",
+      errorMessage: "No Departments found matching criteria",
+    });
+
+    setIsExporting(false);
+    return success;
+  };
+
+
   return (
     <div
       className={`w-full min-h-screen bg-slate-100 px-2 ${
@@ -263,7 +286,12 @@ console.log(departments);
               {departmentStrings.department.title}
             </h3>
             <div className="flex gap-3 md:mr-8">
-
+              <button
+                  className="px-4 py-2 bg-[#3BC0C3] flex justify-between gap-1 text-white rounded-lg"
+                  onClick={() => setShowReportDialog(true)}
+              >
+                Generate Report
+              </button>
               <button
                 onClick={() => setIsAddDepartment(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
@@ -460,6 +488,12 @@ console.log(departments);
       </div>
 
       {/* Modals */}
+      <ReportDialog
+          show={showReportDialog}
+          onClose={() => setShowReportDialog(false)}
+          onGenerate={handleGenerateReport}
+          isLoading={isExporting}
+      />
       {isAddDepartment && (
         <AddDepartment onClose={() => setIsAddDepartment(false)} />
       )}

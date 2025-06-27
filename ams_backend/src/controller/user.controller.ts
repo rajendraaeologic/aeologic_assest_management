@@ -240,7 +240,6 @@ export const getUsers = catchAsync(async (req, res) => {
   const searchTerm = (rawFilters.searchTerm as string)?.trim();
   const isSearchMode = !!searchTerm;
 
-  // Search mode adjustments
   if (isSearchMode) {
     limit = 5;
     sortBy = "createdAt";
@@ -399,6 +398,7 @@ export const exportUsersToExcel = catchAsync(async (req , res) => {
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.status(httpStatus.OK).send(buffer);
 });
+
 /**
  * @swagger
  * tags:

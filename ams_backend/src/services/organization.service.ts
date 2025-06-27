@@ -3,6 +3,7 @@ import db from "@/lib/db";
 import httpStatus from "http-status";
 import ApiError from "@/lib/ApiError";
 import { OrganizationKeys } from "@/utils/selects.utils";
+import xlsx from "xlsx";
 
 //createOrganization
 const createOrganization = async (
@@ -389,6 +390,94 @@ const deleteOrganizationsByIds = async (
   }
 };
 
+
+export interface ExportOrganizationFilters {
+  organizationName?: string;
+  searchTerm?: string;
+  from_date?: string;
+  to_date?: string;
+  selectedDate?: string;
+}
+const exportOrganizationsToExcelService = async (filters: ExportOrganizationFilters): Promise<Buffer> => {
+  let dateFilter = {};
+
+  if (filters.selectedDate) {
+    const selectedDate = new Date(filters.selectedDate);
+    if (isNaN(selectedDate.getTime())) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid selectedDate format. Use YYYY-MM-DD");
+    }
+    dateFilter = {
+      createdAt: {
+        gte: new Date(selectedDate.setHours(0, 0, 0, 0)),
+        lte: new Date(selectedDate.setHours(23, 59, 59, 999)),
+      },
+    };
+  } else if (filters.from_date && filters.to_date) {
+    const fromDate = new Date(filters.from_date);
+    const toDate = new Date(filters.to_date);
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid date format. Use YYYY-MM-DD");
+    }
+    toDate.setHours(23, 59, 59, 999);
+    dateFilter = {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate,
+      },
+    };
+  }
+
+  const where: any = {
+    ...dateFilter,
+    deleted: false,
+  };
+
+  if (filters.organizationName) {
+    where.organizationName = {
+      contains: filters.organizationName,
+      mode: "insensitive"
+    };
+  }
+
+  if (filters.searchTerm?.trim()) {
+    where.OR = [
+      {
+        organizationName: {
+          contains: filters.searchTerm,
+          mode: "insensitive"
+        }
+      },
+    ];
+  }
+
+  const organizations = await db.organization.findMany({
+    where,
+  });
+
+  if (!organizations.length) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No organizations found matching the criteria");
+  }
+
+  const excelData = organizations.map(org => ({
+    "Organization Name": org.organizationName,
+    "Created At": org.createdAt.toISOString(),
+    "Updated At": org.updatedAt.toISOString(),
+  }));
+
+  const workbook = xlsx.utils.book_new();
+  const worksheet = xlsx.utils.json_to_sheet(excelData);
+
+  worksheet['!cols'] = [
+    { wch: 30 },
+    { wch: 25 },
+    { wch: 25 },
+  ];
+
+  xlsx.utils.book_append_sheet(workbook, worksheet, "Organizations");
+  const buffer = xlsx.write(workbook, { type: "buffer", bookType: "xlsx" });
+  return buffer;
+};
+
 export default {
   createOrganization,
   queryOrganizations,
@@ -396,4 +485,5 @@ export default {
   updateOrganizationById,
   deleteOrganizationById,
   deleteOrganizationsByIds,
+  exportOrganizationsToExcelService,
 };

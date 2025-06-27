@@ -6,6 +6,13 @@ import departmentValidation from "@/validations/department.validation";
 
 const router = express.Router();
 
+router.get(
+    "/export-excel",
+    auth("manageDepartments"),
+    validate(departmentValidation.exportDepartmentsToExcel),
+    departmentController.exportDepartmentsToExcel
+);
+
 router
   .route("/createDepartment")
   .post(

@@ -70,6 +70,19 @@ const bulkDeleteOrganizations = {
   }),
 };
 
+// organization.validation.ts
+export const exportOrganizationsToExcel = {
+  query: Joi.object({
+    selectedDate: Joi.date().iso().optional(),
+    from_date: Joi.date().iso().optional(),
+    to_date: Joi.date().iso().optional(),
+    searchTerm: Joi.string().optional().allow(""),
+    organizationName: Joi.string().optional(),
+  })
+      .with('from_date', 'to_date')
+      .without('selectedDate', ['from_date', 'to_date']),
+};
+
 export default {
   createOrganizationValidation,
   getAllOrganizationsValidation,
@@ -77,4 +90,5 @@ export default {
   updateOrganizationValidation,
   deleteOrganizationValidation,
   bulkDeleteOrganizations,
+  exportOrganizationsToExcel,
 };

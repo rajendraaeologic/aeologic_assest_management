@@ -1,8 +1,9 @@
-import { Branch, Prisma } from "@prisma/client";
+import {Branch, Prisma, User, UserRole} from "@prisma/client";
 import db from "@/lib/db";
 import httpStatus from "http-status";
 import ApiError from "@/lib/ApiError";
 import { BranchKeys } from "@/utils/selects.utils";
+import xlsx from "xlsx";
 // createBranch
 const createBranch = async (
     branch: Pick<Branch, "branchName" | "state" | "city" | "companyId">
@@ -441,6 +442,120 @@ const getBranchesByOrganizationId = async (
   return { data, total };
 };
 
+export interface ExportBranchFilters {
+  branchName?: string;
+  city?: string;
+  state?: string;
+  organizationName?: string;
+  searchTerm?: string;
+  from_date?: string;
+  to_date?: string;
+  selectedDate?: string;
+}
+const exportBranchesToExcelService = async (user: User, filters: ExportBranchFilters): Promise<Buffer> => {
+  let dateFilter = {};
+
+  if (filters.selectedDate) {
+    const selectedDate = new Date(filters.selectedDate);
+    if (isNaN(selectedDate.getTime())) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid selectedDate format. Use YYYY-MM-DD");
+    }
+    dateFilter = {
+      createdAt: {
+        gte: new Date(selectedDate.setHours(0, 0, 0, 0)),
+        lte: new Date(selectedDate.setHours(23, 59, 59, 999)),
+      },
+    };
+  } else if (filters.from_date && filters.to_date) {
+    const fromDate = new Date(filters.from_date);
+    const toDate = new Date(filters.to_date);
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid date format. Use YYYY-MM-DD");
+    }
+    toDate.setHours(23, 59, 59, 999);
+    dateFilter = {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate,
+      },
+    };
+  }
+
+  const where: any = {
+    ...dateFilter,
+    deleted: false,
+  };
+
+  if (filters.branchName) {
+    where.branchName = {
+      contains: filters.branchName,
+      mode: "insensitive"
+    };
+  }
+
+  if (filters.state) {
+    where.state = {
+      contains: filters.state,
+      mode: "insensitive"
+    };
+  }
+
+  if (filters.city) {
+    where.city = {
+      contains: filters.city,
+      mode: "insensitive"
+    };
+  }
+
+  if (filters.searchTerm?.trim()) {
+    where.OR = [
+      { branchName: { contains: filters.searchTerm, mode: "insensitive" } },
+      { state: { contains: filters.searchTerm, mode: "insensitive" } },
+      { city: { contains: filters.searchTerm, mode: "insensitive" } },
+    ];
+  }
+
+  const branches = await db.branch.findMany({
+    where,
+    include: {
+      company: {
+        select: {
+          organizationName: true,
+        },
+      },
+    },
+  });
+
+  if (!branches.length) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No branches found matching the criteria");
+  }
+
+  const excelData = branches.map(branch => ({
+    "Branch Name": branch.branchName,
+    "State": branch.state,
+    "City": branch.city,
+    "Organization": branch.company?.organizationName || "N/A",
+    "Created At": branch.createdAt.toISOString(),
+    "Updated At": branch.updatedAt.toISOString(),
+  }));
+
+  const workbook = xlsx.utils.book_new();
+  const worksheet = xlsx.utils.json_to_sheet(excelData);
+
+  worksheet['!cols'] = [
+    { wch: 30 },
+    { wch: 20 },
+    { wch: 20 },
+    { wch: 30 },
+    { wch: 25 },
+    { wch: 25 },
+
+  ];
+
+  xlsx.utils.book_append_sheet(workbook, worksheet, "Branches");
+  const buffer = xlsx.write(workbook, { type: "buffer", bookType: "xlsx" });
+  return buffer;
+};
 
 export default {
   createBranch,
@@ -450,4 +565,5 @@ export default {
   deleteBranchById,
   deleteBranchesByIds,
   getBranchesByOrganizationId,
+  exportBranchesToExcelService,
 };

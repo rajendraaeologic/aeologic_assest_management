@@ -1,8 +1,9 @@
-import {Asset, AssetStatus, Prisma} from "@prisma/client";
+import {Asset, AssetStatus, Prisma, User, UserRole} from "@prisma/client";
 import db from "@/lib/db";
 import httpStatus from "http-status";
 import ApiError from "@/lib/ApiError";
 import { AssetKeys } from "@/utils/selects.utils";
+import xlsx from "xlsx";
 
 // createAsset
 const createAsset = async (
@@ -405,6 +406,147 @@ const deleteAssetsByIds = async (
   }
 };
 
+export interface ExportOrganizationFilters {
+  organizationName?: string;
+  assignedUser?: string;
+  assetName?: string;
+  model?: string;
+  uniqueId?: string;
+  status?: string;
+  branchName?: string;
+  departmentName?: string;
+  searchTerm?: string;
+  from_date?: string;
+  to_date?: string;
+  selectedDate?: string;
+}
+const exportAssetsToExcelService = async (user: User, filters: ExportOrganizationFilters): Promise<Buffer> => {
+  let dateFilter = {};
+
+  if (filters.selectedDate) {
+    const selectedDate = new Date(filters.selectedDate);
+    if (isNaN(selectedDate.getTime())) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid selectedDate format. Use YYYY-MM-DD");
+    }
+    dateFilter = {
+      createdAt: {
+        gte: new Date(selectedDate.setHours(0, 0, 0, 0)),
+        lte: new Date(selectedDate.setHours(23, 59, 59, 999)),
+      },
+    };
+  } else if (filters.from_date && filters.to_date) {
+    const fromDate = new Date(filters.from_date);
+    const toDate = new Date(filters.to_date);
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid date format. Use YYYY-MM-DD");
+    }
+    toDate.setHours(23, 59, 59, 999);
+    dateFilter = {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate,
+      },
+    };
+  }
+
+  let branchIds: string[] = [];
+  let departmentIds: string[] = [];
+
+  if (user.userRole !== UserRole.SUPERADMIN) {
+    const companyBranches = await db.branch.findMany({
+      where: { companyId: user.companyId },
+      select: { id: true }
+    });
+    branchIds = companyBranches.map(branch => branch.id);
+
+    const companyDepartments = await db.department.findMany({
+      where: { branchId: { in: branchIds } },
+      select: { id: true }
+    });
+    departmentIds = companyDepartments.map(dept => dept.id);
+  }
+
+  const where: any = {
+    ...dateFilter,
+    deleted: false,
+    ...(user.userRole !== UserRole.SUPERADMIN ? {
+      OR: [
+        { branchId: { in: branchIds } },
+        { departmentId: { in: departmentIds } },
+        { companyId: user.companyId },
+      ]
+    } : {})
+  };
+
+  if (filters.assetName) {
+    where.assetName = {
+      contains: filters.assetName,
+      mode: "insensitive"
+    };
+  }
+
+  if (filters.status) {
+    where.status = filters.status;
+  }
+
+  if (filters.searchTerm?.trim()) {
+    where.OR = [
+      { assetName: { contains: filters.searchTerm, mode: "insensitive" } },
+      { uniqueId: { contains: filters.searchTerm, mode: "insensitive" } },
+      { serialNumber: { contains: filters.searchTerm, mode: "insensitive" } },
+      { status: { contains: filters.searchTerm, mode: "insensitive" } },
+    ];
+  }
+
+  const assets = await db.asset.findMany({
+    where,
+    select: AssetKeys,
+  });
+
+  if (!assets.length) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No assets found matching the criteria");
+  }
+
+  const excelData = assets.map(asset => ({
+    "Asset Name": asset.assetName,
+    "Unique ID": asset.uniqueId,
+    "Brand": asset.brand,
+    "Model": asset.model,
+    "Serial Number": asset.serialNumber,
+    "Status": asset.status,
+    "Assigned To": asset.assignedUser?.userName || "Unassigned",
+    "Branch": asset.branch?.branchName,
+    "Department": asset.department?.departmentName,
+    "Organization": asset.company?.organizationName,
+    "Created At": asset.createdAt.toISOString(),
+    "Updated At": asset.updatedAt.toISOString(),
+  }));
+
+  const workbook = xlsx.utils.book_new();
+  const worksheet = xlsx.utils.json_to_sheet(excelData);
+
+  // Set column widths
+  worksheet['!cols'] = [
+    { wch: 25 }, // Asset Name
+    { wch: 20 }, // Unique ID
+    { wch: 20 }, // Brand
+    { wch: 20 }, // Model
+    { wch: 20 }, // Serial Number
+    { wch: 15 }, // Status
+    { wch: 20 }, // Assigned To
+    { wch: 20 }, // Branch
+    { wch: 20 }, // Department
+    { wch: 25 }, // Organization
+    { wch: 25 }, // Created At
+    { wch: 25 }, // Updated At
+  ];
+
+  xlsx.utils.book_append_sheet(workbook, worksheet, "Assets");
+
+  const buffer = xlsx.write(workbook, { type: "buffer", bookType: "xlsx" });
+  return buffer;
+};
+
 export default {
   createAsset,
   queryAssets,
@@ -412,4 +554,5 @@ export default {
   updateAssetById,
   deleteAssetById,
   deleteAssetsByIds,
+  exportAssetsToExcelService,
 };

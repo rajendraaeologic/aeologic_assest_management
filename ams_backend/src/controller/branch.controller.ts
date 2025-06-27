@@ -346,6 +346,36 @@ export const getBranchesByOrganizationId = catchAsync(async (req, res) => {
   });
 });
 
+// branch.controller.ts
+const exportBranchesToExcel = catchAsync(async (req, res) => {
+  const user = req.user as User;
+  const filters = {
+    branchName: req.query.branchName as string,
+    state: req.query.state as string,
+    city: req.query.city as string,
+    companyId: req.query.companyId as string,
+    searchTerm: req.query.searchTerm as string,
+    from_date: req.query.from_date as string,
+    to_date: req.query.to_date as string,
+    selectedDate: req.query.selectedDate as string,
+  };
+
+  // Validate companyId for non-superadmins
+  if (user.userRole !== UserRole.SUPERADMIN) {
+    if (filters.companyId && filters.companyId !== user.companyId) {
+      throw new ApiError(httpStatus.FORBIDDEN, "Access to this company's data is forbidden");
+    }
+    filters.companyId = user.companyId;
+  }
+
+  const buffer = await branchService.exportBranchesToExcelService(user, filters);
+
+  const fileName = `branches_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+  res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.status(httpStatus.OK).send(buffer);
+});
+
 /**
  * @swagger
  * tags:
@@ -829,4 +859,5 @@ export default {
   deleteBranch,
   deleteBranches,
   getBranchesByOrganizationId,
+  exportBranchesToExcel,
 };

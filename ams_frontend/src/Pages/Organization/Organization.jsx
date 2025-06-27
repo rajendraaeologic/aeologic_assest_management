@@ -13,7 +13,6 @@ import {
   deselectAllOrganizations,
   setSelectedOrganization, resetOrgTableState,
 } from "../../Features/slices/organizationSlice";
-import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import AddOrganization from "./AddOrganization";
 import UpdateOrganization from "./UpdateOrganization";
@@ -31,8 +30,9 @@ import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoade
 import PaginationControls from "../../components/common/PaginationControls";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
-import {resetBranchTableState} from "../../Features/slices/branchSlice.js";
 import {toSentenceCase} from "../../utils/string.js";
+import {handleReportGeneration} from "../../utils/excelExport.js";
+import ReportDialog from "../../components/common/ReportDialog.jsx";
 
 const Organization = () => {
   const dispatch = useDispatch();
@@ -55,9 +55,8 @@ const Organization = () => {
     error,
   } = useSelector((state) => state.organizationData);
 
-  // const startRow = (currentPage - 1) * rowsPerPage + 1;
-  // const endRow = Math.min(currentPage * rowsPerPage, totalOrganizations);
-
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [isAddOrganization, setIsAddOrganization] = useState(false);
   const [isUpdateOrganization, setIsUpdateOrganization] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -248,6 +247,27 @@ const Organization = () => {
     setShowSelectFirstPopup(false);
   };
 
+  const handleGenerateReport = async (dateFilters) => {
+    setIsExporting(true);
+
+    const success = await handleReportGeneration({
+      reportType: dateFilters.reportType,
+      dateFilters: {
+        selectedDate: dateFilters.selectedDate,
+        fromDate: dateFilters.fromDate,
+        toDate: dateFilters.toDate,
+      },
+      endpoint: "/organization/export-excel",
+      defaultFileName: "organizations_report",
+      successMessage: "Organizations report generated successfully",
+      errorMessage: "No organizations found matching criteria",
+    });
+
+    setIsExporting(false);
+    return success;
+  };
+
+
   return (
     <div
       className={`w-full min-h-screen bg-slate-100 px-2  ${
@@ -265,6 +285,12 @@ const Organization = () => {
           <div className="flex justify-between mx-5 mt-2">
             <h3 className="text-xl font-semibold text-[#6c757D]">{title}</h3>
             <div className="flex gap-3 md:mr-8">
+              <button
+                  className="px-4 py-2 bg-[#3BC0C3] flex justify-between gap-1 text-white rounded-lg"
+                  onClick={() => setShowReportDialog(true)}
+              >
+                Generate Report
+              </button>
               <button
                 onClick={() => setIsAddOrganization(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
@@ -485,6 +511,13 @@ const Organization = () => {
         </div>
       </div>
       {/* Modals */}
+      <ReportDialog
+          show={showReportDialog}
+          onClose={() => setShowReportDialog(false)}
+          onGenerate={handleGenerateReport}
+          isLoading={isExporting}
+      />
+
       {isAddOrganization && (
         <AddOrganization onClose={() => setIsAddOrganization(false)} />
       )}

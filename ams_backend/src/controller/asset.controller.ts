@@ -14,166 +14,6 @@ import db from "@/lib/db";
 
 const prisma = new PrismaClient();
 
-/**
- * @swagger
- * tags:
- *   name: Assets
- *   description: Asset management
- */
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Asset:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *         assetName:
- *           type: string
- *         uniqueId:
- *           type: string
- *         brand:
- *           type: string
- *         model:
- *           type: string
- *         serialNumber:
- *           type: string
- *         status:
- *           type: string
- *         description:
- *           type: string
- *         branchId:
- *           type: string
- *         departmentId:
- *           type: string
- *         companyId:
- *           type: string
- *         createdAt:
- *           type: string
- *           format: date-time
- *         updatedAt:
- *           type: string
- *           format: date-time
- *     AssetResponse:
- *       type: object
- *       properties:
- *         success:
- *           type: boolean
- *         message:
- *           type: string
- *         data:
- *           $ref: '#/components/schemas/Asset'
- *     AssetsListResponse:
- *       type: object
- *       properties:
- *         status:
- *           type: number
- *         success:
- *           type: boolean
- *         message:
- *           type: string
- *         data:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Asset'
- *         totalData:
- *           type: number
- *         page:
- *           type: number
- *         limit:
- *           type: number
- *         totalPages:
- *           type: number
- *         mode:
- *           type: string
- *     AssetAssignment:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *         assetId:
- *           type: string
- *         userId:
- *           type: string
- *         assignedAt:
- *           type: string
- *           format: date-time
- *     AssetHistory:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *         assetId:
- *           type: string
- *         action:
- *           type: string
- *         userId:
- *           type: string
- *         createdAt:
- *           type: string
- *           format: date-time
- */
-
-/**
- * @swagger
- * /asset/createAsset:
- *   post:
- *     summary: Create a new asset
- *     tags: [Assets]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - assetName
- *               - uniqueId
- *             properties:
- *               assetName:
- *                 type: string
- *                 example: "Laptop"
- *               uniqueId:
- *                 type: string
- *                 example: "LP-001"
- *               brand:
- *                 type: string
- *                 example: "Dell"
- *               model:
- *                 type: string
- *                 example: "XPS 15"
- *               serialNumber:
- *                 type: string
- *                 example: "SN123456789"
- *               status:
- *                 type: string
- *                 example: "AVAILABLE"
- *               description:
- *                 type: string
- *                 example: "High performance laptop"
- *               branchId:
- *                 type: string
- *                 example: "branch123"
- *               departmentId:
- *                 type: string
- *                 example: "dept456"
- *               companyId:
- *                 type: string
- *                 example: "company789"
- *     responses:
- *       "201":
- *         description: Created
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AssetResponse'
- *       "400":
- *         description: Bad Request
- */
 const createAsset = catchAsync(async (req, res) => {
   const user = req.user as User;
   try {
@@ -205,87 +45,6 @@ const createAsset = catchAsync(async (req, res) => {
   }
 });
 
-/**
- * @swagger
- * /asset/getAllAssets:
- *   get:
- *     summary: Get all assets with filtering and pagination
- *     tags: [Assets]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: assetName
- *         schema:
- *           type: string
- *         description: Filter by asset name
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *         description: Filter by status
- *       - in: query
- *         name: branchId
- *         schema:
- *           type: string
- *         description: Filter by branch ID
- *       - in: query
- *         name: departmentId
- *         schema:
- *           type: string
- *         description: Filter by department ID
- *       - in: query
- *         name: from_date
- *         schema:
- *           type: string
- *           format: date
- *         description: Filter assets created after this date
- *       - in: query
- *         name: to_date
- *         schema:
- *           type: string
- *           format: date
- *         description: Filter assets created before this date
- *       - in: query
- *         name: searchTerm
- *         schema:
- *           type: string
- *         description: Search term for asset name, serial number, or unique ID
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 10
- *         description: Limit number of results
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *         description: Page number
- *       - in: query
- *         name: sortBy
- *         schema:
- *           type: string
- *           default: createdAt
- *         description: Field to sort by
- *       - in: query
- *         name: sortType
- *         schema:
- *           type: string
- *           enum: [asc, desc]
- *           default: desc
- *         description: Sort order
- *     responses:
- *       "200":
- *         description: OK
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/AssetsListResponse'
- *       "404":
- *         description: No assets found
- */
 export const getAllAssets = catchAsync(async (req, res) => {
   const user = req.user as User;
 
@@ -423,6 +182,403 @@ export const getAllAssets = catchAsync(async (req, res) => {
   });
 });
 
+const getAssetById = catchAsync(async (req, res) => {
+  const asset = await prisma.asset.findUnique({
+    where: { id: req.params.assetId },
+    select: AssetKeys,
+  });
+
+  if (!asset) {
+    res.status(httpStatus.OK).json({
+      status: httpStatus.OK,
+      success: false,
+      message: "Asset not found",
+      data: {
+        asset: null,
+      },
+    });
+    return;
+  }
+
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
+    success: true,
+    message: "Asset fetched successfully",
+    data: {
+      asset,
+    },
+  });
+});
+
+const updateAsset = catchAsync(async (req, res) => {
+  const assetId = req.params.assetId;
+  const updateBody = req.body;
+
+  const updatedAsset = await assetService.updateAssetById(assetId, updateBody);
+
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
+    success: true,
+    message: "Asset updated successfully",
+    data: {
+      asset: updatedAsset,
+    },
+  });
+});
+
+const deleteAsset = catchAsync(async (req, res) => {
+  await assetService.deleteAssetById(req.params.assetId);
+
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
+    success: true,
+    message: "Asset deleted successfully",
+    data: null,
+  });
+});
+
+const bulkDeleteAssets = catchAsync(async (req, res) => {
+  await assetService.deleteAssetsByIds(req.body.assetIds);
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
+    success: true,
+    message: "Assets deleted successfully",
+    data: null,
+  });
+});
+
+const assignAsset = catchAsync(async (req, res) => {
+  // Create assignment record
+  const assignment = await prisma.assetAssignment.create({
+    data: {
+      assetId: req.params.assetId,
+      userId: req.body.assignedToUserId,
+    },
+    select: AssetAssignmentKeys,
+  });
+
+  // Update asset's assigned user
+  await prisma.asset.update({
+    where: { id: req.params.assetId },
+    data: { assignedToUserId: req.body.assignedToUserId },
+  });
+
+  res.status(httpStatus.CREATED).json({
+    status: httpStatus.CREATED,
+    success: true,
+    message: "Asset assigned successfully",
+    data: {
+      assignment,
+    },
+  });
+});
+
+const getAssetAssignments = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ["from_date", "to_date"]);
+  applyDateFilter(filter);
+
+  const assignments = await prisma.assetAssignment.findMany({
+    where: { assetId: req.params.assetId, ...filter },
+    select: AssetAssignmentKeys,
+  });
+
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
+    success: true,
+    message:
+      assignments.length > 0
+        ? "Asset assignments fetched successfully"
+        : "No assignments found",
+    data: {
+      assignments,
+      count: assignments.length,
+    },
+  });
+});
+
+const getAssetHistory = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ["action", "userId", "from_date", "to_date"]);
+  applyDateFilter(filter);
+
+  const history = await prisma.assetHistory.findMany({
+    where: { assetId: req.params.assetId, ...filter },
+    select: AssetHistoryKeys,
+  });
+
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
+    success: true,
+    message:
+      history.length > 0
+        ? "Asset history fetched successfully"
+        : "No history found",
+    data: {
+      history,
+      count: history.length,
+    },
+  });
+});
+
+const exportAssetsToExcel = catchAsync(async (req, res) => {
+  const user = req.user as User;
+  const filters = {
+    assetName: req.query.assetName as string,
+    status: req.query.status as AssetStatus,
+    branchId: req.query.branchId as string,
+    departmentId: req.query.departmentId as string,
+    searchTerm: req.query.searchTerm as string,
+    from_date: req.query.from_date as string,
+    to_date: req.query.to_date as string,
+    selectedDate: req.query.selectedDate as string,
+  };
+
+  const buffer = await assetService.exportAssetsToExcelService(user, filters);
+
+  const fileName = `assets_export_${new Date().toISOString().split('T')[0]}.xlsx`;
+  res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.status(httpStatus.OK).send(buffer);
+});
+
+/**
+ * @swagger
+ * tags:
+ *   name: Assets
+ *   description: Asset management
+ */
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Asset:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         assetName:
+ *           type: string
+ *         uniqueId:
+ *           type: string
+ *         brand:
+ *           type: string
+ *         model:
+ *           type: string
+ *         serialNumber:
+ *           type: string
+ *         status:
+ *           type: string
+ *         description:
+ *           type: string
+ *         branchId:
+ *           type: string
+ *         departmentId:
+ *           type: string
+ *         companyId:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+ *     AssetResponse:
+ *       type: object
+ *       properties:
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         data:
+ *           $ref: '#/components/schemas/Asset'
+ *     AssetsListResponse:
+ *       type: object
+ *       properties:
+ *         status:
+ *           type: number
+ *         success:
+ *           type: boolean
+ *         message:
+ *           type: string
+ *         data:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Asset'
+ *         totalData:
+ *           type: number
+ *         page:
+ *           type: number
+ *         limit:
+ *           type: number
+ *         totalPages:
+ *           type: number
+ *         mode:
+ *           type: string
+ *     AssetAssignment:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         assetId:
+ *           type: string
+ *         userId:
+ *           type: string
+ *         assignedAt:
+ *           type: string
+ *           format: date-time
+ *     AssetHistory:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         assetId:
+ *           type: string
+ *         action:
+ *           type: string
+ *         userId:
+ *           type: string
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ */
+/**
+ * @swagger
+ * /asset/createAsset:
+ *   post:
+ *     summary: Create a new asset
+ *     tags: [Assets]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - assetName
+ *               - uniqueId
+ *             properties:
+ *               assetName:
+ *                 type: string
+ *                 example: "Laptop"
+ *               uniqueId:
+ *                 type: string
+ *                 example: "LP-001"
+ *               brand:
+ *                 type: string
+ *                 example: "Dell"
+ *               model:
+ *                 type: string
+ *                 example: "XPS 15"
+ *               serialNumber:
+ *                 type: string
+ *                 example: "SN123456789"
+ *               status:
+ *                 type: string
+ *                 example: "AVAILABLE"
+ *               description:
+ *                 type: string
+ *                 example: "High performance laptop"
+ *               branchId:
+ *                 type: string
+ *                 example: "branch123"
+ *               departmentId:
+ *                 type: string
+ *                 example: "dept456"
+ *               companyId:
+ *                 type: string
+ *                 example: "company789"
+ *     responses:
+ *       "201":
+ *         description: Created
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AssetResponse'
+ *       "400":
+ *         description: Bad Request
+ */
+/**
+ * @swagger
+ * /asset/getAllAssets:
+ *   get:
+ *     summary: Get all assets with filtering and pagination
+ *     tags: [Assets]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: assetName
+ *         schema:
+ *           type: string
+ *         description: Filter by asset name
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Filter by status
+ *       - in: query
+ *         name: branchId
+ *         schema:
+ *           type: string
+ *         description: Filter by branch ID
+ *       - in: query
+ *         name: departmentId
+ *         schema:
+ *           type: string
+ *         description: Filter by department ID
+ *       - in: query
+ *         name: from_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter assets created after this date
+ *       - in: query
+ *         name: to_date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         description: Filter assets created before this date
+ *       - in: query
+ *         name: searchTerm
+ *         schema:
+ *           type: string
+ *         description: Search term for asset name, serial number, or unique ID
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *         description: Limit number of results
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           default: createdAt
+ *         description: Field to sort by
+ *       - in: query
+ *         name: sortType
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: desc
+ *         description: Sort order
+ *     responses:
+ *       "200":
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AssetsListResponse'
+ *       "404":
+ *         description: No assets found
+ */
 /**
  * @swagger
  * /asset/{assetId}:
@@ -457,34 +613,6 @@ export const getAllAssets = catchAsync(async (req, res) => {
  *       "404":
  *         description: Asset not found
  */
-const getAssetById = catchAsync(async (req, res) => {
-  const asset = await prisma.asset.findUnique({
-    where: { id: req.params.assetId },
-    select: AssetKeys,
-  });
-
-  if (!asset) {
-    res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
-      message: "Asset not found",
-      data: {
-        asset: null,
-      },
-    });
-    return;
-  }
-
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Asset fetched successfully",
-    data: {
-      asset,
-    },
-  });
-});
-
 /**
  * @swagger
  * /asset/{assetId}:
@@ -547,22 +675,6 @@ const getAssetById = catchAsync(async (req, res) => {
  *       "404":
  *         description: Asset not found
  */
-const updateAsset = catchAsync(async (req, res) => {
-  const assetId = req.params.assetId;
-  const updateBody = req.body;
-
-  const updatedAsset = await assetService.updateAssetById(assetId, updateBody);
-
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Asset updated successfully",
-    data: {
-      asset: updatedAsset,
-    },
-  });
-});
-
 /**
  * @swagger
  * /asset/{assetId}:
@@ -593,17 +705,6 @@ const updateAsset = catchAsync(async (req, res) => {
  *       "404":
  *         description: Asset not found
  */
-const deleteAsset = catchAsync(async (req, res) => {
-  await assetService.deleteAssetById(req.params.assetId);
-
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Asset deleted successfully",
-    data: null,
-  });
-});
-
 /**
  * @swagger
  * /asset/bulk-delete:
@@ -641,16 +742,6 @@ const deleteAsset = catchAsync(async (req, res) => {
  *       "404":
  *         description: Assets not found
  */
-const bulkDeleteAssets = catchAsync(async (req, res) => {
-  await assetService.deleteAssetsByIds(req.body.assetIds);
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Assets deleted successfully",
-    data: null,
-  });
-});
-
 /**
  * @swagger
  * /asset/{assetId}/assign:
@@ -695,32 +786,6 @@ const bulkDeleteAssets = catchAsync(async (req, res) => {
  *       "404":
  *         description: Asset or user not found
  */
-const assignAsset = catchAsync(async (req, res) => {
-  // Create assignment record
-  const assignment = await prisma.assetAssignment.create({
-    data: {
-      assetId: req.params.assetId,
-      userId: req.body.assignedToUserId,
-    },
-    select: AssetAssignmentKeys,
-  });
-
-  // Update asset's assigned user
-  await prisma.asset.update({
-    where: { id: req.params.assetId },
-    data: { assignedToUserId: req.body.assignedToUserId },
-  });
-
-  res.status(httpStatus.CREATED).json({
-    status: httpStatus.CREATED,
-    success: true,
-    message: "Asset assigned successfully",
-    data: {
-      assignment,
-    },
-  });
-});
-
 /**
  * @swagger
  * /asset/{assetId}/assignments:
@@ -767,29 +832,6 @@ const assignAsset = catchAsync(async (req, res) => {
  *       "404":
  *         description: No assignments found
  */
-const getAssetAssignments = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ["from_date", "to_date"]);
-  applyDateFilter(filter);
-
-  const assignments = await prisma.assetAssignment.findMany({
-    where: { assetId: req.params.assetId, ...filter },
-    select: AssetAssignmentKeys,
-  });
-
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message:
-      assignments.length > 0
-        ? "Asset assignments fetched successfully"
-        : "No assignments found",
-    data: {
-      assignments,
-      count: assignments.length,
-    },
-  });
-});
-
 /**
  * @swagger
  * /asset/{assetId}/history:
@@ -846,28 +888,6 @@ const getAssetAssignments = catchAsync(async (req, res) => {
  *       "404":
  *         description: No history found
  */
-const getAssetHistory = catchAsync(async (req, res) => {
-  const filter = pick(req.query, ["action", "userId", "from_date", "to_date"]);
-  applyDateFilter(filter);
-
-  const history = await prisma.assetHistory.findMany({
-    where: { assetId: req.params.assetId, ...filter },
-    select: AssetHistoryKeys,
-  });
-
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message:
-      history.length > 0
-        ? "Asset history fetched successfully"
-        : "No history found",
-    data: {
-      history,
-      count: history.length,
-    },
-  });
-});
 
 export default {
   createAsset,
@@ -879,4 +899,5 @@ export default {
   assignAsset,
   getAssetAssignments,
   getAssetHistory,
+  exportAssetsToExcel,
 };

@@ -6,6 +6,13 @@ import auth from "@/middleware/auth.middleware";
 
 const router = express.Router();
 
+router.get(
+    "/export-excel",
+    auth("manageOrganizations"),
+    validate(organizationValidation.exportOrganizationsToExcel),
+    organizationController.exportOrganizationsToExcel
+);
+
 router
   .route("/createOrganization")
   .post(

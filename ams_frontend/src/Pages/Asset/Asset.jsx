@@ -11,7 +11,6 @@ import {
   deselectAllAssets,
   setSelectedAsset, resetAssetTableState,
 } from "../../Features/slices/assetSlice";
-import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import AddAsset from "./AddAsset";
 import UpdateAsset from "./UpdateAsset";
@@ -26,8 +25,9 @@ import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoade
 import PaginationControls from "../../components/common/PaginationControls";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
-import {resetDeptTableState} from "../../Features/slices/departmentSlice.js";
 import {toSentenceCase} from "../../utils/string.js";
+import {handleReportGeneration} from "../../utils/excelExport.js";
+import ReportDialog from "../../components/common/ReportDialog.jsx";
 const Asset = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -45,6 +45,10 @@ const Asset = () => {
     loading,
     error,
   } = useSelector((state) => state.assetUserData);
+
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
 
   const [isAddAsset, setIsAddAsset] = useState(false);
   const [isUpdateAsset, setIsUpdateAsset] = useState(false);
@@ -227,6 +231,27 @@ const Asset = () => {
     setShowSelectFirstPopup(false);
   };
 
+  const handleGenerateReport = async (dateFilters) => {
+    setIsExporting(true);
+
+    const success = await handleReportGeneration({
+      reportType: dateFilters.reportType,
+      dateFilters: {
+        selectedDate: dateFilters.selectedDate,
+        fromDate: dateFilters.fromDate,
+        toDate: dateFilters.toDate,
+      },
+      endpoint: "/asset/export-excel",
+      defaultFileName: "Asset_report",
+      successMessage: "Assets report generated successfully",
+      errorMessage: "No Assets found matching criteria",
+    });
+
+    setIsExporting(false);
+    return success;
+  };
+
+
   return (
     <div
       className={`w-full min-h-screen bg-slate-100 px-2 ${
@@ -246,6 +271,12 @@ const Asset = () => {
               {strings.title}
             </h3>
             <div className="flex gap-3 md:mr-8">
+              <button
+                  className="px-4 py-2 bg-[#3BC0C3] flex justify-between gap-1 text-white rounded-lg"
+                  onClick={() => setShowReportDialog(true)}
+              >
+                Generate Report
+              </button>
               <button
                 onClick={() => setIsAddAsset(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
@@ -444,6 +475,12 @@ const Asset = () => {
         </div>
       </div>
       {/* Modals */}
+      <ReportDialog
+          show={showReportDialog}
+          onClose={() => setShowReportDialog(false)}
+          onGenerate={handleGenerateReport}
+          isLoading={isExporting}
+      />
       {isAddAsset && (
         <AddAsset
           onClose={() => setIsAddAsset(false)}

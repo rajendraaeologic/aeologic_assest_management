@@ -93,6 +93,21 @@ export const getDepartmentsByBranchIdValidation = {
     searchTerm: Joi.string().allow("").optional(),
   }),
 };
+
+export const exportDepartmentsToExcel = {
+  query: Joi.object({
+    selectedDate: Joi.date().iso().optional(),
+    from_date: Joi.date().iso().optional(),
+    to_date: Joi.date().iso().optional(),
+    searchTerm: Joi.string().optional().allow(""),
+    departmentName: Joi.string().optional(),
+    companyId: Joi.string().optional(),
+    branchId: Joi.string().optional(),
+  })
+      .with('from_date', 'to_date')
+      .without('selectedDate', ['from_date', 'to_date']),
+};
+
 export default {
   createDepartmentValidation,
   getAllDepartmentsValidation,
@@ -101,4 +116,5 @@ export default {
   deleteDepartmentValidation,
   bulkDeleteDepartmentsValidation,
   getDepartmentsByBranchIdValidation,
+  exportDepartmentsToExcel,
 };

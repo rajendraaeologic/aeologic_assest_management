@@ -1,8 +1,9 @@
-import { Department, Prisma } from "@prisma/client";
+import {Department, Prisma, User} from "@prisma/client";
 import db from "@/lib/db";
 import httpStatus from "http-status";
 import ApiError from "@/lib/ApiError";
 import { DepartmentKeys } from "@/utils/selects.utils";
+import xlsx from "xlsx";
 
 //createDepartment
 const createDepartment = async (
@@ -539,6 +540,123 @@ const getDepartmentsByCompanyId = async (
   return { data, total };
 };
 
+export interface ExportDepartmentFilters {
+  organizationName?: string;
+  branchName?: string;
+  departmentName?: string;
+  searchTerm?: string;
+  from_date?: string;
+  to_date?: string;
+  selectedDate?: string;
+}
+const exportDepartmentsToExcelService = async (user: User, filters: ExportDepartmentFilters): Promise<Buffer> => {
+  let dateFilter = {};
+
+  if (filters.selectedDate) {
+    const selectedDate = new Date(filters.selectedDate);
+    if (isNaN(selectedDate.getTime())) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid selectedDate format. Use YYYY-MM-DD");
+    }
+    dateFilter = {
+      createdAt: {
+        gte: new Date(selectedDate.setHours(0, 0, 0, 0)),
+        lte: new Date(selectedDate.setHours(23, 59, 59, 999)),
+      },
+    };
+  } else if (filters.from_date && filters.to_date) {
+    const fromDate = new Date(filters.from_date);
+    const toDate = new Date(filters.to_date);
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid date format. Use YYYY-MM-DD");
+    }
+    toDate.setHours(23, 59, 59, 999);
+    dateFilter = {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate,
+      },
+    };
+  }
+
+  const where: any = {
+    ...dateFilter,
+    deleted: false,
+  };
+
+  if (filters.organizationName) {
+    where.organizationName = {
+      contains: filters.organizationName,
+      mode: "insensitive"
+    };
+  }
+
+  if (filters.departmentName) {
+    where.departmentName = {
+      contains: filters.departmentName,
+      mode: "insensitive"
+    };
+  }
+
+  if (filters.branchName) {
+    where.branchName = {
+      contains: filters.branchName,
+      mode: "insensitive"
+    };
+  }
+
+  if (filters.searchTerm?.trim()) {
+    where.OR = [
+      { departmentName: { contains: filters.searchTerm, mode: "insensitive" } },
+      { branchName: { contains: filters.searchTerm, mode: "insensitive" } },
+      { organizationName: { contains: filters.searchTerm, mode: "insensitive" } },
+    ];
+  }
+
+  const departments = await db.department.findMany({
+    where,
+    include: {
+      company: {
+        select: {
+          organizationName: true,
+        },
+      },
+      branch: {
+        select: {
+          branchName: true,
+        },
+      },
+    },
+  });
+
+  if (!departments.length) {
+    throw new ApiError(httpStatus.NOT_FOUND, "No departments found matching the criteria");
+  }
+
+  const excelData = departments.map(dept => ({
+    "Department Name": dept.departmentName,
+    "Branch": dept.branch?.branchName || "N/A",
+    "Organization": dept.company?.organizationName || "N/A",
+    "Created At": dept.createdAt.toISOString(),
+    "Updated At": dept.updatedAt.toISOString(),
+  }));
+
+  const workbook = xlsx.utils.book_new();
+  const worksheet = xlsx.utils.json_to_sheet(excelData);
+
+  worksheet['!cols'] = [
+    { wch: 30 },
+    { wch: 25 },
+    { wch: 30 },
+    { wch: 25 },
+    { wch: 25 },
+  ];
+
+  xlsx.utils.book_append_sheet(workbook, worksheet, "Departments");
+  const buffer = xlsx.write(workbook, { type: "buffer", bookType: "xlsx" });
+  return buffer;
+};
+
+
 export default {
   createDepartment,
   queryDepartments,
@@ -548,4 +666,5 @@ export default {
   deleteDepartmentsByIds,
   getDepartmentsByBranchId,
   getDepartmentsByCompanyId,
+  exportDepartmentsToExcelService,
 };

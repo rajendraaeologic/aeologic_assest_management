@@ -760,8 +760,21 @@ const exportUsersToExcelService = async (user: User, filters: ExportFilters): Pr
 
   const workbook = xlsx.utils.book_new();
   const worksheet = xlsx.utils.json_to_sheet(excelData);
-  xlsx.utils.book_append_sheet(workbook, worksheet, "Users");
 
+  // Set column widths
+  worksheet['!cols'] = [
+    { wch: 25 },
+    { wch: 20 },
+    { wch: 20 },
+    { wch: 20 },
+    { wch: 20 },
+    { wch: 15 },
+    { wch: 20 },
+    { wch: 20 },
+    { wch: 20 },
+  ];
+
+  xlsx.utils.book_append_sheet(workbook, worksheet, "Users");
   const buffer = xlsx.write(workbook, { type: "buffer", bookType: "xlsx" });
   return buffer;
 };

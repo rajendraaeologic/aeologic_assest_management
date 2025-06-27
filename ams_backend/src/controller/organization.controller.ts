@@ -201,6 +201,22 @@ const bulkDeleteOrganizations = catchAsync(async (req, res) => {
   }
 });
 
+const exportOrganizationsToExcel = catchAsync(async (req, res) => {
+  const filters = {
+    organizationName: req.query.organizationName as string,
+    searchTerm: req.query.searchTerm as string,
+    from_date: req.query.from_date as string,
+    to_date: req.query.to_date as string,
+    selectedDate: req.query.selectedDate as string,
+  };
+
+  const buffer = await organizationService.exportOrganizationsToExcelService(filters);
+
+  res.setHeader('Content-Disposition', 'attachment; filename="organizations_export.xlsx"');
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.status(httpStatus.OK).send(buffer);
+});
+
 /**
  * @swagger
  * tags:
@@ -573,4 +589,5 @@ export default {
   updateOrganization,
   deleteOrganization,
   bulkDeleteOrganizations,
+  exportOrganizationsToExcel,
 };

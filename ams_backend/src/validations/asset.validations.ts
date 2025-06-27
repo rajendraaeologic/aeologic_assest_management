@@ -3,6 +3,7 @@ import {
   isValidMongoDBObjectId,
   isValidMongoDBObjectIdCustomMessages,
 } from "@/validations/custom.validation";
+import {AssetStatus} from "@prisma/client";
 
 const createAssetValidation = {
   body: Joi.object()
@@ -194,6 +195,21 @@ const bulkDeleteAssetsValidation = {
   }),
 };
 
+export const exportAssetsToExcel = {
+    query: Joi.object({
+        selectedDate: Joi.date().iso().optional(),
+        from_date: Joi.date().iso().optional(),
+        to_date: Joi.date().iso().optional(),
+        searchTerm: Joi.string().optional().allow(""),
+        assetName: Joi.string().optional(),
+        status: Joi.string().valid(...Object.values(AssetStatus)).optional(),
+        branchId: Joi.string().optional(),
+        departmentId: Joi.string().optional(),
+    })
+        .with('from_date', 'to_date')
+        .without('selectedDate', ['from_date', 'to_date']),
+};
+
 export default {
   createAssetValidation,
   getAllAssetsValidation,
@@ -201,4 +217,5 @@ export default {
   updateAssetValidation,
   deleteAssetValidation,
   bulkDeleteAssetsValidation,
+    exportAssetsToExcel,
 };

@@ -11,7 +11,6 @@ import {
   deselectAllBranches,
   setSelectedBranch, resetBranchTableState,
 } from "../../Features/slices/branchSlice";
-import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import AddBranch from "./AddBranch";
 import UpdateBranch from "./updateBranch";
@@ -31,6 +30,8 @@ import PaginationControls from "../../components/common/PaginationControls";
 import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 import DeleteConfirmationModal from "../../components/common/DeleteConfirmationModal";
 import {toSentenceCase} from "../../utils/string.js";
+import {handleReportGeneration} from "../../utils/excelExport.js";
+import ReportDialog from "../../components/common/ReportDialog.jsx";
 const Branch = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -45,9 +46,11 @@ const Branch = () => {
     totalBranches,
     searchTerm,
     loading,
-    error,
   } = useSelector((state) => state.branchData);
 
+
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [isAddBranch, setIsAddBranch] = useState(false);
   const [isUpdateBranch, setIsUpdateBranch] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -242,6 +245,27 @@ const Branch = () => {
     setShowSelectFirstPopup(false);
   };
 
+  const handleGenerateReport = async (dateFilters) => {
+    setIsExporting(true);
+
+    const success = await handleReportGeneration({
+      reportType: dateFilters.reportType,
+      dateFilters: {
+        selectedDate: dateFilters.selectedDate,
+        fromDate: dateFilters.fromDate,
+        toDate: dateFilters.toDate,
+      },
+      endpoint: "/branch/export-excel",
+      defaultFileName: "Branch_report",
+      successMessage: "Branch report generated successfully",
+      errorMessage: "No Branch found matching criteria",
+    });
+
+    setIsExporting(false);
+    return success;
+  };
+
+
   return (
     <div
       className={`w-full min-h-screen bg-slate-100 px-2 ${
@@ -261,6 +285,12 @@ const Branch = () => {
               {branchStrings.branch.title}
             </h3>
             <div className="flex gap-3 md:mr-8">
+              <button
+                  className="px-4 py-2 bg-[#3BC0C3] flex justify-between gap-1 text-white rounded-lg"
+                  onClick={() => setShowReportDialog(true)}
+              >
+                Generate Report
+              </button>
               <button
                 onClick={() => setIsAddBranch(true)}
                 className="px-4 py-2 bg-[#3BC0C3] text-white rounded-lg"
@@ -468,6 +498,13 @@ const Branch = () => {
       </div>
 
       {/* Modals */}
+      <ReportDialog
+          show={showReportDialog}
+          onClose={() => setShowReportDialog(false)}
+          onGenerate={handleGenerateReport}
+          isLoading={isExporting}
+      />
+
       {isAddBranch && <AddBranch onClose={() => setIsAddBranch(false)} />}
       {isUpdateBranch && (
         <UpdateBranch onClose={() => setIsUpdateBranch(false)} />

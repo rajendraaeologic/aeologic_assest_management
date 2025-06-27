@@ -6,6 +6,13 @@ import branchValidation from "@/validations/branch.validation";
 
 const router = express.Router();
 
+router.get(
+    "/export-excel",
+    auth("manageBranches"),
+    validate(branchValidation.exportBranchesToExcel),
+    branchController.exportBranchesToExcel
+);
+
 router
   .route("/createBranch")
   .post(

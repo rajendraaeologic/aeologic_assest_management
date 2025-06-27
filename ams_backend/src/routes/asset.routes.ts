@@ -5,6 +5,14 @@ import assetValidation from "@/validations/asset.validations";
 import auth from "@/middleware/auth.middleware";
 const router = express.Router();
 
+
+router.get(
+    "/export-excel",
+    auth("manageAssets"),
+    validate(assetValidation.exportAssetsToExcel),
+    assetController.exportAssetsToExcel
+);
+
 router
   .route("/createAsset")
   .post(

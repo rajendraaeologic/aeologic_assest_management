@@ -187,13 +187,12 @@ export const AssetKeys: Prisma.AssetSelect = {
   status: true,
   createdAt: true,
   updatedAt: true,
-  // assignedUser: {
-  //   select: {
-  //     id: true,
-  //     userName: true,
-  //     email: true,
-  //   },
-  // },
+  assignedUser: {
+    select: {
+      id: true,
+      userName: true,
+    },
+  },
   // assetLocation: {
   //   select: {
   //     id: true,

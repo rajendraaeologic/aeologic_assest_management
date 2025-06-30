@@ -422,6 +422,15 @@ const UpdateAssignAsset = ({ onClose }) => {
     setShowUserDropdown(false);
   };
 
+  const hasChanges = (formData) => {
+    if (!selectedAssignment) return false;
+
+    return (
+        formData.assetId !== selectedAssignment.asset?.id ||
+        formData.userId !== selectedAssignment.user?.id
+    );
+  };
+
   const onSubmit = async (data) => {
     try {
       if (!user?.companyId) {
@@ -431,7 +440,7 @@ const UpdateAssignAsset = ({ onClose }) => {
         });
         return;
       }
-      // Check if required IDs are available
+
       if (!selectedAssignment || !selectedAssignment.id) {
         toast.error("Selected assignment is missing or invalid");
         return;
@@ -439,6 +448,15 @@ const UpdateAssignAsset = ({ onClose }) => {
 
       if (!data.assetId || !data.userId) {
         toast.error("Asset and user selection are required");
+        return;
+      }
+
+      if (!hasChanges(data)) {
+        toast.info("No changes made to the assignment", {
+          position: "top-right",
+          autoClose: 1000,
+        });
+        handleClose();
         return;
       }
 
@@ -451,11 +469,7 @@ const UpdateAssignAsset = ({ onClose }) => {
       };
 
       console.log("Updating assignment with payload:", payload);
-
-      // Dispatch the update action
       await dispatch(updateAssignAsset(payload)).unwrap();
-
-      // After successful update, refresh the assignments list
       await dispatch(
         getAllAssignAssets({
           page: currentPage,
@@ -472,9 +486,7 @@ const UpdateAssignAsset = ({ onClose }) => {
     } catch (error) {
       console.error("Error updating assignment:", error);
 
-      // Handle specific error cases
       if (error?.message) {
-        // Specifically handle the asset in use error
         if (
           error.message.includes("not available for assignment") ||
           error.message.includes("IN_USE")
@@ -488,7 +500,6 @@ const UpdateAssignAsset = ({ onClose }) => {
           return;
         }
 
-        // Display the specific error message from the backend if available
         toast.error(error.message, {
           position: "top-right",
           autoClose: 3000,
@@ -496,14 +507,12 @@ const UpdateAssignAsset = ({ onClose }) => {
         return;
       }
 
-      // Default error message
       toast.error(assignAssetStrings.updateAssignAsset.toast.error, {
         position: "top-right",
         autoClose: 1000,
       });
     }
   };
-
   return (
     <div
       className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${

@@ -414,27 +414,49 @@ const UpdateUserForm = ({ onClose }) => {
       return;
     }
 
-    try {
-      const userData = {
-        params: { userId: selectedUser.id },
-        body: {
-          userName: data.userName,
-          phone: data.phone,
-          email: data.email,
-          userRole: data.userRole,
-          status: data.status,
-          branchId: data.branchId,
-          departmentId: data.departmentId,
-          companyId: selectedOrg.id,
-        },
-      };
+    const userData = {
+      params: { userId: selectedUser.id },
+      body: {
+        userName: data.userName,
+        phone: data.phone,
+        email: data.email,
+        userRole: data.userRole,
+        status: data.status,
+        branchId: data.branchId,
+        departmentId: data.departmentId,
+        companyId: selectedOrg.id,
+      },
+    };
 
+    const hasChanges = Object.keys(userData.body).some(key => {
+      if (key === 'branchId') {
+        return selectedUser.branch?.id !== userData.body.branchId;
+      }
+      if (key === 'departmentId') {
+        return selectedUser.department?.id !== userData.body.departmentId;
+      }
+      if (key === 'companyId') {
+        return selectedUser.company?.id !== userData.body.companyId;
+      }
+      return selectedUser[key] !== userData.body[key];
+    });
+
+    if (!hasChanges) {
+      toast.success("No changes made to the user", {
+        position: "top-right",
+        autoClose: 1000,
+      });
+      handleClose();
+      return;
+    }
+
+    try {
       await dispatch(updateUser(userData)).unwrap();
       await dispatch(
-        getAllUsers({
-          page: currentPage,
-          limit: rowsPerPage,
-        })
+          getAllUsers({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
       ).unwrap();
 
       toast.success(userStrings.updateUser.toast.success, {
@@ -459,7 +481,6 @@ const UpdateUserForm = ({ onClose }) => {
       });
     }
   };
-
   return (
     <div
       className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${

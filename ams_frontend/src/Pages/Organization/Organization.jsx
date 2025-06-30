@@ -78,10 +78,14 @@ const Organization = () => {
   useEffect(() => {
     dispatch(setSearchTerm(""));
     setLocalSearchTerm("");
+    if (selectedOrganizations.length > 0) {
+      dispatch(deselectAllOrganizations());
+    }
     return () => {
       dispatch(setSearchTerm(""));
       setLocalSearchTerm("");
       dispatch(resetOrgTableState());
+      dispatch(deselectAllOrganizations());
     };
   }, [dispatch]);
 
@@ -180,24 +184,10 @@ const Organization = () => {
     try {
       setIsDeleting(true);
       if (organizationToDelete) {
-        // Single organization delete
         await dispatch(deleteOrganization([organizationToDelete])).unwrap();
-        dispatch(
-          getAllOrganizations({
-            page: currentPage,
-            limit: rowsPerPage,
-          })
-        );
         setDeleteMessage(modals.deleteSuccess.single);
       } else if (selectedOrganizations.length > 0) {
-        // Multiple organizations delete
         await dispatch(deleteOrganization(selectedOrganizations)).unwrap();
-        dispatch(
-          getAllOrganizations({
-            page: currentPage,
-            limit: rowsPerPage,
-          })
-        );
         setDeleteMessage(
           modals.deleteSuccess.multiple.replace(
             "{count}",
@@ -206,10 +196,19 @@ const Organization = () => {
         );
       }
 
-      setShowDeleteConfirmation(false);
-      setOrganizationToDelete(null);
+      // Reset selections after successful delete
       dispatch(deselectAllOrganizations());
+      setOrganizationToDelete(null);
+      setShowDeleteConfirmation(false);
       setShowDeleteSuccessPopup(true);
+
+      // Refresh data
+      dispatch(
+          getAllOrganizations({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+      );
 
       setTimeout(() => {
         setShowDeleteSuccessPopup(false);
@@ -219,11 +218,6 @@ const Organization = () => {
         position: "top-right",
         autoClose: 2000,
       });
-
-      // Reset states
-      setShowDeleteConfirmation(false);
-      setOrganizationToDelete(null);
-      dispatch(deselectAllOrganizations());
     } finally {
       setIsDeleting(false);
     }

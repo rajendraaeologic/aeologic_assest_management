@@ -297,6 +297,22 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
     });
   }, [register]);
 
+  const hasChanges = (formData) => {
+    if (!selectedAsset) return false;
+
+    return (
+        formData.assetName !== selectedAsset.assetName ||
+        formData.uniqueId !== selectedAsset.uniqueId ||
+        formData.brand !== selectedAsset.brand ||
+        formData.model !== selectedAsset.model ||
+        formData.serialNumber !== selectedAsset.serialNumber ||
+        formData.status !== selectedAsset.status ||
+        formData.description !== selectedAsset.description ||
+        formData.branchId !== (selectedAsset.branch?.id || "") ||
+        formData.departmentId !== (selectedAsset.department?.id || "")
+    );
+  };
+
   const onSubmit = async (data) => {
     if (!user?.companyId) {
       toast.error("User organization not found", {
@@ -310,8 +326,18 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
       toast.error("Please select a branch");
       return;
     }
+
     if (!data.departmentId) {
       toast.error("Please select a department");
+      return;
+    }
+
+    if (!hasChanges(data)) {
+      toast.success("No changes made to the asset", {
+        position: "top-right",
+        autoClose: 1000,
+      });
+      handleClose();
       return;
     }
 
@@ -334,10 +360,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
 
       await dispatch(updateAsset(updateData)).unwrap();
       await dispatch(
-        getAllAssets({
-          page: currentPage,
-          limit: rowsPerPage,
-        })
+          getAllAssets({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
       ).unwrap();
       toast.success(assetStrings.updateAsset.toast.success, {
         position: "top-right",

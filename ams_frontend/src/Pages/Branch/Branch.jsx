@@ -103,10 +103,15 @@ const Branch = () => {
   useEffect(() => {
     dispatch(setSearchTerm(""));
     setLocalSearchTerm("");
+    if (selectedBranches.length > 0) {
+      dispatch(deselectAllBranches());
+    }
     return () => {
       dispatch(setSearchTerm(""));
       setLocalSearchTerm("");
       dispatch(resetBranchTableState());
+      dispatch(deselectAllBranches());
+      debouncedSearch.cancel();
     };
   }, [dispatch]);
 
@@ -179,36 +184,31 @@ const Branch = () => {
     try {
       setIsDeleting(true);
       if (branchToDelete) {
-        // Single branch delete
         await dispatch(deleteBranch([branchToDelete])).unwrap();
-        dispatch(
-          getAllBranches({
-            page: currentPage,
-            limit: rowsPerPage,
-          })
-        );
         setDeleteMessage(branchStrings.branch.modals.deleteSuccess.single);
       } else if (selectedBranches.length > 0) {
-        // Multiple branches delete
         await dispatch(deleteBranch(selectedBranches)).unwrap();
-        dispatch(
-          getAllBranches({
-            page: currentPage,
-            limit: rowsPerPage,
-          })
-        );
         setDeleteMessage(
-          branchStrings.branch.modals.deleteSuccess.multiple.replace(
-            "{count}",
-            selectedBranches.length
-          )
+            branchStrings.branch.modals.deleteSuccess.multiple.replace(
+                "{count}",
+                selectedBranches.length
+            )
         );
       }
 
-      setShowDeleteConfirmation(false);
-      setBranchToDelete(null);
+      // Reset selections after successful delete
       dispatch(deselectAllBranches());
+      setBranchToDelete(null);
+      setShowDeleteConfirmation(false);
       setShowDeleteSuccessPopup(true);
+
+      // Refresh data
+      dispatch(
+          getAllBranches({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
+      );
 
       setTimeout(() => {
         setShowDeleteSuccessPopup(false);
@@ -219,7 +219,7 @@ const Branch = () => {
         autoClose: 2000,
       });
 
-      // Reset states
+      // Reset states on error
       setShowDeleteConfirmation(false);
       setBranchToDelete(null);
       dispatch(deselectAllBranches());

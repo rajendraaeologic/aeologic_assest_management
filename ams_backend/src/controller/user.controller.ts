@@ -330,17 +330,49 @@ const getUser = catchAsync(async (req, res) => {
   });
 });
 
+type UserWithRelations = Omit<User, "password"> & {
+  branch?: { id: string };
+  department?: { id: string };
+  company?: { id: string };
+};
+
 const updateUser = catchAsync(async (req, res) => {
-  try {
-    const user = await userService.updateUserById(req.params.userId, req.body);
+  const userId = req.params.userId;
+  const updateData = req.body;
+
+  const currentUser = await userService.getUserById(userId) as UserWithRelations;
+  if (!currentUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  const hasChanges = (() => {
+    if (updateData.userName && updateData.userName !== currentUser.userName) return true;
+    if (updateData.phone && updateData.phone !== currentUser.phone) return true;
+    if (updateData.email && updateData.email !== currentUser.email) return true;
+    if (updateData.userRole && updateData.userRole !== currentUser.userRole) return true;
+    if (updateData.status && updateData.status !== currentUser.status) return true;
+    if (updateData.branchId && updateData.branchId !== currentUser.branch?.id) return true;
+    if (updateData.departmentId && updateData.departmentId !== currentUser.department?.id) return true;
+    if (updateData.companyId && updateData.companyId !== currentUser.company?.id) return true;
+
+    return false;
+  })();
+
+  if (!hasChanges) {
     res.status(httpStatus.OK).json({
       statusCode: httpStatus.OK,
-      message: "User updated successfully",
-      data: { user }
+      message: "No changes made to user data",
+      data: { user: currentUser }
     });
-  } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+    return;
   }
+
+  const user = await userService.updateUserById(userId, updateData);
+  res.status(httpStatus.OK).json({
+    statusCode: httpStatus.OK,
+    message: "User updated successfully",
+    data: { user }
+  });
 });
 
 const deleteUser = catchAsync(async (req, res) => {

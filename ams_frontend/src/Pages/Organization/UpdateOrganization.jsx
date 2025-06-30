@@ -73,6 +73,15 @@ const UpdateOrganization = ({ onClose }) => {
         },
       };
 
+      if (data.organizationName === selectedOrganization.organizationName) {
+        toast.success("No changes made to the organization", {
+          position: "top-right",
+          autoClose: 1000,
+        });
+        handleClose();
+        return;
+      }
+
       await dispatch(updateOrganization(organizationData)).unwrap();
       await dispatch(
         getAllOrganizations({
@@ -96,11 +105,11 @@ const UpdateOrganization = ({ onClose }) => {
         return;
       }
       toast.error(
-        error.message || organizationStrings.updateOrganization.toast.error,
-        {
-          position: "top-right",
-          autoClose: 1500,
-        }
+          error.message || organizationStrings.updateOrganization.toast.error,
+          {
+            position: "top-right",
+            autoClose: 1500,
+          }
       );
     }
   };

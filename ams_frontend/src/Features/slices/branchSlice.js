@@ -103,6 +103,7 @@ const branchSlice = createSlice({
       state.currentPage = 1;
       state.rowsPerPage = 5;
       state.searchTerm = "";
+      state.selectedBranches = [];
     },
     toggleSelectBranch: (state, action) => {
       const id = action.payload;

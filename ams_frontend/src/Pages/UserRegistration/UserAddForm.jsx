@@ -7,6 +7,7 @@ import API from "../../App/api/axiosInstance";
 import userStrings from "../../locales/userStrings";
 import { createUser, getAllUsers } from "../../Features/slices/userSlice";
 import {USER_ROLES} from "../../TypeRoles/constants.roles.js";
+import organizationStrings from "../../locales/organizationStrings.js";
 
 const AddUserForm = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -443,6 +444,13 @@ const AddUserForm = ({ onClose }) => {
                     pattern: {
                       value: /^[a-zA-Z ]+$/,
                       message: userStrings.addUser.validation.userNamePattern,
+                    },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return userStrings.addUser.validation.trimSpaces;
+                      }
+                      return true;
                     },
                   })}
                   type="text"

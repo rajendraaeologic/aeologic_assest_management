@@ -74,13 +74,15 @@ const branchStrings = {
     },
     validation: {
       branchNameRequired: "Branch name is required",
-      branchNameMinLength: "Branch name must be at least 3 alphanumeric long",
-      branchNameMaxLength: "Branch name must be at most 25 alphanumeric long",
+      branchNameMinLength: "Branch name must be min 3 or max 25 alphanumeric ",
+      branchNameMaxLength: "Branch name must be at most 25 alphanumeric ",
       stateRequired: "State is required",
       cityRequired: "City is required",
       organizationRequired: "Organization selection is required",
       branchNamePattern:
         "Branch name must contain only alphanumeric ",
+      trimSpaces: "Branch name must not start or end with spaces.",
+
     },
     select: {
       loading: "Loading organizations...",
@@ -106,8 +108,9 @@ const branchStrings = {
     },
     validation: {
       branchNameRequired: "Branch name is required",
-      branchNameMinLength: "Branch name must be at least 3 alphanumeric long",
-      branchNameMaxLength: "Branch name must be at most 25 alphanumeric long",
+      branchNameMinLength: "Branch name must be min 3 or max 25 alphanumeric  ",
+      branchNameMaxLength: "Branch name must be at most 25 alphanumeric ",
+      trimSpaces: "Branch name must not start or end with spaces.",
       stateRequired: "State is required",
       cityRequired: "City is required",
     },

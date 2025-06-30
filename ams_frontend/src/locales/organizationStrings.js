@@ -64,11 +64,12 @@ const organizationStrings = {
     validation: {
       organizationNameRequired: "Organization name is required",
       organizationNameMinLength:
-        "Organization name must be at least 3 alphanumeric long",
+        "Organization name must be min 3 or max 25 alphanumeric  ",
       organizationNameMaxLength:
-        "Organization name must be at most 25 alphanumeric long",
+        "Organization name must be at most 25 alphanumeric ",
       orgNamePattern:
         "Organization Name must contain only alphanumeric",
+      trimSpaces: "Organization name must not start or end with spaces.",
     },
     buttons: {
       save: "Save",
@@ -91,11 +92,13 @@ const organizationStrings = {
     validation: {
       organizationNameRequired: "Organization name is required",
       organizationNameMinLength:
-        "Organization name must be at least 3 alphanumeric long",
+        "Organization name must be min 3 or max 25 alphanumeric  ",
       organizationNameMaxLength:
-        "Organization name must be at most 25 alphanumeric long",
+        "Organization name must be at most 25 alphanumeric ",
       orgNamePattern:
         "Organization Name must contain only  alphanumeric",
+      trimSpaces: "Organization name must not start or end with spaces.",
+
     },
     buttons: {
       update: "Update",

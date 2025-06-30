@@ -7,6 +7,7 @@ import API from "../../App/api/axiosInstance";
 import userStrings from "../../locales/userStrings";
 import { getAllUsers, updateUser } from "../../Features/slices/userSlice";
 import {USER_ROLES} from "../../TypeRoles/constants.roles.js";
+import organizationStrings from "../../locales/organizationStrings.js";
 
 const UpdateUserForm = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -519,16 +520,18 @@ const UpdateUserForm = ({ onClose }) => {
                       message:
                         userStrings.updateUser.validation.userNamePattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return  userStrings.updateUser.validation.trimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.userName && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.userName.message}
-                  </p>
-                )}
-                {userName?.length === 25 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 25 characters allowed
                   </p>
                 )}
               </div>

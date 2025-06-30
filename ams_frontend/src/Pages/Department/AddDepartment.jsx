@@ -9,6 +9,7 @@ import departmentStrings from "../../locales/departmentStrings";
 import API from "../../App/api/axiosInstance";
 import { getAllDepartments } from "../../Features/slices/departmentSlice";
 import { USER_ROLES } from "../../TypeRoles/constants.roles.js";
+import organizationStrings from "../../locales/organizationStrings.js";
 
 const AddDepartment = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -422,6 +423,13 @@ const AddDepartment = ({ onClose }) => {
                           departmentStrings.addDepartment.validation
                               .deptNamePattern,
                         },
+                        validate: (value) => {
+                          const trimmed = value.trim();
+                          if (value !== trimmed) {
+                            return  departmentStrings.addDepartment.validation.trimSpaces;
+                          }
+                          return true;
+                        },
                       })}
                       type="text"
                       maxLength={25}
@@ -438,11 +446,7 @@ const AddDepartment = ({ onClose }) => {
                         {errors.departmentName.message}
                       </p>
                   )}
-                  {departmentName.length > 25 && (
-                      <p className="text-red-500  text-sm mt-1">
-                        Maximum 25 characters allowed
-                      </p>
-                  )}
+
                 </div>
 
                 <div className="w-full relative">

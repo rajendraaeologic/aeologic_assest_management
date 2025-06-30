@@ -12,6 +12,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import API from "../../App/api/axiosInstance";
 import { USER_ROLES } from "../../TypeRoles/constants.roles.js";
+import organizationStrings from "../../locales/organizationStrings.js";
 
 const AddBranch = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -368,6 +369,13 @@ const AddBranch = ({ onClose }) => {
                           message:
                           branchStrings.addBranch.validation.branchNamePattern,
                         },
+                        validate: (value) => {
+                          const trimmed = value.trim();
+                          if (value !== trimmed) {
+                            return branchStrings.addBranch.validation.trimSpaces;
+                          }
+                          return true;
+                        },
                       })}
                       type="text"
                       id="branchName"
@@ -380,11 +388,6 @@ const AddBranch = ({ onClose }) => {
                   {errors.branchName && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors.branchName.message}
-                      </p>
-                  )}
-                  {branchName?.length > 25 && (
-                      <p className="text-red-500 text-sm mt-1">
-                        Maximum 25 characters allowed
                       </p>
                   )}
                 </div>

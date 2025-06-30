@@ -10,6 +10,7 @@ import {
 } from "../../Features/slices/departmentSlice";
 import { getAllBranches } from "../../Features/slices/branchSlice";
 import departmentStrings from "../../locales/departmentStrings";
+import organizationStrings from "../../locales/organizationStrings.js";
 
 const UpdateDepartment = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -171,6 +172,13 @@ const UpdateDepartment = ({ onClose }) => {
                         departmentStrings.updateDepartment.validation
                           .deptNamePattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return  departmentStrings.updateDepartment.validation.trimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                   type="text"
                   maxLength={25}
@@ -184,11 +192,7 @@ const UpdateDepartment = ({ onClose }) => {
                     {errors.departmentName.message}
                   </p>
                 )}
-                {departmentName.length > 25 && (
-                  <p className="text-red-500  text-sm mt-1">
-                    Maximum 25 characters allowed
-                  </p>
-                )}
+
               </div>
             </div>
 

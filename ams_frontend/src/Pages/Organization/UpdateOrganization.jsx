@@ -164,6 +164,13 @@ const UpdateOrganization = ({ onClose }) => {
                       organizationStrings.updateOrganization.validation
                         .orgNamePattern,
                   },
+                  validate: (value) => {
+                    const trimmed = value.trim();
+                    if (value !== trimmed) {
+                      return organizationStrings.updateOrganization.validation.trimSpaces;
+                    }
+                    return true;
+                  },
                 })}
                 type="text"
                 id="organizationName"
@@ -181,11 +188,7 @@ const UpdateOrganization = ({ onClose }) => {
                   {errors.organizationName.message}
                 </p>
               )}
-              {organizationName.length > 25 && (
-                <p className="text-red-500  text-sm mt-1">
-                  Maximum 25 characters allowed
-                </p>
-              )}
+
             </div>
 
             <hr className="mt-4" />

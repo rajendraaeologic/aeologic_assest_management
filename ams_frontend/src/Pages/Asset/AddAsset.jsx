@@ -7,6 +7,7 @@ import assetStrings from "../../locales/assetStrings";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { getAllAssets } from "../../Features/slices/assetSlice";
+import userStrings from "../../locales/userStrings.js";
 const AddAsset = ({ onClose, onSuccess }) => {
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -333,16 +334,18 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       message:
                         assetStrings.addAsset.validation.assetNamePattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.addAsset.validation.AssetTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.assetName && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.assetName.message}
-                  </p>
-                )}
-                {assetName?.length > 25 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 25 characters allowed
                   </p>
                 )}
               </div>
@@ -379,16 +382,18 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       message:
                       assetStrings.addAsset.validation.uniqueIdPattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.addAsset.validation.UniqueTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.uniqueId && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.uniqueId.message}
-                  </p>
-                )}
-                {uniqueId?.length > 15 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 15 characters allowed
                   </p>
                 )}
               </div>
@@ -423,6 +428,13 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       message:
                       assetStrings.addAsset.validation.brandPattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.addAsset.validation.BrandTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.brand && (
@@ -430,11 +442,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.brand.message}
                   </p>
                 )}
-                {brand?.length > 15 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 15 characters allowed
-                  </p>
-                )}
+
               </div>
 
               {/* Model */}
@@ -467,16 +475,18 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       message:
                       assetStrings.addAsset.validation.modelPattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.addAsset.validation.ModelTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.model && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.model.message}
-                  </p>
-                )}
-                {model?.length > 15 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 15 characters allowed
                   </p>
                 )}
               </div>
@@ -514,16 +524,18 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       message:
                       assetStrings.addAsset.validation.serialNumberPattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.addAsset.validation.SerialTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.serialNumber && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.serialNumber.message}
-                  </p>
-                )}
-                {serialNumber?.length > 15 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 15 characters allowed
                   </p>
                 )}
               </div>
@@ -721,6 +733,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                 </label>
                 <textarea
                   className="mt-1 p-2 w-[206%] border border-gray-300 outline-none rounded-md"
+                  style={{ overflow: "hidden", textOverflow: "ellipsis" }}
                   rows={2}
                   id="description"
                   maxLength={200}
@@ -743,16 +756,18 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       message:
                       assetStrings.addAsset.validation.descriptionPattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.addAsset.validation.DescriptionTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.description && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.description.message}
-                  </p>
-                )}
-                {description?.length === 200 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 200 characters allowed
                   </p>
                 )}
               </div>

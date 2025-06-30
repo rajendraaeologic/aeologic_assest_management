@@ -10,6 +10,7 @@ import {
   getAllBranches,
 } from "../../Features/slices/branchSlice";
 import branchStrings from "../../locales/branchStrings";
+import organizationStrings from "../../locales/organizationStrings.js";
 
 const UpdateBranch = ({ onClose }) => {
   const dispatch = useDispatch();
@@ -207,6 +208,13 @@ const UpdateBranch = ({ onClose }) => {
                           message:
                           branchStrings.updateBranch.validation.branchNamePattern,
                         },
+                        validate: (value) => {
+                          const trimmed = value.trim();
+                          if (value !== trimmed) {
+                            return branchStrings.updateBranch.validation.trimSpaces;
+                          }
+                          return true;
+                        },
                       })}
                       type="text"
                       maxLength={25}
@@ -218,11 +226,6 @@ const UpdateBranch = ({ onClose }) => {
                   {errors.branchName && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors.branchName.message}
-                      </p>
-                  )}
-                  {branchName.length > 25 && (
-                      <p className="text-red-500 text-sm mt-1">
-                        Maximum 25 characters allowed
                       </p>
                   )}
                 </div>

@@ -70,13 +70,14 @@ const departmentStrings = {
     validation: {
       departmentNameRequired: "Department name is required",
       departmentNameMinLength:
-        "Department Name must be at least 3 alphanumeric long",
+        "Department Name must be min 3 or max 25 alphanumeric  ",
       departmentNameMaxLength:
-        "Department Name  must be at most 25 alphanumeric long",
+        "Department Name  must be at most 25 alphanumeric ",
       branchRequired: "Branch is required",
       organizationRequired: "Organization is required",
       deptNamePattern:
-        "Department Name must contain only alphanumeric characters",
+        "Department Name must contain only alphanumeric ",
+      trimSpaces: "Department name must not start or end with spaces.",
     },
     buttons: {
       save: "Save",
@@ -96,11 +97,13 @@ const departmentStrings = {
     validation: {
       departmentNameRequired: "Department name is required",
       departmentNameMinLength:
-        "Department Name must be at least 3 alphanumeric long",
+        "Department Name must be min 3 or max 25 alphanumeric  ",
       departmentNameMaxLength:
-        "Department Name  must be at most 25 alphanumeric long",
+        "Department Name  must be at most 25 alphanumeric ",
       deptNamePattern:
-        "Department Name must contain only alphanumeric characters",
+        "Department Name must contain only alphanumeric ",
+      trimSpaces: "Department name must not start or end with spaces.",
+
     },
     buttons: {
       close: "Close",

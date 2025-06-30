@@ -28,7 +28,7 @@ const createAsset = catchAsync(async (req, res) => {
       branchId: req.body.branchId,
       departmentId: req.body.departmentId,
       companyId: user.companyId,
-      createdById: user.id, // Pass the user's ID
+      createdById: user.id,
 
     });
 

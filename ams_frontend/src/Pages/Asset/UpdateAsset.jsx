@@ -415,6 +415,13 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       message:
                         assetStrings.updateAsset.validation.assetNamePattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.updateAsset.validation.AssetTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.assetName && (
@@ -422,11 +429,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                     {errors.assetName.message}
                   </p>
                 )}
-                {assetName?.length > 25 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 25 characters allowed
-                  </p>
-                )}
+
               </div>
 
               {/* Unique ID */}
@@ -464,6 +467,13 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       message:
                       assetStrings.updateAsset.validation.uniqueIdPattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.updateAsset.validation.UniqueTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.uniqueId && (
@@ -471,11 +481,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                     {errors.uniqueId.message}
                   </p>
                 )}
-                {uniqueId?.length > 15 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 15 characters allowed
-                  </p>
-                )}
+
               </div>
 
               {/* Brand */}
@@ -510,6 +516,13 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       message:
                       assetStrings.updateAsset.validation.brandPattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.updateAsset.validation.BrandTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.brand && (
@@ -517,11 +530,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                     {errors.brand.message}
                   </p>
                 )}
-                {brand?.length > 15 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 15 characters allowed
-                  </p>
-                )}
+
               </div>
 
               {/* Model */}
@@ -556,6 +565,13 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       message:
                       assetStrings.updateAsset.validation.modelPattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.updateAsset.validation.ModelTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.model && (
@@ -563,11 +579,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                     {errors.model.message}
                   </p>
                 )}
-                {model?.length > 15 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 15 characters allowed
-                  </p>
-                )}
+
               </div>
 
               {/* Serial Number */}
@@ -607,6 +619,13 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       message:
                       assetStrings.updateAsset.validation.serialNumberPattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.updateAsset.validation.SerialTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.serialNumber && (
@@ -614,11 +633,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                     {errors.serialNumber.message}
                   </p>
                 )}
-                {serialNumber?.length > 15 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 15 characters allowed
-                  </p>
-                )}
+
               </div>
 
               {/* Status */}
@@ -834,6 +849,13 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       message:
                       assetStrings.updateAsset.validation.descriptionPattern,
                     },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return assetStrings.updateAsset.validation.DescriptionTrimSpaces;
+                      }
+                      return true;
+                    },
                   })}
                 />
                 {errors.description && (
@@ -841,11 +863,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                     {errors.description.message}
                   </p>
                 )}
-                {description?.length === 200 && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Maximum 200 characters allowed
-                  </p>
-                )}
+
               </div>
             </div>
 

@@ -70,9 +70,9 @@ const departmentStrings = {
     validation: {
       departmentNameRequired: "Department name is required",
       departmentNameMinLength:
-        "Department Name must be at least 3 characters long",
+        "Department Name must be at least 3 alphanumeric long",
       departmentNameMaxLength:
-        "Department Name  must be at most 25 characters long",
+        "Department Name  must be at most 25 alphanumeric long",
       branchRequired: "Branch is required",
       organizationRequired: "Organization is required",
       deptNamePattern:
@@ -96,9 +96,9 @@ const departmentStrings = {
     validation: {
       departmentNameRequired: "Department name is required",
       departmentNameMinLength:
-        "Department Name must be at least 3 characters long",
+        "Department Name must be at least 3 alphanumeric long",
       departmentNameMaxLength:
-        "Department Name  must be at most 25 characters long",
+        "Department Name  must be at most 25 alphanumeric long",
       deptNamePattern:
         "Department Name must contain only alphanumeric characters",
     },

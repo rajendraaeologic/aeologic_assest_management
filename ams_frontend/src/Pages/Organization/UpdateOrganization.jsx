@@ -149,19 +149,19 @@ const UpdateOrganization = ({ onClose }) => {
                   minLength: {
                     value: 3,
                     message:
-                      organizationStrings.addOrganization.validation
+                      organizationStrings.updateOrganization.validation
                         .organizationNameMinLength,
                   },
                   maxLength: {
                     value: 25,
                     message:
-                      organizationStrings.addOrganization.validation
+                      organizationStrings.updateOrganization.validation
                         .organizationNameMaxLength,
                   },
                   pattern: {
-                    value: /^[a-zA-Z ]+$/,
+                    value: /^[a-zA-Z0-9 ]+$/,
                     message:
-                      organizationStrings.addOrganization.validation
+                      organizationStrings.updateOrganization.validation
                         .orgNamePattern,
                   },
                 })}
@@ -181,7 +181,7 @@ const UpdateOrganization = ({ onClose }) => {
                   {errors.organizationName.message}
                 </p>
               )}
-              {organizationName.length === 25 && (
+              {organizationName.length > 25 && (
                 <p className="text-red-500  text-sm mt-1">
                   Maximum 25 characters allowed
                 </p>

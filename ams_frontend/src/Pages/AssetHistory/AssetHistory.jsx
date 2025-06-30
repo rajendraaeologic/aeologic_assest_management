@@ -15,7 +15,7 @@ import {
   FiHardDrive,
   FiInfo,
   FiChevronRight,
-  FiX, FiRefreshCw,
+  FiX, FiRefreshCw, FiChevronLeft,
 } from "react-icons/fi";
 import debounce from "lodash.debounce";
 import { useSelector, useDispatch } from "react-redux";
@@ -29,6 +29,7 @@ import {
 } from "../../Features/slices/assetHistorySlice.js";
 import PaginationControls from "../../components/common/PaginationControls.jsx";
 import SkeletonLoader from "../../components/common/SkeletonLoader/SkeletonLoader.jsx";
+import {MdKeyboardArrowLeft} from "react-icons/md";
 const options = ["5", "10", "25", "50", "100"];
 
 const statusConfig = {
@@ -479,14 +480,9 @@ const AssetHistory = () => {
         >
           <div className="pt-24">
             <div className="flex justify-between mx-5 mt-2">
-              <motion.h3
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="text-xl font-semibold text-[#6c757D] flex items-center"
-              >
-                <FiClock className="mr-2" />
+              <h3 className="text-xl font-semibold text-[#6c757D] flex items-center">
                 {strings.title}
-              </motion.h3>
+              </h3>
             </div>
             <div className="mx-5 flex gap-2 mb-4 items-center">
               <button
@@ -495,7 +491,7 @@ const AssetHistory = () => {
               >
                 {strings.breadcrumb.dashboard}
               </button>
-              <FiChevronRight className="text-gray-400" />
+              <MdKeyboardArrowLeft className="h-6 w-6" />
               <p className="text-[#6c757D]">{strings.breadcrumb.assetHistory}</p>
             </div>
           </div>

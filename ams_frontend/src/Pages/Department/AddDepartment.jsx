@@ -438,7 +438,7 @@ const AddDepartment = ({ onClose }) => {
                         {errors.departmentName.message}
                       </p>
                   )}
-                  {departmentName.length === 25 && (
+                  {departmentName.length > 25 && (
                       <p className="text-red-500  text-sm mt-1">
                         Maximum 25 characters allowed
                       </p>

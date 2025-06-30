@@ -55,6 +55,7 @@ export const getAllAssets = catchAsync(async (req, res) => {
     "departmentId",
     "from_date",
     "to_date",
+    "selectedDate",
     "searchTerm",
   ]);
 
@@ -63,7 +64,31 @@ export const getAllAssets = catchAsync(async (req, res) => {
   let sortBy = (req.query.sortBy as string) || "createdAt";
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  applyDateFilter(rawFilters);
+  let dateFilter = {};
+  if (rawFilters.selectedDate) {
+    const selectedDate = new Date(rawFilters.selectedDate as string);
+    const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
+
+    dateFilter = {
+      createdAt: {
+        gte: startOfDay,
+        lte: endOfDay
+      }
+    };
+  } else if (rawFilters.from_date && rawFilters.to_date) {
+    const fromDate = new Date(rawFilters.from_date as string);
+    const toDate = new Date(rawFilters.to_date as string);
+
+    toDate.setHours(23, 59, 59, 999);
+
+    dateFilter = {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate
+      }
+    };
+  }
 
   let branchIds: string[] = [];
   let departmentIds: string[] = [];
@@ -83,21 +108,15 @@ export const getAllAssets = catchAsync(async (req, res) => {
   }
 
   const filters: any = {
+    ...dateFilter,
     ...(user.userRole !== UserRole.SUPERADMIN ? {
       OR: [
         { branchId: { in: branchIds } },
         { departmentId: { in: departmentIds } },
         { companyId: user.companyId },
-
       ]
     } : {})
   };
-
-  if (rawFilters.from_date || rawFilters.to_date) {
-    filters.createdAt = {};
-    if (rawFilters.from_date) filters.createdAt.gte = rawFilters.from_date;
-    if (rawFilters.to_date) filters.createdAt.lte = rawFilters.to_date;
-  }
 
   if (rawFilters.assetName) {
     filters.assetName = {
@@ -123,14 +142,12 @@ export const getAllAssets = catchAsync(async (req, res) => {
   }
 
   const searchConditions = searchTerm
-    ? {
+      ? {
         OR: [
-          {
-            assetName: { contains: searchTerm, mode: "insensitive" },
-          },
+          { assetName: { contains: searchTerm, mode: "insensitive" } },
         ],
       }
-    : {};
+      : {};
 
   const where = {
     ...filters,
@@ -147,10 +164,14 @@ export const getAllAssets = catchAsync(async (req, res) => {
   const result = await assetService.queryAssets(where, options);
 
   if (!result || result.data.length === 0) {
+    const message = (rawFilters.selectedDate || (rawFilters.from_date && rawFilters.to_date))
+        ? "No assets found for the selected date range"
+        : "No assets found";
+
     res.status(httpStatus.OK).json({
       status: httpStatus.OK,
       success: false,
-      message: "No assets found",
+      message,
       data: {
         assets: [],
         pagination: {

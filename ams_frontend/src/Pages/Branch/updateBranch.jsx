@@ -116,6 +116,20 @@ const UpdateBranch = ({ onClose }) => {
       const stateName = State.getStateByCodeAndCountry(data.state, indiaCountryCode)?.name || '';
       const cityName = data.city;
 
+      if (
+          data.branchName === selectedBranch.branchName &&
+          stateName === selectedBranch.state &&
+          cityName === selectedBranch.city
+      ) {
+        toast.success("No changes made to the branch", {
+          position: "top-right",
+          autoClose: 1000,
+        });
+        handleClose();
+
+        return;
+      }
+
       const branchData = {
         params: { branchId: selectedBranch.id },
         body: {

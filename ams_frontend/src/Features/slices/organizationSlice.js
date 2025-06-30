@@ -107,6 +107,7 @@ const organizationSlice = createSlice({
       state.currentPage = 1;
       state.rowsPerPage = 5;
       state.searchTerm = "";
+      state.selectedOrganizations = [];
     },
 
     setRowsPerPage: (state, action) => {

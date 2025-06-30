@@ -81,12 +81,21 @@ const UpdateDepartment = ({ onClose }) => {
         },
       };
 
+      if (data.departmentName === selectedDepartment.departmentName) {
+        toast.success("No changes made to the department", {
+          position: "top-right",
+          autoClose: 1000,
+        });
+        handleClose();
+        return;
+      }
+
       await dispatch(updateDepartment(departmentData)).unwrap();
       await dispatch(
-        getAllDepartments({
-          page: currentPage,
-          limit: rowsPerPage,
-        })
+          getAllDepartments({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
       ).unwrap();
 
       toast.success(departmentStrings.updateDepartment.toast.success, {
@@ -103,10 +112,8 @@ const UpdateDepartment = ({ onClose }) => {
         });
         return;
       }
-
       toast.error(
-        error.message ||
-          departmentStrings.updateDepartment.toast.error || {
+          error.message || departmentStrings.updateDepartment.toast.error, {
             position: "top-right",
             autoClose: 1500,
           }

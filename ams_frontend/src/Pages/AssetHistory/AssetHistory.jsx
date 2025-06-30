@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useCallback } from "react";
+import React, { useState, useEffect, useContext, useCallback,useRef  } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import SliderContext from "../../components/ContexApi";
@@ -14,14 +14,12 @@ import {
   FiActivity,
   FiHardDrive,
   FiInfo,
-  FiChevronRight,
-  FiX, FiRefreshCw, FiChevronLeft,
+  FiX,
 } from "react-icons/fi";
 import debounce from "lodash.debounce";
 import { useSelector, useDispatch } from "react-redux";
 import {
   getAllAssetHistories,
-  getAssetHistoriesByAssetId,
   resetAssetHistoryTableState,
   setCurrentPage,
   setRowsPerPage,
@@ -248,7 +246,8 @@ const AssetHistory = () => {
   const navigate = useNavigate();
   const { isSidebarOpen } = useContext(SliderContext);
   const dispatch = useDispatch();
-
+  const timelineRef = useRef(null);
+  const timelineButtonRef = useRef(null);
   const {
     histories,
     loading,
@@ -464,6 +463,24 @@ const AssetHistory = () => {
   const handlePageChange = (newPage) => {
     dispatch(setCurrentPage(newPage));
   };
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+          !showTimeline ||
+          timelineRef.current?.contains(event.target) ||
+          timelineButtonRef.current?.contains(event.target)
+      ) {
+        return;
+      }
+
+      closeTimeline();
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showTimeline]);
 
   return (
       <div
@@ -623,6 +640,7 @@ const AssetHistory = () => {
                           <td className="px-2 py-2 border border-gray-300 text-center">
                             <div className="flex justify-center gap-2">
                               <button
+                                  ref={timelineButtonRef}
                                   onClick={() => handleViewDetails({ asset, histories })}
                                   className="px-3 py-2 rounded-sm text-blue-600 underline hover:text-blue-800"
                               >
@@ -658,6 +676,7 @@ const AssetHistory = () => {
         <AnimatePresence>
           {showTimeline && selectedAsset && (
               <motion.div
+                  ref={timelineRef}
                   initial={{ x: "100%" }}
                   animate={{ x: 0 }}
                   exit={{ x: "100%" }}

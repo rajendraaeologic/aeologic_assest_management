@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useRef } from "react";
+import React, { useContext } from "react";
 import imageOpen from "../../assets/AeoLogic.logo.png";
 import imageClosed from "../../assets/Aeo.logo.png";
 import {
@@ -7,8 +7,6 @@ import {
   FaBriefcase,
   FaTags,
   FaTruck,
-  FaChartBar,
-  FaCaretDown,
   FaBuilding,
   FaCodeBranch,
 } from "react-icons/fa";
@@ -23,10 +21,6 @@ import {selectCurrentUser} from "../../Features/auth/authSlice.js";
 
 const Sidebar = () => {
   const { isSidebarOpen } = useContext(SliderContext);
-  const [reportsOpen, setReportsOpen] = useState(false);
-  const [dropdownTop, setDropdownTop] = useState(0);
-  const [dropdownLeft, setDropdownLeft] = useState(0);
-  const reportRef = useRef(null);
 
   const user = useSelector(selectCurrentUser);
   const userRole = user?.userRole;
@@ -59,36 +53,6 @@ const Sidebar = () => {
     return true;
   });
 
-  const reports = [
-    { name: "Date Wish Report", path: "/datewishreport" },
-    { name: "Date Range Report", path: "/daterangereport" },
-    { name: "Department Report", path: "/reportdepartment" },
-    { name: "Track Device Report", path: "/trackdevicereport" },
-  ];
-
-  const handleReportsToggle = (e) => {
-    e.stopPropagation();
-    setReportsOpen((prev) => !prev);
-    const rect = reportRef.current?.getBoundingClientRect();
-    if (rect) {
-      setDropdownTop(rect.top + rect.height);
-      setDropdownLeft(rect.left + rect.width + 8);
-    }
-  };
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!reportRef.current?.contains(e.target)) {
-        setReportsOpen(false);
-      }
-    };
-    if (reportsOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [reportsOpen]);
 
   return (
     <div
@@ -139,82 +103,6 @@ const Sidebar = () => {
             </li>
           ))}
 
-          {/* Reports Dropdown */}
-          <li ref={reportRef}>
-            <div
-              className="flex items-center justify-between cursor-pointer p-2 rounded-md hover:bg-gray-700"
-              onClick={handleReportsToggle}
-              data-tip={!isSidebarOpen ? "Reports (Coming Soon)" : ""}
-              data-for="reports-tooltip"
-            >
-              <div className="flex items-center">
-                <span className="w-6 h-6 flex justify-center items-center text-lg">
-                  <FaChartBar />
-                </span>
-                {isSidebarOpen && (
-                  <span className="ml-3">Reports (Coming Soon)</span>
-                )}
-              </div>
-              <FaCaretDown
-                className={`h-4 w-4 transition-transform duration-300 ${
-                  reportsOpen ? "rotate-180" : ""
-                }`}
-              />
-            </div>
-
-            {!isSidebarOpen && (
-              <Tooltip
-                id="reports-tooltip"
-                place="right"
-                effect="solid"
-                className="!bg-gray-900 !text-white !text-sm !rounded-md !px-2 !py-1"
-              />
-            )}
-
-            {reportsOpen && isSidebarOpen && (
-              <ul className="ml-10 mt-2">
-                {reports.map((report, index) => (
-                  <li key={index}>
-                    <NavLink
-                      to={report.path}
-                      className={({ isActive }) =>
-                        `block p-2 rounded-md ${
-                          isActive
-                            ? "text-cyan-500 bg-gray-800"
-                            : "hover:bg-gray-700"
-                        }`
-                      }
-                    >
-                      {report.name}
-                    </NavLink>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {reportsOpen && !isSidebarOpen && (
-              <div
-                className="fixed bg-[#1a2942] w-[180px] p-2  md:-mt-44 rounded-md shadow-xl z-[9999]"
-                style={{ top: dropdownTop, left: dropdownLeft }}
-              >
-                {reports.map((report, index) => (
-                  <NavLink
-                    key={index}
-                    to={report.path}
-                    className={({ isActive }) =>
-                      `block p-2 rounded-md ${
-                        isActive
-                          ? "text-cyan-500 bg-gray-800"
-                          : "hover:bg-gray-700 text-white"
-                      }`
-                    }
-                  >
-                    {report.name}
-                  </NavLink>
-                ))}
-              </div>
-            )}
-          </li>
         </ul>
       </div>
     </div>

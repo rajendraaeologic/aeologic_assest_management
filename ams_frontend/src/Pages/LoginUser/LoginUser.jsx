@@ -22,6 +22,7 @@ const LoginUser = () => {
 
   useEffect(() => {
     userRef.current?.focus();
+    setErrMsg("");
   }, []);
 
   useEffect(() => {
@@ -84,18 +85,12 @@ const LoginUser = () => {
 
       if (result.meta.requestStatus === "fulfilled") {
         const userRole = result.payload.user?.userRole;
-
         navigate(
           userRole === USER_ROLES.USER ? "/user-dashboard" : "/dashboard",
           { replace: true }
         );
       } else if (result.meta.requestStatus === "rejected") {
-        console.log("result", result);
-        const errorMessage =
-          result.payload?.message ||
-          result.error?.message ||
-          "Server Error !Please try again";
-        setErrMsg(errorMessage);
+        setErrMsg(result.payload?.message || "Incorrect email or password");
       }
     } catch (err) {
       setErrMsg("An unexpected error occurred. Please try again.");
@@ -130,13 +125,11 @@ const LoginUser = () => {
             Enter your email and password to access your account.
           </p>
 
-          {(errMsg || error) && (
-            <p ref={errRef} className="text-red-500 text-sm mb-3">
-              {typeof (errMsg || error) === "object"
-                ? (errMsg || error).message || "Login failed"
-                : errMsg || error}
-            </p>
-          )}
+            {errMsg && (
+                <p ref={errRef} className="text-red-500 text-sm mb-3">
+                  {errMsg}
+                </p>
+            )}
 
           <form className="flex flex-col" onSubmit={handleSubmit}>
             <label

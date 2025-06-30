@@ -57,7 +57,7 @@ const createDepartment = catchAsync(async (req, res) => {
   }
 });
 
-const getAllDepartments = catchAsync(async (req, res) => {
+export const getAllDepartments = catchAsync(async (req, res) => {
   const user = req.user as User;
 
   if (!user) {
@@ -68,8 +68,9 @@ const getAllDepartments = catchAsync(async (req, res) => {
     "departmentName",
     "companyId",
     "branchId",
-    "createdAtFrom",
-    "createdAtTo",
+    "from_date",
+    "to_date",
+    "selectedDate",
     "searchTerm",
   ]);
 
@@ -78,16 +79,36 @@ const getAllDepartments = catchAsync(async (req, res) => {
   let sortBy = (req.query.sortBy as string) || "createdAt";
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  applyDateFilter(rawFilters);
+  let dateFilter = {};
+  if (rawFilters.selectedDate) {
+    const selectedDate = new Date(rawFilters.selectedDate as string);
+    const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
 
-  const filters: any = {};
+    dateFilter = {
+      createdAt: {
+        gte: startOfDay,
+        lte: endOfDay
+      }
+    };
+  } else if (rawFilters.from_date && rawFilters.to_date) {
+    const fromDate = new Date(rawFilters.from_date as string);
+    const toDate = new Date(rawFilters.to_date as string);
 
-  if (rawFilters.createdAtFrom || rawFilters.createdAtTo) {
-    filters.createdAt = {};
-    if (rawFilters.createdAtFrom)
-      filters.createdAt.gte = rawFilters.createdAtFrom;
-    if (rawFilters.createdAtTo) filters.createdAt.lte = rawFilters.createdAtTo;
+    toDate.setHours(23, 59, 59, 999);
+
+    dateFilter = {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate
+      }
+    };
   }
+
+  const filters: any = {
+    ...dateFilter,
+    deleted: false
+  };
 
   if (rawFilters.departmentName) {
     filters.departmentName = {
@@ -130,12 +151,8 @@ const getAllDepartments = catchAsync(async (req, res) => {
   const searchConditions = searchTerm
       ? {
         OR: [
-          {
-            departmentName: {
-              contains: searchTerm,
-              mode: "insensitive",
-            },
-          },
+          { departmentName: { contains: searchTerm, mode: "insensitive" } },
+          // Add other searchable fields if needed
         ],
       }
       : {};
@@ -143,7 +160,6 @@ const getAllDepartments = catchAsync(async (req, res) => {
   const where = {
     ...filters,
     ...searchConditions,
-    deleted: false,
   };
 
   const options = {
@@ -156,10 +172,14 @@ const getAllDepartments = catchAsync(async (req, res) => {
   const result = await departmentService.queryDepartments(where, options);
 
   if (!result || result.data.length === 0) {
+    const message = (rawFilters.selectedDate || (rawFilters.from_date && rawFilters.to_date))
+        ? "No departments found for the selected date range"
+        : "No departments found";
+
     res.status(httpStatus.OK).json({
       status: httpStatus.OK,
       success: false,
-      message: "No departments found",
+      message,
       data: {
         departments: [],
         pagination: {

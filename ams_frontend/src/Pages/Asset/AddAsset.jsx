@@ -340,7 +340,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.assetName.message}
                   </p>
                 )}
-                {assetName?.length === 25 && (
+                {assetName?.length > 25 && (
                   <p className="text-red-500 text-sm mt-1">
                     Maximum 25 characters allowed
                   </p>
@@ -374,6 +374,11 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       message:
                         assetStrings.addAsset.validation.uniqueIdMaxLength,
                     },
+                    pattern: {
+                      value: /^[a-zA-Z0-9 ]+$/,
+                      message:
+                      assetStrings.addAsset.validation.uniqueIdPattern,
+                    },
                   })}
                 />
                 {errors.uniqueId && (
@@ -381,7 +386,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.uniqueId.message}
                   </p>
                 )}
-                {uniqueId?.length === 15 && (
+                {uniqueId?.length > 15 && (
                   <p className="text-red-500 text-sm mt-1">
                     Maximum 15 characters allowed
                   </p>
@@ -413,6 +418,11 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       value: 15,
                       message: assetStrings.addAsset.validation.brandMaxLength,
                     },
+                    pattern: {
+                      value: /^[a-zA-Z0-9 ]+$/,
+                      message:
+                      assetStrings.addAsset.validation.brandPattern,
+                    },
                   })}
                 />
                 {errors.brand && (
@@ -420,7 +430,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.brand.message}
                   </p>
                 )}
-                {brand?.length === 15 && (
+                {brand?.length > 15 && (
                   <p className="text-red-500 text-sm mt-1">
                     Maximum 15 characters allowed
                   </p>
@@ -452,6 +462,11 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       value: 15,
                       message: assetStrings.addAsset.validation.modelMaxLength,
                     },
+                    pattern: {
+                      value: /^[a-zA-Z0-9 ]+$/,
+                      message:
+                      assetStrings.addAsset.validation.modelPattern,
+                    },
                   })}
                 />
                 {errors.model && (
@@ -459,7 +474,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.model.message}
                   </p>
                 )}
-                {model?.length === 15 && (
+                {model?.length > 15 && (
                   <p className="text-red-500 text-sm mt-1">
                     Maximum 15 characters allowed
                   </p>
@@ -494,6 +509,11 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       message:
                         assetStrings.addAsset.validation.serialNumberMaxLength,
                     },
+                    pattern: {
+                      value: /^[a-zA-Z0-9 ]+$/,
+                      message:
+                      assetStrings.addAsset.validation.serialNumberPattern,
+                    },
                   })}
                 />
                 {errors.serialNumber && (
@@ -501,7 +521,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     {errors.serialNumber.message}
                   </p>
                 )}
-                {serialNumber?.length === 15 && (
+                {serialNumber?.length > 15 && (
                   <p className="text-red-500 text-sm mt-1">
                     Maximum 15 characters allowed
                   </p>
@@ -717,6 +737,11 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       value: 200,
                       message:
                         assetStrings.addAsset.validation.descriptionMaxLength,
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9 ]+$/,
+                      message:
+                      assetStrings.addAsset.validation.descriptionPattern,
                     },
                   })}
                 />

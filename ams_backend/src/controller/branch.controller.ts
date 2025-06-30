@@ -58,8 +58,9 @@ export const getAllBranches = catchAsync(async (req, res) => {
     "branchName",
     "state",
     "city",
-    "createdAtFrom",
-    "createdAtTo",
+    "from_date",
+    "to_date",
+    "selectedDate",
     "searchTerm",
     "companyId",
   ]);
@@ -69,16 +70,36 @@ export const getAllBranches = catchAsync(async (req, res) => {
   let sortBy = (req.query.sortBy as string) || "createdAt";
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  applyDateFilter(rawFilters);
+  let dateFilter = {};
+  if (rawFilters.selectedDate) {
+    const selectedDate = new Date(rawFilters.selectedDate as string);
+    const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
 
-  const filters: any = {};
+    dateFilter = {
+      createdAt: {
+        gte: startOfDay,
+        lte: endOfDay
+      }
+    };
+  } else if (rawFilters.from_date && rawFilters.to_date) {
+    const fromDate = new Date(rawFilters.from_date as string);
+    const toDate = new Date(rawFilters.to_date as string);
 
-  if (rawFilters.createdAtFrom || rawFilters.createdAtTo) {
-    filters.createdAt = {};
-    if (rawFilters.createdAtFrom)
-      filters.createdAt.gte = rawFilters.createdAtFrom;
-    if (rawFilters.createdAtTo) filters.createdAt.lte = rawFilters.createdAtTo;
+    toDate.setHours(23, 59, 59, 999);
+
+    dateFilter = {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate
+      }
+    };
   }
+
+  const filters: any = {
+    ...dateFilter,
+    deleted: false
+  };
 
   if (rawFilters.branchName) {
     filters.branchName = {
@@ -131,12 +152,9 @@ export const getAllBranches = catchAsync(async (req, res) => {
   const searchConditions = searchTerm
       ? {
         OR: [
-          {
-            branchName: {
-              contains: searchTerm,
-              mode: "insensitive",
-            },
-          },
+          { branchName: { contains: searchTerm, mode: "insensitive" } },
+          { state: { contains: searchTerm, mode: "insensitive" } },
+          { city: { contains: searchTerm, mode: "insensitive" } },
         ],
       }
       : {};
@@ -144,7 +162,6 @@ export const getAllBranches = catchAsync(async (req, res) => {
   const where = {
     ...filters,
     ...searchConditions,
-    deleted: false,
   };
 
   const options = {
@@ -157,10 +174,14 @@ export const getAllBranches = catchAsync(async (req, res) => {
   const result = await branchService.queryBranches(where, options);
 
   if (!result || result.data.length === 0) {
+    const message = (rawFilters.selectedDate || (rawFilters.from_date && rawFilters.to_date))
+        ? "No branches found for the selected date range"
+        : "No branches found";
+
     res.status(httpStatus.OK).json({
       status: httpStatus.OK,
       success: false,
-      message: "No branches found",
+      message,
       data: {
         branches: [],
         pagination: {
@@ -346,7 +367,6 @@ export const getBranchesByOrganizationId = catchAsync(async (req, res) => {
   });
 });
 
-// branch.controller.ts
 const exportBranchesToExcel = catchAsync(async (req, res) => {
   const user = req.user as User;
   const filters = {

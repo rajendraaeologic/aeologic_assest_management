@@ -382,7 +382,7 @@ const AddBranch = ({ onClose }) => {
                         {errors.branchName.message}
                       </p>
                   )}
-                  {branchName?.length === 25 && (
+                  {branchName?.length > 25 && (
                       <p className="text-red-500 text-sm mt-1">
                         Maximum 25 characters allowed
                       </p>

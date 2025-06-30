@@ -519,11 +519,7 @@ const UserRegistration = () => {
                   value={localSearchTerm}
                   onChange={handleSearchChange}
               />
-              {isSearching && (
-                  <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
-          Searching...
-        </span>
-              )}
+
             </div>
           </div>
           <div className="overflow-x-auto overflow-y-auto border border-gray-300 rounded-lg shadow mt-5 mx-4">

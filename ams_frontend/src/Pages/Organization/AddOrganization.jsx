@@ -139,7 +139,7 @@ const AddOrganization = ({ onClose }) => {
                         .organizationNameMaxLength,
                   },
                   pattern: {
-                    value: /^[a-zA-Z ]+$/,
+                    value: /^[a-zA-Z0-9 ]+$/,
                     message:
                       organizationStrings.addOrganization.validation
                         .orgNamePattern,
@@ -163,7 +163,7 @@ const AddOrganization = ({ onClose }) => {
                 </p>
               )}
 
-              {organizationName.length === 25 && (
+              {organizationName.length > 25 && (
                 <p className="text-red-500  text-sm mt-1">
                   Maximum 25 characters allowed
                 </p>

@@ -441,7 +441,7 @@ const AddUserForm = ({ onClose }) => {
                       message: userStrings.addUser.validation.userNameMaxLength,
                     },
                     pattern: {
-                      value: /^[a-zA-Z0-9 ]+$/,
+                      value: /^[a-zA-Z ]+$/,
                       message: userStrings.addUser.validation.userNamePattern,
                     },
                   })}
@@ -458,7 +458,7 @@ const AddUserForm = ({ onClose }) => {
                     {errors.userName.message}
                   </p>
                 )}
-                {userName.length === 25 && (
+                {userName.length > 25 && (
                   <p className="text-red-500  text-sm mt-1">
                     Maximum 25 characters allowed
                   </p>
@@ -506,7 +506,7 @@ const AddUserForm = ({ onClose }) => {
                     {errors.phone.message}
                   </p>
                 )}
-                {phone.length === 25 && (
+                {phone.length > 10 && (
                   <p className="text-red-500  text-sm mt-1">
                     Maximum 10 Numbers allowed
                   </p>

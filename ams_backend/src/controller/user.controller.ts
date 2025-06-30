@@ -32,9 +32,7 @@ export const createUser = catchAsync(async (req, res) => {
     res.status(httpStatus.CREATED).send({
       statusCode: httpStatus.CREATED,
       message: "User created successfully",
-      data: {
-        user
-      }
+      data: { user }
     });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);
@@ -276,8 +274,7 @@ console.log(result)
         : "Users not found";
 
     res.status(httpStatus.OK).json({
-      success: false,
-      status: 404,
+      statusCode: httpStatus.NOT_FOUND,
       message,
       data: {
         users: [],
@@ -286,9 +283,9 @@ console.log(result)
           page,
           limit,
           totalPages: 0,
-          mode: isSearchMode ? "search" : "pagination",
+          mode: isSearchMode ? "search" : "pagination"
         }
-      },
+      }
     });
     return;
   }
@@ -299,8 +296,7 @@ console.log(result)
   }));
 
   res.status(httpStatus.OK).json({
-    status: 200,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Users fetched successfully",
     data: {
       users,
@@ -309,9 +305,9 @@ console.log(result)
         page,
         limit,
         totalPages: Math.ceil(result.total / limit),
-        mode: isSearchMode ? "search" : "pagination",
+        mode: isSearchMode ? "search" : "pagination"
       }
-    },
+    }
   });
 });
 

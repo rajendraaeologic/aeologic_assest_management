@@ -67,6 +67,7 @@ export const getAssetAssignments = catchAsync(async (req, res) => {
     "status",
     "from_date",
     "to_date",
+    "selectedDate",
     "searchTerm",
   ]);
 
@@ -75,7 +76,31 @@ export const getAssetAssignments = catchAsync(async (req, res) => {
   let sortBy = (req.query.sortBy as string) || "assignedAt";
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  applyDateFilter(rawFilters);
+  let dateFilter = {};
+  if (rawFilters.selectedDate) {
+    const selectedDate = new Date(rawFilters.selectedDate as string);
+    const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
+
+    dateFilter = {
+      assignedAt: {
+        gte: startOfDay,
+        lte: endOfDay
+      }
+    };
+  } else if (rawFilters.from_date && rawFilters.to_date) {
+    const fromDate = new Date(rawFilters.from_date as string);
+    const toDate = new Date(rawFilters.to_date as string);
+
+    toDate.setHours(23, 59, 59, 999);
+
+    dateFilter = {
+      assignedAt: {
+        gte: fromDate,
+        lte: toDate
+      }
+    };
+  }
 
   let assetIds: string[] = [];
   let userIds: string[] = [];
@@ -112,6 +137,7 @@ export const getAssetAssignments = catchAsync(async (req, res) => {
   }
 
   const filters: any = {
+    ...dateFilter,
     ...(user.userRole !== UserRole.SUPERADMIN ? {
       OR: [
         { assetId: { in: assetIds } },
@@ -119,12 +145,6 @@ export const getAssetAssignments = catchAsync(async (req, res) => {
       ]
     } : {})
   };
-
-  if (rawFilters.from_date || rawFilters.to_date) {
-    filters.assignedAt = {};
-    if (rawFilters.from_date) filters.assignedAt.gte = rawFilters.from_date;
-    if (rawFilters.to_date) filters.assignedAt.lte = rawFilters.to_date;
-  }
 
   if (rawFilters.assetId) filters.assetId = rawFilters.assetId;
   if (rawFilters.userId) filters.userId = rawFilters.userId;
@@ -155,18 +175,24 @@ export const getAssetAssignments = catchAsync(async (req, res) => {
     ...searchConditions,
   };
 
-  const result = await assignAssetService.getAssetAssignments(where, {
+  const options = {
     limit,
     page,
     sortBy,
     sortType,
-  });
+  };
+
+  const result = await assignAssetService.getAssetAssignments(where, options);
 
   if (!result || result.data.length === 0) {
+    const message = (rawFilters.selectedDate || (rawFilters.from_date && rawFilters.to_date))
+        ? "No asset assignments found for the selected date range"
+        : "No asset assignments found";
+
     res.status(httpStatus.OK).json({
       status: httpStatus.OK,
       success: false,
-      message: "No asset assignments found",
+      message,
       data: {
         assignments: [],
         pagination: {

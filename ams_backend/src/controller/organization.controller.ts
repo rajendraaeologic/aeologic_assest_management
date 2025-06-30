@@ -13,12 +13,10 @@ const createOrganization = catchAsync(async (req, res) => {
       organizationName: req.body.organizationName,
     } as Organization);
 
-    res.status(httpStatus.CREATED).send({
+    res.status(httpStatus.CREATED).json({
       statusCode: httpStatus.CREATED,
-      message: "Organization Created Successfully",
-      data: {
-        organization
-      }
+      message: "Organization created successfully",
+      data: { organization },
     });
   } catch (error) {
     throw new ApiError(httpStatus.CONFLICT, error.message);
@@ -28,8 +26,9 @@ const createOrganization = catchAsync(async (req, res) => {
 export const getAllOrganizations = catchAsync(async (req, res) => {
   const rawFilters = pick(req.query, [
     "organizationName",
-    "createdAtFrom",
-    "createdAtTo",
+    "from_date",
+    "to_date",
+    "selectedDate",
     "searchTerm",
   ]);
 
@@ -38,16 +37,36 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
   let sortBy = (req.query.sortBy as string) || "createdAt";
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  applyDateFilter(rawFilters);
+  let dateFilter = {};
+  if (rawFilters.selectedDate) {
+    const selectedDate = new Date(rawFilters.selectedDate as string);
+    const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
+    const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
 
-  const filters: any = {};
+    dateFilter = {
+      createdAt: {
+        gte: startOfDay,
+        lte: endOfDay
+      }
+    };
+  } else if (rawFilters.from_date && rawFilters.to_date) {
+    const fromDate = new Date(rawFilters.from_date as string);
+    const toDate = new Date(rawFilters.to_date as string);
 
-  if (rawFilters.createdAtFrom || rawFilters.createdAtTo) {
-    filters.createdAt = {};
-    if (rawFilters.createdAtFrom)
-      filters.createdAt.gte = rawFilters.createdAtFrom;
-    if (rawFilters.createdAtTo) filters.createdAt.lte = rawFilters.createdAtTo;
+    toDate.setHours(23, 59, 59, 999);
+
+    dateFilter = {
+      createdAt: {
+        gte: fromDate,
+        lte: toDate
+      }
+    };
   }
+
+  const filters: any = {
+    ...dateFilter,
+    deleted: false
+  };
 
   if (rawFilters.organizationName) {
     filters.organizationName = {
@@ -60,9 +79,8 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
   }
 
   const searchTerm = (rawFilters.searchTerm as string)?.trim();
-
-  // Apply special logic if searchTerm is present
   const isSearchMode = !!searchTerm;
+
   if (isSearchMode) {
     limit = 5;
     sortBy = "createdAt";
@@ -72,18 +90,12 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
   const searchConditions = searchTerm
     ? {
         OR: [
-          {
-            organizationName: {
-              contains: searchTerm,
-              mode: "insensitive",
-            },
-          },
+          { organizationName: { contains: searchTerm, mode: "insensitive"} },
         ],
       }
     : {};
 
   const where = {
-    deleted: false,
     ...filters,
     ...searchConditions,
   };
@@ -98,9 +110,13 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
   const result = await organizationService.queryOrganizations(where, options);
 
   if (!result || result.data.length === 0) {
+    const message = (rawFilters.selectedDate || (rawFilters.from_date && rawFilters.to_date))
+        ? "No organizations found for the selected date range"
+        : "No organizations found";
+
     res.status(httpStatus.OK).json({
-      statusCode: httpStatus.OK,
-      message: "No organizations found",
+      statusCode: httpStatus.NOT_FOUND,
+      message,
       data: {
         organizations: [],
         pagination: {
@@ -137,16 +153,15 @@ const getOrganizationById = catchAsync(async (req, res) => {
   );
 
   if (!result) {
-    res.status(httpStatus.OK).json({
-      status: 404,
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
       message: "No organization found",
       data: [],
     });
     return;
   }
   res.status(httpStatus.OK).json({
-    status: 200,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Organization fetched successfully",
     data:{
       result
@@ -161,9 +176,8 @@ const updateOrganization = catchAsync(async (req, res) => {
       req.body
     );
     res.status(httpStatus.OK).json({
-      status: 200,
-      success: true,
-      message: "Organization update successfully",
+      statusCode: httpStatus.OK,
+      message: "Organization updated successfully",
       data:{
         result
       }
@@ -178,8 +192,8 @@ const deleteOrganization = catchAsync(async (req, res) => {
     await organizationService.deleteOrganizationById(req.params.organizationId);
     res.status(httpStatus.OK).json({
       statusCode: httpStatus.OK,
-      message: "Organization soft-deleted successfully",
-      data: null
+      message: "Organization deleted successfully",
+      data: null,
     });
   } catch (error) {
     throw new ApiError(httpStatus.NOT_FOUND, error.message);

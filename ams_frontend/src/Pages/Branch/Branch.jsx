@@ -413,24 +413,37 @@ const Branch = () => {
                             } hover:bg-gray-200 divide-y divide-gray-300`}
                         >
                           {/* Main Data Columns */}
-                          <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {toSentenceCase(branch.branchName) ||
-                                branchStrings.branch.notAvailable.emptyText}
+                          <td
+                              className="px-2 py-2 border border-gray-300 max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap align-top"
+                              title={toSentenceCase(branch.branchName)}
+                          >
+                            {toSentenceCase(branch.branchName) || branchStrings.branch.notAvailable.emptyText}
                           </td>
-                          <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {toSentenceCase(branch.state) ||
-                                branchStrings.branch.notAvailable.emptyText}
+
+                          <td
+                              className="px-2 py-2 border border-gray-300 max-w-[140px] overflow-hidden text-ellipsis whitespace-nowrap align-top"
+                              title={toSentenceCase(branch.state)}
+                          >
+                            {toSentenceCase(branch.state) || branchStrings.branch.notAvailable.emptyText}
                           </td>
-                          <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {toSentenceCase(branch.city) ||
-                                branchStrings.branch.notAvailable.emptyText}
+
+                          <td
+                              className="px-2 py-2 border border-gray-300 max-w-[140px] overflow-hidden text-ellipsis whitespace-nowrap align-top"
+                              title={toSentenceCase(branch.city)}
+                          >
+                            {toSentenceCase(branch.city) || branchStrings.branch.notAvailable.emptyText}
                           </td>
-                          <td className="px-2 py-2 border border-gray-300 break-words align-top">
+
+                          <td
+                              className="px-2 py-2 border border-gray-300 max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap align-top"
+                              title={toSentenceCase(branch.company?.organizationName)}
+                          >
                             {toSentenceCase(branch.company?.organizationName) ||
                                 branchStrings.branch.notAvailable.emptyText}
                           </td>
 
-                      {/* Departments Chip List */}
+
+                          {/* Departments Chip List */}
                       <td className="px-2 py-2 border border-gray-300 break-words align-top">
                         <ChipsList
                             items={branch.departments || []}

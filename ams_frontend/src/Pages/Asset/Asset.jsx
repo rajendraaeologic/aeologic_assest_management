@@ -399,9 +399,13 @@ const Asset = () => {
                               index % 2 === 0 ? "bg-gray-50" : "bg-white"
                           } hover:bg-gray-200 divide-y divide-gray-300`}
                       >
-                        <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                        <td
+                            className="px-2 py-2 border border-gray-300 max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap align-top"
+                            title={toSentenceCase(asset.assetName)}
+                        >
                           {toSentenceCase(asset.assetName) || strings.notAvailable.emptyText}
                         </td>
+
 
                         {/* Remaining Asset Fields */}
                         {[

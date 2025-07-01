@@ -17,6 +17,9 @@ import API from "../../App/api/axiosInstance";
 import { selectCurrentUser } from "../../Features/auth/authSlice";
 import { useSelector } from "react-redux";
 import { USER_ROLES } from "../../TypeRoles/constants.roles";
+import {Navigate} from "react-router-dom";
+import {FaBriefcase, FaBuilding, FaCodeBranch, FaSyncAlt, FaTags, FaTruck, FaUsers} from "react-icons/fa";
+import {GiAudioCassette} from "react-icons/gi";
 const SkeletonCard = () => (
   <div className="animate-pulse bg-gray-300 h-24 rounded-lg shadow-lg"></div>
 );
@@ -30,6 +33,45 @@ const Dashboard = () => {
   const { isSidebarOpen } = useContext(SliderContext);
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  const iconMap = {
+    "Users": (
+        <div className="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-md">
+          <FaUsers className="text-blue-600 w-5 h-5" />
+        </div>
+    ),
+    "Organizations": (
+        <div className="w-10 h-10 flex items-center justify-center bg-green-100 rounded-md">
+          <FaBuilding className="text-green-600 w-5 h-5" />
+        </div>
+    ),
+    "Branches": (
+        <div className="w-10 h-10 flex items-center justify-center bg-purple-100 rounded-md">
+          <FaCodeBranch className="text-purple-600 w-5 h-5" />
+        </div>
+    ),
+    "Departments": (
+        <div className="w-10 h-10 flex items-center justify-center bg-yellow-100 rounded-md">
+          <FaBriefcase className="text-yellow-500 w-5 h-5" />
+        </div>
+    ),
+    "Assets": (
+        <div className="w-10 h-10 flex items-center justify-center bg-yellow-100 rounded-md">
+          <GiAudioCassette className="text-yellow-500 w-5 h-5" />
+        </div>
+    ),
+    "Assign Tags": (
+        <div className="w-10 h-10 flex items-center justify-center bg-red-100 rounded-md">
+          <FaTags className="text-red-500 w-5 h-5" />
+        </div>
+    ),
+    "Out For Delivery": (
+        <div className="w-10 h-10 flex items-center justify-center bg-teal-100 rounded-md">
+          <FaTruck className="text-teal-500 w-5 h-5" />
+        </div>
+    ),
+  };
+
 
   useEffect(() => {
     let isMounted = true;
@@ -96,13 +138,14 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div
-      className={`w-full bg-slate-100 p-6 ${
-        isSidebarOpen
-          ? "lg:fixed lg:h-screen lg:overflow-hidden md:overflow-y-scroll overflow-y-scroll"
-          : "min-h-screen overflow-auto"
-      }`}
-    >
+      <div
+          className={`w-full bg-slate-100 p-6 pt-24 ${
+              isSidebarOpen
+                  ? "lg:fixed lg:h-screen lg:overflow-hidden md:overflow-y-scroll overflow-y-scroll"
+                  : "min-h-screen overflow-auto"
+          }`}
+      >
+
       <div
         className={`mx-auto ${
           isSidebarOpen
@@ -110,28 +153,59 @@ const Dashboard = () => {
             : "pl-0 md:pl-[90px] lg:pl-[90px]"
         }`}
       >
-        <h1 className="text-3xl font-bold mb-6">
-          {dashboardStrings.dashboard.title}
-        </h1>
+        {/* Dashboard Title and Filters */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {dashboardStrings.dashboard.title}
+            </h1>
+            <p className="text-gray-500 mt-4 font-medium ">
+              Monitor your program’s performance with real-time data and insights across all engagement metrics.
+            </p>
+            <div className=" md:mt-6 flex space-x-2">
+              {["7 days", "4 weeks", "6 months", "12 months"].map((label) => (
+                  <button
+                      key={label}
+                      className="px-4 py-1 border rounded-md text-lg font-medium text-gray-700 bg-white hover:bg-gray-100 border-gray-300 transition"
+                  >
+                    {label}
+                  </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="md:mt-4 flex space-x-2">
+            <button className="ml-2 px-4 py-1 bg-blue-600 text-white text-lg font-medium rounded-md hover:bg-blue-700 transition flex items-center space-x-1">
+              <FaSyncAlt className="w-4 h-4" />
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-6xl pt-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-8xl pt-4">
           {loading
-            ? Array(7)
-                .fill(0)
-                .map((_, idx) => <SkeletonCard key={idx} />)
-            : chartData.map((item) => (
-                <motion.div
-                  key={item.name}
-                  className="py-2 px-2 rounded-lg shadow-lg text-white"
-                  style={{ backgroundColor: item.color }}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <h2 className="text-3xl font-bold">{item.value}</h2>
-                  <h6 className="text-lg font-bold mt-2">{item.name}</h6>
-                </motion.div>
+              ? Array(7)
+                  .fill(0)
+                  .map((_, idx) => <SkeletonCard key={idx} />)
+              : chartData.map((item) => (
+                  <motion.div
+                      key={item.name}
+                      className="p-6 rounded-xl border border-gray-200 bg-white hover:shadow-sm transition-shadow duration-200 w-full h-36 flex flex-col justify-between"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4 }}
+                  >
+                    <div className="flex items-center space-x-2 mb-2">
+                      {iconMap[item.name] || (
+                          <div className="w-5 h-5 bg-gray-300 rounded-full" />
+                      )}
+                      <h6 className="text-2xl font-semibold text-gray-700">
+                        {item.name}
+                      </h6>
+                    </div>
+                    <h2 className="text-3xl font-bold text-gray-900">{item.value}</h2>
+                  </motion.div>
               ))}
         </div>
 

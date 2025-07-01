@@ -412,24 +412,36 @@ const UserDepartment = () => {
                           } hover:bg-gray-200 divide-y divide-gray-300`}
                       >
                         {/* Main Data Columns with toSentenceCase */}
-                        <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                          {toSentenceCase(department.departmentName) ||
-                              departmentStrings.department.notAvailable.emptyText}
-                        </td>
-                        <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                          {toSentenceCase(department.branch?.branchName) ||
-                              departmentStrings.department.notAvailable.emptyText}
-                        </td>
-                        <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                          {toSentenceCase(department.branch?.state) ||
-                              departmentStrings.department.notAvailable.emptyText}
-                        </td>
-                        <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                          {toSentenceCase(department.branch?.city) ||
-                              departmentStrings.department.notAvailable.emptyText}
+                        <td
+                            className="px-2 py-2 border border-gray-300 max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap align-top"
+                            title={toSentenceCase(department.departmentName)}
+                        >
+                          {toSentenceCase(department.departmentName) || departmentStrings.department.notAvailable.emptyText}
                         </td>
 
-                      {/* Action Buttons */}
+                        <td
+                            className="px-2 py-2 border border-gray-300 max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap align-top"
+                            title={toSentenceCase(department.branch?.branchName)}
+                        >
+                          {toSentenceCase(department.branch?.branchName) || departmentStrings.department.notAvailable.emptyText}
+                        </td>
+
+                        <td
+                            className="px-2 py-2 border border-gray-300 max-w-[140px] overflow-hidden text-ellipsis whitespace-nowrap align-top"
+                            title={toSentenceCase(department.branch?.state)}
+                        >
+                          {toSentenceCase(department.branch?.state) || departmentStrings.department.notAvailable.emptyText}
+                        </td>
+
+                        <td
+                            className="px-2 py-2 border border-gray-300 max-w-[140px] overflow-hidden text-ellipsis whitespace-nowrap align-top"
+                            title={toSentenceCase(department.branch?.city)}
+                        >
+                          {toSentenceCase(department.branch?.city) || departmentStrings.department.notAvailable.emptyText}
+                        </td>
+
+
+                        {/* Action Buttons */}
                       <td className="px-2 py-2 border border-gray-300 text-center">
                         <div className="flex justify-center gap-2">
                           <button

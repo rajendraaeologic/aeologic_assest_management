@@ -145,7 +145,7 @@ const TimelineEvent = ({ event, isLast, index }) => {
           transition={{ duration: 0.5, delay: index * 0.1 }}
           whileHover={{
             scale: 1.02,
-            backgroundColor: "rgba(239, 246, 255, 0.7)",
+            y: -2,
             transition: { duration: 0.2 },
           }}
           className="relative pb-6 pl-3 pr-3 rounded-lg cursor-pointer group"
@@ -327,25 +327,29 @@ const AssetHistory = () => {
     const grouped = {};
 
     histories.forEach((history) => {
-      if (!history.asset || !history.asset.id) return;
+      const assetId = history.asset?.id || history.assetId;
+      if (!assetId) return;
 
-      if (!grouped[history.asset.id]) {
-        grouped[history.asset.id] = {
-          asset: history.asset,
+      if (!grouped[assetId]) {
+        grouped[assetId] = {
+          asset: history.asset || { id: assetId },
           histories: [],
         };
       }
-      grouped[history.asset.id].histories.push(history);
+      grouped[assetId].histories.push(history);
     });
 
-    // Sort each asset's histories by timestamp (oldest first for timeline)
-    Object.values(grouped).forEach(group => {
+    return Object.values(grouped).map(group => {
       group.histories.sort((a, b) =>
-          new Date(a.timestamp || a.createdAt).getTime() - new Date(b.timestamp || b.createdAt).getTime()
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
       );
-    });
 
-    return Object.values(grouped);
+      return {
+        asset: group.asset,
+        latestHistory: group.histories[0],
+        allHistories: group.histories
+      };
+    });
   }, [histories]);
 
   const displayedGroupedHistories = groupedHistories();
@@ -410,28 +414,12 @@ const AssetHistory = () => {
         return latestHistory.action?.toLowerCase() || "Unknown action";
     }
   };
-  const handleViewDetails = async (assetData) => {
-    try {
-      setShowTimeline(true);
-      setSelectedAsset(assetData); // Show existing data immediately
-
-      // const result = await dispatch(getAssetHistoriesByAssetId({
-      //   assetId: assetData.asset.id,
-      //   limit: 5,
-      //   page: 1,
-      // }));
-
-      if (result.payload && result.payload.data) {
-        setSelectedAsset(prev => ({
-          ...prev,
-          histories: Array.isArray(result.payload.data) ?
-              result.payload.data :
-              result.payload.data.histories || []
-        }));
-      }
-    } catch (error) {
-      console.error("Error fetching asset histories:", error);
-    }
+  const handleViewDetails = (assetGroup) => {
+    setShowTimeline(true);
+    setSelectedAsset({
+      asset: assetGroup.asset,
+      histories: assetGroup.allHistories
+    });
   };
 
   useEffect(() => {
@@ -597,51 +585,48 @@ const AssetHistory = () => {
                         {error}
                       </td>
                     </tr>
-                ) : displayedGroupedHistories.length === 0 ? (
+                ) : groupedHistories().length === 0 ? (
                     <tr>
-                      <td
-                          colSpan="6"
-                          className="px-2 py-4 text-center border border-gray-300"
-                      >
+                      <td colSpan="6" className="px-2 py-4 text-center border border-gray-300">
                         {searchTerm ? "No assets found matching your search criteria." : "No data available"}
                       </td>
                     </tr>
                 ) : (
-                    displayedGroupedHistories.map(({ asset, histories }, index) => (
+                    groupedHistories().slice(0, rowsPerPage).map((group, index) => (
                         <tr
-                            key={asset.id}
+                            key={group.asset.id}
                             className={`${
                                 index % 2 === 0 ? "bg-gray-50" : "bg-white"
                             } hover:bg-gray-200 divide-y divide-gray-300`}
                         >
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {asset.assetName}
+                            {group.asset.assetName || "N/A"}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
           <span
               className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  statusConfig[asset.status]?.bgColor || "bg-gray-100"
+                  statusConfig[group.asset.status]?.bgColor || "bg-gray-100"
               } ${
-                  statusConfig[asset.status]?.textColor || "text-gray-800"
+                  statusConfig[group.asset.status]?.textColor || "text-gray-800"
               }`}
           >
-            {asset.status}
+            {group.asset.status || group.latestHistory.action}
           </span>
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {asset.branch?.branchName || "N/A"}
+                            {group.asset.branch?.branchName || "N/A"}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {asset.department?.departmentName || "N/A"}
+                            {group.asset.department?.departmentName || "N/A"}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {getLatestAction(histories[0], asset.status)}
+                            {getLatestAction(group.latestHistory, group.asset.status)}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 text-center">
                             <div className="flex justify-center gap-2">
                               <button
                                   ref={timelineButtonRef}
-                                  onClick={() => handleViewDetails({ asset, histories })}
+                                  onClick={() => handleViewDetails(group)}
                                   className="px-3 py-2 rounded-sm text-blue-600 underline hover:text-blue-800"
                               >
                                 <span>View Details</span>
@@ -652,7 +637,6 @@ const AssetHistory = () => {
                     ))
                 )}
                 </tbody>
-
               </table>
             </div>
             {/* Pagination Controls */}

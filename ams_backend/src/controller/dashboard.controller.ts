@@ -1,3 +1,4 @@
+// dashboard.controller.ts
 import httpStatus from "http-status";
 import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
@@ -19,6 +20,14 @@ import { dashboardService } from "@/services";
  *     tags: [Dashboard]
  *     security:
  *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: period
+ *         schema:
+ *           type: string
+ *           enum: [7days, 4weeks, 6months, 12months]
+ *           default: 7days
+ *         description: The time period to filter the counts by
  *     responses:
  *       200:
  *         description: Dashboard counts fetched successfully
@@ -36,27 +45,40 @@ import { dashboardService } from "@/services";
  *                 data:
  *                   type: object
  *                   properties:
- *                     totalUsers:
- *                       type: number
- *                       example: 100
- *                     totalAssets:
- *                       type: number
- *                       example: 250
- *                     totalOrganizations:
- *                       type: number
- *                       example: 10
+ *                     counts:
+ *                       type: object
+ *                       properties:
+ *                         users:
+ *                           type: number
+ *                           example: 100
+ *                         organizations:
+ *                           type: number
+ *                           example: 10
+ *                         branches:
+ *                           type: number
+ *                           example: 15
+ *                         departments:
+ *                           type: number
+ *                           example: 20
+ *                         assets:
+ *                           type: number
+ *                           example: 250
+ *                         outForDelivery:
+ *                           type: number
+ *                           example: 5
  *       401:
  *         description: Unauthorized
  *       500:
  *         description: Unable to fetch dashboard counts
  */
 const getDashboardCounts = catchAsync(async (req, res) => {
-  const counts = await dashboardService.getDashboardCounts();
+  const { period } = req.query;
+  const counts = await dashboardService.getDashboardCounts(period as string);
 
   if (!counts) {
     throw new ApiError(
-      httpStatus.INTERNAL_SERVER_ERROR,
-      "Unable to fetch dashboard counts"
+        httpStatus.INTERNAL_SERVER_ERROR,
+        "Unable to fetch dashboard counts"
     );
   }
 

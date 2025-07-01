@@ -403,9 +403,13 @@ const Organization = () => {
                       } hover:bg-gray-200 divide-y divide-gray-300`}
                     >
                       {/* Organization Name */}
-                      <td className="px-2 py-2 border border-gray-300 break-words align-top">
+                      <td
+                          className="px-2 py-2 border border-gray-300 max-w-[180px] overflow-hidden text-ellipsis whitespace-nowrap align-top"
+                          title={toSentenceCase(org.organizationName)}
+                      >
                         {toSentenceCase(org.organizationName) || notAvailable.emptyText}
                       </td>
+
 
                       {/* Branches Chip List */}
                       <td className="px-2 py-2 border border-gray-300 break-words align-top">

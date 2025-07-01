@@ -24,6 +24,7 @@ const Sidebar = () => {
 
   const user = useSelector(selectCurrentUser);
   const userRole = user?.userRole;
+  const sidebarRef = React.useRef(null);
 
 
   const menuItems = [
@@ -53,9 +54,38 @@ const Sidebar = () => {
     return true;
   });
 
+  React.useEffect(() => {
+    const handleWheel = (e) => {
+      if (!sidebarRef.current) return;
+
+      const isOverSidebar = sidebarRef.current.contains(e.target);
+      if (isOverSidebar) {
+        e.preventDefault();
+
+        const sidebarContent = sidebarRef.current.querySelector('.sidebar-content');
+        if (sidebarContent) {
+          const { scrollTop, scrollHeight, clientHeight } = sidebarContent;
+          const atTop = scrollTop === 0;
+          const atBottom = scrollHeight - scrollTop === clientHeight;
+
+          if ((e.deltaY < 0 && atTop) || (e.deltaY > 0 && atBottom)) {
+            return;
+          }
+          sidebarContent.scrollTop += e.deltaY;
+        }
+      }
+    };
+
+    document.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      document.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
 
   return (
     <div
+        ref={sidebarRef}
       className={`${
         isSidebarOpen ? "md:w-[240px] w-[200px]" : "md:w-[80px] sm:w-[80px] w-0"
       } h-full bg-[#1a2942] text-white fixed top-0 left-0 transition-all duration-300 z-50 overflow-x-hidden`}

@@ -12,6 +12,7 @@ const response = await API.get("/assetHistory", {
         searchTerm: searchTerm.trim(),
     },
 });
+console.log(response);
     return response.data;
 };
 

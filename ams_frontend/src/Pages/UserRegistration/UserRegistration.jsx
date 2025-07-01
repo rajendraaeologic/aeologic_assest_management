@@ -62,11 +62,6 @@ const UserRegistration = () => {
     filters
   } = useSelector((state) => state.usersData);
   const [showReportDialog, setShowReportDialog] = useState(false);
-  const [reportType, setReportType] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(null);
-  const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
-
   const [isAddUserFormOpen, setIsAddUserFormOpen] = useState(false);
   const [isUpdateUserFormOpen, setIsUpdateUserFormOpen] = useState(false);
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
@@ -294,64 +289,6 @@ const UserRegistration = () => {
     setUploadError(null);
   };
 
-  // const handleGenerateReport = async () => {
-  //   if (!reportType) {
-  //     toast.error("Please select a report type");
-  //     return;
-  //   }
-  //   if (reportType === 'date' && !selectedDate) {
-  //     toast.error("Please select a date");
-  //     return;
-  //   }
-  //   if (reportType === 'range' && (!fromDate || !toDate)) {
-  //     toast.error("Please select both dates");
-  //     return;
-  //   }
-  //   if (reportType === 'range' && fromDate > toDate) {
-  //     toast.error("From date cannot be after To date");
-  //     return;
-  //   }
-  //   setIsProcessing(true);
-  //   try {
-  //     const params = new URLSearchParams();
-  //
-  //     if (reportType === 'date') {
-  //       params.append('selectedDate', selectedDate);
-  //     } else if (reportType === 'range') {
-  //       params.append('from_date', fromDate);
-  //       params.append('to_date', toDate);
-  //     }
-  //     Object.entries(filters).forEach(([key, value]) => {
-  //       if (value) params.append(key, value);
-  //     });
-  //     const response = await API.get("/users/export-excel", {
-  //       params,
-  //       responseType: "blob",
-  //     });
-  //     const blob = new Blob([response.data], {
-  //       type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  //     });
-  //     const url = window.URL.createObjectURL(blob);
-  //     const a = document.createElement('a');
-  //     a.href = url;
-  //     a.download = `users_report_${new Date().toISOString().split('T')[0]}.xlsx`;
-  //     document.body.appendChild(a);
-  //     a.click();
-  //     a.remove();
-  //     window.URL.revokeObjectURL(url);
-  //     toast.success("Report generated and downloaded successfully");
-  //   } catch (error) {
-  //     console.error("Download failed:", error);
-  //     toast.error(error.response.data.message || "No users found on matching date ");
-  //   } finally {
-  //     setIsProcessing(false);
-  //     setShowReportDialog(false);
-  //     setReportType(null);
-  //     setSelectedDate(null);
-  //     setFromDate(null);
-  //     setToDate(null);
-  //   }
-  // };
   const handleGenerateReport = async (dateFilters) => {
     setIsProcessing(true);
 

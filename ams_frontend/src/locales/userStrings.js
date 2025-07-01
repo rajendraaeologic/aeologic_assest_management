@@ -130,7 +130,7 @@ const userStrings = {
       branchError: "Error loading branches",
       departmentError: "Error loading departments",
       emailTaken: "Email already exists",
-      phoneTaken: "Phone already exists",
+      phoneTaken: "Phone number already taken",
     },
   },
 
@@ -186,7 +186,7 @@ const userStrings = {
       success: "User updated successfully!",
       error: "Failed to update user",
       emailTaken: "Email already taken",
-      phoneTaken: "Phone already taken",
+      phoneTaken: "Phone number already taken",
       branchError: "Failed to fetch branches",
       departmentError: "Failed to fetch departments",
     },

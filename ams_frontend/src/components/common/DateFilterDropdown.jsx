@@ -1,17 +1,19 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import { FaCalendarAlt, FaTimes } from "react-icons/fa";
-import {setFilters} from "../../Features/slices/userSlice.js";
+import { setFilters } from "../../Features/slices/userSlice.js";
 
 const DateFilterDropdown = () => {
     const dispatch = useDispatch();
+    const [singleDate, setSingleDate] = useState("");
     const [fromDate, setFromDate] = useState("");
     const [toDate, setToDate] = useState("");
     const [isOpen, setIsOpen] = useState(false);
     const [activeFilter, setActiveFilter] = useState(null);
     const dropdownRef = useRef(null);
 
-    // Close dropdown when clicking outside
+    const currentDate = new Date().toISOString().split('T')[0];
+
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -27,7 +29,10 @@ const DateFilterDropdown = () => {
 
     const handleSingleDateChange = (e) => {
         const date = e.target.value;
-        setFromDate(date);
+        if (date > currentDate) return;
+
+        setSingleDate(date);
+        setFromDate("");
         setToDate("");
         setActiveFilter(date ? 'single' : null);
 
@@ -41,24 +46,36 @@ const DateFilterDropdown = () => {
     };
 
     const handleRangeDateChange = (type, value) => {
+        if (value > currentDate) return;
+
         if (type === 'from') {
             setFromDate(value);
+            if (toDate && value > toDate) {
+                setToDate("");
+            }
         } else {
             setToDate(value);
+            if (fromDate && value < fromDate) {
+                setFromDate("");
+            }
         }
+    };
 
-        // Only apply filter when both dates are selected
+    const applyRangeFilter = () => {
         if (fromDate && toDate) {
             dispatch(setFilters({
                 fromDate,
                 toDate,
                 selectedDate: null
             }));
+            setSingleDate(""); // Clear single date when applying range
             setActiveFilter('range');
+            setIsOpen(false);
         }
     };
 
     const handleClearFilter = () => {
+        setSingleDate("");
         setFromDate("");
         setToDate("");
         setActiveFilter(null);
@@ -69,21 +86,9 @@ const DateFilterDropdown = () => {
         }));
     };
 
-    const applyRangeFilter = () => {
-        if (fromDate && toDate) {
-            dispatch(setFilters({
-                fromDate,
-                toDate,
-                selectedDate: null
-            }));
-            setActiveFilter('range');
-            setIsOpen(false);
-        }
-    };
-
     const getDisplayText = () => {
         if (activeFilter === 'single') {
-            return new Date(fromDate).toLocaleDateString();
+            return new Date(singleDate).toLocaleDateString();
         }
         if (activeFilter === 'range') {
             return `${new Date(fromDate).toLocaleDateString()} - ${new Date(toDate).toLocaleDateString()}`;
@@ -92,18 +97,17 @@ const DateFilterDropdown = () => {
     };
 
     return (
-        <div className="relative mr-3"  ref={dropdownRef}>
+        <div className="relative mr-3" ref={dropdownRef}>
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`p-2 text-sm  font-medium  border rounded-md flex items-center gap-2 cursor-pointer ${
+                className={`p-2 text-sm font-medium border rounded-md flex items-center gap-2 cursor-pointer ${
                     activeFilter
                         ? 'bg-[#3BC0C3] text-white'
                         : 'bg-white text-gray-700 border-gray-300'
                 }`}
             >
-
-            <FaCalendarAlt className="text-lg" />
+                <FaCalendarAlt className="text-lg" />
                 <span className="text-base md:text-sm">{getDisplayText()}</span>
                 {activeFilter && (
                     <button
@@ -126,9 +130,9 @@ const DateFilterDropdown = () => {
                             <h3 className="text-sm font-medium mb-2">Single Date</h3>
                             <input
                                 type="date"
-                                value={fromDate}
+                                value={singleDate}
                                 onChange={handleSingleDateChange}
-                                max={toDate || undefined}
+                                max={currentDate}
                                 className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#3BC0C3] focus:border-transparent"
                             />
                         </div>
@@ -142,7 +146,7 @@ const DateFilterDropdown = () => {
                                         type="date"
                                         value={fromDate}
                                         onChange={(e) => handleRangeDateChange('from', e.target.value)}
-                                        max={toDate || undefined}
+                                        max={toDate || currentDate}
                                         className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#3BC0C3] focus:border-transparent"
                                     />
                                 </div>
@@ -153,6 +157,7 @@ const DateFilterDropdown = () => {
                                         value={toDate}
                                         onChange={(e) => handleRangeDateChange('to', e.target.value)}
                                         min={fromDate || undefined}
+                                        max={currentDate}
                                         className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#3BC0C3] focus:border-transparent"
                                     />
                                 </div>

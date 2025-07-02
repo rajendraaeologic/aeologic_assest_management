@@ -20,10 +20,9 @@ const ChipsList = ({ items = [], labelKey = "label", emptyText = "N/A" }) => {
                   label={label || "N/A"}
                   size="small"
                   sx={{
-                    backgroundColor: "rgba(59, 192, 195, 0.6)",
                     color: "#003333",
                     fontWeight: 500,
-                    fontSize: "0.9rem",
+                    fontSize: "1rem",
                     borderRadius: "4px",
                     height: "auto",
                     maxWidth: 120,
@@ -34,9 +33,6 @@ const ChipsList = ({ items = [], labelKey = "label", emptyText = "N/A" }) => {
                       textOverflow: "ellipsis",
                       padding: "0 8px",
                       display: "block",
-                    },
-                    "&:hover": {
-                      backgroundColor: "rgba(59, 192, 195, 0.7)",
                     },
                   }}
               />

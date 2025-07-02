@@ -23,7 +23,7 @@ const UpdateBranch = ({ onClose }) => {
   const indiaCountryCode = 'IN';
 
   const { selectedBranch, currentPage, rowsPerPage } = useSelector(
-    (state) => state.branchData
+      (state) => state.branchData
   );
 
   const {
@@ -126,7 +126,6 @@ const UpdateBranch = ({ onClose }) => {
           autoClose: 1000,
         });
         handleClose();
-
         return;
       }
 
@@ -184,7 +183,11 @@ const UpdateBranch = ({ onClose }) => {
             <h2 className="text-[17px] font-semibold text-white">
               {branchStrings.updateBranch.title}
             </h2>
-            <button onClick={handleClose} className="text-white rounded-md">
+            <button
+                onClick={handleClose}
+                className="text-white rounded-md"
+                disabled={isSubmitting}
+            >
               <IoClose className="h-7 w-7" />
             </button>
           </div>
@@ -233,9 +236,10 @@ const UpdateBranch = ({ onClose }) => {
                       type="text"
                       maxLength={25}
                       id="branchName"
+                      disabled={isSubmitting}
                       className={`mt-1 p-2 w-full border ${
                           errors.branchName ? "border-red-500" : "border-gray-300"
-                      } outline-none rounded-md`}
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
                   />
                   {errors.branchName && (
                       <p className="text-red-500 text-sm mt-1">
@@ -255,9 +259,10 @@ const UpdateBranch = ({ onClose }) => {
                   <select
                       {...register("state", { required: "State is required" })}
                       id="state"
+                      disabled={isSubmitting}
                       className={`mt-1 p-2 w-full border ${
                           errors.state ? "border-red-500" : "border-gray-300"
-                      } outline-none rounded-md`}
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
                   >
                     <option value="">Select State</option>
                     {states.map((stateOption) => (
@@ -286,10 +291,10 @@ const UpdateBranch = ({ onClose }) => {
                         required: "City is required",
                       })}
                       id="city"
+                      disabled={!state || isSubmitting}
                       className={`mt-1 p-2 w-full border ${
                           errors.city ? "border-red-500" : "border-gray-300"
-                      } outline-none rounded-md`}
-                      disabled={!state}
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
                   >
                     <option value="">
                       {!state ? "Select State First" : "Select City"}
@@ -313,14 +318,14 @@ const UpdateBranch = ({ onClose }) => {
                 <button
                     type="button"
                     onClick={handleClose}
-                    className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
+                    className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-50"
                     disabled={isSubmitting}
                 >
                   {branchStrings.updateBranch.buttons.close}
                 </button>
                 <button
                     type="submit"
-                    className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
+                    className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isSubmitting}
                 >
                   {isSubmitting

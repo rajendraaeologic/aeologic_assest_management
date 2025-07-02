@@ -286,7 +286,7 @@ const AddBranch = ({ onClose }) => {
                           onClick={handleOrgClick}
                           className={`mt-1 p-2 w-full border ${
                               errors.companyId ? "border-red-500" : "border-gray-300"
-                          } rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis`}
+                          } rounded-md cursor-pointer bg-white truncate`}
                       >
                         {selectedOrg?.organizationName || "Select Organization"}
                       </div>
@@ -383,7 +383,7 @@ const AddBranch = ({ onClose }) => {
                       placeholder={branchStrings.addBranch.placeholders.branchName}
                       className={`mt-1 p-2 w-full border ${
                           errors.branchName ? "border-red-500" : "border-gray-300"
-                      } outline-none rounded-md`}
+                      } outline-none rounded-md truncate`}
                   />
                   {errors.branchName && (
                       <p className="text-red-500 text-sm mt-1">
@@ -406,7 +406,7 @@ const AddBranch = ({ onClose }) => {
                       id="state"
                       className={`mt-1 p-2 w-full border ${
                           errors.state ? "border-red-500" : "border-gray-300"
-                      } outline-none rounded-md`}
+                      } outline-none rounded-md truncate`}
                   >
                     <option value="">Select State</option>
                     {states.map((state) => (
@@ -439,7 +439,7 @@ const AddBranch = ({ onClose }) => {
                       id="city"
                       className={`mt-1 p-2 w-full border ${
                           errors.city ? "border-red-500" : "border-gray-300"
-                      } outline-none rounded-md`}
+                      } outline-none rounded-md truncate`}
                       disabled={!state}
                   >
                     <option value="">Select City</option>

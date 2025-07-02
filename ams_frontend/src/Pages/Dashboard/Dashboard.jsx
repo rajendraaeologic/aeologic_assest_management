@@ -55,38 +55,38 @@ const Dashboard = () => {
 
   const iconMap = {
     Users: (
-        <div className="w-10 h-10 flex items-center justify-center bg-blue-100 rounded-md">
-          <FaUsers className="text-blue-600 w-5 h-5" />
+        <div className="w-7 h-7  flex items-center justify-center bg-blue-100 rounded-md">
+          <FaUsers className="text-blue-600 w-4 h-4" />
         </div>
     ),
     Organizations: (
-        <div className="w-10 h-10 flex items-center justify-center bg-green-100 rounded-md">
-          <FaBuilding className="text-green-600 w-5 h-5" />
+        <div className="w-7 h-7 flex items-center justify-center bg-green-100 rounded-md">
+          <FaBuilding className="text-green-600 w-4 h-4" />
         </div>
     ),
     Branches: (
-        <div className="w-10 h-10 flex items-center justify-center bg-purple-100 rounded-md">
-          <FaCodeBranch className="text-purple-600 w-5 h-5" />
+        <div className="w-7 h-7  flex items-center justify-center bg-purple-100 rounded-md">
+          <FaCodeBranch className="text-purple-600 w-4 h-4" />
         </div>
     ),
     Departments: (
-        <div className="w-10 h-10 flex items-center justify-center bg-yellow-100 rounded-md">
-          <FaBriefcase className="text-yellow-500 w-5 h-5" />
+        <div className="w-7 h-7  flex items-center justify-center bg-yellow-100 rounded-md">
+          <FaBriefcase className="text-yellow-500 w-4 h-4" />
         </div>
     ),
     Assets: (
-        <div className="w-10 h-10 flex items-center justify-center bg-yellow-100 rounded-md">
-          <GiAudioCassette className="text-yellow-500 w-5 h-5" />
+        <div className="w-7 h-7  flex items-center justify-center bg-yellow-100 rounded-md">
+          <GiAudioCassette className="text-yellow-500 w-4 h-4" />
         </div>
     ),
     "Assign Tags": (
-        <div className="w-10 h-10 flex items-center justify-center bg-red-100 rounded-md">
-          <FaTags className="text-red-500 w-5 h-5" />
+        <div className="w-7 h-7  flex items-center justify-center bg-red-100 rounded-md">
+          <FaTags className="text-red-500 w-4 h-4" />
         </div>
     ),
     "Out For Delivery": (
-        <div className="w-10 h-10 flex items-center justify-center bg-teal-100 rounded-md">
-          <FaTruck className="text-teal-500 w-5 h-5" />
+        <div className="w-7 h-7 flex items-center justify-center bg-teal-100 rounded-md">
+          <FaTruck className="text-teal-500 w-4 h-4" />
         </div>
     ),
   };
@@ -173,7 +173,7 @@ console.log(res)
       <div
           className={`w-full bg-slate-100 p-6 pt-24 ${
               isSidebarOpen
-                  ? "lg:fixed lg:h-screen lg:overflow-hidden md:overflow-y-scroll overflow-y-scroll"
+                  ? "lg:fixed lg:h-screen lg:overflow-y-auto md:overflow-y-scroll overflow-y-scroll"
                   : "min-h-screen overflow-auto"
           }`}
       >
@@ -223,7 +223,7 @@ console.log(res)
           </div>
 
           {/* Stats Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-8xl pt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-8xl pt-2">
             {loading
                 ? Array(7)
                     .fill(0)
@@ -231,20 +231,20 @@ console.log(res)
                 : chartData.map((item) => (
                     <motion.div
                         key={item.name}
-                        className="p-6 rounded-xl border border-gray-200 bg-white hover:shadow-sm transition-shadow duration-200 w-full h-36 flex flex-col justify-between"
+                        className="p-6 rounded-xl border border-gray-200 bg-white hover:shadow-sm transition-shadow duration-200 w-full h-24 flex flex-col justify-between"
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.4 }}
                     >
-                      <div className="flex items-center space-x-2 mb-2">
+                      <div className="flex items-center space-x-2 ">
                         {iconMap[item.name] || (
-                            <div className="w-5 h-5 bg-gray-300 rounded-full" />
+                            <div className="w-10 h-10 bg-gray-300 rounded-full" />
                         )}
-                        <h6 className="text-2xl font-semibold text-gray-700">
+                        <h6 className="text-xl font-semibold text-gray-700">
                           {item.name}
                         </h6>
                       </div>
-                      <h2 className="text-3xl font-bold text-gray-900">
+                      <h2 className="text-2xl mt-1 font-bold text-gray-900">
                         {item.value}
                       </h2>
                     </motion.div>

@@ -363,7 +363,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   type="text"
                   id="uniqueId"
                   maxLength={15}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md truncate"
                   placeholder={assetStrings.addAsset.placeholders.uniqueId}
                   {...register("uniqueId", {
                     required: assetStrings.addAsset.validation.uniqueIdRequired,
@@ -411,7 +411,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   type="text"
                   maxLength={15}
                   id="brand"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md truncate"
                   placeholder={assetStrings.addAsset.placeholders.brand}
                   {...register("brand", {
                     required: assetStrings.addAsset.validation.brandRequired,
@@ -458,7 +458,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   type="text"
                   maxLength={15}
                   id="model"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md truncate"
                   placeholder={assetStrings.addAsset.placeholders.model}
                   {...register("model", {
                     required: assetStrings.addAsset.validation.modelRequired,
@@ -504,7 +504,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   type="text"
                   maxLength={15}
                   id="serialNumber"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md truncate"
                   placeholder={assetStrings.addAsset.placeholders.serialNumber}
                   {...register("serialNumber", {
                     required:
@@ -547,7 +547,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <select
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
+                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md truncate"
                   {...register("status", {
                     required: assetStrings.addAsset.validation.statusRequired,
                   })}
@@ -603,7 +603,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                         }
                         setShowBranchDropdown(!showBranchDropdown);
                       }}
-                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
                   >
                     {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                   </div>
@@ -669,7 +669,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                         }
                         setShowDeptDropdown(!showDeptDropdown);
                       }}
-                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
                   >
                     {selectedDept
                         ? selectedDept.departmentName
@@ -732,7 +732,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <textarea
-                  className="mt-1 p-2 w-[206%] border border-gray-300 outline-none rounded-md"
+                  className="mt-1 p-2 w-[206%] border border-gray-300 outline-none rounded-md truncate"
                   style={{ overflow: "hidden", textOverflow: "ellipsis" }}
                   rows={2}
                   id="description"

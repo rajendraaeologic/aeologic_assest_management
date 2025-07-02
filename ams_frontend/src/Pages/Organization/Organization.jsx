@@ -39,7 +39,6 @@ const Organization = () => {
   const navigate = useNavigate();
   const { isSidebarOpen } = useContext(SliderContext);
 
-  // Get localized organizationStrings
   const { title, breadcrumb, buttons, table, modals, notAvailable } =
     organizationStrings.organization;
 
@@ -52,7 +51,6 @@ const Organization = () => {
     totalOrganizations,
     searchTerm,
     loading,
-    error,
   } = useSelector((state) => state.organizationData);
 
   const [showReportDialog, setShowReportDialog] = useState(false);
@@ -66,7 +64,7 @@ const Organization = () => {
   const [deleteMessage, setDeleteMessage] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
-  const [isSearching, setIsSearching] = useState(false);
+  const [setIsSearching] = useState(false);
   const options = ["5", "10", "25", "50", "100"];
   const debouncedSearch = useCallback(
     debounce((value) => {

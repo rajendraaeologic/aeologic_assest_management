@@ -17,14 +17,14 @@ const UpdateOrganization = ({ onClose }) => {
   const modalRef = useRef(null);
   const { currentPage, rowsPerPage } = useSelector((state) => state.usersData);
   const selectedOrganization = useSelector(
-    (state) => state.organizationData.selectedOrganization
+      (state) => state.organizationData.selectedOrganization
   );
 
   const {
     register,
     handleSubmit,
     reset,
-
+    setError,
     formState: { errors, isSubmitting },
     watch,
   } = useForm({
@@ -84,10 +84,10 @@ const UpdateOrganization = ({ onClose }) => {
 
       await dispatch(updateOrganization(organizationData)).unwrap();
       await dispatch(
-        getAllOrganizations({
-          page: currentPage,
-          limit: rowsPerPage,
-        })
+          getAllOrganizations({
+            page: currentPage,
+            limit: rowsPerPage,
+          })
       ).unwrap();
 
       toast.success(organizationStrings.updateOrganization.toast.success, {
@@ -115,115 +115,119 @@ const UpdateOrganization = ({ onClose }) => {
   };
 
   return (
-    <div
-      className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${
-        isVisible ? "opacity-100" : "opacity-0"
-      }`}
-      onClick={handleOutsideClick}
-    >
       <div
-        ref={modalRef}
-        className={`mt-[20px] w-[400px] min-h-60 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
-          isVisible ? "scale-100" : "scale-95"
-        }`}
+          className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${
+              isVisible ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={handleOutsideClick}
       >
-        <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
-          <h2 className="text-[17px] font-semibold text-white">
-            {organizationStrings.updateOrganization.title}
-          </h2>
-          <button onClick={handleClose} className="text-white rounded-md">
-            <IoClose className="h-7 w-7" />
-          </button>
-        </div>
-
-        <div className="p-4">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="w-full">
-              <label
-                htmlFor="organizationName"
-                className="block text-sm font-medium text-gray-700"
-              >
-                {
-                  organizationStrings.updateOrganization.formLabels
-                    .organizationName
-                }
-                <span className="text-red-500">*</span>
-              </label>
-              <input
-                ref={firstInputRef}
-                {...register("organizationName", {
-                  required:
-                    organizationStrings.updateOrganization.validation
-                      .organizationNameRequired,
-                  minLength: {
-                    value: 3,
-                    message:
-                      organizationStrings.updateOrganization.validation
-                        .organizationNameMinLength,
-                  },
-                  maxLength: {
-                    value: 25,
-                    message:
-                      organizationStrings.updateOrganization.validation
-                        .organizationNameMaxLength,
-                  },
-                  pattern: {
-                    value: /^[a-zA-Z0-9 ]+$/,
-                    message:
-                      organizationStrings.updateOrganization.validation
-                        .orgNamePattern,
-                  },
-                  validate: (value) => {
-                    const trimmed = value.trim();
-                    if (value !== trimmed) {
-                      return organizationStrings.updateOrganization.validation.trimSpaces;
-                    }
-                    return true;
-                  },
-                })}
-                type="text"
-                id="organizationName"
-                maxLength={25}
-                placeholder={
-                  organizationStrings.updateOrganization.placeholders
-                    .organizationName
-                }
-                className={`mt-1 p-2 w-full border ${
-                  errors.organizationName ? "border-red-500" : "border-gray-300"
-                } outline-none rounded-md`}
-              />
-              {errors.organizationName && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.organizationName.message}
-                </p>
-              )}
-
-            </div>
-
-            <hr className="mt-4" />
-            <div className="flex justify-end gap-4 mt-4 mb-2">
-              <button
-                type="button"
+        <div
+            ref={modalRef}
+            className={`mt-[20px] w-[400px] min-h-60 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+                isVisible ? "scale-100" : "scale-95"
+            }`}
+        >
+          <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
+            <h2 className="text-[17px] font-semibold text-white">
+              {organizationStrings.updateOrganization.title}
+            </h2>
+            <button
                 onClick={handleClose}
-                className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
+                className="text-white rounded-md"
                 disabled={isSubmitting}
-              >
-                {organizationStrings.updateOrganization.buttons.close}
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
-                disabled={isSubmitting}
-              >
-                {isSubmitting
-                  ? organizationStrings.updateOrganization.buttons.updating
-                  : organizationStrings.updateOrganization.buttons.update}
-              </button>
-            </div>
-          </form>
+            >
+              <IoClose className="h-7 w-7" />
+            </button>
+          </div>
+
+          <div className="p-4">
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="w-full">
+                <label
+                    htmlFor="organizationName"
+                    className="block text-sm font-medium text-gray-700"
+                >
+                  {
+                    organizationStrings.updateOrganization.formLabels
+                        .organizationName
+                  }
+                  <span className="text-red-500">*</span>
+                </label>
+                <input
+                    ref={firstInputRef}
+                    {...register("organizationName", {
+                      required:
+                      organizationStrings.updateOrganization.validation
+                          .organizationNameRequired,
+                      minLength: {
+                        value: 3,
+                        message:
+                        organizationStrings.updateOrganization.validation
+                            .organizationNameMinLength,
+                      },
+                      maxLength: {
+                        value: 25,
+                        message:
+                        organizationStrings.updateOrganization.validation
+                            .organizationNameMaxLength,
+                      },
+                      pattern: {
+                        value: /^[a-zA-Z0-9 ]+$/,
+                        message:
+                        organizationStrings.updateOrganization.validation
+                            .orgNamePattern,
+                      },
+                      validate: (value) => {
+                        const trimmed = value.trim();
+                        if (value !== trimmed) {
+                          return organizationStrings.updateOrganization.validation.trimSpaces;
+                        }
+                        return true;
+                      },
+                    })}
+                    type="text"
+                    id="organizationName"
+                    maxLength={25}
+                    disabled={isSubmitting}
+                    placeholder={
+                      organizationStrings.updateOrganization.placeholders
+                          .organizationName
+                    }
+                    className={`mt-1 p-2 w-full border ${
+                        errors.organizationName ? "border-red-500" : "border-gray-300"
+                    } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
+                />
+                {errors.organizationName && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.organizationName.message}
+                    </p>
+                )}
+              </div>
+
+              <hr className="mt-4" />
+              <div className="flex justify-end gap-4 mt-4 mb-2">
+                <button
+                    type="button"
+                    onClick={handleClose}
+                    className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-50"
+                    disabled={isSubmitting}
+                >
+                  {organizationStrings.updateOrganization.buttons.close}
+                </button>
+                <button
+                    type="submit"
+                    className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSubmitting}
+                >
+                  {isSubmitting
+                      ? organizationStrings.updateOrganization.buttons.updating
+                      : organizationStrings.updateOrganization.buttons.update}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
   );
 };
 

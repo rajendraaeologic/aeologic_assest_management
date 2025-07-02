@@ -565,7 +565,7 @@ const AddUserForm = ({ onClose }) => {
                         onClick={handleOrgClick}
                         className={`mt-1 p-2 w-full border ${
                             errors.companyId ? "border-red-500" : "border-gray-300"
-                        } rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis`}
+                        } rounded-md cursor-pointer bg-white truncate`}
                     >
                       {selectedOrg?.organizationName || "Select Organization"}
                     </div>
@@ -637,7 +637,7 @@ const AddUserForm = ({ onClose }) => {
                     }
                     setShowBranchDropdown(!showBranchDropdown);
                   }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
                 >
                   {selectedBranch?.branchName || "Select Branch"}
                 </div>
@@ -704,7 +704,7 @@ const AddUserForm = ({ onClose }) => {
                     }
                     setShowDeptDropdown(!showDeptDropdown);
                   }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
                 >
                   {selectedDept?.departmentName || "Select Department"}
                 </div>

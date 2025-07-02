@@ -145,7 +145,7 @@ const TimelineEvent = ({ event, isLast, index }) => {
           transition={{ duration: 0.5, delay: index * 0.1 }}
           whileHover={{
             scale: 1.02,
-            y: -2,
+            backgroundColor: "rgba(239, 246, 255, 0.7)",
             transition: { duration: 0.2 },
           }}
           className="relative pb-6 pl-3 pr-3 rounded-lg cursor-pointer group"
@@ -533,11 +533,6 @@ const AssetHistory = () => {
                     value={localSearchTerm}
                     onChange={handleSearchChange}
                 />
-                {isSearching && (
-                    <span className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 text-gray-400 animate-pulse">
-                  Searching...
-                </span>
-                )}
               </div>
             </div>
 

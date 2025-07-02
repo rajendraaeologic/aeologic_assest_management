@@ -419,9 +419,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                   maxLength={25}
                   id="assetName"
                   type="text"
+                  disabled={isSubmitting}
                   className={`mt-1 p-2 w-full border ${
-                    errors.assetName ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
+                      errors.assetName ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
                   placeholder={assetStrings.updateAsset.placeholders.assetName}
                   {...register("assetName", {
                     required:
@@ -471,9 +472,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                   type="text"
                   maxLength={15}
                   id="uniqueId"
+                  disabled={isSubmitting}
                   className={`mt-1 p-2 w-full border ${
-                    errors.uniqueId ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
+                      errors.uniqueId ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
                   placeholder={assetStrings.updateAsset.placeholders.uniqueId}
                   {...register("uniqueId", {
                     required:
@@ -523,8 +525,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                   type="text"
                   maxLength={15}
                   id="brand"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  placeholder={assetStrings.updateAsset.placeholders.brand}
+                  disabled={isSubmitting}
+                  className={`mt-1 p-2 w-full border ${
+                      errors.brand ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}                  placeholder={assetStrings.updateAsset.placeholders.brand}
                   {...register("brand", {
                     required: assetStrings.updateAsset.validation.brandRequired,
                     minLength: {
@@ -572,8 +576,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                   type="text"
                   maxLength={15}
                   id="model"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  placeholder={assetStrings.updateAsset.placeholders.model}
+                  disabled={isSubmitting}
+                  className={`mt-1 p-2 w-full border ${
+                      errors.model ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}                  placeholder={assetStrings.updateAsset.placeholders.model}
                   {...register("model", {
                     required: assetStrings.updateAsset.validation.modelRequired,
                     minLength: {
@@ -621,8 +627,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                   type="text"
                   maxLength={15}
                   id="serialNumber"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  placeholder={
+                  disabled={isSubmitting}
+                  className={`mt-1 p-2 w-full border ${
+                      errors.serialNumber ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}                  placeholder={
                     assetStrings.updateAsset.placeholders.serialNumber
                   }
                   {...register("serialNumber", {
@@ -669,13 +677,14 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <select
-                  className={`mt-1 p-2 w-full border ${
-                    errors.status ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                  {...register("status", {
-                    required:
+                    disabled={isSubmitting}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.status ? "border-red-500" : "border-gray-300"
+                    } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
+                    {...register("status", {
+                      required:
                       assetStrings.updateAsset.validation.statusRequired,
-                  })}
+                    })}
                 >
                   <option value="IN_USE">
                     {assetStrings.addAsset.statusOptions.in_use}
@@ -721,10 +730,12 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <div
-                    onClick={handleBranchClick}
-                    className={
-                      "mt-1 p-2 w-full border  border-gray-300 rounded-md cursor-pointer bg-white"
-                    }
+                    onClick={isSubmitting ? null : handleBranchClick}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.branchId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                 </div>
@@ -733,7 +744,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       {errors.branchId.message}
                     </p>
                 )}
-                {showBranchDropdown && (
+                {showBranchDropdown && !isSubmitting && (
                     <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                       <input
                           type="text"
@@ -782,10 +793,12 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <div
-                    onClick={handleDeptClick}
-                    className={
-                      "mt-1 p-2 w-full border  border-gray-300 rounded-md cursor-pointer bg-white"
-                    }
+                    onClick={isSubmitting ? null : handleDeptClick}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.departmentId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   {selectedDept
                       ? selectedDept.departmentName
@@ -796,7 +809,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       {errors.departmentId.message}
                     </p>
                 )}
-                {showDeptDropdown && (
+                {showDeptDropdown && !isSubmitting && (
                     <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                       <input
                           type="text"
@@ -848,8 +861,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <textarea
-                  className="mt-1 p-2 w-[206%] border border-gray-300 outline-none rounded-md"
-                  rows={2}
+                    disabled={isSubmitting}
+                    className={`mt-1 p-2 w-[206%] border ${
+                        errors.description ? "border-red-500" : "border-gray-300"
+                    } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}                  rows={2}
                   id="description"
                   maxLength={200}
                   placeholder={
@@ -904,9 +919,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                 {assetStrings.updateAsset.buttons.close}
               </button>
               <button
-                type="submit"
-                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
-                disabled={isSubmitting}
+                  type="submit"
+                  className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
               >
                 {isSubmitting
                   ? assetStrings.updateAsset.buttons.updating

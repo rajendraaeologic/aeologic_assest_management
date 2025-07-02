@@ -19,10 +19,10 @@ const UpdateDepartment = ({ onClose }) => {
   const modalRef = useRef(null);
 
   const selectedDepartment = useSelector(
-    (state) => state.departmentData.selectedDepartment
+      (state) => state.departmentData.selectedDepartment
   );
   const { currentPage, rowsPerPage } = useSelector(
-    (state) => state.departmentData
+      (state) => state.departmentData
   );
 
   const {
@@ -30,6 +30,7 @@ const UpdateDepartment = ({ onClose }) => {
     handleSubmit,
     reset,
     setValue,
+    setError,
     watch,
     formState: { errors, isSubmitting },
   } = useForm({
@@ -122,111 +123,115 @@ const UpdateDepartment = ({ onClose }) => {
   };
 
   return (
-    <div
-      className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${
-        isVisible ? "opacity-100" : "opacity-0"
-      }`}
-      onClick={handleOutsideClick}
-    >
       <div
-        ref={modalRef}
-        className={`mt-[20px] w-[400px] min-h-40 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
-          isVisible ? "scale-100" : "scale-95"
-        }`}
+          className={`fixed inset-0 overflow-y-scroll px-1 md:px-0 bg-black bg-opacity-50 z-50 flex justify-center items-start transition-opacity duration-300 ${
+              isVisible ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={handleOutsideClick}
       >
-        <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
-          <h2 className="text-[17px] font-semibold text-white">
-            {departmentStrings.updateDepartment.title}
-          </h2>
-          <button onClick={handleClose} className="text-white rounded-md">
-            <IoClose className="h-7 w-7" />
-          </button>
-        </div>
-
-        <div className="p-4">
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="grid sm:grid-cols-1 lg:grid-cols-1 gap-4">
-              <div className="w-full">
-                <label
-                  htmlFor="departmentName"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {departmentStrings.updateDepartment.formLabels.departmentName}
-                  <span className="text-red-500">*</span>
-                </label>
-
-                <input
-                  ref={firstInputRef}
-                  {...register("departmentName", {
-                    required:
-                      departmentStrings.updateDepartment.validation
-                        .departmentNameRequired,
-                    minLength: {
-                      value: 3,
-                      message:
-                        departmentStrings.updateDepartment.validation
-                          .departmentNameMinLength,
-                    },
-                    maxLength: {
-                      value: 25,
-                      message:
-                        departmentStrings.updateDepartment.validation
-                          .departmentNameMaxLength,
-                    },
-                    pattern: {
-                      value: /^[a-zA-Z0-9 ]+$/,
-                      message:
-                        departmentStrings.updateDepartment.validation
-                          .deptNamePattern,
-                    },
-                    validate: (value) => {
-                      const trimmed = value.trim();
-                      if (value !== trimmed) {
-                        return  departmentStrings.updateDepartment.validation.trimSpaces;
-                      }
-                      return true;
-                    },
-                  })}
-                  type="text"
-                  maxLength={25}
-                  id="departmentName"
-                  className={`mt-1 p-2 w-full border ${
-                    errors.departmentName ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                />
-                {errors.departmentName && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.departmentName.message}
-                  </p>
-                )}
-
-              </div>
-            </div>
-
-            <hr className="mt-4" />
-            <div className="flex justify-end gap-4 mt-4 mb-2">
-              <button
-                type="button"
+        <div
+            ref={modalRef}
+            className={`mt-[20px] w-[400px] min-h-40 bg-white shadow-md rounded-md transform transition-transform duration-300 ${
+                isVisible ? "scale-100" : "scale-95"
+            }`}
+        >
+          <div className="flex justify-between px-6 bg-[#3bc0c3] rounded-t-md items-center py-3">
+            <h2 className="text-[17px] font-semibold text-white">
+              {departmentStrings.updateDepartment.title}
+            </h2>
+            <button
                 onClick={handleClose}
-                className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
+                className="text-white rounded-md"
                 disabled={isSubmitting}
-              >
-                {departmentStrings.updateDepartment.buttons.close}
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
-                disabled={isSubmitting}
-              >
-                {isSubmitting
-                  ? departmentStrings.updateDepartment.buttons.updating
-                  : departmentStrings.updateDepartment.buttons.update}
-              </button>
-            </div>
-          </form>
+            >
+              <IoClose className="h-7 w-7" />
+            </button>
+          </div>
+
+          <div className="p-4">
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="grid sm:grid-cols-1 lg:grid-cols-1 gap-4">
+                <div className="w-full">
+                  <label
+                      htmlFor="departmentName"
+                      className="block text-sm font-medium text-gray-700"
+                  >
+                    {departmentStrings.updateDepartment.formLabels.departmentName}
+                    <span className="text-red-500">*</span>
+                  </label>
+
+                  <input
+                      ref={firstInputRef}
+                      {...register("departmentName", {
+                        required:
+                        departmentStrings.updateDepartment.validation
+                            .departmentNameRequired,
+                        minLength: {
+                          value: 3,
+                          message:
+                          departmentStrings.updateDepartment.validation
+                              .departmentNameMinLength,
+                        },
+                        maxLength: {
+                          value: 25,
+                          message:
+                          departmentStrings.updateDepartment.validation
+                              .departmentNameMaxLength,
+                        },
+                        pattern: {
+                          value: /^[a-zA-Z0-9 ]+$/,
+                          message:
+                          departmentStrings.updateDepartment.validation
+                              .deptNamePattern,
+                        },
+                        validate: (value) => {
+                          const trimmed = value.trim();
+                          if (value !== trimmed) {
+                            return  departmentStrings.updateDepartment.validation.trimSpaces;
+                          }
+                          return true;
+                        },
+                      })}
+                      type="text"
+                      maxLength={25}
+                      id="departmentName"
+                      disabled={isSubmitting}
+                      className={`mt-1 p-2 w-full border ${
+                          errors.departmentName ? "border-red-500" : "border-gray-300"
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
+                  />
+                  {errors.departmentName && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors.departmentName.message}
+                      </p>
+                  )}
+                </div>
+              </div>
+
+              <hr className="mt-4" />
+              <div className="flex justify-end gap-4 mt-4 mb-2">
+                <button
+                    type="button"
+                    onClick={handleClose}
+                    className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-50"
+                    disabled={isSubmitting}
+                >
+                  {departmentStrings.updateDepartment.buttons.close}
+                </button>
+                <button
+                    type="submit"
+                    className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={isSubmitting}
+                >
+                  {isSubmitting
+                      ? departmentStrings.updateDepartment.buttons.updating
+                      : departmentStrings.updateDepartment.buttons.update}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
-    </div>
   );
 };
 

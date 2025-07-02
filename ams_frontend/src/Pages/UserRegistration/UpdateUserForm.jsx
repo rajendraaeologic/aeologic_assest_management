@@ -520,9 +520,10 @@ const UpdateUserForm = ({ onClose }) => {
                   maxLength={25}
                   id="userName"
                   type="text"
+                  disabled={isSubmitting}
                   className={`mt-1 p-2 w-full border ${
-                    errors.userName ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
+                      errors.userName ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
                   {...register("userName", {
                     required:
                       userStrings.updateUser.validation.userNameRequired,
@@ -570,9 +571,10 @@ const UpdateUserForm = ({ onClose }) => {
                   type="tel"
                   maxLength={10}
                   id="phone"
+                  disabled={isSubmitting}
                   className={`mt-1 p-2 w-full border ${
-                    errors.phone ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
+                      errors.phone ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
                   {...register("phone", {
                     required: userStrings.updateUser.validation.phoneRequired,
                     maxLength: {
@@ -583,6 +585,12 @@ const UpdateUserForm = ({ onClose }) => {
                       value: /^[0-9]{10}$/,
                       message: userStrings.updateUser.validation.phoneInvalid,
                     },
+                    validate: (value) => {
+                      if (/^0{10}$/.test(value)) {
+                        return "Phone number cannot be all zeros.";
+                      }
+                      return true;
+                    }
                   })}
                 />
                 {errors.phone && (
@@ -602,11 +610,12 @@ const UpdateUserForm = ({ onClose }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="email"
+                    type="text"
                   id="email"
-                  className={`mt-1 p-2 w-full border ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
+                    disabled={isSubmitting}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.email ? "border-red-500" : "border-gray-300"
+                    } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
                   {...register("email", {
                     required: userStrings.updateUser.validation.emailRequired,
                     pattern: {
@@ -631,10 +640,12 @@ const UpdateUserForm = ({ onClose }) => {
                     </label>
 
                     <div
-                        onClick={handleOrgClick}
+                        onClick={isSubmitting ? null : handleOrgClick}
                         className={`mt-1 p-2 w-full border ${
                             errors.companyId ? "border-red-500" : "border-gray-300"
-                        } rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis`}
+                        } rounded-md cursor-pointer bg-white truncate ${
+                            isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                        }`}
                     >
                       {selectedOrg?.organizationName || "Select Organization"}
                     </div>
@@ -645,7 +656,7 @@ const UpdateUserForm = ({ onClose }) => {
                         </p>
                     )}
 
-                    {showOrgDropdown && (
+                    {showOrgDropdown &&   !isSubmitting &&  (
                         <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                           <input
                               type="text"
@@ -696,10 +707,12 @@ const UpdateUserForm = ({ onClose }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <div
-                  onClick={handleBranchClick}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.branchId ? "border-red-500" : "border-gray-300"
-                  } rounded-md cursor-pointer bg-white`}
+                    onClick={isSubmitting ? null : handleBranchClick}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.branchId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   {selectedBranch?.branchName || "Select Branch"}
                 </div>
@@ -708,7 +721,7 @@ const UpdateUserForm = ({ onClose }) => {
                     {errors.branchId.message}
                   </p>
                 )}
-                {showBranchDropdown && (
+                {showBranchDropdown &&  !isSubmitting &&(
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
                       type="text"
@@ -757,10 +770,12 @@ const UpdateUserForm = ({ onClose }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <div
-                  onClick={handleDeptClick}
-                  className={`mt-1 p-2 w-full border ${
-                    errors.departmentId ? "border-red-500" : "border-gray-300"
-                  } rounded-md cursor-pointer bg-white`}
+                    onClick={isSubmitting ? null : handleDeptClick}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.departmentId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   {selectedDept?.departmentName || "Select Department"}
                 </div>
@@ -769,7 +784,7 @@ const UpdateUserForm = ({ onClose }) => {
                     {errors.departmentId.message}
                   </p>
                 )}
-                {showDeptDropdown && (
+                {showDeptDropdown &&  !isSubmitting && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
                       type="text"
@@ -830,9 +845,10 @@ const UpdateUserForm = ({ onClose }) => {
                         return true;
                       }
                     })}
+                    disabled={isSubmitting}
                     className={`mt-1 p-2 w-full border ${
                         errors.userRole ? "border-red-500" : "border-gray-300"
-                    } outline-none rounded-md`}
+                    } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
                 >
                   <option value="">{userStrings.updateUser.select.roleDefault}</option>
                   {getRoleOptions().map((option) => (
@@ -855,12 +871,13 @@ const UpdateUserForm = ({ onClose }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <select
-                  className={`mt-1 p-2 w-full border ${
-                    errors.status ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
-                  {...register("status", {
-                    required: userStrings.updateUser.validation.statusRequired,
-                  })}
+                    disabled={isSubmitting}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.status ? "border-red-500" : "border-gray-300"
+                    } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
+                    {...register("status", {
+                      required: userStrings.updateUser.validation.statusRequired,
+                    })}
                 >
                   <option value="ACTIVE">ACTIVE</option>
                   <option value="IN_ACTIVE">IN_ACTIVE</option>
@@ -884,9 +901,9 @@ const UpdateUserForm = ({ onClose }) => {
                 {userStrings.updateUser.buttons.close}
               </button>
               <button
-                type="submit"
-                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
-                disabled={isSubmitting}
+                  type="submit"
+                  className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
               >
                 {isSubmitting
                   ? userStrings.updateUser.buttons.updating

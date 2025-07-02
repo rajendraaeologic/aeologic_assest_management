@@ -496,7 +496,7 @@ const AddAssignAsset = ({ onClose }) => {
                       }
                       setShowBranchDropdown(!showBranchDropdown);
                     }}
-                    className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                    className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
                 >
                   {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                 </div>
@@ -564,7 +564,7 @@ const AddAssignAsset = ({ onClose }) => {
                     }
                     setShowDeptDropdown(!showDeptDropdown);
                   }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
                 >
                   {selectedDept
                     ? selectedDept.departmentName
@@ -634,7 +634,7 @@ const AddAssignAsset = ({ onClose }) => {
                     }
                     setShowAssetDropdown(!showAssetDropdown);
                   }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
                 >
                   {assets.find((a) => a.id === assetId)
                     ? assets.find((a) => a.id === assetId).assetName
@@ -719,7 +719,7 @@ const AddAssignAsset = ({ onClose }) => {
                     if (!departmentId) return;
                     setShowUserDropdown(!showUserDropdown);
                   }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
                 >
                   {users.find((u) => u.id === watch("userId"))
                     ? `${users.find((u) => u.id === watch("userId")).userName}`

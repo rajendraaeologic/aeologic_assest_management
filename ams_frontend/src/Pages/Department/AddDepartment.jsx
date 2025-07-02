@@ -336,7 +336,7 @@ const AddDepartment = ({ onClose }) => {
                           onClick={handleOrgClick}
                           className={`mt-1 p-2 w-full border ${
                               errors.companyId ? "border-red-500" : "border-gray-300"
-                          } rounded-md cursor-pointer bg-white whitespace-nowrap overflow-hidden text-ellipsis`}
+                          } rounded-md cursor-pointer bg-white truncate`}
                       >
                         {selectedOrg?.organizationName || "Select Organization"}
                       </div>
@@ -439,7 +439,7 @@ const AddDepartment = ({ onClose }) => {
                       }
                       className={`mt-1 p-2 w-full border ${
                           errors.departmentName ? "border-red-500" : "border-gray-300"
-                      } outline-none rounded-md`}
+                      } outline-none rounded-md truncate`}
                   />
                   {errors.departmentName && (
                       <p className="text-red-500 text-sm mt-1">
@@ -458,7 +458,7 @@ const AddDepartment = ({ onClose }) => {
                       onClick={handleBranchClick}
                       className={`mt-1 p-2 w-full border ${
                           errors.branchId ? "border-red-500" : "border-gray-300"
-                      } rounded-md cursor-pointer bg-white`}
+                      } rounded-md cursor-pointer bg-white truncate`}
                       disabled={!companyId}
                   >
                     {selectedBranch ? selectedBranch.branchName : "Select Branch"}

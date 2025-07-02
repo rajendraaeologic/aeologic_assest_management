@@ -586,7 +586,7 @@ const UpdateAssignAsset = ({ onClose }) => {
                   {assignAssetStrings.updateAssignAsset.formLabels.branch}
                 </label>
                 <div
-                    onClick={() => {
+                    onClick={isSubmitting ? null : () => {
                       handleBranchClick();
                       if (!user?.companyId) {
                         toast.error("organization not found");
@@ -594,7 +594,11 @@ const UpdateAssignAsset = ({ onClose }) => {
                       }
                       setShowBranchDropdown(!showBranchDropdown);
                     }}
-                    className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                    className={`mt-1 p-2 w-full border ${
+                        errors.branchId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                 </div>
@@ -603,7 +607,7 @@ const UpdateAssignAsset = ({ onClose }) => {
                     {errors.branchId.message}
                   </p>
                 )}
-                {showBranchDropdown && (
+                {showBranchDropdown && !isSubmitting && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
                       type="text"
@@ -654,12 +658,15 @@ const UpdateAssignAsset = ({ onClose }) => {
                   {assignAssetStrings.updateAssignAsset.formLabels.department}
                 </label>
                 <div
-                  onClick={() => {
-                    handleDeptClick();
-
-                    setShowDeptDropdown(!showDeptDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                    onClick={isSubmitting ? null : () => {
+                      handleDeptClick();
+                      setShowDeptDropdown(!showDeptDropdown);
+                    }}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.departmentId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   {selectedDept
                     ? selectedDept.departmentName
@@ -670,7 +677,7 @@ const UpdateAssignAsset = ({ onClose }) => {
                     {errors.departmentId.message}
                   </p>
                 )}
-                {showDeptDropdown && (
+                {showDeptDropdown && !isSubmitting && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
                       type="text"
@@ -722,21 +729,25 @@ const UpdateAssignAsset = ({ onClose }) => {
                 </label>
 
                 <div
-                  onClick={() => {
-                    if (!departmentId) {
-                      toast.error("Please select a department first");
-                      return;
-                    }
-                    setShowAssetDropdown(!showAssetDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                    onClick={isSubmitting ? null : () => {
+                      if (!departmentId) {
+                        toast.error("Please select a department first");
+                        return;
+                      }
+                      setShowAssetDropdown(!showAssetDropdown);
+                    }}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.assetId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   {selectedAsset
                     ? `${selectedAsset.assetName}`
                     : "Select Asset"}
                 </div>
 
-                {showAssetDropdown && (
+                {showAssetDropdown && !isSubmitting && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
                       type="text"
@@ -763,17 +774,17 @@ const UpdateAssignAsset = ({ onClose }) => {
                         const isDisabled = !isUnassigned && !isCurrentAsset;
 
                         return (
-                          <li
-                            key={asset.id}
-                            onClick={() => {
-                              if (!isDisabled) handleAssetSelect(asset);
-                            }}
-                            className={`px-4 py-2 hover:bg-gray-100 ${
-                              isDisabled
-                                ? "cursor-not-allowed text-gray-400"
-                                : "cursor-pointer text-black"
-                            }`}
-                          >
+                            <li
+                                key={asset.id}
+                                onClick={() => {
+                                  if (!isDisabled) handleAssetSelect(asset);
+                                }}
+                                className={`px-4 py-2 hover:bg-gray-100 ${
+                                    isDisabled
+                                        ? "cursor-not-allowed text-gray-400"
+                                        : "cursor-pointer text-black"
+                                }`}
+                            >
                             {asset.assetName}
                             {!isUnassigned && (
                               <span className="ml-2 text-sm text-red-500">
@@ -815,11 +826,15 @@ const UpdateAssignAsset = ({ onClose }) => {
                   {assignAssetStrings.updateAssignAsset.formLabels.userName}
                 </label>
                 <div
-                  onClick={() => {
-                    if (!departmentId) return;
-                    setShowUserDropdown(!showUserDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white"
+                    onClick={isSubmitting ? null : () => {
+                      if (!departmentId) return;
+                      setShowUserDropdown(!showUserDropdown);
+                    }}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.userId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                    }`}
                 >
                   {users.find((u) => u.id === watch("userId"))
                     ? `${users.find((u) => u.id === watch("userId")).userName} `
@@ -830,7 +845,7 @@ const UpdateAssignAsset = ({ onClose }) => {
                     {errors.userId.message}
                   </p>
                 )}
-                {showUserDropdown && (
+                {showUserDropdown && !isSubmitting && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
                       type="text"
@@ -887,9 +902,9 @@ const UpdateAssignAsset = ({ onClose }) => {
                 {assignAssetStrings.updateAssignAsset.buttons.close}
               </button>
               <button
-                type="submit"
-                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
-                disabled={isSubmitting}
+                  type="submit"
+                  className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
               >
                 {isSubmitting
                   ? assignAssetStrings.updateAssignAsset.buttons.updating

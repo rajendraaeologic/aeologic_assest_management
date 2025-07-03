@@ -1,18 +1,36 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { FaCalendarAlt, FaTimes } from "react-icons/fa";
-import { setFilters } from "../../Features/slices/userSlice.js";
+import { setFilters, clearFilters } from "../../Features/slices/userSlice.js";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 
 const DateFilterDropdown = () => {
     const dispatch = useDispatch();
-    const [singleDate, setSingleDate] = useState("");
-    const [fromDate, setFromDate] = useState("");
-    const [toDate, setToDate] = useState("");
+    const filters = useSelector(state => state.usersData.filters);
+    const [singleDate, setSingleDate] = useState(null);
+    const [fromDate, setFromDate] = useState(null);
+    const [toDate, setToDate] = useState(null);
     const [isOpen, setIsOpen] = useState(false);
     const [activeFilter, setActiveFilter] = useState(null);
     const dropdownRef = useRef(null);
 
-    const currentDate = new Date().toISOString().split('T')[0];
+    useEffect(() => {
+        if (!filters.selectedDate && !filters.fromDate && !filters.toDate) {
+            resetLocalState();
+        }
+    }, [filters]);
+
+    useEffect(() => {
+        if (filters.selectedDate) {
+            setSingleDate(new Date(filters.selectedDate));
+            setActiveFilter('single');
+        } else if (filters.fromDate || filters.toDate) {
+            setFromDate(filters.fromDate ? new Date(filters.fromDate) : null);
+            setToDate(filters.toDate ? new Date(filters.toDate) : null);
+            setActiveFilter('range');
+        }
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -27,17 +45,24 @@ const DateFilterDropdown = () => {
         };
     }, []);
 
-    const handleSingleDateChange = (e) => {
-        const date = e.target.value;
-        if (date > currentDate) return;
+    const resetLocalState = () => {
+        setSingleDate(null);
+        setFromDate(null);
+        setToDate(null);
+        setActiveFilter(null);
+    };
+
+    const handleSingleDateChange = (date) => {
+        if (!date) return;
 
         setSingleDate(date);
-        setFromDate("");
-        setToDate("");
-        setActiveFilter(date ? 'single' : null);
+        setFromDate(null);
+        setToDate(null);
+        setActiveFilter('single');
 
+        const dateString = date.toISOString().split('T')[0];
         dispatch(setFilters({
-            selectedDate: date,
+            selectedDate: dateString,
             fromDate: null,
             toDate: null
         }));
@@ -45,53 +70,51 @@ const DateFilterDropdown = () => {
         setIsOpen(false);
     };
 
-    const handleRangeDateChange = (type, value) => {
-        if (value > currentDate) return;
+    const handleRangeDateChange = (type, date) => {
+        if (!date) return;
 
         if (type === 'from') {
-            setFromDate(value);
-            if (toDate && value > toDate) {
-                setToDate("");
+            setFromDate(date);
+            if (toDate && date > toDate) {
+                setToDate(null);
             }
         } else {
-            setToDate(value);
-            if (fromDate && value < fromDate) {
-                setFromDate("");
+            setToDate(date);
+            if (fromDate && date < fromDate) {
+                setFromDate(null);
             }
         }
     };
 
     const applyRangeFilter = () => {
-        if (fromDate && toDate) {
+        if (fromDate || toDate) {
+            const from = fromDate ? fromDate.toISOString().split('T')[0] + 'T00:00:00.000Z' : null;
+            const to = toDate ? toDate.toISOString().split('T')[0] + 'T23:59:59.999Z' : null;
+
             dispatch(setFilters({
-                fromDate,
-                toDate,
+                from_date: from,
+                to_date: to,
                 selectedDate: null
             }));
-            setSingleDate(""); // Clear single date when applying range
+            setSingleDate(null);
             setActiveFilter('range');
             setIsOpen(false);
         }
     };
 
     const handleClearFilter = () => {
-        setSingleDate("");
-        setFromDate("");
-        setToDate("");
-        setActiveFilter(null);
-        dispatch(setFilters({
-            selectedDate: null,
-            fromDate: null,
-            toDate: null
-        }));
+        resetLocalState();
+        dispatch(clearFilters());
     };
 
     const getDisplayText = () => {
         if (activeFilter === 'single') {
-            return new Date(singleDate).toLocaleDateString();
+            return singleDate?.toLocaleDateString() || "";
         }
         if (activeFilter === 'range') {
-            return `${new Date(fromDate).toLocaleDateString()} - ${new Date(toDate).toLocaleDateString()}`;
+            const fromText = fromDate?.toLocaleDateString() || "Start";
+            const toText = toDate?.toLocaleDateString() || "End";
+            return `${fromText} - ${toText}`;
         }
         return "Date Wise";
     };
@@ -128,12 +151,13 @@ const DateFilterDropdown = () => {
                         {/* Single Date Selector */}
                         <div>
                             <h3 className="text-sm font-medium mb-2">Single Date</h3>
-                            <input
-                                type="date"
-                                value={singleDate}
+                            <DatePicker
+                                selected={singleDate}
                                 onChange={handleSingleDateChange}
-                                max={currentDate}
+                                maxDate={new Date()}
                                 className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#3BC0C3] focus:border-transparent"
+                                placeholderText="Select a date"
+                                dateFormat="yyyy-MM-dd"
                             />
                         </div>
 
@@ -142,31 +166,33 @@ const DateFilterDropdown = () => {
                             <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="block text-xs text-gray-500 mb-1">From</label>
-                                    <input
-                                        type="date"
-                                        value={fromDate}
-                                        onChange={(e) => handleRangeDateChange('from', e.target.value)}
-                                        max={toDate || currentDate}
+                                    <DatePicker
+                                        selected={fromDate}
+                                        onChange={(date) => handleRangeDateChange('from', date)}
+                                        maxDate={toDate || new Date()}
                                         className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#3BC0C3] focus:border-transparent"
+                                        placeholderText="Start date"
+                                        dateFormat="yyyy-MM-dd"
                                     />
                                 </div>
                                 <div>
                                     <label className="block text-xs text-gray-500 mb-1">To</label>
-                                    <input
-                                        type="date"
-                                        value={toDate}
-                                        onChange={(e) => handleRangeDateChange('to', e.target.value)}
-                                        min={fromDate || undefined}
-                                        max={currentDate}
+                                    <DatePicker
+                                        selected={toDate}
+                                        onChange={(date) => handleRangeDateChange('to', date)}
+                                        minDate={fromDate}
+                                        maxDate={new Date()}
                                         className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#3BC0C3] focus:border-transparent"
+                                        placeholderText="End date"
+                                        dateFormat="yyyy-MM-dd"
                                     />
                                 </div>
                             </div>
                             <button
                                 onClick={applyRangeFilter}
-                                disabled={!fromDate || !toDate}
+                                disabled={!fromDate && !toDate}
                                 className={`mt-2 w-full py-1 rounded ${
-                                    fromDate && toDate
+                                    fromDate || toDate
                                         ? "bg-[#3BC0C3] text-white hover:bg-[#2fa8ab]"
                                         : "bg-gray-200 text-gray-400 cursor-not-allowed"
                                 }`}

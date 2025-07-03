@@ -9,7 +9,7 @@ import {
   toggleSelectBranch,
   selectAllBranches,
   deselectAllBranches,
-  setSelectedBranch, resetBranchTableState,
+  setSelectedBranch, resetBranchTableState, resetSelectedBranches,
 } from "../../Features/slices/branchSlice";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import AddBranch from "./AddBranch";
@@ -110,6 +110,7 @@ const Branch = () => {
       dispatch(setSearchTerm(""));
       setLocalSearchTerm("");
       dispatch(resetBranchTableState());
+      dispatch(resetSelectedBranches());
       dispatch(deselectAllBranches());
       debouncedSearch.cancel();
     };

@@ -452,7 +452,7 @@ const UpdateAssignAsset = ({ onClose }) => {
       }
 
       if (!hasChanges(data)) {
-        toast.info("No changes made to the assignment", {
+        toast.success("No changes made to the assignment", {
           position: "top-right",
           autoClose: 1000,
         });

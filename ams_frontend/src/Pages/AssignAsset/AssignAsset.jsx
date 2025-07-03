@@ -10,7 +10,7 @@ import {
   toggleSelectAssignAsset,
   selectAllAssignAssets,
   deselectAllAssignAssets,
-  setSelectedAssignAsset, resetAssignAssetTableState,
+  setSelectedAssignAsset, resetAssignAssetTableState, resetSelectedAssignAssets,
 } from "../../Features/slices/assignAssetSlice";
 import { CiSaveUp2 } from "react-icons/ci";
 import { MdKeyboardArrowLeft } from "react-icons/md";
@@ -107,7 +107,7 @@ const AssignAsset = () => {
       dispatch(setSearchTerm(""));
       setLocalSearchTerm("");
       dispatch(resetAssignAssetTableState());
-
+      dispatch(resetSelectedAssignAssets());
     };
   }, [dispatch]);
 

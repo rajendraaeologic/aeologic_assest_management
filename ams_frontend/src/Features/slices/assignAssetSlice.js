@@ -94,6 +94,9 @@ const assignAssetSlice = createSlice({
     searchTerm: "",
   },
   reducers: {
+    resetSelectedAssignAssets: (state) => {
+      state.selectedAssignAssets = [];
+    },
     setSelectedAssignAsset: (state, action) => {
       state.selectedAssignAsset = action.payload;
     },
@@ -209,6 +212,7 @@ export const {
   selectAllAssignAssets,
   deselectAllAssignAssets,
   setSearchTerm,
+  resetSelectedAssignAssets
 } = assignAssetSlice.actions;
 
 export default assignAssetSlice.reducer;

@@ -59,17 +59,17 @@ const organizationStrings = {
       organizationName: "Organization Name",
     },
     placeholders: {
-      organizationName: "Enter organization name",
+      organizationName: "Enter Organization Name",
     },
     validation: {
-      organizationNameRequired: "Organization name is required",
+      organizationNameRequired: "Organization Name is required",
       organizationNameMinLength:
-        "Organization name must be min 3 or max 25 alphanumeric  ",
+        "Organization Name must be min 3 or max 25 alphanumeric  ",
       organizationNameMaxLength:
-        "Organization name must be at most 25 alphanumeric ",
+        "Organization Name must be max 25 alphanumeric ",
       orgNamePattern:
         "Organization Name must contain only alphanumeric",
-      trimSpaces: "Organization name must not start or end with spaces.",
+      trimSpaces: "Organization Name must not start or end with spaces.",
     },
     buttons: {
       save: "Save",
@@ -87,17 +87,17 @@ const organizationStrings = {
       organizationName: "Organization Name",
     },
     placeholders: {
-      organizationName: "Enter organization name",
+      organizationName: "Enter Organization Name",
     },
     validation: {
-      organizationNameRequired: "Organization name is required",
+      organizationNameRequired: "Organization Name is required",
       organizationNameMinLength:
-        "Organization name must be min 3 or max 25 alphanumeric  ",
+        "Organization Name must be min 3 or max 25 alphanumeric  ",
       organizationNameMaxLength:
-        "Organization name must be at most 25 alphanumeric ",
+        "Organization Name must be max 25 alphanumeric ",
       orgNamePattern:
         "Organization Name must contain only  alphanumeric",
-      trimSpaces: "Organization name must not start or end with spaces.",
+      trimSpaces: "Organization Name must not start or end with spaces.",
 
     },
     buttons: {

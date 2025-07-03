@@ -112,86 +112,70 @@ const AddOrganization = ({ onClose }) => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="w-full">
               <label
-                htmlFor="organizationName"
-                className="block text-sm font-medium text-gray-700"
+                  htmlFor="organizationName"
+                  className="block text-sm font-medium text-gray-700"
               >
-                {
-                  organizationStrings.addOrganization.formLabels
-                    .organizationName
-                }
+                {organizationStrings.addOrganization.formLabels.organizationName}
                 <span className="text-red-500">*</span>
               </label>
               <input
-                {...register("organizationName", {
-                  required:
-                    organizationStrings.addOrganization.validation
-                      .organizationNameRequired,
-                  minLength: {
-                    value: 3,
-                    message:
-                      organizationStrings.addOrganization.validation
-                        .organizationNameMinLength,
-                  },
-                  maxLength: {
-                    value: 25,
-                    message:
-                      organizationStrings.addOrganization.validation
-                        .organizationNameMaxLength,
-                  },
-                  pattern: {
-                    value: /^[a-zA-Z0-9 ]+$/,
-                    message:
-                      organizationStrings.addOrganization.validation
-                        .orgNamePattern,
-                  },
-                  validate: (value) => {
-                    const trimmed = value.trim();
-                    if (value !== trimmed) {
-                      return organizationStrings.addOrganization.validation.trimSpaces;
-                    }
-                    return true;
-                  },
-
-                })}
-                type="text"
-                id="organizationName"
-                maxLength={25}
-                placeholder={
-                  organizationStrings.addOrganization.placeholders
-                    .organizationName
-                }
-                className={`mt-1 p-2 w-full border ${
-                  errors.organizationName ? "border-red-500" : "border-gray-300"
-                } outline-none rounded-md truncate`}
+                  {...register("organizationName", {
+                    required: organizationStrings.addOrganization.validation.organizationNameRequired,
+                    minLength: {
+                      value: 3,
+                      message: organizationStrings.addOrganization.validation.organizationNameMinLength,
+                    },
+                    maxLength: {
+                      value: 25,
+                      message: organizationStrings.addOrganization.validation.organizationNameMaxLength,
+                    },
+                    pattern: {
+                      value: /^[a-zA-Z0-9 ]+$/,
+                      message: organizationStrings.addOrganization.validation.orgNamePattern,
+                    },
+                    validate: (value) => {
+                      const trimmed = value.trim();
+                      if (value !== trimmed) {
+                        return organizationStrings.addOrganization.validation.trimSpaces;
+                      }
+                      return true;
+                    },
+                  })}
+                  type="text"
+                  id="organizationName"
+                  maxLength={25}
+                  disabled={isSubmitting}
+                  placeholder={organizationStrings.addOrganization.placeholders.organizationName}
+                  className={`mt-1 p-2 w-full border ${
+                      errors.organizationName ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
               />
 
               {errors.organizationName && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.organizationName.message}
-                </p>
+                  <p className="text-red-500 text-sm mt-1">
+                    {errors.organizationName.message}
+                  </p>
               )}
-
-
             </div>
 
             <hr className="mt-4" />
             <div className="flex justify-end gap-4 mt-4 mb-2">
               <button
-                type="button"
-                onClick={handleClose}
-                className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
-                disabled={isSubmitting}
+                  type="button"
+                  onClick={handleClose}
+                  className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
               >
                 {organizationStrings.addOrganization.buttons.close}
               </button>
               <button
-                type="submit"
-                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
-                disabled={isSubmitting}
+                  type="submit"
+                  className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
               >
                 {isSubmitting
-                  ? organizationStrings.addOrganization.buttons.saving
-                  : organizationStrings.addOrganization.buttons.save}
+                    ? organizationStrings.addOrganization.buttons.saving
+                    : organizationStrings.addOrganization.buttons.save}
               </button>
             </div>
           </form>

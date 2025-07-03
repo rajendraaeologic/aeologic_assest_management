@@ -65,19 +65,19 @@ const departmentStrings = {
       selectBranch: "Select Branch",
     },
     placeholders: {
-      departmentName: "Department name",
+      departmentName: "Department Name",
     },
     validation: {
-      departmentNameRequired: "Department name is required",
+      departmentNameRequired: "Department Name is required",
       departmentNameMinLength:
         "Department Name must be min 3 or max 25 alphanumeric  ",
       departmentNameMaxLength:
-        "Department Name  must be at most 25 alphanumeric ",
+        "Department Name  must be max 25 alphanumeric ",
       branchRequired: "Branch is required",
       organizationRequired: "Organization is required",
       deptNamePattern:
         "Department Name must contain only alphanumeric ",
-      trimSpaces: "Department name must not start or end with spaces.",
+      trimSpaces: "Department Name must not start or end with spaces.",
     },
     buttons: {
       save: "Save",
@@ -95,11 +95,11 @@ const departmentStrings = {
       departmentName: "Department Name",
     },
     validation: {
-      departmentNameRequired: "Department name is required",
+      departmentNameRequired: "Department Name is required",
       departmentNameMinLength:
         "Department Name must be min 3 or max 25 alphanumeric  ",
       departmentNameMaxLength:
-        "Department Name  must be at most 25 alphanumeric ",
+        "Department Name  must be max 25 alphanumeric ",
       deptNamePattern:
         "Department Name must contain only alphanumeric ",
       trimSpaces: "Department name must not start or end with spaces.",

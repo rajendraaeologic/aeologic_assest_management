@@ -456,10 +456,11 @@ const AddUserForm = ({ onClose }) => {
                   type="text"
                   maxLength={25}
                   id="userName"
+                  disabled={isSubmitting}
                   placeholder={userStrings.addUser.placeholders.userName}
                   className={`mt-1 p-2 w-full border ${
-                    errors.userName ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
+                      errors.userName ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
                 />
                 {errors.userName && (
                   <p className="text-red-500 text-sm mt-1">
@@ -504,10 +505,11 @@ const AddUserForm = ({ onClose }) => {
                   type="tel"
                   maxLength={10}
                   id="phoneNumber"
+                  disabled={isSubmitting}
                   placeholder={userStrings.addUser.placeholders.phone}
                   className={`mt-1 p-2 w-full border ${
-                    errors.phone ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
+                      errors.phone ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
                 />
                 {errors.phone && (
                   <p className="text-red-500 text-sm mt-1">
@@ -541,10 +543,11 @@ const AddUserForm = ({ onClose }) => {
                   })}
                   type="text"
                   id="email"
+                  disabled={isSubmitting}
                   placeholder={userStrings.addUser.placeholders.email}
                   className={`mt-1 p-2 w-full border ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
+                      errors.email ? "border-red-500" : "border-gray-300"
+                  } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
                 />
                 {errors.email && (
                   <p className="text-red-500 text-sm mt-1">
@@ -562,10 +565,12 @@ const AddUserForm = ({ onClose }) => {
                     </label>
 
                     <div
-                        onClick={handleOrgClick}
+                        onClick={!isSubmitting ? handleOrgClick : undefined}
                         className={`mt-1 p-2 w-full border ${
                             errors.companyId ? "border-red-500" : "border-gray-300"
-                        } rounded-md cursor-pointer bg-white truncate`}
+                        } rounded-md cursor-pointer bg-white truncate disabled:opacity-70 disabled:cursor-not-allowed ${
+                            isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                        }`}
                     >
                       {selectedOrg?.organizationName || "Select Organization"}
                     </div>
@@ -576,7 +581,7 @@ const AddUserForm = ({ onClose }) => {
                         </p>
                     )}
 
-                    {showOrgDropdown && (
+                    {showOrgDropdown &&   !isSubmitting && (
                         <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                           <input
                               type="text"
@@ -629,19 +634,23 @@ const AddUserForm = ({ onClose }) => {
                 </label>
 
                 <div
-                  onClick={() => {
-                    handleBranchClick();
-                    if (!selectedOrgId) {
-                      toast.error("Please select an organization first");
-                      return;
-                    }
-                    setShowBranchDropdown(!showBranchDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
+                    onClick={!isSubmitting ? () => {
+                      handleBranchClick();
+                      if (!selectedOrgId) {
+                        toast.error("Please select an organization first");
+                        return;
+                      }
+                      setShowBranchDropdown(!showBranchDropdown);
+                    } : undefined}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.branchId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                    }`}
                 >
                   {selectedBranch?.branchName || "Select Branch"}
                 </div>
-                {showBranchDropdown && (
+                {showBranchDropdown &&  !isSubmitting && (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
                       type="text"
@@ -696,19 +705,23 @@ const AddUserForm = ({ onClose }) => {
                 </label>
 
                 <div
-                  onClick={() => {
-                    handleDeptClick();
-                    if (!branchId) {
-                      toast.error("Please select a branch first");
-                      return;
-                    }
-                    setShowDeptDropdown(!showDeptDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
+                    onClick={!isSubmitting ? () => {
+                      handleDeptClick();
+                      if (!branchId) {
+                        toast.error("Please select a branch first");
+                        return;
+                      }
+                      setShowDeptDropdown(!showDeptDropdown);
+                    } : undefined}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.departmentId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                    }`}
                 >
                   {selectedDept?.departmentName || "Select Department"}
                 </div>
-                {showDeptDropdown && (
+                {showDeptDropdown && !isSubmitting &&  (
                   <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                     <input
                       type="text"
@@ -775,9 +788,10 @@ const AddUserForm = ({ onClose }) => {
                         return true;
                       }
                     })}
+                    disabled={isSubmitting}
                     className={`mt-1 p-2 w-full border ${
                         errors.userRole ? "border-red-500" : "border-gray-300"
-                    } outline-none rounded-md`}
+                    } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
                 >
                   <option value="">{userStrings.addUser.select.roleDefault}</option>
                   {getRoleOptions().map((option) => (
@@ -802,12 +816,13 @@ const AddUserForm = ({ onClose }) => {
                 </label>
 
                 <select
-                  {...register("status", {
-                    required: userStrings.addUser.validation.statusRequired,
-                  })}
+                    disabled={isSubmitting}
                   className={`mt-1 p-2 w-full border ${
                     errors.status ? "border-red-500" : "border-gray-300"
-                  } outline-none rounded-md`}
+                  } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
+                    {...register("status", {
+                      required: userStrings.addUser.validation.statusRequired,
+                    })}
                 >
                   <option value="ACTIVE">
                     {userStrings.addUser.select.statusActive}
@@ -835,9 +850,9 @@ const AddUserForm = ({ onClose }) => {
                 {userStrings.addUser.buttons.close}
               </button>
               <button
-                type="submit"
-                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
-                disabled={isSubmitting}
+                  type="submit"
+                  className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
               >
                 {isSubmitting
                   ? userStrings.addUser.buttons.saving

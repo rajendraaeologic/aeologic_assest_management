@@ -123,11 +123,12 @@ const UserRegistration = () => {
   useEffect(() => {
     dispatch(setSearchTerm(""));
     setLocalSearchTerm("");
+    dispatch(clearFilters());
     return () => {
       dispatch(setSearchTerm(""));
       setLocalSearchTerm("");
       dispatch(resetUserTableState());
-
+      dispatch(clearFilters());
     };
   }, [dispatch]);
 

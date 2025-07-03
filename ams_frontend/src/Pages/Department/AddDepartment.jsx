@@ -333,10 +333,12 @@ const AddDepartment = ({ onClose }) => {
                       </label>
 
                       <div
-                          onClick={handleOrgClick}
+                          onClick={!isSubmitting ? handleOrgClick : undefined}
                           className={`mt-1 p-2 w-full border ${
                               errors.companyId ? "border-red-500" : "border-gray-300"
-                          } rounded-md cursor-pointer bg-white truncate`}
+                          } rounded-md cursor-pointer bg-white truncate ${
+                              isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                          }`}
                       >
                         {selectedOrg?.organizationName || "Select Organization"}
                       </div>
@@ -347,7 +349,7 @@ const AddDepartment = ({ onClose }) => {
                           </p>
                       )}
 
-                      {showOrgDropdown && (
+                      {showOrgDropdown && !isSubmitting && (
                           <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                             <input
                                 type="text"
@@ -402,31 +404,23 @@ const AddDepartment = ({ onClose }) => {
                   <input
                       ref={firstInputRef}
                       {...register("departmentName", {
-                        required:
-                        departmentStrings.addDepartment.validation
-                            .departmentNameRequired,
+                        required: departmentStrings.addDepartment.validation.departmentNameRequired,
                         minLength: {
                           value: 3,
-                          message:
-                          departmentStrings.addDepartment.validation
-                              .departmentNameMinLength,
+                          message: departmentStrings.addDepartment.validation.departmentNameMinLength,
                         },
                         maxLength: {
                           value: 25,
-                          message:
-                          departmentStrings.addDepartment.validation
-                              .departmentNameMaxLength,
+                          message: departmentStrings.addDepartment.validation.departmentNameMaxLength,
                         },
                         pattern: {
                           value: /^[a-zA-Z0-9 ]+$/,
-                          message:
-                          departmentStrings.addDepartment.validation
-                              .deptNamePattern,
+                          message: departmentStrings.addDepartment.validation.deptNamePattern,
                         },
                         validate: (value) => {
                           const trimmed = value.trim();
                           if (value !== trimmed) {
-                            return  departmentStrings.addDepartment.validation.trimSpaces;
+                            return departmentStrings.addDepartment.validation.trimSpaces;
                           }
                           return true;
                         },
@@ -434,19 +428,17 @@ const AddDepartment = ({ onClose }) => {
                       type="text"
                       maxLength={25}
                       id="departmentName"
-                      placeholder={
-                        departmentStrings.addDepartment.placeholders.departmentName
-                      }
+                      disabled={isSubmitting}
+                      placeholder={departmentStrings.addDepartment.placeholders.departmentName}
                       className={`mt-1 p-2 w-full border ${
                           errors.departmentName ? "border-red-500" : "border-gray-300"
-                      } outline-none rounded-md truncate`}
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
                   />
                   {errors.departmentName && (
                       <p className="text-red-500 text-sm mt-1">
                         {errors.departmentName.message}
                       </p>
                   )}
-
                 </div>
 
                 <div className="w-full relative">
@@ -455,15 +447,17 @@ const AddDepartment = ({ onClose }) => {
                     <span className="text-red-500">*</span>
                   </label>
                   <div
-                      onClick={handleBranchClick}
+                      onClick={!isSubmitting ? handleBranchClick : undefined}
                       className={`mt-1 p-2 w-full border ${
                           errors.branchId ? "border-red-500" : "border-gray-300"
-                      } rounded-md cursor-pointer bg-white truncate`}
-                      disabled={!companyId}
+                      } rounded-md cursor-pointer bg-white truncate ${
+                          isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                      }`}
+                      disabled={!companyId || isSubmitting}
                   >
                     {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                   </div>
-                  {showBranchDropdown && (
+                  {showBranchDropdown && !isSubmitting && (
                       <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                         <input
                             type="text"
@@ -516,14 +510,14 @@ const AddDepartment = ({ onClose }) => {
                 <button
                     type="button"
                     onClick={handleClose}
-                    className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
+                    className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-70 disabled:cursor-not-allowed"
                     disabled={isSubmitting}
                 >
                   {departmentStrings.addDepartment.buttons.close}
                 </button>
                 <button
                     type="submit"
-                    className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
+                    className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-70 disabled:cursor-not-allowed"
                     disabled={isSubmitting}
                 >
                   {isSubmitting

@@ -299,294 +299,281 @@ const AddAsset = ({ onClose, onSuccess }) => {
           <div className="p-5 px-10">
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Asset Name */}
+                <div className="w-full">
+                  <label htmlFor="assetName" className="block text-sm font-medium text-gray-700">
+                    {assetStrings.addAsset.formLabels.assetName}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                      ref={firstInputRef}
+                      id="assetName"
+                      type="text"
+                      maxLength={25}
+                      disabled={loading}
+                      className={`mt-1 p-2 w-full border ${
+                          errors.assetName ? "border-red-500" : "border-gray-300"
+                      } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
+                      placeholder={assetStrings.addAsset.placeholders.assetName}
+                      {...register("assetName", {
+                        required: assetStrings.addAsset.validation.assetNameRequired,
+                        minLength: {
+                          value: 3,
+                          message: assetStrings.addAsset.validation.assetNameMinLength,
+                        },
+                        maxLength: {
+                          value: 25,
+                          message: assetStrings.addAsset.validation.assetNameMaxLength,
+                        },
+                        pattern: {
+                          value: /^[a-zA-Z0-9 ]+$/,
+                          message: assetStrings.addAsset.validation.assetNamePattern,
+                        },
+                        validate: (value) => {
+                          const trimmed = value.trim();
+                          if (value !== trimmed) {
+                            return assetStrings.addAsset.validation.AssetTrimSpaces;
+                          }
+                          return true;
+                        },
+                      })}
+                  />
+                  {errors.assetName && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.assetName.message}
+                      </p>
+                  )}
+                </div>
 
-              {/* Asset Name */}
-              <div className="w-full">
-                <label
-                  htmlFor="assetName"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {assetStrings.addAsset.formLabels.assetName}
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  ref={firstInputRef}
-                  id="assetName"
-                  type="text"
-                  maxLength={25}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md"
-                  placeholder={assetStrings.addAsset.placeholders.assetName}
-                  {...register("assetName", {
-                    required:
-                      assetStrings.addAsset.validation.assetNameRequired,
-                    minLength: {
-                      value: 3,
-                      message:
-                        assetStrings.addAsset.validation.assetNameMinLength,
-                    },
-                    maxLength: {
-                      value: 25,
-                      message:
-                        assetStrings.addAsset.validation.assetNameMaxLength,
-                    },
-                    pattern: {
-                      value: /^[a-zA-Z0-9 ]+$/,
-                      message:
-                        assetStrings.addAsset.validation.assetNamePattern,
-                    },
-                    validate: (value) => {
-                      const trimmed = value.trim();
-                      if (value !== trimmed) {
-                        return assetStrings.addAsset.validation.AssetTrimSpaces;
-                      }
-                      return true;
-                    },
-                  })}
-                />
-                {errors.assetName && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.assetName.message}
-                  </p>
-                )}
-              </div>
+                {/* Unique ID */}
+                <div className="w-full">
+                  <label htmlFor="uniqueId" className="block text-sm font-medium text-gray-700">
+                    {assetStrings.addAsset.formLabels.uniqueId}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                      type="text"
+                      id="uniqueId"
+                      maxLength={25}
+                      disabled={loading}
+                      className={`mt-1 p-2 w-full border ${
+                          errors.uniqueId ? "border-red-500" : "border-gray-300"
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
+                      placeholder={assetStrings.addAsset.placeholders.uniqueId}
+                      {...register("uniqueId", {
+                        required: assetStrings.addAsset.validation.uniqueIdRequired,
+                        minLength: {
+                          value: 3,
+                          message: assetStrings.addAsset.validation.uniqueIdMinLength,
+                        },
+                        maxLength: {
+                          value: 25,
+                          message: assetStrings.addAsset.validation.uniqueIdMaxLength,
+                        },
+                        pattern: {
+                          value: /^[a-zA-Z0-9 ]+$/,
+                          message: assetStrings.addAsset.validation.uniqueIdPattern,
+                        },
+                        validate: (value) => {
+                          const trimmed = value.trim();
+                          if (value !== trimmed) {
+                            return assetStrings.addAsset.validation.UniqueTrimSpaces;
+                          }
+                          return true;
+                        },
+                      })}
+                  />
+                  {errors.uniqueId && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.uniqueId.message}
+                      </p>
+                  )}
+                </div>
 
-              {/* Unique ID */}
-              <div className="w-full">
-                <label
-                  htmlFor="uniqueId"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {assetStrings.addAsset.formLabels.uniqueId}
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  id="uniqueId"
-                  maxLength={15}
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md truncate"
-                  placeholder={assetStrings.addAsset.placeholders.uniqueId}
-                  {...register("uniqueId", {
-                    required: assetStrings.addAsset.validation.uniqueIdRequired,
-                    minLength: {
-                      value: 3,
-                      message:
-                        assetStrings.addAsset.validation.uniqueIdMinLength,
-                    },
-                    maxLength: {
-                      value: 15,
-                      message:
-                        assetStrings.addAsset.validation.uniqueIdMaxLength,
-                    },
-                    pattern: {
-                      value: /^[a-zA-Z0-9 ]+$/,
-                      message:
-                      assetStrings.addAsset.validation.uniqueIdPattern,
-                    },
-                    validate: (value) => {
-                      const trimmed = value.trim();
-                      if (value !== trimmed) {
-                        return assetStrings.addAsset.validation.UniqueTrimSpaces;
-                      }
-                      return true;
-                    },
-                  })}
-                />
-                {errors.uniqueId && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.uniqueId.message}
-                  </p>
-                )}
-              </div>
+                {/* Brand */}
+                <div className="w-full">
+                  <label htmlFor="brand" className="block text-sm font-medium text-gray-700">
+                    {assetStrings.addAsset.formLabels.brand}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                      type="text"
+                      maxLength={25}
+                      id="brand"
+                      disabled={loading}
+                      className={`mt-1 p-2 w-full border ${
+                          errors.brand ? "border-red-500" : "border-gray-300"
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
+                      placeholder={assetStrings.addAsset.placeholders.brand}
+                      {...register("brand", {
+                        required: assetStrings.addAsset.validation.brandRequired,
+                        minLength: {
+                          value: 3,
+                          message: assetStrings.addAsset.validation.brandMinLength,
+                        },
+                        maxLength: {
+                          value: 25,
+                          message: assetStrings.addAsset.validation.brandMaxLength,
+                        },
+                        pattern: {
+                          value: /^[a-zA-Z0-9 ]+$/,
+                          message: assetStrings.addAsset.validation.brandPattern,
+                        },
+                        validate: (value) => {
+                          const trimmed = value.trim();
+                          if (value !== trimmed) {
+                            return assetStrings.addAsset.validation.BrandTrimSpaces;
+                          }
+                          return true;
+                        },
+                      })}
+                  />
+                  {errors.brand && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.brand.message}
+                      </p>
+                  )}
+                </div>
 
-              {/* Brand */}
-              <div className="w-full">
-                <label
-                  htmlFor="brand"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {assetStrings.addAsset.formLabels.brand}
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  maxLength={15}
-                  id="brand"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md truncate"
-                  placeholder={assetStrings.addAsset.placeholders.brand}
-                  {...register("brand", {
-                    required: assetStrings.addAsset.validation.brandRequired,
-                    minLength: {
-                      value: 3,
-                      message: assetStrings.addAsset.validation.brandMinLength,
-                    },
-                    maxLength: {
-                      value: 15,
-                      message: assetStrings.addAsset.validation.brandMaxLength,
-                    },
-                    pattern: {
-                      value: /^[a-zA-Z0-9 ]+$/,
-                      message:
-                      assetStrings.addAsset.validation.brandPattern,
-                    },
-                    validate: (value) => {
-                      const trimmed = value.trim();
-                      if (value !== trimmed) {
-                        return assetStrings.addAsset.validation.BrandTrimSpaces;
-                      }
-                      return true;
-                    },
-                  })}
-                />
-                {errors.brand && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.brand.message}
-                  </p>
-                )}
+                {/* Model */}
+                <div className="w-full">
+                  <label htmlFor="model" className="block text-sm font-medium text-gray-700">
+                    {assetStrings.addAsset.formLabels.model}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                      type="text"
+                      maxLength={25}
+                      id="model"
+                      disabled={loading}
+                      className={`mt-1 p-2 w-full border ${
+                          errors.model ? "border-red-500" : "border-gray-300"
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
+                      placeholder={assetStrings.addAsset.placeholders.model}
+                      {...register("model", {
+                        required: assetStrings.addAsset.validation.modelRequired,
+                        minLength: {
+                          value: 3,
+                          message: assetStrings.addAsset.validation.modelMinLength,
+                        },
+                        maxLength: {
+                          value: 25,
+                          message: assetStrings.addAsset.validation.modelMaxLength,
+                        },
+                        pattern: {
+                          value: /^[a-zA-Z0-9 ]+$/,
+                          message: assetStrings.addAsset.validation.modelPattern,
+                        },
+                        validate: (value) => {
+                          const trimmed = value.trim();
+                          if (value !== trimmed) {
+                            return assetStrings.addAsset.validation.ModelTrimSpaces;
+                          }
+                          return true;
+                        },
+                      })}
+                  />
+                  {errors.model && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.model.message}
+                      </p>
+                  )}
+                </div>
 
-              </div>
+                {/* Serial Number */}
+                <div className="w-full">
+                  <label htmlFor="serialNumber" className="block text-sm font-medium text-gray-700">
+                    {assetStrings.addAsset.formLabels.serialNumber}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                      type="text"
+                      maxLength={25}
+                      id="serialNumber"
+                      disabled={loading}
+                      className={`mt-1 p-2 w-full border ${
+                          errors.serialNumber ? "border-red-500" : "border-gray-300"
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
+                      placeholder={assetStrings.addAsset.placeholders.serialNumber}
+                      {...register("serialNumber", {
+                        required: assetStrings.addAsset.validation.serialNumberRequired,
+                        minLength: {
+                          value: 3,
+                          message: assetStrings.addAsset.validation.serialNumberMinLength,
+                        },
+                        maxLength: {
+                          value: 25,
+                          message: assetStrings.addAsset.validation.serialNumberMaxLength,
+                        },
+                        pattern: {
+                          value: /^[a-zA-Z0-9 ]+$/,
+                          message: assetStrings.addAsset.validation.serialNumberPattern,
+                        },
+                        validate: (value) => {
+                          const trimmed = value.trim();
+                          if (value !== trimmed) {
+                            return assetStrings.addAsset.validation.SerialTrimSpaces;
+                          }
+                          return true;
+                        },
+                      })}
+                  />
+                  {errors.serialNumber && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.serialNumber.message}
+                      </p>
+                  )}
+                </div>
 
-              {/* Model */}
-              <div className="w-full">
-                <label
-                  htmlFor="model"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {assetStrings.addAsset.formLabels.model}
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  maxLength={15}
-                  id="model"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md truncate"
-                  placeholder={assetStrings.addAsset.placeholders.model}
-                  {...register("model", {
-                    required: assetStrings.addAsset.validation.modelRequired,
-                    minLength: {
-                      value: 3,
-                      message: assetStrings.addAsset.validation.modelMinLength,
-                    },
-                    maxLength: {
-                      value: 15,
-                      message: assetStrings.addAsset.validation.modelMaxLength,
-                    },
-                    pattern: {
-                      value: /^[a-zA-Z0-9 ]+$/,
-                      message:
-                      assetStrings.addAsset.validation.modelPattern,
-                    },
-                    validate: (value) => {
-                      const trimmed = value.trim();
-                      if (value !== trimmed) {
-                        return assetStrings.addAsset.validation.ModelTrimSpaces;
-                      }
-                      return true;
-                    },
-                  })}
-                />
-                {errors.model && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.model.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Serial Number */}
-              <div className="w-full">
-                <label
-                  htmlFor="serialNumber"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {assetStrings.addAsset.formLabels.serialNumber}
-                  <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  maxLength={15}
-                  id="serialNumber"
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md truncate"
-                  placeholder={assetStrings.addAsset.placeholders.serialNumber}
-                  {...register("serialNumber", {
-                    required:
-                      assetStrings.addAsset.validation.serialNumberRequired,
-                    minLength: {
-                      value: 3,
-                      message:
-                        assetStrings.addAsset.validation.serialNumberMinLength,
-                    },
-                    maxLength: {
-                      value: 15,
-                      message:
-                        assetStrings.addAsset.validation.serialNumberMaxLength,
-                    },
-                    pattern: {
-                      value: /^[a-zA-Z0-9 ]+$/,
-                      message:
-                      assetStrings.addAsset.validation.serialNumberPattern,
-                    },
-                    validate: (value) => {
-                      const trimmed = value.trim();
-                      if (value !== trimmed) {
-                        return assetStrings.addAsset.validation.SerialTrimSpaces;
-                      }
-                      return true;
-                    },
-                  })}
-                />
-                {errors.serialNumber && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.serialNumber.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Status */}
-              <div className="w-full">
-                <label className="block text-sm font-medium text-gray-700">
-                  {assetStrings.addAsset.formLabels.status}
-                  <span className="text-red-500">*</span>
-                </label>
-                <select
-                  className="mt-1 p-2 w-full border border-gray-300 outline-none rounded-md truncate"
-                  {...register("status", {
-                    required: assetStrings.addAsset.validation.statusRequired,
-                  })}
-                >
-                  <option value="UNASSIGNED">
-                    {assetStrings.addAsset.statusOptions.unassigned}
-                  </option>
-                  <option value="ASSIGNED">
-                    {assetStrings.addAsset.statusOptions.assigned}
-                  </option>
-
-                  <option value="LOST">
-                    {assetStrings.addAsset.statusOptions.lost}
-                  </option>
-                  <option value="DAMAGED">
-                    {assetStrings.addAsset.statusOptions.damaged}
-                  </option>
-                  <option value="IN_REPAIR">
-                    {assetStrings.addAsset.statusOptions.in_REPAIR}
-                  </option>
-                  <option value="DISPOSED">
-                    {assetStrings.addAsset.statusOptions.disposed}
-                  </option>
-                  <option value="IN_USE">
-                    {assetStrings.addAsset.statusOptions.in_use}
-                  </option>
-                  <option value="UNDER_MAINTENANCE">
-                    {assetStrings.addAsset.statusOptions.maintenance}
-                  </option>
-                  <option value="RETIRED">
-                    {assetStrings.addAsset.statusOptions.retired}
-                  </option>
-                </select>
-                {errors.status && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.status.message}
-                  </p>
-                )}
-              </div>
+                {/* Status */}
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700">
+                    {assetStrings.addAsset.formLabels.status}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                      disabled={loading}
+                      className={`mt-1 p-2 w-full border ${
+                          errors.status ? "border-red-500" : "border-gray-300"
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
+                      {...register("status", {
+                        required: assetStrings.addAsset.validation.statusRequired,
+                      })}
+                  >
+                    <option value="UNASSIGNED">
+                      {assetStrings.addAsset.statusOptions.unassigned}
+                    </option>
+                    <option value="ASSIGNED">
+                      {assetStrings.addAsset.statusOptions.assigned}
+                    </option>
+                    <option value="LOST">
+                      {assetStrings.addAsset.statusOptions.lost}
+                    </option>
+                    <option value="DAMAGED">
+                      {assetStrings.addAsset.statusOptions.damaged}
+                    </option>
+                    <option value="IN_REPAIR">
+                      {assetStrings.addAsset.statusOptions.in_REPAIR}
+                    </option>
+                    <option value="DISPOSED">
+                      {assetStrings.addAsset.statusOptions.disposed}
+                    </option>
+                    <option value="IN_USE">
+                      {assetStrings.addAsset.statusOptions.in_use}
+                    </option>
+                    <option value="UNDER_MAINTENANCE">
+                      {assetStrings.addAsset.statusOptions.maintenance}
+                    </option>
+                    <option value="RETIRED">
+                      {assetStrings.addAsset.statusOptions.retired}
+                    </option>
+                  </select>
+                  {errors.status && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.status.message}
+                      </p>
+                  )}
+                </div>
 
                 {/* Branch Dropdown */}
                 <div className="w-full relative">
@@ -595,15 +582,19 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     <span className="text-red-500">*</span>
                   </label>
                   <div
-                      onClick={() => {
+                      onClick={!loading ? () => {
                         handleBranchClick();
                         if (!user?.companyId) {
                           toast.error("organization not found");
                           return;
                         }
                         setShowBranchDropdown(!showBranchDropdown);
-                      }}
-                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
+                      } : undefined}
+                      className={`mt-1 p-2 w-full border ${
+                          errors.branchId ? "border-red-500" : "border-gray-300"
+                      } rounded-md cursor-pointer bg-white truncate ${
+                          loading ? 'opacity-70 cursor-not-allowed' : ''
+                      }`}
                   >
                     {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                   </div>
@@ -612,7 +603,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                         {errors.branchId.message}
                       </p>
                   )}
-                  {showBranchDropdown && (
+                  {showBranchDropdown && !loading && (
                       <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                         <input
                             type="text"
@@ -625,6 +616,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                               }
                             }}
                             className="p-2 w-full border-b outline-none"
+                            disabled={loading}
                         />
                         <ul
                             onScroll={handleBranchScroll}
@@ -633,8 +625,10 @@ const AddAsset = ({ onClose, onSuccess }) => {
                           {branches.map((branch) => (
                               <li
                                   key={branch.id}
-                                  onClick={() => handleBranchSelect(branch)}
-                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                  onClick={!loading ? () => handleBranchSelect(branch) : undefined}
+                                  className={`px-4 py-2 hover:bg-gray-100 ${
+                                      loading ? 'cursor-not-allowed' : 'cursor-pointer'
+                                  }`}
                               >
                                 {branch.branchName}
                               </li>
@@ -661,15 +655,19 @@ const AddAsset = ({ onClose, onSuccess }) => {
                     <span className="text-red-500">*</span>
                   </label>
                   <div
-                      onClick={() => {
+                      onClick={!loading ? () => {
                         handleDeptClick();
                         if (!branchId) {
                           toast.error("Please select a branch first");
                           return;
                         }
                         setShowDeptDropdown(!showDeptDropdown);
-                      }}
-                      className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
+                      } : undefined}
+                      className={`mt-1 p-2 w-full border ${
+                          errors.departmentId ? "border-red-500" : "border-gray-300"
+                      } rounded-md cursor-pointer bg-white truncate ${
+                          loading ? 'opacity-70 cursor-not-allowed' : ''
+                      }`}
                   >
                     {selectedDept
                         ? selectedDept.departmentName
@@ -680,7 +678,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                         {errors.departmentId.message}
                       </p>
                   )}
-                  {showDeptDropdown && (
+                  {showDeptDropdown && !loading && (
                       <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                         <input
                             type="text"
@@ -693,6 +691,7 @@ const AddAsset = ({ onClose, onSuccess }) => {
                               }
                             }}
                             className="p-2 w-full border-b outline-none"
+                            disabled={loading}
                         />
                         <ul
                             onScroll={handleDeptScroll}
@@ -701,8 +700,10 @@ const AddAsset = ({ onClose, onSuccess }) => {
                           {departments.map((dept) => (
                               <li
                                   key={dept.id}
-                                  onClick={() => handleDeptSelect(dept)}
-                                  className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                  onClick={!loading ? () => handleDeptSelect(dept) : undefined}
+                                  className={`px-4 py-2 hover:bg-gray-100 ${
+                                      loading ? 'cursor-not-allowed' : 'cursor-pointer'
+                                  }`}
                               >
                                 {dept.departmentName}
                               </li>
@@ -722,81 +723,75 @@ const AddAsset = ({ onClose, onSuccess }) => {
                   )}
                 </div>
 
-              {/* Description */}
-              <div className="w-full">
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  {assetStrings.addAsset.formLabels.description}
-                  <span className="text-red-500">*</span>
-                </label>
-                <textarea
-                  className="mt-1 p-2 w-[206%] border border-gray-300 outline-none rounded-md truncate"
-                  style={{ overflow: "hidden", textOverflow: "ellipsis" }}
-                  rows={2}
-                  id="description"
-                  maxLength={200}
-                  placeholder={assetStrings.addAsset.placeholders.description}
-                  {...register("description", {
-                    required:
-                      assetStrings.addAsset.validation.descriptionRequired,
-                    minLength: {
-                      value: 10,
-                      message:
-                        assetStrings.addAsset.validation.descriptionMinLength,
-                    },
-                    maxLength: {
-                      value: 200,
-                      message:
-                        assetStrings.addAsset.validation.descriptionMaxLength,
-                    },
-                    pattern: {
-                      value: /^[a-zA-Z0-9 ]+$/,
-                      message:
-                      assetStrings.addAsset.validation.descriptionPattern,
-                    },
-                    validate: (value) => {
-                      const trimmed = value.trim();
-                      if (value !== trimmed) {
-                        return assetStrings.addAsset.validation.DescriptionTrimSpaces;
-                      }
-                      return true;
-                    },
-                  })}
-                />
-                {errors.description && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.description.message}
-                  </p>
-                )}
+                {/* Description */}
+                <div className="w-full">
+                  <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                    {assetStrings.addAsset.formLabels.description}
+                    <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                      disabled={loading}
+                      className={`mt-1 p-2 w-[206%] border ${
+                          errors.description ? "border-red-500" : "border-gray-300"
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
+                      style={{ overflow: "hidden", textOverflow: "ellipsis" }}
+                      rows={2}
+                      id="description"
+                      maxLength={200}
+                      placeholder={assetStrings.addAsset.placeholders.description}
+                      {...register("description", {
+                        required: assetStrings.addAsset.validation.descriptionRequired,
+                        minLength: {
+                          value: 10,
+                          message: assetStrings.addAsset.validation.descriptionMinLength,
+                        },
+                        maxLength: {
+                          value: 200,
+                          message: assetStrings.addAsset.validation.descriptionMaxLength,
+                        },
+                        pattern: {
+                          value: /^[a-zA-Z0-9 ]+$/,
+                          message: assetStrings.addAsset.validation.descriptionPattern,
+                        },
+                        validate: (value) => {
+                          const trimmed = value.trim();
+                          if (value !== trimmed) {
+                            return assetStrings.addAsset.validation.DescriptionTrimSpaces;
+                          }
+                          return true;
+                        },
+                      })}
+                  />
+                  {errors.description && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.description.message}
+                      </p>
+                  )}
+                </div>
               </div>
 
-
-            </div>
-
-            <hr className="mt-4" />
-            <div className="flex justify-end gap-4 md:mt-4 mt-4 mb-2 mr-5">
-              <button
-                type="button"
-                onClick={handleClose}
-                className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
-                disabled={loading}
-              >
-                {assetStrings.addAsset.buttons.close}
-              </button>
-              <button
-                type="submit"
-                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg"
-                disabled={loading}
-              >
-                {loading
-                  ? assetStrings.addAsset.buttons.saving
-                  : assetStrings.addAsset.buttons.save}
-              </button>
-            </div>
-          </form>
-        </div>
+              <hr className="mt-4" />
+              <div className="flex justify-end gap-4 md:mt-4 mt-4 mb-2 mr-5">
+                <button
+                    type="button"
+                    onClick={handleClose}
+                    className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                    disabled={loading}
+                >
+                  {assetStrings.addAsset.buttons.close}
+                </button>
+                <button
+                    type="submit"
+                    className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                    disabled={loading}
+                >
+                  {loading
+                      ? assetStrings.addAsset.buttons.saving
+                      : assetStrings.addAsset.buttons.save}
+                </button>
+              </div>
+            </form>
+          </div>
       </div>
     </div>
   );

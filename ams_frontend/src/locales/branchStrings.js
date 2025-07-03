@@ -68,24 +68,24 @@ const branchStrings = {
       companyId: "Organization",
     },
     placeholders: {
-      branchName: "Branch name",
+      branchName: "Branch Name",
       state: "State",
       city: "City",
     },
     validation: {
-      branchNameRequired: "Branch name is required",
-      branchNameMinLength: "Branch name must be min 3 or max 25 alphanumeric ",
-      branchNameMaxLength: "Branch name must be at most 25 alphanumeric ",
+      branchNameRequired: "Branch Name is required",
+      branchNameMinLength: "Branch Name must be min 3 or max 25 alphanumeric ",
+      branchNameMaxLength: "Branch name must be max 25 alphanumeric ",
       stateRequired: "State is required",
       cityRequired: "City is required",
       organizationRequired: "Organization selection is required",
       branchNamePattern:
-        "Branch name must contain only alphanumeric ",
-      trimSpaces: "Branch name must not start or end with spaces.",
+        "Branch Name must contain only alphanumeric ",
+      trimSpaces: "Branch Name must not start or end with spaces.",
 
     },
     select: {
-      loading: "Loading organizations...",
+      loading: "Loading Organizations...",
       defaultOption: "Select Organization",
     },
     buttons: {
@@ -96,7 +96,7 @@ const branchStrings = {
     toast: {
       success: "Branch added successfully!",
       error: "Failed to add branch",
-      branchNameExists: "Branch name already exists",
+      branchNameExists: "Branch Name already exists",
     },
   },
   updateBranch: {
@@ -107,10 +107,10 @@ const branchStrings = {
       city: "City",
     },
     validation: {
-      branchNameRequired: "Branch name is required",
-      branchNameMinLength: "Branch name must be min 3 or max 25 alphanumeric  ",
-      branchNameMaxLength: "Branch name must be at most 25 alphanumeric ",
-      trimSpaces: "Branch name must not start or end with spaces.",
+      branchNameRequired: "Branch Name is required",
+      branchNameMinLength: "Branch Name must be min 3 or max 25 alphanumeric  ",
+      branchNameMaxLength: "Branch Name must be max 25 alphanumeric ",
+      trimSpaces: "Branch Name must not start or end with spaces.",
       stateRequired: "State is required",
       cityRequired: "City is required",
     },

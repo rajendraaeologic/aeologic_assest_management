@@ -470,7 +470,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  maxLength={15}
+                  maxLength={25}
                   id="uniqueId"
                   disabled={isSubmitting}
                   className={`mt-1 p-2 w-full border ${
@@ -486,7 +486,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                         assetStrings.updateAsset.validation.uniqueIdMinLength,
                     },
                     maxLength: {
-                      value: 15,
+                      value: 25,
                       message:
                         assetStrings.updateAsset.validation.uniqueIdMaxLength,
                     },
@@ -523,7 +523,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  maxLength={15}
+                  maxLength={25}
                   id="brand"
                   disabled={isSubmitting}
                   className={`mt-1 p-2 w-full border ${
@@ -537,7 +537,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                         assetStrings.updateAsset.validation.brandMinLength,
                     },
                     maxLength: {
-                      value: 15,
+                      value: 25,
                       message:
                         assetStrings.updateAsset.validation.brandMaxLength,
                     },
@@ -574,7 +574,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  maxLength={15}
+                  maxLength={25}
                   id="model"
                   disabled={isSubmitting}
                   className={`mt-1 p-2 w-full border ${
@@ -588,7 +588,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                         assetStrings.updateAsset.validation.modelMinLength,
                     },
                     maxLength: {
-                      value: 15,
+                      value: 25,
                       message:
                         assetStrings.updateAsset.validation.modelMaxLength,
                     },
@@ -625,7 +625,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  maxLength={15}
+                  maxLength={25}
                   id="serialNumber"
                   disabled={isSubmitting}
                   className={`mt-1 p-2 w-full border ${
@@ -643,7 +643,7 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                           .serialNumberMinLength,
                     },
                     maxLength: {
-                      value: 15,
+                      value: 25,
                       message:
                         assetStrings.updateAsset.validation
                           .serialNumberMaxLength,

@@ -267,10 +267,12 @@ const AddBranch = ({ onClose }) => {
                       </label>
 
                       <div
-                          onClick={handleOrgClick}
+                          onClick={!isSubmitting ? handleOrgClick : undefined}
                           className={`mt-1 p-2 w-full border ${
                               errors.companyId ? "border-red-500" : "border-gray-300"
-                          } rounded-md cursor-pointer bg-white truncate`}
+                          } rounded-md cursor-pointer bg-white truncate ${
+                              isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                          }`}
                       >
                         {selectedOrg?.organizationName || "Select Organization"}
                       </div>
@@ -281,7 +283,7 @@ const AddBranch = ({ onClose }) => {
                           </p>
                       )}
 
-                      {showOrgDropdown && (
+                      {showOrgDropdown && !isSubmitting && (
                           <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                             <input
                                 type="text"
@@ -294,13 +296,16 @@ const AddBranch = ({ onClose }) => {
                                   }
                                 }}
                                 className="p-2 w-full border-b outline-none"
+                                disabled={isSubmitting}
                             />
                             <ul onScroll={handleOrgScroll} className="max-h-40 overflow-auto">
                               {organizations.map((org) => (
                                   <li
                                       key={org.id}
-                                      onClick={() => handleOrgSelect(org)}
-                                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                      onClick={!isSubmitting ? () => handleOrgSelect(org) : undefined}
+                                      className={`px-4 py-2 hover:bg-gray-100 ${
+                                          isSubmitting ? 'cursor-not-allowed' : 'cursor-pointer'
+                                      }`}
                                   >
                                     {org.organizationName}
                                   </li>
@@ -336,22 +341,18 @@ const AddBranch = ({ onClose }) => {
                   <input
                       ref={firstInputRef}
                       {...register("branchName", {
-                        required:
-                        branchStrings.addBranch.validation.branchNameRequired,
+                        required: branchStrings.addBranch.validation.branchNameRequired,
                         minLength: {
                           value: 3,
-                          message:
-                          branchStrings.addBranch.validation.branchNameMinLength,
+                          message: branchStrings.addBranch.validation.branchNameMinLength,
                         },
                         maxLength: {
                           value: 25,
-                          message:
-                          branchStrings.addBranch.validation.branchNameMaxLength,
+                          message: branchStrings.addBranch.validation.branchNameMaxLength,
                         },
                         pattern: {
                           value: /^[a-zA-Z0-9 ]+$/,
-                          message:
-                          branchStrings.addBranch.validation.branchNamePattern,
+                          message: branchStrings.addBranch.validation.branchNamePattern,
                         },
                         validate: (value) => {
                           const trimmed = value.trim();
@@ -364,10 +365,11 @@ const AddBranch = ({ onClose }) => {
                       type="text"
                       id="branchName"
                       maxLength={25}
+                      disabled={isSubmitting}
                       placeholder={branchStrings.addBranch.placeholders.branchName}
                       className={`mt-1 p-2 w-full border ${
                           errors.branchName ? "border-red-500" : "border-gray-300"
-                      } outline-none rounded-md truncate`}
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
                   />
                   {errors.branchName && (
                       <p className="text-red-500 text-sm mt-1">
@@ -388,9 +390,10 @@ const AddBranch = ({ onClose }) => {
                   <select
                       {...register("state", { required: "State is required" })}
                       id="state"
+                      disabled={isSubmitting}
                       className={`mt-1 p-2 w-full border ${
                           errors.state ? "border-red-500" : "border-gray-300"
-                      } outline-none rounded-md truncate`}
+                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
                   >
                     <option value="">Select State</option>
                     {states.map((state) => (
@@ -446,14 +449,14 @@ const AddBranch = ({ onClose }) => {
                 <button
                     type="button"
                     onClick={handleClose}
-                    className="px-3 py-2 bg-[#6c757d] text-white rounded-lg"
+                    className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-70 disabled:cursor-not-allowed"
                     disabled={isSubmitting}
                 >
                   {branchStrings.addBranch.buttons.close}
                 </button>
                 <button
                     type="submit"
-                    className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
+                    className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-70 disabled:cursor-not-allowed"
                     disabled={isSubmitting}
                 >
                   {isSubmitting

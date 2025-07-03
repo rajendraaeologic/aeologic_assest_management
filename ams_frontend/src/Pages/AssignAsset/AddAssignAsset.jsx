@@ -488,15 +488,19 @@ const AddAssignAsset = ({ onClose }) => {
                   Branch
                 </label>
                 <div
-                    onClick={() => {
+                    onClick={!isSubmitting ? () => {
                       handleBranchClick();
                       if (!user?.companyId) {
                         toast.error("organization not found");
                         return;
                       }
                       setShowBranchDropdown(!showBranchDropdown);
-                    }}
-                    className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
+                    } : undefined}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.branchId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                    }`}
                 >
                   {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                 </div>
@@ -505,48 +509,48 @@ const AddAssignAsset = ({ onClose }) => {
                     {errors.branchId.message}
                   </p>
                 )}
-                {showBranchDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search branch..."
-                      value={branchSearchTerm}
-                      onChange={handleBranchSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleBranchScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {branches.map((branch) => (
-                        <li
-                          key={branch.id}
-                          onClick={() => handleBranchSelect(branch)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {branch.branchName}
-                        </li>
-                      ))}
-                      {loadingBranches && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            {
-                              assignAssetStrings.addAssignAsset.select
-                                  .loadingBranches
+                {showBranchDropdown && !isSubmitting && (
+                    <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                      <input
+                          type="text"
+                          placeholder="Search branch..."
+                          value={branchSearchTerm}
+                          onChange={handleBranchSearch}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
                             }
-                          </li>
-                      )}
-                      {noBranchesFound && !loadingBranches && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No branches found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
+                          }}
+                          className="p-2 w-full border-b outline-none"
+                          disabled={isSubmitting}
+                      />
+                      <ul
+                          onScroll={handleBranchScroll}
+                          className="max-h-40 overflow-auto"
+                      >
+                        {branches.map((branch) => (
+                            <li
+                                key={branch.id}
+                                onClick={!isSubmitting ? () => handleBranchSelect(branch) : undefined}
+                                className={`px-4 py-2 hover:bg-gray-100 ${
+                                    isSubmitting ? 'cursor-not-allowed' : 'cursor-pointer'
+                                }`}
+                            >
+                              {branch.branchName}
+                            </li>
+                        ))}
+                        {loadingBranches && (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              {assignAssetStrings.addAssignAsset.select.loadingBranches}
+                            </li>
+                        )}
+                        {noBranchesFound && !loadingBranches && (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              No branches found
+                            </li>
+                        )}
+                      </ul>
+                    </div>
                 )}
               </div>
 
@@ -556,15 +560,19 @@ const AddAssignAsset = ({ onClose }) => {
                   Department
                 </label>
                 <div
-                  onClick={() => {
-                    handleDeptClick();
-                    if (!branchId) {
-                      toast.error("Please select a branch first");
-                      return;
-                    }
-                    setShowDeptDropdown(!showDeptDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
+                    onClick={!isSubmitting ? () => {
+                      handleDeptClick();
+                      if (!branchId) {
+                        toast.error("Please select a branch first");
+                        return;
+                      }
+                      setShowDeptDropdown(!showDeptDropdown);
+                    } : undefined}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.departmentId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                    }`}
                 >
                   {selectedDept
                     ? selectedDept.departmentName
@@ -575,48 +583,48 @@ const AddAssignAsset = ({ onClose }) => {
                     {errors.departmentId.message}
                   </p>
                 )}
-                {showDeptDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search department..."
-                      value={deptSearchTerm}
-                      onChange={handleDeptSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleDeptScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {departments.map((dept) => (
-                        <li
-                          key={dept.id}
-                          onClick={() => handleDeptSelect(dept)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {dept.departmentName}
-                        </li>
-                      ))}
-                      {loadingDepartments && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            {
-                              assignAssetStrings.addAssignAsset.select
-                                  .loadingDepartments
+                {showDeptDropdown && !isSubmitting && (
+                    <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                      <input
+                          type="text"
+                          placeholder="Search department..."
+                          value={deptSearchTerm}
+                          onChange={handleDeptSearch}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
                             }
-                          </li>
-                      )}
-                      {noDeptsFound && !loadingDepartments && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No departments found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
+                          }}
+                          className="p-2 w-full border-b outline-none"
+                          disabled={isSubmitting}
+                      />
+                      <ul
+                          onScroll={handleDeptScroll}
+                          className="max-h-40 overflow-auto"
+                      >
+                        {departments.map((dept) => (
+                            <li
+                                key={dept.id}
+                                onClick={!isSubmitting ? () => handleDeptSelect(dept) : undefined}
+                                className={`px-4 py-2 hover:bg-gray-100 ${
+                                    isSubmitting ? 'cursor-not-allowed' : 'cursor-pointer'
+                                }`}
+                            >
+                              {dept.departmentName}
+                            </li>
+                        ))}
+                        {loadingDepartments && (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              {assignAssetStrings.addAssignAsset.select.loadingDepartments}
+                            </li>
+                        )}
+                        {noDeptsFound && !loadingDepartments && (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              No departments found
+                            </li>
+                        )}
+                      </ul>
+                    </div>
                 )}
               </div>
 
@@ -625,87 +633,85 @@ const AddAssignAsset = ({ onClose }) => {
                 <label className="block text-sm font-medium text-gray-700">
                   {assignAssetStrings.addAssignAsset.formLabels.asset}
                 </label>
-
                 <div
-                  onClick={() => {
-                    if (!departmentId) {
-                      toast.error("Please select a department first");
-                      return;
-                    }
-                    setShowAssetDropdown(!showAssetDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
+                    onClick={!isSubmitting ? () => {
+                      if (!departmentId) {
+                        toast.error("Please select a department first");
+                        return;
+                      }
+                      setShowAssetDropdown(!showAssetDropdown);
+                    } : undefined}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.assetId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                    }`}
                 >
                   {assets.find((a) => a.id === assetId)
-                    ? assets.find((a) => a.id === assetId).assetName
-                    : assignAssetStrings.addAssignAsset.select.assetDefault}
+                      ? assets.find((a) => a.id === assetId).assetName
+                      : assignAssetStrings.addAssignAsset.select.assetDefault}
                 </div>
-
                 {errors.assetId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.assetId.message}
-                  </p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.assetId.message}
+                    </p>
                 )}
-
-                {showAssetDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search asset..."
-                      value={assetSearchTerm}
-                      onChange={handleAssetSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-
-                    <ul
-                      onScroll={handleAssetScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {assets.map((asset) => {
-                        const isUnassigned = asset.status === "UNASSIGNED";
-                        const isDisabled = !isUnassigned;
-
-                        return (
-                          <li
-                            key={asset.id}
-                            onClick={() => {
-                              if (!isDisabled) handleAssetSelect(asset);
-                            }}
-                            className={`px-4 py-2 hover:bg-gray-100 ${
-                              isDisabled
-                                ? "cursor-not-allowed text-gray-400"
-                                : "cursor-pointer text-black"
-                            }`}
-                          >
-                            {asset.assetName}
-                            {isDisabled && (
-                              <span className="ml-2 text-sm text-red-500">
-                                ({asset.status.replace("_", " ")})
-                              </span>
-                            )}
-                          </li>
-                        );
-                      })}
-                      {loadingAssets && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            {
-                              assignAssetStrings.addAssignAsset.select
-                                  .loadingAssets
+                {showAssetDropdown && !isSubmitting && (
+                    <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                      <input
+                          type="text"
+                          placeholder="Search asset..."
+                          value={assetSearchTerm}
+                          onChange={handleAssetSearch}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
                             }
-                          </li>
-                      )}
-                      {assets.length === 0 && !loadingAssets && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          No available assets found
-                        </li>
-                      )}
-                    </ul>
-                  </div>
+                          }}
+                          className="p-2 w-full border-b outline-none"
+                          disabled={isSubmitting}
+                      />
+                      <ul
+                          onScroll={handleAssetScroll}
+                          className="max-h-40 overflow-auto"
+                      >
+                        {assets.map((asset) => {
+                          const isUnassigned = asset.status === "UNASSIGNED";
+                          const isDisabled = !isUnassigned || isSubmitting;
+
+                          return (
+                              <li
+                                  key={asset.id}
+                                  onClick={() => {
+                                    if (!isDisabled) handleAssetSelect(asset);
+                                  }}
+                                  className={`px-4 py-2 hover:bg-gray-100 ${
+                                      isDisabled
+                                          ? "cursor-not-allowed text-gray-400"
+                                          : "cursor-pointer text-black"
+                                  }`}
+                              >
+                                {asset.assetName}
+                                {!isUnassigned && (
+                                    <span className="ml-2 text-sm text-red-500">
+                      ({asset.status.replace("_", " ")})
+                    </span>
+                                )}
+                              </li>
+                          );
+                        })}
+                        {loadingAssets && (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              {assignAssetStrings.addAssignAsset.select.loadingAssets}
+                            </li>
+                        )}
+                        {assets.length === 0 && !loadingAssets && (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              No available assets found
+                            </li>
+                        )}
+                      </ul>
+                    </div>
                 )}
               </div>
 
@@ -715,11 +721,15 @@ const AddAssignAsset = ({ onClose }) => {
                   {assignAssetStrings.addAssignAsset.formLabels.userName}
                 </label>
                 <div
-                  onClick={() => {
-                    if (!departmentId) return;
-                    setShowUserDropdown(!showUserDropdown);
-                  }}
-                  className="mt-1 p-2 w-full border border-gray-300 rounded-md cursor-pointer bg-white truncate"
+                    onClick={!isSubmitting ? () => {
+                      if (!departmentId) return;
+                      setShowUserDropdown(!showUserDropdown);
+                    } : undefined}
+                    className={`mt-1 p-2 w-full border ${
+                        errors.userId ? "border-red-500" : "border-gray-300"
+                    } rounded-md cursor-pointer bg-white truncate ${
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                    }`}
                 >
                   {users.find((u) => u.id === watch("userId"))
                     ? `${users.find((u) => u.id === watch("userId")).userName}`
@@ -730,65 +740,65 @@ const AddAssignAsset = ({ onClose }) => {
                     {errors.userId.message}
                   </p>
                 )}
-                {showUserDropdown && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search user..."
-                      value={userSearchTerm}
-                      onChange={handleUserSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleUserScroll}
-                      className="max-h-40 overflow-auto"
-                    >
-                      {users.map((user) => (
-                        <li
-                          key={user.id}
-                          onClick={() => handleUserSelect(user)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {user.userName}
-                        </li>
-                      ))}
-                      {loadingUsers && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            {
-                              assignAssetStrings.addAssignAsset.select
-                                  .loadingUsers
+                {showUserDropdown && !isSubmitting && (
+                    <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                      <input
+                          type="text"
+                          placeholder="Search user..."
+                          value={userSearchTerm}
+                          onChange={handleUserSearch}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
                             }
-                          </li>
-                      )}
-                      {noUsersFound && !loadingUsers && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No Users found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
+                          }}
+                          className="p-2 w-full border-b outline-none"
+                          disabled={isSubmitting}
+                      />
+                      <ul
+                          onScroll={handleUserScroll}
+                          className="max-h-40 overflow-auto"
+                      >
+                        {users.map((user) => (
+                            <li
+                                key={user.id}
+                                onClick={!isSubmitting ? () => handleUserSelect(user) : undefined}
+                                className={`px-4 py-2 hover:bg-gray-100 ${
+                                    isSubmitting ? 'cursor-not-allowed' : 'cursor-pointer'
+                                }`}
+                            >
+                              {user.userName}
+                            </li>
+                        ))}
+                        {loadingUsers && (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              {assignAssetStrings.addAssignAsset.select.loadingUsers}
+                            </li>
+                        )}
+                        {noUsersFound && !loadingUsers && (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              No Users found
+                            </li>
+                        )}
+                      </ul>
+                    </div>
                 )}
               </div>
             </div>
             <hr className="mt-4" />
             <div className="flex justify-end gap-4 mt-6">
               <button
-                type="button"
-                onClick={handleClose}
-                className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-50"
-                disabled={isSubmitting}
+                  type="button"
+                  onClick={handleClose}
+                  className="px-3 py-2 bg-[#6c757d] text-white rounded-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
               >
                 {assignAssetStrings.addAssignAsset.buttons.close}
               </button>
               <button
-                type="submit"
-                className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-50"
-                disabled={isSubmitting}
+                  type="submit"
+                  className="px-3 py-2 bg-[#3bc0c3] text-white rounded-lg disabled:opacity-70 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
               >
                 {isSubmitting
                   ? assignAssetStrings.addAssignAsset.buttons.saving

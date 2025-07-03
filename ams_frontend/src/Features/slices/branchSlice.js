@@ -87,6 +87,9 @@ const branchSlice = createSlice({
     setSelectedBranch: (state, action) => {
       state.selectedBranch = action.payload;
     },
+    clearSelectedBranch: (state) => {
+      state.selectedBranch = null;
+    },
     setCurrentPage: (state, action) => {
       state.currentPage = action.payload;
     },
@@ -199,6 +202,7 @@ export const {
   selectAllBranches,
   deselectAllBranches,
   setSearchTerm,
+  clearSelectedBranch
 } = branchSlice.actions;
 
 export default branchSlice.reducer;

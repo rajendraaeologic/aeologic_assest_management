@@ -8,6 +8,7 @@ import { State, City } from 'country-state-city';
 import {
   createBranch,
   getAllBranches,
+  clearSelectedBranch, // Add this import if not present
 } from "../../Features/slices/branchSlice";
 import { useDispatch, useSelector } from "react-redux";
 import API from "../../App/api/axiosInstance";
@@ -113,7 +114,6 @@ const AddBranch = ({ onClose }) => {
   };
 
   const handleOrgClick = async () => {
-    // Only allow dropdown interaction for Superadmin
     if (currentUserRole === USER_ROLES.SUPERADMIN) {
       setShowOrgDropdown((prev) => !prev);
       if (searchTerm.trim() === "") await fetchOrganizations(1, "");
@@ -121,13 +121,16 @@ const AddBranch = ({ onClose }) => {
   };
 
   useEffect(() => {
+    if (selectedBranch) {
+      dispatch(clearSelectedBranch());
+    }
+
     firstInputRef.current?.focus();
     document.body.style.overflow = "hidden";
     setIsVisible(true);
     const indiaStates = State.getStatesOfCountry(indiaCountryCode);
     setStates(indiaStates);
 
-    // Set initial organization based on user role
     if (currentUserRole !== USER_ROLES.SUPERADMIN) {
       if (currentUserCompanyId) {
         setValue("companyId", currentUserCompanyId);
@@ -139,40 +142,21 @@ const AddBranch = ({ onClose }) => {
     } else {
       fetchOrganizations(1, "");
     }
-
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [currentUserRole, currentUserCompanyId, currentUserOrganizationName]);
+  }, [currentUserRole, currentUserCompanyId, currentUserOrganizationName, dispatch, selectedBranch]);
 
+  // Remove the useEffect that was pre-filling data from selectedBranch
+  // This useEffect was causing the issue
+  /*
   useEffect(() => {
     if (selectedBranch) {
-      // Find the state ISO code by name
-      const stateCode = State.getStatesOfCountry(indiaCountryCode)
-          .find(s => s.name === selectedBranch.state)?.isoCode || '';
-
-      reset({
-        branchName: selectedBranch.branchName,
-        state: stateCode,
-        city: selectedBranch.city,
-        companyId: selectedBranch.companyId
-      });
-
-      // Set selected organization if it exists
-      if (selectedBranch.companyId) {
-        setSelectedOrg({
-          id: selectedBranch.companyId,
-          organizationName: selectedBranch.organizationName
-        });
-      }
-
-      // Load cities for the state if it exists
-      if (stateCode) {
-        const stateCities = City.getCitiesOfState(indiaCountryCode, stateCode);
-        setCities(stateCities);
-      }
+      // This was pre-filling the form with selectedBranch data
+      // We don't want this in AddBranch component
     }
   }, [selectedBranch, reset]);
+  */
 
   useEffect(() => {
     register("companyId", {

@@ -87,6 +87,9 @@ const branchSlice = createSlice({
     setSelectedBranch: (state, action) => {
       state.selectedBranch = action.payload;
     },
+    resetSelectedBranches: (state) => {
+      state.selectedBranches = [];
+    },
     clearSelectedBranch: (state) => {
       state.selectedBranch = null;
     },
@@ -202,7 +205,8 @@ export const {
   selectAllBranches,
   deselectAllBranches,
   setSearchTerm,
-  clearSelectedBranch
+  clearSelectedBranch,
+  resetSelectedBranches
 } = branchSlice.actions;
 
 export default branchSlice.reducer;

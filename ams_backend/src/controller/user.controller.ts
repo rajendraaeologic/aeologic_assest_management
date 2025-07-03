@@ -176,29 +176,54 @@ export const getUsers = catchAsync(async (req, res) => {
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
   let dateFilter = {};
+
   if (rawFilters.selectedDate) {
-    const selectedDate = new Date(rawFilters.selectedDate as string);
-    const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
-
-    dateFilter = {
-      createdAt: {
-        gte: startOfDay,
-        lte: endOfDay
+    try {
+      const selectedDate = new Date(rawFilters.selectedDate as string);
+      if (isNaN(selectedDate.getTime())) {
+        throw new Error("Invalid date");
       }
-    };
-  } else if (rawFilters.from_date && rawFilters.to_date) {
-    const fromDate = new Date(rawFilters.from_date as string);
-    const toDate = new Date(rawFilters.to_date as string);
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-    toDate.setHours(23, 59, 59, 999);
+      dateFilter = {
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay
+        }
+      };
+    } catch (error) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid selectedDate format");
+    }
+  }
+  else if (rawFilters.from_date || rawFilters.to_date) {
+    try {
+      const fromDate = rawFilters.from_date ? new Date(rawFilters.from_date as string) : null;
+      const toDate = rawFilters.to_date ? new Date(rawFilters.to_date as string) : null;
 
-    dateFilter = {
-      createdAt: {
-        gte: fromDate,
-        lte: toDate
+      if (fromDate && isNaN(fromDate.getTime())) {
+        throw new Error("Invalid from_date");
       }
-    };
+      if (toDate && isNaN(toDate.getTime())) {
+        throw new Error("Invalid to_date");
+      }
+
+      dateFilter = {
+        createdAt: {
+          ...(fromDate && { gte: fromDate }),
+          ...(toDate && { lte: toDate })
+        }
+      };
+
+      if (fromDate && toDate && fromDate > toDate) {
+        throw new ApiError(httpStatus.BAD_REQUEST, "from_date cannot be after to_date");
+      }
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid date format");
+    }
   }
 
   const filters: any = {

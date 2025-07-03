@@ -11,7 +11,7 @@ import {
   toggleSelectOrganization,
   selectAllOrganizations,
   deselectAllOrganizations,
-  setSelectedOrganization, resetOrgTableState,
+  setSelectedOrganization, resetOrgTableState, resetSelectedOrganizations,
 } from "../../Features/slices/organizationSlice";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import AddOrganization from "./AddOrganization";
@@ -64,15 +64,16 @@ const Organization = () => {
   const [deleteMessage, setDeleteMessage] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
-  const [setIsSearching] = useState(false);
   const options = ["5", "10", "25", "50", "100"];
+
+
   const debouncedSearch = useCallback(
-    debounce((value) => {
-      dispatch(setSearchTerm(value));
-      setIsSearching(false);
-    }, 500),
-    [dispatch]
+      debounce((value) => {
+        dispatch(setSearchTerm(value));
+      }, 500),
+      [dispatch]
   );
+
   useEffect(() => {
     dispatch(setSearchTerm(""));
     setLocalSearchTerm("");
@@ -84,6 +85,7 @@ const Organization = () => {
       setLocalSearchTerm("");
       dispatch(resetOrgTableState());
       dispatch(deselectAllOrganizations());
+      dispatch(resetSelectedOrganizations());
     };
   }, [dispatch]);
 
@@ -111,7 +113,6 @@ const Organization = () => {
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setLocalSearchTerm(value);
-    setIsSearching(value.trim().length > 0);
     debouncedSearch(value);
   };
 

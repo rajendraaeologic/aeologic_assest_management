@@ -8,8 +8,8 @@ export const injectStore = (store) => {
 };
 
 const API = axios.create({
-   baseURL: "http://localhost:3000/api/v1",
-    // baseURL: "https://us-central1-asset-management-83e3b.cloudfunctions.net/ams_api/api/v1",
+   // baseURL: "http://localhost:3000/api/v1",
+    baseURL: "https://us-central1-asset-management-83e3b.cloudfunctions.net/ams_api/api/v1",
     withCredentials: true,
 });
 
@@ -36,14 +36,14 @@ API.interceptors.response.use(
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             try {
-        const refreshResponse = await axios.get(
-          "http://localhost:3000/api/v1/auth/refresh-tokens",
-          { withCredentials: true }
-        );
         // const refreshResponse = await axios.get(
-        //   "https://us-central1-asset-management-83e3b.cloudfunctions.net/ams_api/api/v1/auth/refresh-tokens",
+        //   "http://localhost:3000/api/v1/auth/refresh-tokens",
         //   { withCredentials: true }
         // );
+        const refreshResponse = await axios.get(
+          "https://us-central1-asset-management-83e3b.cloudfunctions.net/ams_api/api/v1/auth/refresh-tokens",
+          { withCredentials: true }
+        );
                 console.log(refreshResponse);
 
                 if (!refreshResponse.data?.access?.token) {

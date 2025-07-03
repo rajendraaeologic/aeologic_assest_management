@@ -11,7 +11,7 @@ import {
   toggleSelectDepartment,
   selectAllDepartments,
   deselectAllDepartments,
-  setSelectedDepartment, resetDeptTableState,
+  setSelectedDepartment, resetDeptTableState, resetSelectedDepartments,
 } from "../../Features/slices/departmentSlice";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import AddDepartment from "./AddDepartment";
@@ -32,6 +32,7 @@ import SelectFirstPopup from "../../components/common/SelectFirstPopup";
 import {toSentenceCase} from "../../utils/string.js";
 import ReportDialog from "../../components/common/ReportDialog.jsx";
 import {handleReportGeneration} from "../../utils/excelExport.js";
+import {resetSelectedBranches} from "../../Features/slices/branchSlice.js";
 const UserDepartment = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -105,6 +106,7 @@ const UserDepartment = () => {
     return () => {
       dispatch(setSearchTerm(""));
       setLocalSearchTerm("");
+      dispatch(resetSelectedDepartments());
       dispatch(resetDeptTableState());
     };
   }, [dispatch]);

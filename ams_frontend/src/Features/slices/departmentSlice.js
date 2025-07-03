@@ -87,6 +87,9 @@ const departmentSlice = createSlice({
     searchTerm: "",
   },
   reducers: {
+    resetSelectedDepartments: (state) => {
+      state.selectedDepartments = [];
+    },
     setSelectedDepartment: (state, action) => {
       state.selectedDepartment = action.payload;
     },
@@ -201,6 +204,7 @@ export const {
   selectAllDepartments,
   deselectAllDepartments,
   setSearchTerm,
+  resetSelectedDepartments
 } = departmentSlice.actions;
 
 export default departmentSlice.reducer;

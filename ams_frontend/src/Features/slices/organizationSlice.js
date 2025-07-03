@@ -94,7 +94,9 @@ const organizationSlice = createSlice({
     setSelectedOrganization: (state, action) => {
       state.selectedOrganization = action.payload;
     },
-
+    resetSelectedOrganizations: (state) => {
+      state.selectedOrganizations = [];
+    },
     setCurrentPage: (state, action) => {
       state.currentPage = action.payload;
     },
@@ -208,6 +210,7 @@ export const {
   selectAllOrganizations,
   deselectAllOrganizations,
   setSearchTerm,
+  resetSelectedOrganizations,
 } = organizationSlice.actions;
 
 export default organizationSlice.reducer;

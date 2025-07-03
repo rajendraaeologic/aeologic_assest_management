@@ -9,7 +9,7 @@ import {
   toggleSelectAsset,
   selectAllAssets,
   deselectAllAssets,
-  setSelectedAsset, resetAssetTableState,
+  setSelectedAsset, resetAssetTableState, resetSelectedAssets,
 } from "../../Features/slices/assetSlice";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import AddAsset from "./AddAsset";
@@ -83,6 +83,7 @@ const Asset = () => {
       dispatch(setSearchTerm(""));
       setLocalSearchTerm("");
       dispatch(resetAssetTableState());
+      dispatch(resetSelectedAssets());
     };
   }, [dispatch]);
 

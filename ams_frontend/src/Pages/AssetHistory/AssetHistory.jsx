@@ -248,6 +248,7 @@ const AssetHistory = () => {
   const dispatch = useDispatch();
   const timelineRef = useRef(null);
   const timelineButtonRef = useRef(null);
+  const mainContentRef = useRef(null);
   const {
     histories,
     loading,
@@ -273,6 +274,27 @@ const AssetHistory = () => {
     historyTimeline: "History Timeline",
     breadcrumb: { dashboard: "Dashboard", assetHistory: "Asset History" },
   };
+  useEffect(() => {
+    if (showTimeline) {
+      document.body.style.overflow = 'hidden';
+      if (mainContentRef.current) {
+        mainContentRef.current.style.overflow = 'hidden';
+      }
+    } else {
+      document.body.style.overflow = 'auto';
+      if (mainContentRef.current) {
+        mainContentRef.current.style.overflow = 'auto';
+      }
+    }
+
+    return () => {
+      document.body.style.overflow = 'auto';
+      if (mainContentRef.current) {
+        mainContentRef.current.style.overflow = 'auto';
+      }
+    };
+  }, [showTimeline]);
+
   const handleNavigate = () => {
     navigate("/dashboard");
   };
@@ -357,7 +379,6 @@ const AssetHistory = () => {
   const getLatestAction = (latestHistory, currentStatus) => {
     if (!latestHistory) return "No recent actions";
 
-    // If current status exists, use that to determine the last action
     if (currentStatus) {
       switch (currentStatus) {
         case "LOST":
@@ -472,6 +493,7 @@ const AssetHistory = () => {
 
   return (
       <div
+          ref={mainContentRef}
           className={`w-full min-h-screen bg-slate-100 px-2 ${
               isSidebarOpen ? "overflow-hidden" : "overflow-y-auto overflow-x-hidden"
           }`}
@@ -587,7 +609,7 @@ const AssetHistory = () => {
                       </td>
                     </tr>
                 ) : (
-                    groupedHistories().slice(0, rowsPerPage).map((group, index) => (
+                    groupedHistories().map((group, index) => (
                         <tr
                             key={group.asset.id}
                             className={`${
@@ -660,7 +682,7 @@ const AssetHistory = () => {
                   animate={{ x: 0 }}
                   exit={{ x: "100%" }}
                   transition={{ type: "spring", damping: 20, stiffness: 300 }}
-                  className="fixed right-0 top-0 h-full w-full md:w-96 lg:w-96 bg-white shadow-2xl z-50 overflow-y-auto"
+                  className="fixed right-0 top-0 h-full w-full md:w-96 lg:w-96 bg-white shadow-2xl z-50"
               >
                 <div className="sticky top-0 bg-white border-b border-gray-200 p-4 z-10">
                   <div className="flex items-center justify-between">
@@ -670,13 +692,6 @@ const AssetHistory = () => {
                     </h2>
 
                     <div className="flex items-center gap-2">
-                      {/*<button*/}
-                      {/*    onClick={() => handleViewDetails(selectedAsset)}*/}
-                      {/*    className="p-2 hover:bg-gray-100 rounded-full transition-colors"*/}
-                      {/*    title="Refresh"*/}
-                      {/*>*/}
-                      {/*  <FiRefreshCw className="h-5 w-5 text-gray-500" />*/}
-                      {/*</button>*/}
                       <button
                           onClick={closeTimeline}
                           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -696,71 +711,73 @@ const AssetHistory = () => {
                   </div>
                 </div>
 
-                <div className="p-4">
-                  {/* Asset Details Section */}
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
-                      <FiInfo className="mr-2" />
-                      Asset Details
-                    </h4>
-                    <div className="bg-gray-50 rounded-lg p-3 space-y-2">
-
-                      {selectedAsset.asset.branch?.branchName && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Branch:</span>
-                            <span className="text-gray-800 font-medium">
-                        {selectedAsset.asset.branch.branchName}
-                      </span>
-                          </div>
-                      )}
-                      {selectedAsset.asset.department?.departmentName && (
-                          <div className="flex justify-between text-sm">
-                            <span className="text-gray-600">Department:</span>
-                            <span className="text-gray-800 font-medium">
-                        {selectedAsset.asset.department.departmentName}
-                      </span>
-                          </div>
-                      )}
-                      <div className="flex justify-between text-sm">
-                        <span className="text-gray-600">Current Status:</span>
-                        <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                statusConfig[selectedAsset.asset.status]?.bgColor ||
-                                "bg-gray-100"
-                            } ${
-                                statusConfig[selectedAsset.asset.status]?.textColor ||
-                                "text-gray-800"
-                            }`}
-                        >
-                      {selectedAsset.asset.status}
-                    </span>
+                {/* Scrollable content area */}
+                <div className="h-[calc(100%-64px)] overflow-y-auto">
+                  <div className="p-4">
+                    {/* Asset Details Section */}
+                    <div className="mb-6">
+                      <h4 className="font-semibold text-gray-800 mb-3 flex items-center">
+                        <FiInfo className="mr-2" />
+                        Asset Details
+                      </h4>
+                      <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                        {selectedAsset.asset.branch?.branchName && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Branch:</span>
+                              <span className="text-gray-800 font-medium">
+                                {selectedAsset.asset.branch.branchName}
+                              </span>
+                            </div>
+                        )}
+                        {selectedAsset.asset.department?.departmentName && (
+                            <div className="flex justify-between text-sm">
+                              <span className="text-gray-600">Department:</span>
+                              <span className="text-gray-800 font-medium">
+                                {selectedAsset.asset.department.departmentName}
+                              </span>
+                            </div>
+                        )}
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Current Status:</span>
+                          <span
+                              className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                  statusConfig[selectedAsset.asset.status]?.bgColor ||
+                                  "bg-gray-100"
+                              } ${
+                                  statusConfig[selectedAsset.asset.status]?.textColor ||
+                                  "text-gray-800"
+                              }`}
+                          >
+                            {selectedAsset.asset.status}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Timeline Section */}
-                  <div>
-                    <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
-                      <FiActivity className="mr-2" />
-                      History Timeline
-                    </h4>
-                    <div className="border-l-2 border-gray-200 pl-4 ml-2">
-                      {selectedAsset.histories && selectedAsset.histories.length > 0 ? (
-                          <>
-                            {selectedAsset.histories.map((history, index) => (
-                                <TimelineEvent
-                                    key={history.id || index}
-                                    event={history}
-                                    isLast={index === selectedAsset.histories.length - 1}
-                                    index={index}
-                                />
-                            ))}
-                          </>
-                      ) : (
-                          <p className="text-gray-500 text-sm italic">
-                            No history records available for this asset
-                          </p>
-                      )}
+                    {/* Timeline Section */}
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-4 flex items-center">
+                        <FiActivity className="mr-2" />
+                        History Timeline
+                      </h4>
+                      <div className="border-l-2 border-gray-200 pl-4 ml-2">
+                        {selectedAsset.histories && selectedAsset.histories.length > 0 ? (
+                            <>
+                              {selectedAsset.histories.map((history, index) => (
+                                  <TimelineEvent
+                                      key={history.id || index}
+                                      event={history}
+                                      isLast={index === selectedAsset.histories.length - 1}
+                                      index={index}
+                                  />
+                              ))}
+                            </>
+                        ) : (
+                            <p className="text-gray-500 text-sm italic">
+                              No history records available for this asset
+                            </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

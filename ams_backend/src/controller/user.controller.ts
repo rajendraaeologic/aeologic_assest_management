@@ -200,8 +200,11 @@ export const getUsers = catchAsync(async (req, res) => {
   }
   else if (rawFilters.from_date || rawFilters.to_date) {
     try {
-      const fromDate = rawFilters.from_date ? new Date(rawFilters.from_date as string) : null;
-      const toDate = rawFilters.to_date ? new Date(rawFilters.to_date as string) : null;
+      const fromDateStr = rawFilters.from_date as string | undefined;
+      const toDateStr = rawFilters.to_date as string | undefined;
+
+      const fromDate = fromDateStr ? new Date(fromDateStr) : null;
+      const toDate = toDateStr ? new Date(toDateStr) : null;
 
       if (fromDate && isNaN(fromDate.getTime())) {
         throw new Error("Invalid from_date");
@@ -210,14 +213,24 @@ export const getUsers = catchAsync(async (req, res) => {
         throw new Error("Invalid to_date");
       }
 
+      const startOfDay = fromDate ? new Date(fromDate) : null;
+      if (startOfDay) {
+        startOfDay.setHours(0, 0, 0, 0);
+      }
+
+      const endOfDay = toDate ? new Date(toDate) : null;
+      if (endOfDay) {
+        endOfDay.setHours(23, 59, 59, 999);
+      }
+
       dateFilter = {
         createdAt: {
-          ...(fromDate && { gte: fromDate }),
-          ...(toDate && { lte: toDate })
+          ...(startOfDay && { gte: startOfDay }),
+          ...(endOfDay && { lte: endOfDay })
         }
       };
 
-      if (fromDate && toDate && fromDate > toDate) {
+      if (startOfDay && endOfDay && startOfDay > endOfDay) {
         throw new ApiError(httpStatus.BAD_REQUEST, "from_date cannot be after to_date");
       }
     } catch (error) {
@@ -225,7 +238,6 @@ export const getUsers = catchAsync(async (req, res) => {
       throw new ApiError(httpStatus.BAD_REQUEST, "Invalid date format");
     }
   }
-
   const filters: any = {
     ...dateFilter,
     deleted: false

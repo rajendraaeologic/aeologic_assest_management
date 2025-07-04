@@ -25,12 +25,12 @@ const DateFilterDropdown = () => {
         if (filters.selectedDate) {
             setSingleDate(new Date(filters.selectedDate));
             setActiveFilter('single');
-        } else if (filters.fromDate || filters.toDate) {
-            setFromDate(filters.fromDate ? new Date(filters.fromDate) : null);
-            setToDate(filters.toDate ? new Date(filters.toDate) : null);
+        } else if (filters.from_date || filters.to_date) {
+            setFromDate(filters.from_date ? new Date(filters.from_date) : null);
+            setToDate(filters.to_date ? new Date(filters.to_date) : null);
             setActiveFilter('range');
         }
-    }, []);
+    }, [filters]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -88,12 +88,19 @@ const DateFilterDropdown = () => {
 
     const applyRangeFilter = () => {
         if (fromDate || toDate) {
-            const from = fromDate ? fromDate.toISOString().split('T')[0] + 'T00:00:00.000Z' : null;
-            const to = toDate ? toDate.toISOString().split('T')[0] + 'T23:59:59.999Z' : null;
+            const from = fromDate ? new Date(fromDate) : null;
+            const to = toDate ? new Date(toDate) : null;
+
+            if (from) {
+                from.setHours(0, 0, 0, 0);
+            }
+            if (to) {
+                to.setHours(23, 59, 59, 999);
+            }
 
             dispatch(setFilters({
-                from_date: from,
-                to_date: to,
+                from_date: from ? from.toISOString() : null,
+                to_date: to ? to.toISOString() : null,
                 selectedDate: null
             }));
             setSingleDate(null);
@@ -109,15 +116,16 @@ const DateFilterDropdown = () => {
 
     const getDisplayText = () => {
         if (activeFilter === 'single') {
-            return singleDate?.toLocaleDateString() || "";
+            return `Date: ${singleDate?.toLocaleDateString() || ""}`;
         }
         if (activeFilter === 'range') {
             const fromText = fromDate?.toLocaleDateString() || "Start";
             const toText = toDate?.toLocaleDateString() || "End";
-            return `${fromText} - ${toText}`;
+            return `From: ${fromText} - To: ${toText}`;
         }
         return "Date Wise";
     };
+
 
     return (
         <div className="relative mr-3" ref={dropdownRef}>

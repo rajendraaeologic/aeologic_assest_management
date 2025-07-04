@@ -101,7 +101,9 @@ const userSlice = createSlice({
       state.filters = {};
       state.currentPage = 1;
     },
-
+    resetSelectedUsers: (state) => {
+      state.selectedUsers = [];
+    },
     setFilters: (state, action) => {
       state.filters = action.payload;
       state.currentPage = 1;
@@ -242,6 +244,7 @@ export const {
   selectAllUsers,
   deselectAllUsers,
   setSearchTerm,
+  resetSelectedUsers,
 } = userSlice.actions;
 
 export default userSlice.reducer;

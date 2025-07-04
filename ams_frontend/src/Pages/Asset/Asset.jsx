@@ -167,6 +167,7 @@ const Asset = () => {
 
   const handlePageChange = (page) => {
     dispatch(setCurrentPage(page));
+    dispatch(deselectAllAssets());
   };
 
   const handleDeleteClick = (asset) => {

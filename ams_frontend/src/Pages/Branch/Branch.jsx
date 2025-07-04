@@ -32,6 +32,7 @@ import DeleteConfirmationModal from "../../components/common/DeleteConfirmationM
 import {toSentenceCase} from "../../utils/string.js";
 import {handleReportGeneration} from "../../utils/excelExport.js";
 import ReportDialog from "../../components/common/ReportDialog.jsx";
+import {getAllAssignAssets} from "../../Features/slices/assignAssetSlice.js";
 const Branch = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -150,6 +151,7 @@ const Branch = () => {
 
   const handlePageChange = (page) => {
     dispatch(setCurrentPage(page));
+    dispatch(deselectAllBranches());
   };
 
   const handleDeleteSelectedBranches = () => {
@@ -182,8 +184,9 @@ const Branch = () => {
   };
 
   const confirmDelete = async () => {
+    setIsDeleting(true);
+
     try {
-      setIsDeleting(true);
       if (branchToDelete) {
         await dispatch(deleteBranch([branchToDelete])).unwrap();
         setDeleteMessage(branchStrings.branch.modals.deleteSuccess.single);
@@ -197,12 +200,6 @@ const Branch = () => {
         );
       }
 
-      // Reset selections after successful delete
-      dispatch(deselectAllBranches());
-      setBranchToDelete(null);
-      setShowDeleteConfirmation(false);
-      setShowDeleteSuccessPopup(true);
-
       // Refresh data
       dispatch(
           getAllBranches({
@@ -210,6 +207,12 @@ const Branch = () => {
             limit: rowsPerPage,
           })
       );
+
+      // Reset state
+      dispatch(deselectAllBranches());
+      setBranchToDelete(null);
+      setShowDeleteConfirmation(false);
+      setShowDeleteSuccessPopup(true);
 
       setTimeout(() => {
         setShowDeleteSuccessPopup(false);
@@ -220,10 +223,10 @@ const Branch = () => {
         autoClose: 2000,
       });
 
-      // Reset states on error
-      setShowDeleteConfirmation(false);
-      setBranchToDelete(null);
+      // Reset on failure
       dispatch(deselectAllBranches());
+      setBranchToDelete(null);
+      setShowDeleteConfirmation(false);
     } finally {
       setIsDeleting(false);
     }

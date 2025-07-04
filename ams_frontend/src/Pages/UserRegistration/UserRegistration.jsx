@@ -23,7 +23,7 @@ import {
   toggleSelectUser,
   selectAllUsers,
   deselectAllUsers,
-  setSelectedUser, resetUserTableState, clearFilters,
+  setSelectedUser, resetUserTableState, clearFilters, resetSelectedUsers,
 } from "../../Features/slices/userSlice";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import { CiSaveUp2 } from "react-icons/ci";
@@ -128,6 +128,7 @@ const UserRegistration = () => {
       dispatch(setSearchTerm(""));
       setLocalSearchTerm("");
       dispatch(resetUserTableState());
+      dispatch(resetSelectedUsers());
       dispatch(clearFilters());
     };
   }, [dispatch]);

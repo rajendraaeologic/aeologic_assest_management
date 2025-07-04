@@ -230,6 +230,9 @@ const UpdateBranch = ({ onClose }) => {
                           if (value !== trimmed) {
                             return branchStrings.updateBranch.validation.trimSpaces;
                           }
+                          if (/^0{25}$/.test(value)) {
+                            return "Branch Name cannot be all zeros.";
+                          }
                           return true;
                         },
                       })}

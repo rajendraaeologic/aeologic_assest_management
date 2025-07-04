@@ -102,7 +102,7 @@ const userStrings = {
       codeRequired: "User code is required",
       organizationRequired: "Please select an Organization",
       branchRequired: "Please select a Branch",
-      departmentRequired: "Please select a Dpartment",
+      departmentRequired: "Please select a Department",
       roleRequired: "Please select a Role",
       statusRequired: "Status is Required",
       userNamePattern: "User Name must contain only  characters",

@@ -108,9 +108,7 @@ const UserRegistration = () => {
     };
 
     dispatch(getAllUsers(commonPayload));
-    dispatch(getAllOrganizations(commonPayload));
-    dispatch(getAllDepartments(commonPayload));
-    dispatch(getAllBranches(commonPayload));
+
   }, [dispatch, currentPage, rowsPerPage, searchTerm, filters]);
 
   const handleSearchChange = (e) => {
@@ -403,29 +401,34 @@ const UserRegistration = () => {
                   filterType="userRole"
                   options={['USER', 'MANAGER', 'ADMIN']}
               />
-
               <TableFilterDropdown
                   filterType="organization"
-                  options={organizations?.map(org => ({
-                    value: org.id,
-                    label: org.organizationName
-                  }))}
+                  fetchOnOpen={true}
+                  apiUrl="/organization/getAllOrganizations"
+                  responseDataKey="organizations"
+                  displayField="organizationName"
+                  valueField="id"
+                  placeholder="Select organization"
               />
 
               <TableFilterDropdown
                   filterType="branch"
-                  options={branches?.map(branch => ({
-                    value: branch.id,
-                    label: branch.branchName
-                  }))}
+                  fetchOnOpen={true}
+                  apiUrl="/branch/getAllBranches"
+                  responseDataKey="branches"
+                  displayField="branchName"
+                  valueField="id"
+                  placeholder="Select Branch"
               />
 
               <TableFilterDropdown
                   filterType="department"
-                  options={departments?.map(dept => ({
-                    value: dept.id,
-                    label: dept.departmentName
-                  }))}
+                  fetchOnOpen={true}
+                  apiUrl="/department/getAllDepartments"
+                  responseDataKey="departments"
+                  displayField="departmentName"
+                  valueField="id"
+                  placeholder="Select Department"
               />
             </div>
           </div>

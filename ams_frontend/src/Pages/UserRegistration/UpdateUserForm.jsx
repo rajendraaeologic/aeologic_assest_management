@@ -587,7 +587,7 @@ const UpdateUserForm = ({ onClose }) => {
                     },
                     validate: (value) => {
                       if (/^0{10}$/.test(value)) {
-                        return "Phone number cannot be all zeros.";
+                        return "Phone number can't be all zeros.";
                       }
                       return true;
                     }

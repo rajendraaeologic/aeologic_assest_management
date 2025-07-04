@@ -326,13 +326,16 @@ const AddAsset = ({ onClose, onSuccess }) => {
                           message: assetStrings.addAsset.validation.assetNameMaxLength,
                         },
                         pattern: {
-                          value: /^[a-zA-Z0-9 ]+$/,
+                          value: /^[a-zA-Z0-9 ,."'\n\r]+$/,
                           message: assetStrings.addAsset.validation.assetNamePattern,
                         },
                         validate: (value) => {
                           const trimmed = value.trim();
                           if (value !== trimmed) {
                             return assetStrings.addAsset.validation.AssetTrimSpaces;
+                          }
+                          if (/^0{25}$/.test(value)) {
+                            return "Asset Name can't be all zeros.";
                           }
                           return true;
                         },
@@ -379,6 +382,9 @@ const AddAsset = ({ onClose, onSuccess }) => {
                           if (value !== trimmed) {
                             return assetStrings.addAsset.validation.UniqueTrimSpaces;
                           }
+                          if (/^0{25}$/.test(value)) {
+                            return "Unique ID can't be all zeros.";
+                          }
                           return true;
                         },
                       })}
@@ -423,6 +429,9 @@ const AddAsset = ({ onClose, onSuccess }) => {
                           const trimmed = value.trim();
                           if (value !== trimmed) {
                             return assetStrings.addAsset.validation.BrandTrimSpaces;
+                          }
+                          if (/^0{25}$/.test(value)) {
+                            return "Brand can't be all zeros.";
                           }
                           return true;
                         },
@@ -469,6 +478,9 @@ const AddAsset = ({ onClose, onSuccess }) => {
                           if (value !== trimmed) {
                             return assetStrings.addAsset.validation.ModelTrimSpaces;
                           }
+                          if (/^0{25}$/.test(value)) {
+                            return "Model can't be all zeros.";
+                          }
                           return true;
                         },
                       })}
@@ -513,6 +525,9 @@ const AddAsset = ({ onClose, onSuccess }) => {
                           const trimmed = value.trim();
                           if (value !== trimmed) {
                             return assetStrings.addAsset.validation.SerialTrimSpaces;
+                          }
+                          if (/^0{25}$/.test(value)) {
+                            return "Serial No. can't be all zeros.";
                           }
                           return true;
                         },
@@ -733,9 +748,9 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       disabled={loading}
                       className={`mt-1 p-2 w-[206%] border ${
                           errors.description ? "border-red-500" : "border-gray-300"
-                      } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}
-                      style={{ overflow: "hidden", textOverflow: "ellipsis" }}
-                      rows={2}
+                      } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
+                      style={{ overflow: "auto", whiteSpace: "pre-wrap" }}
+                      rows={3}
                       id="description"
                       maxLength={200}
                       placeholder={assetStrings.addAsset.placeholders.description}
@@ -750,13 +765,15 @@ const AddAsset = ({ onClose, onSuccess }) => {
                           message: assetStrings.addAsset.validation.descriptionMaxLength,
                         },
                         pattern: {
-                          value: /^[a-zA-Z0-9 ]+$/,
+                          value: /^[a-zA-Z0-9 ,."'`\n\r]+$/,
                           message: assetStrings.addAsset.validation.descriptionPattern,
                         },
                         validate: (value) => {
-                          const trimmed = value.trim();
-                          if (value !== trimmed) {
-                            return assetStrings.addAsset.validation.DescriptionTrimSpaces;
+                          if (!value.trim()) {
+                            return assetStrings.addAsset.validation.descriptionRequired;
+                          }
+                          if (/^0{200}$/.test(value)) {
+                            return "Description can't be all zeros.";
                           }
                           return true;
                         },

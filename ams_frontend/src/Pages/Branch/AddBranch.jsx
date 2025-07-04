@@ -359,6 +359,9 @@ const AddBranch = ({ onClose }) => {
                           if (value !== trimmed) {
                             return branchStrings.addBranch.validation.trimSpaces;
                           }
+                          if (/^0{25}$/.test(value)) {
+                            return "Branch Name cannot be all zeros.";
+                          }
                           return true;
                         },
                       })}

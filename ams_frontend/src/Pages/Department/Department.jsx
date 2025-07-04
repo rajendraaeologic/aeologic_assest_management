@@ -106,7 +106,7 @@ const UserDepartment = () => {
     return () => {
       dispatch(setSearchTerm(""));
       setLocalSearchTerm("");
-      dispatch(resetSelectedDepartments());
+      dispatch(deselectAllDepartments());
       dispatch(resetDeptTableState());
     };
   }, [dispatch]);
@@ -152,6 +152,7 @@ const UserDepartment = () => {
 
   const handlePageChange = (page) => {
     dispatch(setCurrentPage(page));
+    dispatch(deselectAllDepartments());
   };
 
   const handleSelectAllDepartments = (e) => {

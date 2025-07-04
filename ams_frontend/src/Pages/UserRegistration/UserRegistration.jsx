@@ -192,6 +192,7 @@ const UserRegistration = () => {
   };
   const handlePageChange = (page) => {
     dispatch(setCurrentPage(page));
+    dispatch(deselectAllUsers());
   };
 
   const confirmDelete = async () => {

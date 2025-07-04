@@ -85,7 +85,6 @@ const Organization = () => {
       setLocalSearchTerm("");
       dispatch(resetOrgTableState());
       dispatch(deselectAllOrganizations());
-      dispatch(resetSelectedOrganizations());
     };
   }, [dispatch]);
 
@@ -165,6 +164,7 @@ const Organization = () => {
   };
   const handlePageChange = (page) => {
     dispatch(setCurrentPage(page));
+    dispatch(deselectAllOrganizations());
   };
   const handleToggleOrganizationSelection = (id) => {
     dispatch(toggleSelectOrganization(id));

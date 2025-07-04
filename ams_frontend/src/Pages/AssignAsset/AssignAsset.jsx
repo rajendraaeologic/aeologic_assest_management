@@ -145,6 +145,7 @@ const AssignAsset = () => {
 
   const handlePageChange = (page) => {
     dispatch(setCurrentPage(page));
+    dispatch(deselectAllAssignAssets());
   };
 
   const handleDeleteSelectedAssignAssets = () => {

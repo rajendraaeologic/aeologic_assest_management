@@ -164,11 +164,11 @@ const AddUserForm = ({ onClose }) => {
     }
   }, [selectedOrg]);
 
-  useEffect(() => {
-    if (branchId) {
-      fetchDepartments(1, deptSearchTerm);
-    }
-  }, [branchId, deptSearchTerm]);
+  // useEffect(() => {
+  //   if (branchId) {
+  //     fetchDepartments(1, deptSearchTerm);
+  //   }
+  // }, [branchId, deptSearchTerm]);
 
   useEffect(() => {
     // Set initial organization based on user role
@@ -181,8 +181,6 @@ const AddUserForm = ({ onClose }) => {
         });
         setSelectedOrgId(currentUserCompanyId);
       }
-    } else {
-      fetchOrganizations(1, "");
     }
 
     firstInputRef.current?.focus();
@@ -193,13 +191,14 @@ const AddUserForm = ({ onClose }) => {
     };
   }, [currentUserRole, currentUserCompanyId, currentUserOrganizationName]);
 
-  useEffect(() => {
-    if (selectedOrgId) {
-      setBranchSearchTerm("");
-      setBranchPage(1);
-      fetchBranches(1, "");
-    }
-  }, [selectedOrgId]);
+  // useEffect(() => {
+  //   if (selectedOrgId) {
+  //     setBranchSearchTerm("");
+  //     setBranchPage(1);
+  //     fetchBranches(1, "");
+  //   }
+  // }, [selectedOrgId]);
+
 
   useEffect(() => {
     register("companyId", {
@@ -255,24 +254,42 @@ const AddUserForm = ({ onClose }) => {
     setSelectedBranch(null);
     setSelectedDept(null);
   };
+  //
+  // const handleOrgClick = async () => {
+  //   // Only allow dropdown interaction for Superadmin
+  //   if (currentUserRole === USER_ROLES.SUPERADMIN) {
+  //     setShowOrgDropdown((prev) => !prev);
+  //     if (searchTerm.trim() === "") await fetchOrganizations(1, "");
+  //   }
+  // };
+    const handleOrgClick = async () => {
+      // Only allow dropdown interaction for Superadmin
+      if (currentUserRole === USER_ROLES.SUPERADMIN) {
+        const shouldFetch = !showOrgDropdown; // Only fetch when opening the dropdown
+        setShowOrgDropdown((prev) => !prev);
 
-  const handleOrgClick = async () => {
-    // Only allow dropdown interaction for Superadmin
-    if (currentUserRole === USER_ROLES.SUPERADMIN) {
-      setShowOrgDropdown((prev) => !prev);
-      if (searchTerm.trim() === "") await fetchOrganizations(1, "");
-    }
-  };
+        if (shouldFetch && searchTerm.trim() === "") {
+          await fetchOrganizations(1, "");
+        }
+      }
+    };
 
   const handleBranchClick = async () => {
+    if (!selectedOrgId) {
+      toast.error("Please select an organization first");
+      return;
+    }
+
+    const shouldFetch = !showBranchDropdown; // Only fetch when opening the dropdown
     setShowBranchDropdown((prev) => !prev);
-    if (!showBranchDropdown) {
+
+    if (shouldFetch) {
       setBranchSearchTerm("");
       setBranchPage(1);
       setBranches([]);
       await fetchBranches(1, "");
     }
-  };
+  }
 
   // Branch handlers
   const handleBranchScroll = (e) => {
@@ -324,8 +341,15 @@ const AddUserForm = ({ onClose }) => {
     setDeptSearchTerm("");
   };
   const handleDeptClick = async () => {
+    if (!branchId) {
+      toast.error("Please select a branch first");
+      return;
+    }
+
+    const shouldFetch = !showDeptDropdown; // Only fetch when opening the dropdown
     setShowDeptDropdown((prev) => !prev);
-    if (!showDeptDropdown) {
+
+    if (shouldFetch) {
       setDeptSearchTerm("");
       setDepartmentPage(1);
       setDepartments([]);
@@ -497,7 +521,7 @@ const AddUserForm = ({ onClose }) => {
                     },
                     validate: (value) => {
                       if (/^0{10}$/.test(value)) {
-                        return "Phone number cannot be all zeros.";
+                        return "Phone number can't be all zeros.";
                       }
                       return true;
                     }
@@ -793,7 +817,7 @@ const AddUserForm = ({ onClose }) => {
                         errors.userRole ? "border-red-500" : "border-gray-300"
                     } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
                 >
-                  <option value="">{userStrings.addUser.select.roleDefault}</option>
+                  <option value="" disabled>{userStrings.addUser.select.roleDefault}</option>
                   {getRoleOptions().map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}

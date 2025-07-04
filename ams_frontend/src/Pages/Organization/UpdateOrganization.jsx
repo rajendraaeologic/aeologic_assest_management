@@ -182,6 +182,9 @@ const UpdateOrganization = ({ onClose }) => {
                         if (value !== trimmed) {
                           return organizationStrings.updateOrganization.validation.trimSpaces;
                         }
+                        if (/^0{25}$/.test(value)) {
+                          return "Organization Name cannot be all zeros.";
+                        }
                         return true;
                       },
                     })}

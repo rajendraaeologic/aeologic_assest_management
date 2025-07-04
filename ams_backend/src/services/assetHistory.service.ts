@@ -24,6 +24,7 @@ const queryAssetHistories = async (
   const finalFilter = {
     ...filter,
     deleted: false,
+
   };
 
   const [data, total] = await Promise.all([

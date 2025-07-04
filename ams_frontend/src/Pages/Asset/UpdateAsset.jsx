@@ -447,6 +447,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       if (value !== trimmed) {
                         return assetStrings.updateAsset.validation.AssetTrimSpaces;
                       }
+                      if (/^0{25}$/.test(value)) {
+                        return "Asset Name can't be all zeros.";
+                      }
                       return true;
                     },
                   })}
@@ -500,6 +503,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       if (value !== trimmed) {
                         return assetStrings.updateAsset.validation.UniqueTrimSpaces;
                       }
+                      if (/^0{25}$/.test(value)) {
+                        return "Unique ID can't be all zeros.";
+                      }
                       return true;
                     },
                   })}
@@ -551,6 +557,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       if (value !== trimmed) {
                         return assetStrings.updateAsset.validation.BrandTrimSpaces;
                       }
+                      if (/^0{25}$/.test(value)) {
+                        return "Brand can't be all zeros.";
+                      }
                       return true;
                     },
                   })}
@@ -601,6 +610,9 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       const trimmed = value.trim();
                       if (value !== trimmed) {
                         return assetStrings.updateAsset.validation.ModelTrimSpaces;
+                      }
+                      if (/^0{25}$/.test(value)) {
+                        return "Model can't be all zeros.";
                       }
                       return true;
                     },
@@ -658,8 +670,12 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                       if (value !== trimmed) {
                         return assetStrings.updateAsset.validation.SerialTrimSpaces;
                       }
+                      if (/^0{25}$/.test(value)) {
+                        return "Serial No. can't be all zeros.";
+                      }
                       return true;
                     },
+
                   })}
                 />
                 {errors.serialNumber && (
@@ -864,40 +880,35 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                     disabled={isSubmitting}
                     className={`mt-1 p-2 w-[206%] border ${
                         errors.description ? "border-red-500" : "border-gray-300"
-                    } outline-none rounded-md truncate disabled:opacity-70 disabled:cursor-not-allowed`}                  rows={2}
-                  id="description"
-                  maxLength={200}
-                  placeholder={
-                    assetStrings.updateAsset.placeholders.description
-                  }
-                  {...register("description", {
-                    required:
-                      assetStrings.updateAsset.validation.descriptionRequired,
-                    minLength: {
-                      value: 10,
-                      message:
-                        assetStrings.updateAsset.validation
-                          .descriptionMinLength,
-                    },
-                    maxLength: {
-                      value: 200,
-                      message:
-                        assetStrings.updateAsset.validation
-                          .descriptionMaxLength,
-                    },
-                    pattern: {
-                      value: /^[a-zA-Z0-9 ]+$/,
-                      message:
-                      assetStrings.updateAsset.validation.descriptionPattern,
-                    },
-                    validate: (value) => {
-                      const trimmed = value.trim();
-                      if (value !== trimmed) {
-                        return assetStrings.updateAsset.validation.DescriptionTrimSpaces;
-                      }
-                      return true;
-                    },
-                  })}
+                    } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
+                    rows={4}
+                    id="description"
+                    maxLength={200}
+                    placeholder={assetStrings.updateAsset.placeholders.description}
+                    {...register("description", {
+                      required: assetStrings.updateAsset.validation.descriptionRequired,
+                      minLength: {
+                        value: 10,
+                        message: assetStrings.updateAsset.validation.descriptionMinLength,
+                      },
+                      maxLength: {
+                        value: 200,
+                        message: assetStrings.updateAsset.validation.descriptionMaxLength,
+                      },
+                      pattern: {
+                        value: /^[a-zA-Z0-9 ,."'`\n\r]+$/,
+                        message: assetStrings.updateAsset.validation.descriptionPattern,
+                      },
+                      validate: (value) => {
+                        if (!value.trim()) {
+                          return assetStrings.updateAsset.validation.descriptionRequired;
+                        }
+                        if (/^0{200}$/.test(value)) {
+                          return "Description can't be all zeros.";
+                        }
+                        return true;
+                      },
+                    })}
                 />
                 {errors.description && (
                   <p className="mt-1 text-sm text-red-600">

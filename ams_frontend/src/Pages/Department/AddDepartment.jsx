@@ -422,6 +422,9 @@ const AddDepartment = ({ onClose }) => {
                           if (value !== trimmed) {
                             return departmentStrings.addDepartment.validation.trimSpaces;
                           }
+                          if (/^0{25}$/.test(value)) {
+                            return "Department Name cannot be all zeros.";
+                          }
                           return true;
                         },
                       })}

@@ -43,6 +43,7 @@ import {getAllDepartments} from "../../Features/slices/departmentSlice.js";
 import DateFilterDropdown from "../../components/common/DateFilterDropdown.jsx";
 import ReportDialog from "../../components/common/ReportDialog.jsx";
 import {handleReportGeneration} from "../../utils/excelExport.js";
+import {USER_ROLES} from "../../TypeRoles/constants.roles.js";
 
 const UserRegistration = () => {
   const dispatch = useDispatch();
@@ -75,9 +76,8 @@ const UserRegistration = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
   const [isSearching, setIsSearching] = useState(false);
-  const { organizations } = useSelector((state) => state.organizationData);
-  const { branches } = useSelector((state) => state.branchData);
-  const { departments } = useSelector((state) => state.departmentData);
+  const currentUser = useSelector((state) => state.auth.user);
+  const currentUserRole = currentUser?.userRole;
 
   const options = ["5", "10", "25", "50", "100"];
 
@@ -377,7 +377,8 @@ const UserRegistration = () => {
         </div>
 
         <div className="min-h-[580px] pb-10 bg-white mt-3 ml-2 rounded-lg">
-          <div className="flex items-center justify-between px-6 pt-4 pb-2">
+          {currentUserRole === USER_ROLES.SUPERADMIN && (
+              <div className="flex items-center justify-between px-6 pt-4 pb-2">
             <div className="flex items-center gap-2">
               <span className="text-gray-600 whitespace-nowrap">Filters:</span>
               <button
@@ -433,6 +434,7 @@ const UserRegistration = () => {
               />
             </div>
           </div>
+              )}
           <div className="flex items-center justify-between pt-8 px-6">
             {/* Left side: Show entries dropdown */}
             <div className="flex items-center gap-2">

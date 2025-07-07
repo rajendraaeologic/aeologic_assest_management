@@ -410,7 +410,7 @@ const UserRegistration = () => {
                   responseDataKey="organizations"
                   displayField="organizationName"
                   valueField="id"
-                  placeholder="Select organization"
+                  placeholder="organization"
               />
 
               <TableFilterDropdown
@@ -420,7 +420,7 @@ const UserRegistration = () => {
                   responseDataKey="branches"
                   displayField="branchName"
                   valueField="id"
-                  placeholder="Select Branch"
+                  placeholder="Branch"
               />
 
               <TableFilterDropdown
@@ -430,7 +430,7 @@ const UserRegistration = () => {
                   responseDataKey="departments"
                   displayField="departmentName"
                   valueField="id"
-                  placeholder="Select Department"
+                  placeholder="Department"
               />
             </div>
           </div>

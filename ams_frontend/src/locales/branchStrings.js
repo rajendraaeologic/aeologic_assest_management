@@ -1,6 +1,6 @@
 const branchStrings = {
   branch: {
-    title: "Branch List",
+    title: "Branch",
     breadcrumb: {
       dashboard: "Dashboard",
       branch: "Branch",
@@ -17,11 +17,11 @@ const branchStrings = {
     },
     table: {
       headers: {
-        branchName: "Branch Name",
+        branchName: "Branch",
         state: "State",
         city: "City",
-        organizationName: "Organization Name",
-        departmentName: "Department Name",
+        organizationName: "Organization",
+        departmentName: "Department",
         userName: "User Name",
         assetName: "Asset Name",
         assetStatus: "Asset Status",
@@ -62,7 +62,7 @@ const branchStrings = {
   addBranch: {
     title: "Add Branch",
     formLabels: {
-      branchName: "Branch Name",
+      branchName: "Branch",
       state: "State",
       city: "City",
       companyId: "Organization",
@@ -100,9 +100,9 @@ const branchStrings = {
     },
   },
   updateBranch: {
-    title: "Update Branch",
+    title: "Edit Branch",
     formLabels: {
-      branchName: "Branch Name",
+      branchName: "Branch",
       state: "State",
       city: "City",
     },

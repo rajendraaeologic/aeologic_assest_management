@@ -1,6 +1,6 @@
 const assetStrings = {
   asset: {
-    title: "Asset List",
+    title: "Asset",
     breadcrumb: {
       dashboard: "Dashboard",
       asset: "Asset",
@@ -17,7 +17,7 @@ const assetStrings = {
     },
     table: {
       headers: {
-        assetName: "Asset Name",
+        assetName: "Asset",
         uniqueId: "Unique ID",
         brand: "Brand",
         model: "Model",
@@ -25,9 +25,9 @@ const assetStrings = {
         status: "Status",
         assignedUser: "Assigned To",
         assetLocation: "Location",
-        organizationName: "Organization Name",
-        branch: "Branch Name",
-        department: "Department Name",
+        organizationName: "Organization",
+        branch: "Branch",
+        department: "Department",
         action: "Action",
         deleteAll: "Delete All",
       },
@@ -171,7 +171,7 @@ const assetStrings = {
     },
   },
   updateAsset: {
-    title: "Update Asset*",
+    title: "Edit Asset",
     formLabels: {
       assetName: "Asset Name",
       uniqueId: "Unique ID",

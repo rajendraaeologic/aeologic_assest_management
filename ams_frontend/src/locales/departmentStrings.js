@@ -1,6 +1,6 @@
 const departmentStrings = {
   department: {
-    title: "Department List",
+    title: "Department",
     breadcrumb: {
       dashboard: "Dashboard",
       department: "Department",
@@ -17,8 +17,8 @@ const departmentStrings = {
     },
     table: {
       headers: {
-        departmentName: "Department Name",
-        branchName: "Branch Name",
+        departmentName: "Department",
+        branchName: "Branch",
         state: "State",
         city: "City",
         userName: "User Name",
@@ -60,9 +60,9 @@ const departmentStrings = {
   addDepartment: {
     title: "Add Department",
     formLabels: {
-      departmentName: "Department Name",
-      selectOrganization: "Select Organization",
-      selectBranch: "Select Branch",
+      departmentName: "Department",
+      selectOrganization: "Organization",
+      selectBranch: "Branch",
     },
     placeholders: {
       departmentName: "Department Name",
@@ -90,9 +90,9 @@ const departmentStrings = {
     },
   },
   updateDepartment: {
-    title: "Update Department",
+    title: "Edit Department",
     formLabels: {
-      departmentName: "Department Name",
+      departmentName: "Department",
     },
     validation: {
       departmentNameRequired: "Department Name is required",

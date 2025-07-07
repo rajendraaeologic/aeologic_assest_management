@@ -1,6 +1,6 @@
 const assignAssetStrings = {
   assignAsset: {
-    title: "Assign Asset List",
+    title: "Assign Asset",
     breadcrumb: {
       dashboard: "Dashboard",
       assignAsset: "Assign Asset",
@@ -18,10 +18,10 @@ const assignAssetStrings = {
     table: {
       headers: {
         userName: "User Name",
-        organizationName: "Organization Name",
-        branchName: "Branch Name",
-        assetName: "Asset Name",
-        departmentName: "Department Name",
+        organizationName: "Organization",
+        branchName: "Branch",
+        assetName: "Asset",
+        departmentName: "Department",
         action: "Action",
         deleteAll: "Delete All",
       },
@@ -109,7 +109,7 @@ const assignAssetStrings = {
   },
 
   updateAssignAsset: {
-    title: "Edit Assigned Asset",
+    title: "Edit Assign Asset",
     breadcrumb: {
       dashboard: "Dashboard",
       assignAsset: "Assign Asset",

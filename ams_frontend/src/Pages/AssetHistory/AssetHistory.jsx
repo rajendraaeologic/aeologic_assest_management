@@ -564,7 +564,7 @@ const AssetHistory = () => {
                 <tr>
                   <th className="px-2 py-2 border border-gray-300 whitespace-nowrap cursor-pointer hover:bg-[#2b9ea1]">
                     <div className="flex items-center">
-                      Asset Name
+                      Asset
                     </div>
                   </th>
                   <th className="px-2 py-2 border border-gray-300 whitespace-nowrap cursor-pointer hover:bg-[#2b9ea1]">

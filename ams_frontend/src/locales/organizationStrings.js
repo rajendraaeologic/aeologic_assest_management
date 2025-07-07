@@ -1,6 +1,6 @@
 const organizationStrings = {
   organization: {
-    title: "Organization List",
+    title: "Organization",
     breadcrumb: {
       dashboard: "Dashboard",
       organization: "Organization",
@@ -17,11 +17,11 @@ const organizationStrings = {
     },
     table: {
       headers: {
-        orgName: "Organization Name",
-        branchName: "Branch Name",
+        orgName: "Organization",
+        branchName: "Branch",
         state: "State",
         city: "City",
-        departmentName: "Department Name",
+        departmentName: "Department",
         action: "Action",
         deleteAll: "Delete All",
       },
@@ -56,7 +56,7 @@ const organizationStrings = {
   addOrganization: {
     title: "Add Organization",
     formLabels: {
-      organizationName: "Organization Name",
+      organizationName: "Organization",
     },
     placeholders: {
       organizationName: "Enter Organization Name",
@@ -82,9 +82,9 @@ const organizationStrings = {
     },
   },
   updateOrganization: {
-    title: "Update Organization",
+    title: "Edit Organization",
     formLabels: {
-      organizationName: "Organization Name",
+      organizationName: "Organization",
     },
     placeholders: {
       organizationName: "Enter Organization Name",

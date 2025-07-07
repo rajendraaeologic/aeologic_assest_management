@@ -303,8 +303,7 @@ export const getUsers = catchAsync(async (req, res) => {
     sortType,
   };
 
-  const result = await userService.queryUsers(where, options);
-console.log(result)
+  const result = await userService.queryUsers(where, options, user.id); // Pass the user IDconsole.log(result)
   if (!result || result.data.length === 0) {
     const message = (rawFilters.selectedDate || (rawFilters.from_date && rawFilters.to_date))
         ? "No users found for the selected date range"

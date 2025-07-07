@@ -18,16 +18,18 @@ const login = catchAsync(async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await authService.loginUserWithEmailAndPassword(email, password);
-    const tokens = await tokenService.generateAuthTokens(user);
 
-    // res.status(200).send({
-    //   statusCode: 200,
-    //   message: "Login successful",
-    //   data: {
-    //     user,
-    //     tokens
-    //   }
-    // });
+    if (user.status === 'IN_ACTIVE') {
+      throw new ApiError(
+          httpStatus.FORBIDDEN,
+          "Your account is inactive. Please contact the superadmin for assistance.",
+          true,
+          null,
+          "Account Inactive"
+      );
+    }
+
+    const tokens = await tokenService.generateAuthTokens(user);
 
     res.cookie('refreshToken', tokens.refresh.token, {
       httpOnly: true,
@@ -47,6 +49,10 @@ const login = catchAsync(async (req, res) => {
       }
     });
   } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+
     throw new ApiError(
         httpStatus.UNAUTHORIZED,
         "Incorrect email or password",
@@ -57,11 +63,6 @@ const login = catchAsync(async (req, res) => {
   }
 });
 
-// const logout = catchAsync(async (req, res) => {
-//   await authService.logout(req.body.refreshToken);
-//   res.status(httpStatus.NO_CONTENT).send({ message: "Logout Successfully" });
-// });
-
 const logout = catchAsync(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
   if (refreshToken) {
@@ -71,11 +72,6 @@ const logout = catchAsync(async (req, res) => {
   res.clearCookie('refreshToken');
   res.status(httpStatus.NO_CONTENT).send();
 });
-
-// const refreshTokens = catchAsync(async (req, res) => {
-//   const tokens = await authService.refreshAuth(req.body.refreshToken);
-//   res.send({ ...tokens });
-// });
 
 const refreshTokens = catchAsync(async (req, res) => {
   const refreshToken = req.cookies?.refreshToken;

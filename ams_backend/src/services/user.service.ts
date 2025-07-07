@@ -312,6 +312,7 @@ const queryUsers = async (
     sortBy?: string;
     sortType?: "asc" | "desc";
   },
+  requestingUserId?: string,
   selectKeys: Prisma.UserSelect = UserKeys
 ): Promise<{ data: User[]; total: number }> => {
   const page = options.page ?? 1;
@@ -322,6 +323,7 @@ const queryUsers = async (
   const finalFilter = {
     ...filter,
     deleted: false,
+    ...(requestingUserId ? { id: { not: requestingUserId } } : {}),
   };
 
   const [data, total] = await Promise.all([

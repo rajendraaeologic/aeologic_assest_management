@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../../Features/auth/authSlice";
 import loginImage from "../../assets/login.jpg";
 import { USER_ROLES } from "../../TypeRoles/constants.roles";
+import {toast} from "react-toastify";
 
 const LoginUser = () => {
   const userRef = useRef();
@@ -80,20 +81,58 @@ const LoginUser = () => {
 
     try {
       const result = await dispatch(
-        loginUser({ email: user.email, password: user.password })
+          loginUser({ email: user.email, password: user.password })
       );
 
       if (result.meta.requestStatus === "fulfilled") {
         const userRole = result.payload.user?.userRole;
         navigate(
-          userRole === USER_ROLES.USER ? "/user-dashboard" : "/dashboard",
-          { replace: true }
+            userRole === USER_ROLES.USER ? "/user-dashboard" : "/dashboard",
+            { replace: true }
         );
-      } else if (result.meta.requestStatus === "rejected") {
-        setErrMsg(result.payload?.message || "Incorrect email or password");
+      }  else if (result.meta.requestStatus === "rejected") {
+        // Handle specific error messages from backend
+        const errorMessage = result.payload;
+
+        if (errorMessage === "Your account is inactive. Please contact the superadmin for assistance.") {
+          toast.warning(errorMessage, {
+            position: "top-right",
+            autoClose: 5000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        } else if (errorMessage === "Incorrect email or password") {
+          toast.error("Incorrect email or password", {
+            position: "top-right",
+            autoClose: 4000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        } else {
+          toast.error(errorMessage || "Login failed. Please try again.", {
+            position: "top-right",
+            autoClose: 4000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+        }
       }
     } catch (err) {
-      setErrMsg("An unexpected error occurred. Please try again.");
+      console.error("Login error:", err);
+      toast.error("An unexpected error occurred. Please try again.", {
+        position: "top-right",
+        autoClose: 4000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     }
   };
 

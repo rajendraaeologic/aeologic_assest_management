@@ -612,7 +612,7 @@ const UpdateUserForm = ({ onClose }) => {
                 <input
                     type="text"
                   id="email"
-                    disabled={isSubmitting}
+                    disabled={true}
                     className={`mt-1 p-2 w-full border ${
                         errors.email ? "border-red-500" : "border-gray-300"
                     } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
@@ -850,7 +850,7 @@ const UpdateUserForm = ({ onClose }) => {
                         errors.userRole ? "border-red-500" : "border-gray-300"
                     } outline-none rounded-md disabled:opacity-70 disabled:cursor-not-allowed`}
                 >
-                  <option value="">{userStrings.updateUser.select.roleDefault}</option>
+                  <option value="" disabled>{userStrings.updateUser.select.roleDefault}</option>
                   {getRoleOptions().map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}

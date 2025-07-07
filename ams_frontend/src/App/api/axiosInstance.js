@@ -33,7 +33,11 @@ API.interceptors.response.use(
 
         const originalRequest = error.config;
 
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        // Don't attempt token refresh for auth endpoints
+        const authEndpoints = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password'];
+        const isAuthEndpoint = authEndpoints.some(endpoint => originalRequest.url.includes(endpoint));
+
+        if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
             originalRequest._retry = true;
             try {
         // const refreshResponse = await axios.get(
@@ -75,8 +79,8 @@ API.interceptors.response.use(
             }
         }
 
-        // Handle 403 errors (forbidden)
-        if (error.response?.status === 403) {
+        // Handle 403 errors (forbidden) - but not for auth endpoints
+        if (error.response?.status === 403 && !isAuthEndpoint) {
             console.warn("Access forbidden. Logging out.");
             storeInstance.dispatch(logOut());
         }

@@ -183,10 +183,12 @@ export const getUsers = catchAsync(async (req, res) => {
       if (isNaN(selectedDate.getTime())) {
         throw new Error("Invalid date");
       }
-      const startOfDay = new Date(selectedDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(selectedDate);
-      endOfDay.setHours(23, 59, 59, 999);
+
+      const year = selectedDate.getFullYear();
+      const month = selectedDate.getMonth();
+      const day = selectedDate.getDate();
+      const startOfDay = new Date(Date.UTC(year, month, day, 0, 0, 0, 0));
+      const endOfDay = new Date(Date.UTC(year, month, day, 23, 59, 59, 999));
 
       dateFilter = {
         createdAt: {
@@ -194,7 +196,15 @@ export const getUsers = catchAsync(async (req, res) => {
           lte: endOfDay
         }
       };
+
+      console.log('Date filter applied:', {
+        input: rawFilters.selectedDate,
+        startOfDay: startOfDay.toISOString(),
+        endOfDay: endOfDay.toISOString()
+      });
+
     } catch (error) {
+      console.error('Date filter error:', error);
       throw new ApiError(httpStatus.BAD_REQUEST, "Invalid selectedDate format");
     }
   }

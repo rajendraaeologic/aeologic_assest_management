@@ -325,7 +325,7 @@ const queryUsers = async (
     deleted: false,
     ...(requestingUserId ? { id: { not: requestingUserId } } : {}),
   };
-
+  console.log('Final filter before query:', JSON.stringify(finalFilter, null, 2));
   const [data, total] = await Promise.all([
     db.user.findMany({
       where: finalFilter,
@@ -339,7 +339,7 @@ const queryUsers = async (
     }),
     db.user.count({ where: finalFilter }),
   ]);
-
+  console.log(`Query returned ${data.length} users`);
   return { data, total };
 };
 

@@ -5,16 +5,19 @@ import API from '../../App/api/axiosInstance';
 import { toast } from 'react-toastify';
 
 const TableFilterDropdown = ({
-     filterType,
-     options = [],
-     fetchOnOpen = false,
-     apiUrl = null,
-     responseDataKey = 'organizations',
-     displayField = 'organizationName',
-     valueField = 'id',
-     placeholder = '',
-     disabled = false
- }) => {
+                                 filterType,
+                                 options = [],
+                                 fetchOnOpen = false,
+                                 apiUrl = null,
+                                 responseDataKey = 'organizations',
+                                 displayField = 'organizationName',
+                                 valueField = 'id',
+                                 placeholder = '',
+                                 disabled = false,
+                                 parentFilterType = null,
+                                 parentId = null,
+                                 allowIndependentSelection = false // Enable independent selection when true
+                             }) => {
     const dispatch = useDispatch();
     const dropdownRef = useRef(null);
     const listRef = useRef(null);
@@ -36,18 +39,28 @@ const TableFilterDropdown = ({
     const fetchOptions = async (pageNum, search = '') => {
         if (!apiUrl) return;
 
+        let url = apiUrl;
+        // Only use parent filter when not in independent mode
+        if (!allowIndependentSelection && parentFilterType && parentId) {
+            if (filterType === 'branch' && parentFilterType === 'organization') {
+                url = `/branch/${parentId}/branches`;
+            } else if (filterType === 'department' && parentFilterType === 'branch') {
+                url = `/department/${parentId}/departments`;
+            }
+        }
+
         try {
             setLoading(true);
             const response = await API.get(
-                `${apiUrl}?page=${pageNum}&limit=${LIMIT}&searchTerm=${search}`
+                `${url}?page=${pageNum}&limit=${LIMIT}&searchTerm=${search}`
             );
 
             const responseData = response?.data?.data || {};
-            const items = responseDataKey ? responseData[responseDataKey] : [];
+            const items = responseDataKey ? responseData[responseDataKey] || [] : [];
             const pagination = responseData?.pagination || { totalPages: 0 };
 
             setDynamicOptions((prev) =>
-                pageNum === 1 ? (items || []) : [...prev, ...(items || [])]
+                pageNum === 1 ? items : [...prev, ...items]
             );
             setNoItemsFound((!items || items.length === 0) && search !== "");
             setPage(pageNum);
@@ -63,12 +76,20 @@ const TableFilterDropdown = ({
     const handleDropdownClick = async () => {
         if (disabled) return;
 
+        // Only check parent filter when not in independent mode
+        if (!allowIndependentSelection && parentFilterType && !filters[parentFilterType]) {
+            toast.error(`Please select ${parentFilterType} first`);
+            return;
+        }
+
         const shouldFetch = !isOpen;
         setIsOpen((prev) => !prev);
 
-        if (shouldFetch && fetchOnOpen && apiUrl) {
-            if (searchTerm.trim() === "") {
+        if (shouldFetch) {
+            if (fetchOnOpen && apiUrl && searchTerm.trim() === "") {
                 await fetchOptions(1, "");
+            } else if (options.length > 0) {
+                setDynamicOptions(options);
             }
         }
     };
@@ -87,15 +108,34 @@ const TableFilterDropdown = ({
         setNoItemsFound(false);
         if (apiUrl) {
             fetchOptions(1, search);
+        } else if (options.length > 0) {
+            const filtered = options.filter(option =>
+                option.toLowerCase().includes(search.toLowerCase())
+            );
+            setDynamicOptions(filtered);
+            setNoItemsFound(filtered.length === 0 && search !== "");
         }
     };
 
     const handleItemSelect = (item) => {
-        const value = item?.[valueField] || item?.id || item;
-        const displayValue = item?.[displayField] || item?.name || item;
-
-        setSelectedItem(item);
+        const displayValue = typeof item === 'object' ? item[displayField] || item.name || item : item;
         const newFilters = { ...filters, [filterType]: displayValue };
+
+        // Only clear child filters when not in independent mode
+        if (!allowIndependentSelection) {
+            if (filterType === 'organization') {
+                newFilters.branch = null;
+                newFilters.department = null;
+            } else if (filterType === 'branch') {
+                newFilters.department = null;
+            }
+        }
+
+        // Store the ID if it's an object
+        if (typeof item === 'object') {
+            newFilters[`${filterType}Id`] = item[valueField] || item.id;
+        }
+
         dispatch(setFilters(newFilters));
         setIsOpen(false);
         setSearchTerm("");
@@ -114,7 +154,7 @@ const TableFilterDropdown = ({
     }, []);
 
     useEffect(() => {
-        if (options && !fetchOnOpen) {
+        if (options.length > 0 && !fetchOnOpen) {
             setDynamicOptions(options);
         }
     }, [options, fetchOnOpen]);
@@ -160,7 +200,7 @@ const TableFilterDropdown = ({
 
             {isOpen && !disabled && (
                 <div className="absolute z-50 mt-2 w-full border border-gray-300 bg-white rounded-md shadow">
-                    {fetchOnOpen && (
+                    {(fetchOnOpen || options.length > 0) && (
                         <input
                             type="text"
                             placeholder={`Search ${filterType}...`}
@@ -176,12 +216,12 @@ const TableFilterDropdown = ({
                     )}
                     <ul
                         ref={listRef}
-                        onScroll={fetchOnOpen ? handleScroll : null}
+                        onScroll={(fetchOnOpen || apiUrl) ? handleScroll : null}
                         className="max-h-40 overflow-auto"
                     >
                         {dynamicOptions?.map((item, index) => {
-                            const key = item?.[valueField] || item?.id || index;
-                            const displayText = item?.[displayField] || item?.name || item;
+                            const key = typeof item === 'object' ? item[valueField] || item.id || index : index;
+                            const displayText = typeof item === 'object' ? item[displayField] || item.name || item : item;
 
                             return (
                                 <li

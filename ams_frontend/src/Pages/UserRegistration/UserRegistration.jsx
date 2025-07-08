@@ -105,6 +105,9 @@ const UserRegistration = () => {
       limit: rowsPerPage,
       searchTerm: searchTerm.trim(),
       filters: filters,
+      organizationId: filters.organizationId,
+      branchId: filters.branchId,
+      departmentId: filters.departmentId,
     };
 
     dispatch(getAllUsers(commonPayload));
@@ -394,6 +397,7 @@ const UserRegistration = () => {
             <div className="flex items-center gap-2 flex-wrap justify-end ">
               <DateFilterDropdown/>
 
+              {/* Simple dropdowns */}
               <TableFilterDropdown
                   filterType="status"
                   options={['ACTIVE', 'IN_ACTIVE']}
@@ -403,6 +407,8 @@ const UserRegistration = () => {
                   filterType="userRole"
                   options={['USER', 'MANAGER', 'ADMIN']}
               />
+
+              {/* Interlinked dropdowns */}
               <TableFilterDropdown
                   filterType="organization"
                   fetchOnOpen={true}
@@ -410,7 +416,7 @@ const UserRegistration = () => {
                   responseDataKey="organizations"
                   displayField="organizationName"
                   valueField="id"
-                  placeholder="organization"
+                  placeholder="Organization"
               />
 
               <TableFilterDropdown
@@ -421,6 +427,9 @@ const UserRegistration = () => {
                   displayField="branchName"
                   valueField="id"
                   placeholder="Branch"
+                  parentFilterType="organization"
+                  parentId={filters.organizationId}
+                  allowIndependentSelection={true}
               />
 
               <TableFilterDropdown
@@ -431,6 +440,9 @@ const UserRegistration = () => {
                   displayField="departmentName"
                   valueField="id"
                   placeholder="Department"
+                  parentFilterType="branch"
+                  parentId={filters.branchId}
+                  allowIndependentSelection={true}
               />
             </div>
           </div>

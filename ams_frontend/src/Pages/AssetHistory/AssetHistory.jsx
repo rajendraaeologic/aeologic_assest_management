@@ -259,7 +259,43 @@ const AssetHistory = () => {
     totalPages,
     searchTerm,
   } = useSelector((state) => state.assetHistory);
-  const [isSearching, setIsSearching] = useState(false);
+
+  const groupedHistories = useCallback(() => {
+    if (!histories || histories.length === 0) return [];
+
+    const groupedByAsset = {};
+    histories.forEach((history) => {
+      const assetId = history.asset?.id || history.assetId;
+      if (!assetId) return;
+
+      if (!groupedByAsset[assetId]) {
+        groupedByAsset[assetId] = {
+          asset: history.asset || { id: assetId },
+          histories: [],
+        };
+      }
+      groupedByAsset[assetId].histories.push(history);
+    });
+
+    let flattenedHistories = [];
+    Object.values(groupedByAsset).forEach(group => {
+      group.histories.sort((a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      group.histories.forEach(history => {
+        flattenedHistories.push({
+          asset: group.asset,
+          historyRecord: history,
+        });
+      });
+    });
+
+    return flattenedHistories;
+  }, [histories]);
+
+  const displayedIndividualHistories = groupedHistories();
+
+  const [setIsSearching] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [showTimeline, setShowTimeline] = useState(false);
   const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
@@ -274,6 +310,9 @@ const AssetHistory = () => {
     historyTimeline: "History Timeline",
     breadcrumb: { dashboard: "Dashboard", assetHistory: "Asset History" },
   };
+
+  const totalIndividualHistories = displayedIndividualHistories.length;
+
   useEffect(() => {
     if (showTimeline) {
       document.body.style.overflow = 'hidden';
@@ -343,39 +382,6 @@ const AssetHistory = () => {
     debouncedSearch(value);
   };
 
-  const groupedHistories = useCallback(() => {
-    if (!histories || histories.length === 0) return [];
-
-    const grouped = {};
-
-    histories.forEach((history) => {
-      const assetId = history.asset?.id || history.assetId;
-      if (!assetId) return;
-
-      if (!grouped[assetId]) {
-        grouped[assetId] = {
-          asset: history.asset || { id: assetId },
-          histories: [],
-        };
-      }
-      grouped[assetId].histories.push(history);
-    });
-
-    return Object.values(grouped).map(group => {
-      group.histories.sort((a, b) =>
-          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-      );
-
-      return {
-        asset: group.asset,
-        latestHistory: group.histories[0],
-        allHistories: group.histories
-      };
-    });
-  }, [histories]);
-
-  const displayedGroupedHistories = groupedHistories();
-
   const getLatestAction = (latestHistory, currentStatus) => {
     if (!latestHistory) return "No recent actions";
 
@@ -435,11 +441,15 @@ const AssetHistory = () => {
         return latestHistory.action?.toLowerCase() || "Unknown action";
     }
   };
-  const handleViewDetails = (assetGroup) => {
+  const handleViewDetails = (item) => {
     setShowTimeline(true);
+    const allHistoriesForAsset = histories.filter(
+        h => (h.asset?.id || h.assetId) === (item.asset.id)
+    ).sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
     setSelectedAsset({
-      asset: assetGroup.asset,
-      histories: assetGroup.allHistories
+      asset: item.asset,
+      histories: allHistoriesForAsset,
     });
   };
 
@@ -602,48 +612,53 @@ const AssetHistory = () => {
                         {error}
                       </td>
                     </tr>
-                ) : groupedHistories().length === 0 ? (
+                ) : displayedIndividualHistories.length === 0 ? (
                     <tr>
                       <td colSpan="6" className="px-2 py-4 text-center border border-gray-300">
-                        {searchTerm ? "No assets found matching your search criteria." : "No data available"}
+                        {searchTerm ? "No history records found matching your search criteria." : "No data available"}
                       </td>
                     </tr>
                 ) : (
-                    groupedHistories().map((group, index) => (
+                    displayedIndividualHistories.map((item, index) => (
                         <tr
-                            key={group.asset.id}
+                            key={item.historyRecord.id || `${item.asset.id}-${index}`}
                             className={`${
                                 index % 2 === 0 ? "bg-gray-50" : "bg-white"
                             } hover:bg-gray-200 divide-y divide-gray-300`}
                         >
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {group.asset.assetName || "N/A"}
+                            {item.asset.assetName || "N/A"} {/* Access asset details */}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-          <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  statusConfig[group.asset.status]?.bgColor || "bg-gray-100"
-              } ${
-                  statusConfig[group.asset.status]?.textColor || "text-gray-800"
-              }`}
-          >
-            {group.asset.status || group.latestHistory.action}
-          </span>
+                              <span
+                                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                      statusConfig[item.historyRecord.status]?.bgColor || "bg-gray-100" // Use historyRecord's status
+                                  } ${
+                                      statusConfig[item.historyRecord.status]?.textColor || "text-gray-800"
+                                  }`}
+                              >
+                                {item.historyRecord.status || item.historyRecord.action}
+                              </span>
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {group.asset.branch?.branchName || "N/A"}
+                            {item.asset.branch?.branchName || "N/A"}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {group.asset.department?.departmentName || "N/A"}
+                            {item.asset.department?.departmentName || "N/A"}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 break-words align-top">
-                            {getLatestAction(group.latestHistory, group.asset.status)}
+                            {getLatestAction(item.historyRecord, item.historyRecord.status)}
                           </td>
                           <td className="px-2 py-2 border border-gray-300 text-center">
                             <div className="flex justify-center gap-2">
                               <button
                                   ref={timelineButtonRef}
-                                  onClick={() => handleViewDetails(group)}
+                                  onClick={() => handleViewDetails({
+                                    asset: item.asset,
+                                    allHistories: displayedIndividualHistories
+                                        .filter(h => h.asset.id === item.asset.id)
+                                        .map(h => h.historyRecord)
+                                  })}
                                   className="px-3 py-2 rounded-sm text-blue-600 underline hover:text-blue-800"
                               >
                                 <span>View Details</span>
@@ -657,19 +672,17 @@ const AssetHistory = () => {
               </table>
             </div>
             {/* Pagination Controls */}
-            {!loading && !error && displayedGroupedHistories.length > 0 && (
-                <PaginationControls
-                    currentPage={currentPage}
-                    rowsPerPage={rowsPerPage}
-                    totalItems={totalHistories}
-                    totalPages={totalPages}
-                    onPrev={() => handlePageChange(currentPage - 1)}
-                    onNext={() => handlePageChange(currentPage + 1)}
-                    onPageChange={handlePageChange}
-                    previousLabel="Previous"
-                    nextLabel="Next"
-                />
-            )}
+            <PaginationControls
+                currentPage={currentPage}
+                rowsPerPage={rowsPerPage}
+                totalItems={totalHistories}
+                totalPages={totalPages}
+                onPrev={() => handlePageChange(currentPage - 1)}
+                onNext={() => handlePageChange(currentPage + 1)}
+                onPageChange={handlePageChange}
+                previousLabel="Previous"
+                nextLabel="Next"
+            />
           </div>
         </div>
 

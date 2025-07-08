@@ -91,7 +91,7 @@ const initialState = {
     error: null,
     currentPage: 1,
     rowsPerPage: 5,
-    totalAssets: 0,
+    totalHistories: 0,
     totalPages: 0,
     searchTerm: "",
     mode: "pagination",

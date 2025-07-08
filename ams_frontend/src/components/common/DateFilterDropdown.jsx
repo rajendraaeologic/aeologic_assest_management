@@ -14,6 +14,8 @@ const DateFilterDropdown = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeFilter, setActiveFilter] = useState(null);
     const dropdownRef = useRef(null);
+    const [rangeError, setRangeError] = useState('');
+
 
     useEffect(() => {
         if (!filters.selectedDate && !filters.fromDate && !filters.toDate) {
@@ -55,21 +57,21 @@ const DateFilterDropdown = () => {
     const handleSingleDateChange = (date) => {
         if (!date) return;
 
-        setSingleDate(date);
-        setFromDate(null);
-        setToDate(null);
-        setActiveFilter('single');
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const dateString = `${year}-${month}-${day}`;
 
-        const dateString = date.toISOString().split('T')[0];
+        console.log('Dispatching date filter:', dateString);
+
         dispatch(setFilters({
             selectedDate: dateString,
-            fromDate: null,
-            toDate: null
+            from_date: null,
+            to_date: null
         }));
 
         setIsOpen(false);
     };
-
     const handleRangeDateChange = (type, date) => {
         if (!date) return;
 
@@ -85,8 +87,21 @@ const DateFilterDropdown = () => {
             }
         }
     };
+    useEffect(() => {
+        if (!isOpen) {
+            setRangeError('');
+        }
+    }, [isOpen]);
+
 
     const applyRangeFilter = () => {
+        setRangeError('');
+
+        if ((fromDate && !toDate) || (!fromDate && toDate)) {
+            setRangeError('Please select both start and end dates.');
+            return;
+        }
+
         if (fromDate || toDate) {
             const from = fromDate ? new Date(fromDate) : null;
             const to = toDate ? new Date(toDate) : null;
@@ -207,6 +222,9 @@ const DateFilterDropdown = () => {
                             >
                                 Apply Range
                             </button>
+                            {rangeError && (
+                                <p className="text-red-500 text-sm mt-1">{rangeError}</p>
+                            )}
                         </div>
                     </div>
                 </div>

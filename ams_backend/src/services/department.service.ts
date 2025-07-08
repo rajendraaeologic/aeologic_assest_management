@@ -130,6 +130,8 @@ const updateDepartmentById = async (
       const existingDepartmentWithName = await db.department.findFirst({
         where: {
           departmentName: newName,
+          branchId: department.branchId,
+          companyId: department.companyId,
           id: { not: departmentId },
           deleted: false,
         },

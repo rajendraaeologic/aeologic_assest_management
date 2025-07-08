@@ -24,7 +24,7 @@ const getAssetHistories = catchAsync(async (req, res) => {
     searchTerm?: string;
   };
 
-  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 5; // Changed from const to let
   const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
   let sortBy = (req.query.sortBy as string) || "timestamp";
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
@@ -40,11 +40,11 @@ const getAssetHistories = catchAsync(async (req, res) => {
     });
     const branchIds = companyBranches.map(branch => branch.id);
 
-  const companyDepartments = await db.department.findMany({
-    where: { branchId: { in: branchIds } },
-    select: { id: true }
-  });
-  const departmentIds = companyDepartments.map(dept => dept.id);
+    const companyDepartments = await db.department.findMany({
+      where: { branchId: { in: branchIds } },
+      select: { id: true }
+    });
+    const departmentIds = companyDepartments.map(dept => dept.id);
 
     const companyAssets = await db.asset.findMany({
       where: {
@@ -84,7 +84,7 @@ const getAssetHistories = catchAsync(async (req, res) => {
       contains: rawFilters.assetId,
       mode: "insensitive",
     };
-    limit = 1;
+    limit = 5; // Now this works because limit is declared with let
     sortBy = "timestamp";
     sortType = "desc";
   }
@@ -93,7 +93,7 @@ const getAssetHistories = catchAsync(async (req, res) => {
 
   const isSearchMode = !!searchTerm;
   if (isSearchMode) {
-    limit = 5;
+    limit = 5; // Now this works because limit is declared with let
     sortBy = "timestamp";
     sortType = "desc";
   }
@@ -156,6 +156,8 @@ const getAssetHistories = catchAsync(async (req, res) => {
     }
   });
 });
+
+
 const getAssetHistoryById = catchAsync(async (req, res) => {
   const history = await assetHistoryService.getAssetHistoryById(
       req.params.historyId

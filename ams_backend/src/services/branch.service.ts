@@ -125,6 +125,7 @@ export const updateBranchById = async (
       const existingBranchWithName = await db.branch.findFirst({
         where: {
           branchName: newName,
+          companyId: branch.companyId,
           id: { not: branchId },
           deleted: false,
         },

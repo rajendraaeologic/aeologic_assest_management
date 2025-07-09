@@ -68,7 +68,16 @@ export const queryBranches = async (
   const [data, total] = await Promise.all([
     db.branch.findMany({
       where: finalFilter,
-      select: BranchKeys,
+      select: {
+        ...BranchKeys,
+        departments: {
+          where: { deleted: false },
+          select: {
+            id: true,
+            departmentName: true,
+          },
+        },
+      },
       skip,
       take: limit,
       orderBy: { [sortBy]: sortType },
@@ -78,7 +87,6 @@ export const queryBranches = async (
 
   return { data, total };
 };
-
 // getBranchById
 const getBranchById = async (branchId: string) => {
   return await db.branch.findUnique({

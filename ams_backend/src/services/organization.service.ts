@@ -57,7 +57,25 @@ const queryOrganizations = async (
   const [data, total] = await Promise.all([
     db.organization.findMany({
       where: finalFilter,
-      select: OrganizationKeys,
+      select: {
+        ...OrganizationKeys,
+        branches: {
+          where: { deleted: false },
+          select: {
+            id: true,
+            branchName: true,
+            state: true,
+            city: true,
+            departments: {
+              where: { deleted: false },
+              select: {
+                id: true,
+                departmentName: true,
+              },
+            },
+          },
+        },
+      },
       skip,
       take: limit,
       orderBy: { [sortBy]: sortType },
@@ -70,11 +88,18 @@ const queryOrganizations = async (
 
 //getOrganizationById
 const getOrganizationById = async (organizationId: string) => {
-  return await db.organization.findUnique({
+  const organization = await db.organization.findUnique({
     where: { id: organizationId, deleted: false },
     select: OrganizationKeys,
   });
+
+  if (!organization) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Organization not found");
+  }
+
+  return organization;
 };
+
 
 // updateOrganizationById
 const updateOrganizationById = async (

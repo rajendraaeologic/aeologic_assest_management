@@ -16,9 +16,8 @@ const DateFilterDropdown = () => {
     const dropdownRef = useRef(null);
     const [rangeError, setRangeError] = useState('');
 
-
     useEffect(() => {
-        if (!filters.selectedDate && !filters.fromDate && !filters.toDate) {
+        if (!filters.selectedDate && !filters.from_date && !filters.to_date) {
             resetLocalState();
         }
     }, [filters]);
@@ -26,10 +25,13 @@ const DateFilterDropdown = () => {
     useEffect(() => {
         if (filters.selectedDate) {
             setSingleDate(new Date(filters.selectedDate));
+            setFromDate(null);
+            setToDate(null);
             setActiveFilter('single');
         } else if (filters.from_date || filters.to_date) {
             setFromDate(filters.from_date ? new Date(filters.from_date) : null);
             setToDate(filters.to_date ? new Date(filters.to_date) : null);
+            setSingleDate(null);
             setActiveFilter('range');
         }
     }, [filters]);
@@ -55,14 +57,15 @@ const DateFilterDropdown = () => {
     };
 
     const handleSingleDateChange = (date) => {
-        if (!date) return;
+        if (!date) {
+            dispatch(clearFilters());
+            return;
+        }
 
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
         const dateString = `${year}-${month}-${day}`;
-
-        console.log('Dispatching date filter:', dateString);
 
         dispatch(setFilters({
             selectedDate: dateString,
@@ -72,56 +75,91 @@ const DateFilterDropdown = () => {
 
         setIsOpen(false);
     };
+
     const handleRangeDateChange = (type, date) => {
-        if (!date) return;
+        if (!date) {
+            // If clearing a date, automatically update the filter
+            if (type === 'from') {
+                setFromDate(null);
+                dispatch(setFilters({
+                    from_date: null,
+                    to_date: toDate ? toDate.toISOString() : null,
+                    selectedDate: null
+                }));
+            } else {
+                setToDate(null);
+                dispatch(setFilters({
+                    from_date: fromDate ? fromDate.toISOString() : null,
+                    to_date: null,
+                    selectedDate: null
+                }));
+            }
+            return;
+        }
 
         if (type === 'from') {
             setFromDate(date);
             if (toDate && date > toDate) {
                 setToDate(null);
+                dispatch(setFilters({
+                    from_date: date.toISOString(),
+                    to_date: null,
+                    selectedDate: null
+                }));
             }
         } else {
             setToDate(date);
             if (fromDate && date < fromDate) {
                 setFromDate(null);
+                dispatch(setFilters({
+                    from_date: null,
+                    to_date: date.toISOString(),
+                    selectedDate: null
+                }));
             }
         }
     };
+
     useEffect(() => {
         if (!isOpen) {
             setRangeError('');
         }
     }, [isOpen]);
 
-
     const applyRangeFilter = () => {
         setRangeError('');
 
-        if ((fromDate && !toDate) || (!fromDate && toDate)) {
-            setRangeError('Please select both start and end dates.');
-            return;
-        }
+        if (fromDate && toDate) {
+            const from = new Date(fromDate);
+            const to = new Date(toDate);
 
-        if (fromDate || toDate) {
+            from.setHours(0, 0, 0, 0);
+            to.setHours(23, 59, 59, 999);
+
+            dispatch(setFilters({
+                from_date: from.toISOString(),
+                to_date: to.toISOString(),
+                selectedDate: null
+            }));
+        } else if (fromDate || toDate) {
+            // Automatically apply when either date is selected
             const from = fromDate ? new Date(fromDate) : null;
             const to = toDate ? new Date(toDate) : null;
 
-            if (from) {
-                from.setHours(0, 0, 0, 0);
-            }
-            if (to) {
-                to.setHours(23, 59, 59, 999);
-            }
+            if (from) from.setHours(0, 0, 0, 0);
+            if (to) to.setHours(23, 59, 59, 999);
 
             dispatch(setFilters({
                 from_date: from ? from.toISOString() : null,
                 to_date: to ? to.toISOString() : null,
                 selectedDate: null
             }));
-            setSingleDate(null);
-            setActiveFilter('range');
-            setIsOpen(false);
+        } else {
+            // Clear if no dates are selected
+            dispatch(clearFilters());
         }
+
+        setIsOpen(false);
     };
 
     const handleClearFilter = () => {
@@ -134,13 +172,20 @@ const DateFilterDropdown = () => {
             return `Date: ${singleDate?.toLocaleDateString() || ""}`;
         }
         if (activeFilter === 'range') {
-            const fromText = fromDate?.toLocaleDateString() || "Start";
-            const toText = toDate?.toLocaleDateString() || "End";
-            return `From: ${fromText} - To: ${toText}`;
+            const fromText = fromDate?.toLocaleDateString() || "";
+            const toText = toDate?.toLocaleDateString() || "";
+
+            if (fromText && toText) {
+                return `From: ${fromText} - To: ${toText}`;
+            } else if (fromText) {
+                return `From: ${fromText}`;
+            } else if (toText) {
+                return `To: ${toText}`;
+            }
+            return "Date Range";
         }
         return "Date Wise";
     };
-
 
     return (
         <div className="relative mr-3" ref={dropdownRef}>
@@ -181,6 +226,7 @@ const DateFilterDropdown = () => {
                                 className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#3BC0C3] focus:border-transparent"
                                 placeholderText="Select a date"
                                 dateFormat="yyyy-MM-dd"
+                                // isClearable
                             />
                         </div>
 
@@ -196,6 +242,7 @@ const DateFilterDropdown = () => {
                                         className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#3BC0C3] focus:border-transparent"
                                         placeholderText="Start date"
                                         dateFormat="yyyy-MM-dd"
+                                        // isClearable
                                     />
                                 </div>
                                 <div>
@@ -208,19 +255,15 @@ const DateFilterDropdown = () => {
                                         className="w-full p-2 border rounded-md focus:ring-2 focus:ring-[#3BC0C3] focus:border-transparent"
                                         placeholderText="End date"
                                         dateFormat="yyyy-MM-dd"
+                                        // isClearable
                                     />
                                 </div>
                             </div>
                             <button
                                 onClick={applyRangeFilter}
-                                disabled={!fromDate && !toDate}
-                                className={`mt-2 w-full py-1 rounded ${
-                                    fromDate || toDate
-                                        ? "bg-[#3BC0C3] text-white hover:bg-[#2fa8ab]"
-                                        : "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                }`}
+                                className="mt-2 w-full py-1 rounded bg-[#3BC0C3] text-white hover:bg-[#2fa8ab]"
                             >
-                                Apply Range
+                                Apply
                             </button>
                             {rangeError && (
                                 <p className="text-red-500 text-sm mt-1">{rangeError}</p>

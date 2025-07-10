@@ -13,7 +13,7 @@ export const password: Joi.CustomValidator<string> = (value, helpers) => {
 
 export const passwordCustomMessages: Joi.LanguageMessages = {
     minPassword: '{{#label}} must be at least 8 characters',
-    customPassword: '{{#label}} must contain at least 1 letter and 1 number'
+    customPassword: 'Incorrect email or password'
 };
 
 export const isValidMongoDBObjectId: Joi.CustomValidator<string> = (value, helpers) => {

@@ -13,11 +13,22 @@ const loginUserWithEmailAndPassword = async (
   password: string
 ): Promise<Omit<User, "password">> => {
   const user = await userService.getUserWithPasswordByEmail(email);
-  if (!user || !(await isPasswordMatch(password, user.password as string))) {
+
+  if (!user) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Your Account doesn't exist");
+  }
+
+  if (user.deleted) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "User account has been deleted");
+  }
+
+  if (!(await isPasswordMatch(password, user.password as string))) {
     throw new ApiError(httpStatus.UNAUTHORIZED, "Incorrect email or password");
   }
+
   return exclude(user, ["password"]);
 };
+
 
 const logout = async (refreshToken: string): Promise<void> => {
   try {
@@ -37,17 +48,17 @@ const logout = async (refreshToken: string): Promise<void> => {
 };
 
 const refreshAuth = async (
-  refreshToken: string
+    refreshToken: string
 ): Promise<AuthTokensResponse> => {
   try {
     const refreshTokenData = await tokenService.verifyToken(
-      refreshToken,
-      TokenType.REFRESH
+        refreshToken,
+        TokenType.REFRESH
     );
 
     const user = await userService.getUserById(refreshTokenData.userId);
-    if (!user) {
-      throw new ApiError(httpStatus.UNAUTHORIZED, 'User not found');
+    if (!user || user.deleted) {
+      throw new ApiError(httpStatus.UNAUTHORIZED, 'User account has been deleted');
     }
 
     await db.token.delete({ where: { id: refreshTokenData.id } });
@@ -117,9 +128,15 @@ const resetPassword = async (
 const verifyEmail = async (verifyEmailToken: string): Promise<void> => {
   try {
     const verifyEmailTokenData = await tokenService.verifyToken(
-      verifyEmailToken,
-      TokenType.VERIFY_EMAIL
+        verifyEmailToken,
+        TokenType.VERIFY_EMAIL
     );
+
+    const user = await userService.getUserById(verifyEmailTokenData.userId);
+    if (!user || user.deleted) {
+      throw new Error("User account has been deleted");
+    }
+
     await db.token.deleteMany({
       where: {
         userId: verifyEmailTokenData.userId,

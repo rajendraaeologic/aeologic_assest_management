@@ -368,16 +368,35 @@ const getUserByEmail = async (
 };
 
 const getUserWithPasswordByEmail = async (
-  email: string,
-  excludeUserId: string = null
+    email: string,
+    excludeUserId: string | null = null
 ): Promise<User | null> => {
-  if (!excludeUserId) {
-    return db.user.findFirst({
-      omit: { password: false },
-      where: { email, deleted: false },
-    });
-  }
-  return null
+  return db.user.findFirst({
+    where: {
+      email,
+      deleted: false,
+      ...(excludeUserId ? { id: { not: excludeUserId } } : {}),
+    },
+    select: {
+      id: true,
+      userName: true,
+      phone: true,
+      ISDCode: true,
+      email: true,
+      image: true,
+      password: true,
+      userRole: true,
+      status: true,
+      isEmailVerified: true,
+      deleted: true,
+      deletedAt: true,
+      createdAt: true,
+      updatedAt: true,
+      companyId: true,
+      branchId: true,
+      departmentId: true
+    }
+  });
 };
 
 const getUserByPhone = async (

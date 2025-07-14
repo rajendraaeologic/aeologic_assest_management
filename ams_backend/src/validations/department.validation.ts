@@ -28,6 +28,7 @@ const getAllDepartmentsValidation = {
     limit: Joi.number().integer().optional(),
     page: Joi.number().integer().optional(),
     searchTerm: Joi.string().allow("").optional(),
+    selectedDate: Joi.date().iso().optional(),
   }),
 };
 

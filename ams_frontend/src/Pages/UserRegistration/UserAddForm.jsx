@@ -413,6 +413,18 @@ const AddUserForm = ({ onClose }) => {
       handleClose();
     } catch (error) {
       const errorMessage = error?.message || "";
+
+      if (errorMessage.includes("This user has been deleted")) {
+        toast.info("This email is linked to a previously removed account(User). Please contact SuperAdmin if you need help restoring access.", {
+          autoClose: 3000,
+          position: "top-right"
+        });
+        return setError("email", {
+          type: "manual",
+          message: userStrings.addUser.toast.emailTaken,
+        });
+      }
+
       if (errorMessage.includes("Email already taken")) {
         toast.error(userStrings.addUser.toast.emailTaken, { autoClose: 2000 });
         return setError("email", {
@@ -420,6 +432,7 @@ const AddUserForm = ({ onClose }) => {
           message: userStrings.addUser.toast.emailTaken,
         });
       }
+
       if (errorMessage.includes("Phone already taken")) {
         toast.error(userStrings.addUser.toast.phoneTaken, { autoClose: 2000 });
         return setError("phone", {
@@ -427,10 +440,6 @@ const AddUserForm = ({ onClose }) => {
           message: userStrings.addUser.toast.phoneTaken,
         });
       }
-      toast.error(userStrings.addUser.toast.error, {
-        position: "top-right",
-        autoClose: 2000,
-      });
     }
   };
 

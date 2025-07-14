@@ -1,8 +1,37 @@
-// dashboard.controller.ts
 import httpStatus from "http-status";
 import ApiError from "@/lib/ApiError";
 import catchAsync from "@/lib/catchAsync";
 import { dashboardService } from "@/services";
+import { User } from "@prisma/client";
+
+const getDashboardCounts = catchAsync(async (req, res) => {
+  const { period } = req.query;
+  const user = req.user as User;
+
+  const dashboardUser = {
+    id: user.id,
+    userRole: user.userRole,
+    companyId: user.companyId
+  };
+
+  const counts = await dashboardService.getDashboardCounts(period as string, dashboardUser);
+
+  if (!counts) {
+    throw new ApiError(
+        httpStatus.INTERNAL_SERVER_ERROR,
+        "Unable to fetch dashboard counts"
+    );
+  }
+
+  res.status(httpStatus.OK).json({
+    status: httpStatus.OK,
+    message: "Dashboard counts fetched successfully",
+    data: {
+      counts,
+    },
+  });
+});
+
 
 /**
  * @swagger
@@ -71,25 +100,6 @@ import { dashboardService } from "@/services";
  *       500:
  *         description: Unable to fetch dashboard counts
  */
-const getDashboardCounts = catchAsync(async (req, res) => {
-  const { period } = req.query;
-  const counts = await dashboardService.getDashboardCounts(period as string);
-
-  if (!counts) {
-    throw new ApiError(
-        httpStatus.INTERNAL_SERVER_ERROR,
-        "Unable to fetch dashboard counts"
-    );
-  }
-
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    message: "Dashboard counts fetched successfully",
-    data: {
-      counts,
-    },
-  });
-});
 
 export default {
   getDashboardCounts,

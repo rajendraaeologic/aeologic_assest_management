@@ -113,11 +113,6 @@ console.log(res)
             color: "#3B82F6",
           },
           {
-            name: dashboardStrings.dashboard.stats.organizations,
-            value: organizations,
-            color: "#210F37",
-          },
-          {
             name: dashboardStrings.dashboard.stats.branches,
             value: branches,
             color: "#fc0380",
@@ -143,6 +138,15 @@ console.log(res)
             color: "#14B8A6",
           },
         ];
+
+        if (user?.userRole === USER_ROLES.SUPERADMIN) {
+          data.splice(1, 0, {
+            name: dashboardStrings.dashboard.stats.organizations,
+            value: organizations,
+            color: "#210F37",
+          });
+        }
+
         setChartData(data);
       }
     } catch (error) {
@@ -150,7 +154,7 @@ console.log(res)
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.userRole]);
 
   const handlePeriodChange = useCallback(
       (period) => {

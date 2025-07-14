@@ -17,9 +17,10 @@ const UpdateUserForm = ({ onClose }) => {
   const selectedUser = useSelector((state) => state.usersData.selectedUser);
   const { currentPage, rowsPerPage } = useSelector((state) => state.usersData);
 
+  const orgDropdownRef = useRef(null);
+  const branchDropdownRef = useRef(null);
+  const deptDropdownRef = useRef(null);
   const [noOrgsFound, setNoOrgsFound] = useState(false);
-  const [noBranchesFound, setNoBranchesFound] = useState(false);
-  const [noDeptsFound, setNoDeptsFound] = useState(false);
 
   // Organization dropdown state
   const [organizations, setOrganizations] = useState([]);
@@ -124,7 +125,6 @@ const UpdateUserForm = ({ onClose }) => {
           data: { branches,pagination },
         },
       } = response;
-      setNoBranchesFound(branches.length === 0 && search !== "");
       setBranches((prev) =>
           page === 1 ? branches : [...prev, ...branches]
       );
@@ -150,7 +150,6 @@ const UpdateUserForm = ({ onClose }) => {
           data: { departments,pagination },
         },
       } = response;
-      setNoDeptsFound(departments.length === 0 && search !== "");
       setDepartments((prev) =>
           page === 1 ? departments : [...prev, ...departments]
       );
@@ -234,6 +233,28 @@ const UpdateUserForm = ({ onClose }) => {
     }
   }, [branchId, deptSearchTerm]);
 
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showOrgDropdown && orgDropdownRef.current && !orgDropdownRef.current.contains(event.target)) {
+        setShowOrgDropdown(false);
+      }
+      if (showBranchDropdown && branchDropdownRef.current && !branchDropdownRef.current.contains(event.target)) {
+        setShowBranchDropdown(false);
+      }
+      if (showDeptDropdown && deptDropdownRef.current && !deptDropdownRef.current.contains(event.target)) {
+        setShowDeptDropdown(false);
+      }
+    };
+    if (showOrgDropdown || showBranchDropdown || showDeptDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showOrgDropdown, showBranchDropdown, showDeptDropdown]);
+
+
   // Organization dropdown handlers
   const handleOrgScroll = (e) => {
     const bottomReached =
@@ -283,7 +304,6 @@ const UpdateUserForm = ({ onClose }) => {
 
   const handleBranchSearch = (e) => {
     const search = e.target.value;
-    setNoBranchesFound(false);
     setBranchSearchTerm(search);
     fetchBranches(1, search);
   };
@@ -324,7 +344,6 @@ const UpdateUserForm = ({ onClose }) => {
 
   const handleDeptSearch = (e) => {
     const search = e.target.value;
-    setNoDeptsFound(false);
     setDeptSearchTerm(search);
     fetchDepartments(1, search);
   };
@@ -657,7 +676,9 @@ const UpdateUserForm = ({ onClose }) => {
                     )}
 
                     {showOrgDropdown &&   !isSubmitting &&  (
-                        <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                        <div
+                            ref={orgDropdownRef}
+                            className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                           <input
                               type="text"
                               placeholder="Search organization..."
@@ -707,61 +728,74 @@ const UpdateUserForm = ({ onClose }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <div
-                    onClick={isSubmitting ? null : handleBranchClick}
+                    onClick={!isSubmitting ? () => {
+                      if (!selectedOrgId) {
+                        toast.error("Please select an organization first");
+                        return;
+                      }
+                      setShowBranchDropdown(!showBranchDropdown);
+                    } : undefined}
                     className={`mt-1 p-2 w-full border ${
                         errors.branchId ? "border-red-500" : "border-gray-300"
                     } rounded-md cursor-pointer bg-white truncate ${
-                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
                 >
                   {selectedBranch?.branchName || "Select Branch"}
                 </div>
-                {errors.branchId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.branchId.message}
-                  </p>
-                )}
-                {showBranchDropdown &&  !isSubmitting &&(
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search branch..."
-                      value={branchSearchTerm}
-                      onChange={handleBranchSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleBranchScroll}
-                      className="max-h-40 overflow-auto"
+                {showBranchDropdown && !isSubmitting && (
+                    <div
+                        ref={branchDropdownRef}
+                        className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow"
                     >
-                      {branches.map((branch) => (
-                        <li
-                          key={branch.id}
-                          onClick={() => handleBranchSelect(branch)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {branch.branchName}
-                        </li>
-                      ))}
-                      {loadingBranches && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {noBranchesFound && !loadingBranches && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No branches found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
+                      <input
+                          type="text"
+                          placeholder="Search branch..."
+                          value={branchSearchTerm}
+                          onChange={handleBranchSearch}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                            }
+                          }}
+                          className="p-2 w-full border-b outline-none"
+                      />
+                      <ul
+                          onScroll={handleBranchScroll}
+                          className="max-h-40 overflow-auto"
+                      >
+                        {branches.length === 0 && !loadingBranches ? (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              {branchSearchTerm ? "No branches found" : "No branches exist"}
+                            </li>
+                        ) : (
+                            <>
+                              {branches.map((branch) => (
+                                  <li
+                                      key={branch.id}
+                                      onClick={() => handleBranchSelect(branch)}
+                                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                  >
+                                    {branch.branchName}
+                                  </li>
+                              ))}
+                              {loadingBranches && (
+                                  <li className="px-4 py-2 text-sm text-gray-500">
+                                    Loading...
+                                  </li>
+                              )}
+                            </>
+                        )}
+                      </ul>
+                    </div>
+                )}
+                {errors.branchId && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.branchId.message}
+                    </p>
                 )}
               </div>
+
 
               {/* Department Dropdown */}
               <div className="w-full relative">
@@ -770,59 +804,71 @@ const UpdateUserForm = ({ onClose }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <div
-                    onClick={isSubmitting ? null : handleDeptClick}
+                    onClick={!isSubmitting ? () => {
+                      if (!branchId) {
+                        toast.error("Please select a branch first");
+                        return;
+                      }
+                      setShowDeptDropdown(!showDeptDropdown);
+                    } : undefined}
                     className={`mt-1 p-2 w-full border ${
                         errors.departmentId ? "border-red-500" : "border-gray-300"
                     } rounded-md cursor-pointer bg-white truncate ${
-                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
                 >
                   {selectedDept?.departmentName || "Select Department"}
                 </div>
-                {errors.departmentId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.departmentId.message}
-                  </p>
-                )}
-                {showDeptDropdown &&  !isSubmitting && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search department..."
-                      value={deptSearchTerm}
-                      onChange={handleDeptSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleDeptScroll}
-                      className="max-h-40 overflow-auto"
+                {showDeptDropdown && !isSubmitting && (
+                    <div
+                        ref={deptDropdownRef}
+                        className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow"
                     >
-                      {departments.map((dept) => (
-                        <li
-                          key={dept.id}
-                          onClick={() => handleDeptSelect(dept)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {dept.departmentName}
-                        </li>
-                      ))}
-                      {loadingDepartments && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          Loading...
-                        </li>
-                      )}
-                      {noDeptsFound && !loadingDepartments && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No departments found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
+                      <input
+                          type="text"
+                          placeholder="Search department..."
+                          value={deptSearchTerm}
+                          onChange={handleDeptSearch}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                            }
+                          }}
+                          className="p-2 w-full border-b outline-none"
+                      />
+                      <ul
+                          onScroll={handleDeptScroll}
+                          className="max-h-40 overflow-auto"
+                      >
+                        {departments.length === 0 && !loadingDepartments ? (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              {deptSearchTerm ? "No departments found" : "No departments exist"}
+                            </li>
+                        ) : (
+                            <>
+                              {departments.map((dept) => (
+                                  <li
+                                      key={dept.id}
+                                      onClick={() => handleDeptSelect(dept)}
+                                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                  >
+                                    {dept.departmentName}
+                                  </li>
+                              ))}
+                              {loadingDepartments && (
+                                  <li className="px-4 py-2 text-sm text-gray-500">
+                                    Loading...
+                                  </li>
+                              )}
+                            </>
+                        )}
+                      </ul>
+                    </div>
+                )}
+                {errors.departmentId && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.departmentId.message}
+                    </p>
                 )}
               </div>
 

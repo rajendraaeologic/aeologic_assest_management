@@ -493,6 +493,7 @@ const UserDepartment = () => {
             onPageChange={handlePageChange}
             previousLabel={departmentStrings.department.buttons.previous}
             nextLabel={departmentStrings.department.buttons.next}
+            disabled={loading}
           />
         </div>
       </div>

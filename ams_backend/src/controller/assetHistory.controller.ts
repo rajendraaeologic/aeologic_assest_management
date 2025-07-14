@@ -24,12 +24,11 @@ const getAssetHistories = catchAsync(async (req, res) => {
     searchTerm?: string;
   };
 
-  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 5; // Changed from const to let
+  let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 5;
   const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
   let sortBy = (req.query.sortBy as string) || "timestamp";
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  // Only get company-specific IDs if user is not SUPERADMIN
   let assetIds: string[] = [];
   let userIds: string[] = [];
 
@@ -84,7 +83,7 @@ const getAssetHistories = catchAsync(async (req, res) => {
       contains: rawFilters.assetId,
       mode: "insensitive",
     };
-    limit = 5; // Now this works because limit is declared with let
+    limit = 5;
     sortBy = "timestamp";
     sortType = "desc";
   }
@@ -93,7 +92,7 @@ const getAssetHistories = catchAsync(async (req, res) => {
 
   const isSearchMode = !!searchTerm;
   if (isSearchMode) {
-    limit = 5; // Now this works because limit is declared with let
+    limit = 5;
     sortBy = "timestamp";
     sortType = "desc";
   }

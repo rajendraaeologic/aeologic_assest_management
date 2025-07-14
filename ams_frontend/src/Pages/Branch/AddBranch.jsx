@@ -26,6 +26,8 @@ const AddBranch = ({ onClose }) => {
   const [cities, setCities] = useState([]);
   const indiaCountryCode = 'IN';
 
+  const orgDropdownRef = useRef(null);
+
   // Organization dropdown state
   const [organizations, setOrganizations] = useState([]);
   const [orgLoading, setOrgLoading] = useState(false);
@@ -89,6 +91,20 @@ const AddBranch = ({ onClose }) => {
       setOrgLoading(false);
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showOrgDropdown && orgDropdownRef.current && !orgDropdownRef.current.contains(event.target)) {
+        setShowOrgDropdown(false);
+      }
+    };
+    if (showOrgDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showOrgDropdown]);
 
   // Organization handlers
   const handleOrgScroll = (e) => {
@@ -284,7 +300,9 @@ const AddBranch = ({ onClose }) => {
                       )}
 
                       {showOrgDropdown && !isSubmitting && (
-                          <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                          <div
+                              ref={orgDropdownRef}
+                              className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
                             <input
                                 type="text"
                                 placeholder="Search organization..."

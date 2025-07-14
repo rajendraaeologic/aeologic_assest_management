@@ -472,6 +472,7 @@ const Asset = () => {
             onPageChange={handlePageChange}
             previousLabel={strings.buttons.previous}
             nextLabel={strings.buttons.next}
+            disabled={loading}
           />
         </div>
       </div>

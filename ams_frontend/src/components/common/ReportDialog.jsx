@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
-import { toast } from 'react-toastify';
+import React, { useState, useEffect } from 'react';
 
 const ReportDialog = ({
-                          show,
-                          onClose,
-                          onGenerate,
-                          defaultFileName = "export",
-                          isLoading = false,
-                      }) => {
+      show,
+      onClose,
+      onGenerate,
+      defaultFileName = "export",
+      isLoading = false,
+  }) => {
     const [reportType, setReportType] = useState(null);
     const [selectedDate, setSelectedDate] = useState(null);
     const [fromDate, setFromDate] = useState(null);
     const [toDate, setToDate] = useState(null);
+
+    const currentDate = new Date().toISOString().split('T')[0];
+
+    useEffect(() => {
+        setSelectedDate(null);
+        setFromDate(null);
+        setToDate(null);
+    }, [reportType]);
 
     const handleGenerate = async () => {
         const success = await onGenerate({
@@ -64,6 +71,7 @@ const ReportDialog = ({
                                 value={selectedDate || ''}
                                 onChange={(e) => setSelectedDate(e.target.value)}
                                 className="border p-2 rounded"
+                                max={currentDate}
                             />
                         </div>
                     </div>
@@ -78,6 +86,7 @@ const ReportDialog = ({
                                 value={fromDate || ''}
                                 onChange={(e) => setFromDate(e.target.value)}
                                 className="border p-2 rounded"
+                                max={currentDate}
                             />
                         </div>
                         <div className="flex items-center gap-4">
@@ -87,6 +96,7 @@ const ReportDialog = ({
                                 value={toDate || ''}
                                 onChange={(e) => setToDate(e.target.value)}
                                 className="border p-2 rounded"
+                                max={currentDate}
                             />
                         </div>
                     </div>

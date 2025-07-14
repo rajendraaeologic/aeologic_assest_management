@@ -13,6 +13,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
   const firstInputRef = useRef(null);
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef(null);
+
+  const branchDropdownRef = useRef(null);
+  const deptDropdownRef = useRef(null);
+
   const { error } = useSelector((state) => state.assetUserData);
   const selectedAsset = useSelector(
     (state) => state.assetUserData.selectedAsset
@@ -20,9 +24,6 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
   const { currentPage, rowsPerPage } = useSelector(
     (state) => state.assetUserData
   );
-
-  const [noBranchesFound, setNoBranchesFound] = useState(false);
-  const [noDeptsFound, setNoDeptsFound] = useState(false);
 
   // Organization dropdown state
   const [selectedOrg, setSelectedOrg] = useState(null);
@@ -91,7 +92,6 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
           data: { branches,pagination },
         },
       } = response;
-      setNoBranchesFound(branches.length === 0 && search !== "");
       setBranches((prev) =>
           page === 1 ? branches : [...prev, ...branches]
       );
@@ -117,7 +117,6 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
           data: { departments,pagination },
         },
       } = response;
-      setNoDeptsFound(departments.length === 0 && search !== "");
       setDepartments((prev) =>
           page === 1 ? departments : [...prev, ...departments]
       );
@@ -197,6 +196,24 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
     }
   }, [branchId, deptSearchTerm]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showBranchDropdown && branchDropdownRef.current && !branchDropdownRef.current.contains(event.target)) {
+        setShowBranchDropdown(false);
+      }
+      if (showDeptDropdown && deptDropdownRef.current && !deptDropdownRef.current.contains(event.target)) {
+        setShowDeptDropdown(false);
+      }
+    };
+    if (showBranchDropdown || showDeptDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showBranchDropdown, showDeptDropdown]);
+
+
   // Branch dropdown handlers
   const handleBranchScroll = (e) => {
     const bottomReached =
@@ -208,7 +225,6 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
 
   const handleBranchSearch = (e) => {
     const search = e.target.value;
-    setNoBranchesFound(false);
     setBranchSearchTerm(search);
     fetchBranches(1, search);
   };
@@ -249,7 +265,6 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
 
   const handleDeptSearch = (e) => {
     const search = e.target.value;
-    setNoDeptsFound(false);
     setDeptSearchTerm(search);
     fetchDepartments(1, search);
   };
@@ -742,15 +757,22 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
               {/* Branch Dropdown */}
               <div className="w-full relative">
                 <label className="block text-sm font-medium text-gray-700">
-                  {assetStrings.updateAsset.formLabels.branch}{" "}
+                  {assetStrings.updateAsset.formLabels.branch}
                   <span className="text-red-500">*</span>
                 </label>
                 <div
-                    onClick={isSubmitting ? null : handleBranchClick}
+                    onClick={!isSubmitting ? () => {
+                      handleBranchClick();
+                      if (!user?.companyId) {
+                        toast.error("organization not found");
+                        return;
+                      }
+                      setShowBranchDropdown(!showBranchDropdown);
+                    } : undefined}
                     className={`mt-1 p-2 w-full border ${
                         errors.branchId ? "border-red-500" : "border-gray-300"
                     } rounded-md cursor-pointer bg-white truncate ${
-                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
                 >
                   {selectedBranch ? selectedBranch.branchName : "Select Branch"}
@@ -761,7 +783,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                     </p>
                 )}
                 {showBranchDropdown && !isSubmitting && (
-                    <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                    <div
+                        ref={branchDropdownRef}
+                        className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow"
+                    >
                       <input
                           type="text"
                           placeholder="Search branch..."
@@ -773,29 +798,35 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                             }
                           }}
                           className="p-2 w-full border-b outline-none"
+                          disabled={isSubmitting}
                       />
                       <ul
                           onScroll={handleBranchScroll}
                           className="max-h-40 overflow-auto"
                       >
-                        {branches.map((branch) => (
-                            <li
-                                key={branch.id}
-                                onClick={() => handleBranchSelect(branch)}
-                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                            >
-                              {branch.branchName}
-                            </li>
-                        ))}
-                        {loadingBranches && (
+                        {branches.length === 0 && !loadingBranches ? (
                             <li className="px-4 py-2 text-sm text-gray-500">
-                              Loading...
+                              {branchSearchTerm ? "No branches found" : "No branches exist"}
                             </li>
-                        )}
-                        {noBranchesFound && !loadingBranches && (
-                            <li className="px-4 py-2 text-sm text-gray-500">
-                              No branches found
-                            </li>
+                        ) : (
+                            <>
+                              {branches.map((branch) => (
+                                  <li
+                                      key={branch.id}
+                                      onClick={!isSubmitting ? () => handleBranchSelect(branch) : undefined}
+                                      className={`px-4 py-2 hover:bg-gray-100 ${
+                                          isSubmitting ? 'cursor-not-allowed' : 'cursor-pointer'
+                                      }`}
+                                  >
+                                    {branch.branchName}
+                                  </li>
+                              ))}
+                              {loadingBranches && (
+                                  <li className="px-4 py-2 text-sm text-gray-500">
+                                    Loading...
+                                  </li>
+                              )}
+                            </>
                         )}
                       </ul>
                     </div>
@@ -809,11 +840,18 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                   <span className="text-red-500">*</span>
                 </label>
                 <div
-                    onClick={isSubmitting ? null : handleDeptClick}
+                    onClick={!isSubmitting ? () => {
+                      handleDeptClick();
+                      if (!branchId) {
+                        toast.error("Please select a branch first");
+                        return;
+                      }
+                      setShowDeptDropdown(!showDeptDropdown);
+                    } : undefined}
                     className={`mt-1 p-2 w-full border ${
                         errors.departmentId ? "border-red-500" : "border-gray-300"
                     } rounded-md cursor-pointer bg-white truncate ${
-                        isSubmitting ? "opacity-70 cursor-not-allowed" : ""
+                        isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
                     }`}
                 >
                   {selectedDept
@@ -826,7 +864,10 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                     </p>
                 )}
                 {showDeptDropdown && !isSubmitting && (
-                    <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                    <div
+                        ref={deptDropdownRef}
+                        className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow"
+                    >
                       <input
                           type="text"
                           placeholder="Search department..."
@@ -838,29 +879,35 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
                             }
                           }}
                           className="p-2 w-full border-b outline-none"
+                          disabled={isSubmitting}
                       />
                       <ul
                           onScroll={handleDeptScroll}
                           className="max-h-40 overflow-auto"
                       >
-                        {departments.map((dept) => (
-                            <li
-                                key={dept.id}
-                                onClick={() => handleDeptSelect(dept)}
-                                className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                            >
-                              {dept.departmentName}
-                            </li>
-                        ))}
-                        {loadingDepartments && (
+                        {departments.length === 0 && !loadingDepartments ? (
                             <li className="px-4 py-2 text-sm text-gray-500">
-                              Loading...
+                              {deptSearchTerm ? "No departments found" : "No departments exist"}
                             </li>
-                        )}
-                        {noDeptsFound && !loadingDepartments && (
-                            <li className="px-4 py-2 text-sm text-gray-500">
-                              No departments found
-                            </li>
+                        ) : (
+                            <>
+                              {departments.map((dept) => (
+                                  <li
+                                      key={dept.id}
+                                      onClick={!isSubmitting ? () => handleDeptSelect(dept) : undefined}
+                                      className={`px-4 py-2 hover:bg-gray-100 ${
+                                          isSubmitting ? 'cursor-not-allowed' : 'cursor-pointer'
+                                      }`}
+                                  >
+                                    {dept.departmentName}
+                                  </li>
+                              ))}
+                              {loadingDepartments && (
+                                  <li className="px-4 py-2 text-sm text-gray-500">
+                                    Loading...
+                                  </li>
+                              )}
+                            </>
                         )}
                       </ul>
                     </div>

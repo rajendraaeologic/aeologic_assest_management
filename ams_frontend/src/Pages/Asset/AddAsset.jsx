@@ -14,13 +14,13 @@ const AddAsset = ({ onClose, onSuccess }) => {
   const modalRef = useRef(null);
   const dispatch = useDispatch();
 
+  const branchDropdownRef = useRef(null);
+  const deptDropdownRef = useRef(null);
+
   const { loading, currentPage, rowsPerPage } = useSelector(
     (state) => state.assetUserData
   );
   const { user } = useSelector((state) => state.auth);
-
-  const [noBranchesFound, setNoBranchesFound] = useState(false);
-  const [noDeptsFound, setNoDeptsFound] = useState(false);
 
   // Branch dropdown state
   const [branches, setBranches] = useState([]);
@@ -98,7 +98,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
           data: { branches,pagination },
         },
       } = response;
-      setNoBranchesFound(branches.length === 0 && search !== "");
       setBranches((prev) =>
           page === 1 ? branches : [...prev, ...branches]
       );
@@ -123,7 +122,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
           data: { departments,pagination },
         },
       } = response;
-      setNoDeptsFound(departments.length === 0 && search !== "");
       setDepartments((prev) =>
           page === 1 ? departments : [...prev, ...departments]
       );
@@ -142,6 +140,25 @@ const AddAsset = ({ onClose, onSuccess }) => {
     }
   }, [branchId, deptSearchTerm]);
 
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showBranchDropdown && branchDropdownRef.current && !branchDropdownRef.current.contains(event.target)) {
+        setShowBranchDropdown(false);
+      }
+      if (showDeptDropdown && deptDropdownRef.current && !deptDropdownRef.current.contains(event.target)) {
+        setShowDeptDropdown(false);
+      }
+    };
+    if (showBranchDropdown || showDeptDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showBranchDropdown, showDeptDropdown]);
+
+
   // Branch handlers
   const handleBranchScroll = (e) => {
     const bottomReached =
@@ -153,7 +170,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
 
   const handleBranchSearch = (e) => {
     const search = e.target.value;
-    setNoBranchesFound(false);
     setBranchSearchTerm(search);
     fetchBranches(1, search);
   };
@@ -190,7 +206,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
 
   const handleDeptSearch = (e) => {
     const search = e.target.value;
-    setNoDeptsFound(false);
     setDeptSearchTerm(search);
     fetchDepartments(1, search);
   };
@@ -619,7 +634,10 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       </p>
                   )}
                   {showBranchDropdown && !loading && (
-                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                      <div
+                          ref={branchDropdownRef}
+                          className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow"
+                      >
                         <input
                             type="text"
                             placeholder="Search branch..."
@@ -637,26 +655,29 @@ const AddAsset = ({ onClose, onSuccess }) => {
                             onScroll={handleBranchScroll}
                             className="max-h-40 overflow-auto"
                         >
-                          {branches.map((branch) => (
-                              <li
-                                  key={branch.id}
-                                  onClick={!loading ? () => handleBranchSelect(branch) : undefined}
-                                  className={`px-4 py-2 hover:bg-gray-100 ${
-                                      loading ? 'cursor-not-allowed' : 'cursor-pointer'
-                                  }`}
-                              >
-                                {branch.branchName}
-                              </li>
-                          ))}
-                          {loadingBranches && (
+                          {branches.length === 0 && !loadingBranches ? (
                               <li className="px-4 py-2 text-sm text-gray-500">
-                                Loading...
+                                {branchSearchTerm ? "No branches found" : "No branches exist"}
                               </li>
-                          )}
-                          {noBranchesFound && !loadingBranches && (
-                              <li className="px-4 py-2 text-sm text-gray-500">
-                                No branches found
-                              </li>
+                          ) : (
+                              <>
+                                {branches.map((branch) => (
+                                    <li
+                                        key={branch.id}
+                                        onClick={!loading ? () => handleBranchSelect(branch) : undefined}
+                                        className={`px-4 py-2 hover:bg-gray-100 ${
+                                            loading ? 'cursor-not-allowed' : 'cursor-pointer'
+                                        }`}
+                                    >
+                                      {branch.branchName}
+                                    </li>
+                                ))}
+                                {loadingBranches && (
+                                    <li className="px-4 py-2 text-sm text-gray-500">
+                                      Loading...
+                                    </li>
+                                )}
+                              </>
                           )}
                         </ul>
                       </div>
@@ -694,7 +715,10 @@ const AddAsset = ({ onClose, onSuccess }) => {
                       </p>
                   )}
                   {showDeptDropdown && !loading && (
-                      <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
+                      <div
+                          ref={deptDropdownRef}
+                          className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow"
+                      >
                         <input
                             type="text"
                             placeholder="Search department..."
@@ -712,31 +736,35 @@ const AddAsset = ({ onClose, onSuccess }) => {
                             onScroll={handleDeptScroll}
                             className="max-h-40 overflow-auto"
                         >
-                          {departments.map((dept) => (
-                              <li
-                                  key={dept.id}
-                                  onClick={!loading ? () => handleDeptSelect(dept) : undefined}
-                                  className={`px-4 py-2 hover:bg-gray-100 ${
-                                      loading ? 'cursor-not-allowed' : 'cursor-pointer'
-                                  }`}
-                              >
-                                {dept.departmentName}
-                              </li>
-                          ))}
-                          {loadingDepartments && (
+                          {departments.length === 0 && !loadingDepartments ? (
                               <li className="px-4 py-2 text-sm text-gray-500">
-                                Loading...
+                                {deptSearchTerm ? "No departments found" : "No departments exist"}
                               </li>
-                          )}
-                          {noDeptsFound && !loadingDepartments && (
-                              <li className="px-4 py-2 text-sm text-gray-500">
-                                No departments found
-                              </li>
+                          ) : (
+                              <>
+                                {departments.map((dept) => (
+                                    <li
+                                        key={dept.id}
+                                        onClick={!loading ? () => handleDeptSelect(dept) : undefined}
+                                        className={`px-4 py-2 hover:bg-gray-100 ${
+                                            loading ? 'cursor-not-allowed' : 'cursor-pointer'
+                                        }`}
+                                    >
+                                      {dept.departmentName}
+                                    </li>
+                                ))}
+                                {loadingDepartments && (
+                                    <li className="px-4 py-2 text-sm text-gray-500">
+                                      Loading...
+                                    </li>
+                                )}
+                              </>
                           )}
                         </ul>
                       </div>
                   )}
                 </div>
+
 
                 {/* Description */}
                 <div className="w-full">

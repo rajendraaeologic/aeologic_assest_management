@@ -610,6 +610,7 @@ const UserRegistration = () => {
             onPageChange={handlePageChange}
             previousLabel={userStrings.user.buttons.previous}
             nextLabel={userStrings.user.buttons.next}
+            disabled={loading}
           />
         </div>
       </div>

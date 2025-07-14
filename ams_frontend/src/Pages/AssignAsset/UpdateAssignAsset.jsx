@@ -21,11 +21,10 @@ const UpdateAssignAsset = ({ onClose }) => {
   const { currentPage, rowsPerPage } = useSelector(
     (state) => state.assignAssetData
   );
-
-  const [noBranchesFound, setNoBranchesFound] = useState(false);
-  const [noDeptsFound, setNoDeptsFound] = useState(false);
-  const [noUsersFound, setNoUsersFound] = useState(false);
-  const [noAssetsFound, setNoAssetsFound] = useState(false);
+  const branchDropdownRef = useRef(null);
+  const deptDropdownRef = useRef(null);
+  const assetDropdownRef = useRef(null);
+  const userDropdownRef = useRef(null);
 
   // User dropdown state
   const [users, setUsers] = useState([]);
@@ -91,7 +90,6 @@ const UpdateAssignAsset = ({ onClose }) => {
           data: { branches,pagination },
         },
       } = response;
-      setNoBranchesFound(branches.length === 0 && search !== "");
       setBranches((prev) =>
           page === 1 ? branches : [...prev, ...branches]
       );
@@ -117,7 +115,6 @@ const UpdateAssignAsset = ({ onClose }) => {
           data: { departments,pagination },
         },
       } = response;
-      setNoDeptsFound(departments.length === 0 && search !== "");
       setDepartments((prev) =>
           page === 1 ? departments : [...prev, ...departments]
       );
@@ -143,7 +140,6 @@ const UpdateAssignAsset = ({ onClose }) => {
           data: { users,pagination },
         },
       } = response;
-      setNoUsersFound(users.length === 0 && search !== "");
       setUsers((prev) =>
           page === 1 ? users : [...prev, ...users]
       );
@@ -171,7 +167,6 @@ const UpdateAssignAsset = ({ onClose }) => {
       const { data } = response;
 
       if (data && data.data) {
-        setNoAssetsFound(data.data.assets.length === 0 && search !== "");
         setAssets(prev =>
             page === 1 ? data.data.assets : [...prev, ...data.data.assets]
         );
@@ -180,7 +175,6 @@ const UpdateAssignAsset = ({ onClose }) => {
       }
     } catch (error) {
       console.error("Error fetching assets", error);
-      setNoAssetsFound(true);
       toast.error("Failed to fetch assets");
     } finally {
       setLoadingAssets(false);
@@ -274,6 +268,29 @@ const UpdateAssignAsset = ({ onClose }) => {
     }
   }, [selectedAssignment, reset]);
 
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showBranchDropdown && branchDropdownRef.current && !branchDropdownRef.current.contains(event.target)) {
+        setShowBranchDropdown(false);
+      }
+      if (showDeptDropdown && deptDropdownRef.current && !deptDropdownRef.current.contains(event.target)) {
+        setShowDeptDropdown(false);
+      }
+      if (showAssetDropdown && assetDropdownRef.current && !assetDropdownRef.current.contains(event.target)) {
+        setShowAssetDropdown(false);
+      }
+      if (showUserDropdown && userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setShowUserDropdown(false);
+      }
+    };
+    if (showBranchDropdown || showDeptDropdown || showAssetDropdown || showUserDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showBranchDropdown, showDeptDropdown, showAssetDropdown, showUserDropdown]);
+
   const handleClose = () => {
     setIsVisible(false);
     setTimeout(() => {
@@ -287,8 +304,6 @@ const UpdateAssignAsset = ({ onClose }) => {
     }
   };
 
-
-
   // Branch handlers
   const handleBranchScroll = (e) => {
     const bottomReached =
@@ -300,7 +315,6 @@ const UpdateAssignAsset = ({ onClose }) => {
 
   const handleBranchSearch = (e) => {
     const search = e.target.value;
-    setNoBranchesFound(false);
     setBranchSearchTerm(search);
     fetchBranches(1, search);
   };
@@ -347,7 +361,6 @@ const UpdateAssignAsset = ({ onClose }) => {
 
   const handleDeptSearch = (e) => {
     const search = e.target.value;
-    setNoDeptsFound(false);
     setDeptSearchTerm(search);
     fetchDepartments(1, search);
   };
@@ -389,7 +402,6 @@ const UpdateAssignAsset = ({ onClose }) => {
 
   const handleAssetSearch = (e) => {
     const search = e.target.value;
-    setNoAssetsFound(false);
     setAssetSearchTerm(search);
     fetchAssetsByDepartmentId(1, search);
   };
@@ -411,7 +423,6 @@ const UpdateAssignAsset = ({ onClose }) => {
 
   const handleUserSearch = (e) => {
     const search = e.target.value;
-    setNoUsersFound(false);
     setUserSearchTerm(search);
     fetchUsersByDepartmentId(1, search);
   };
@@ -603,52 +614,55 @@ const UpdateAssignAsset = ({ onClose }) => {
                   {selectedBranch ? selectedBranch.branchName : "Select Branch"}
                 </div>
                 {errors.branchId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.branchId.message}
-                  </p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.branchId.message}
+                    </p>
                 )}
                 {showBranchDropdown && !isSubmitting && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search branch..."
-                      value={branchSearchTerm}
-                      onChange={handleBranchSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleBranchScroll}
-                      className="max-h-40 overflow-auto"
+                    <div
+                        ref={branchDropdownRef}
+                        className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow"
                     >
-                      {branches.map((branch) => (
-                        <li
-                          key={branch.id}
-                          onClick={() => handleBranchSelect(branch)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {branch.branchName}
-                        </li>
-                      ))}
-                      {loadingBranches && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            {
-                              assignAssetStrings.addAssignAsset.select
-                                  .loadingBranches
+                      <input
+                          type="text"
+                          placeholder="Search branch..."
+                          value={branchSearchTerm}
+                          onChange={handleBranchSearch}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
                             }
-                          </li>
-                      )}
-                      {noBranchesFound && !loadingBranches && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No branches found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
+                          }}
+                          className="p-2 w-full border-b outline-none"
+                      />
+                      <ul
+                          onScroll={handleBranchScroll}
+                          className="max-h-40 overflow-auto"
+                      >
+                        {branches.length === 0 && !loadingBranches ? (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              {branchSearchTerm ? "No branches found" : "No branches exist"}
+                            </li>
+                        ) : (
+                            <>
+                              {branches.map((branch) => (
+                                  <li
+                                      key={branch.id}
+                                      onClick={() => handleBranchSelect(branch)}
+                                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                  >
+                                    {branch.branchName}
+                                  </li>
+                              ))}
+                              {loadingBranches && (
+                                  <li className="px-4 py-2 text-sm text-gray-500">
+                                    {assignAssetStrings.addAssignAsset.select.loadingBranches}
+                                  </li>
+                              )}
+                            </>
+                        )}
+                      </ul>
+                    </div>
                 )}
               </div>
 
@@ -669,56 +683,59 @@ const UpdateAssignAsset = ({ onClose }) => {
                     }`}
                 >
                   {selectedDept
-                    ? selectedDept.departmentName
-                    : "Select Department"}
+                      ? selectedDept.departmentName
+                      : "Select Department"}
                 </div>
                 {errors.departmentId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.departmentId.message}
-                  </p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.departmentId.message}
+                    </p>
                 )}
                 {showDeptDropdown && !isSubmitting && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search department..."
-                      value={deptSearchTerm}
-                      onChange={handleDeptSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleDeptScroll}
-                      className="max-h-40 overflow-auto"
+                    <div
+                        ref={deptDropdownRef}
+                        className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow"
                     >
-                      {departments.map((dept) => (
-                        <li
-                          key={dept.id}
-                          onClick={() => handleDeptSelect(dept)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {dept.departmentName}
-                        </li>
-                      ))}
-                      {loadingDepartments && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            {
-                              assignAssetStrings.addAssignAsset.select
-                                  .loadingDepartments
+                      <input
+                          type="text"
+                          placeholder="Search department..."
+                          value={deptSearchTerm}
+                          onChange={handleDeptSearch}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
                             }
-                          </li>
-                      )}
-                      {noDeptsFound && !loadingDepartments && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No departments found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
+                          }}
+                          className="p-2 w-full border-b outline-none"
+                      />
+                      <ul
+                          onScroll={handleDeptScroll}
+                          className="max-h-40 overflow-auto"
+                      >
+                        {departments.length === 0 && !loadingDepartments ? (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              {deptSearchTerm ? "No departments found" : "No departments exist"}
+                            </li>
+                        ) : (
+                            <>
+                              {departments.map((dept) => (
+                                  <li
+                                      key={dept.id}
+                                      onClick={() => handleDeptSelect(dept)}
+                                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                  >
+                                    {dept.departmentName}
+                                  </li>
+                              ))}
+                              {loadingDepartments && (
+                                  <li className="px-4 py-2 text-sm text-gray-500">
+                                    {assignAssetStrings.addAssignAsset.select.loadingDepartments}
+                                  </li>
+                              )}
+                            </>
+                        )}
+                      </ul>
+                    </div>
                 )}
               </div>
 
@@ -727,7 +744,6 @@ const UpdateAssignAsset = ({ onClose }) => {
                 <label className="block text-sm font-medium text-gray-700">
                   {assignAssetStrings.updateAssignAsset.formLabels.asset}
                 </label>
-
                 <div
                     onClick={isSubmitting ? null : () => {
                       if (!departmentId) {
@@ -743,80 +759,78 @@ const UpdateAssignAsset = ({ onClose }) => {
                     }`}
                 >
                   {selectedAsset
-                    ? `${selectedAsset.assetName}`
-                    : "Select Asset"}
+                      ? `${selectedAsset.assetName}`
+                      : "Select Asset"}
                 </div>
-
                 {showAssetDropdown && !isSubmitting && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search asset..."
-                      value={assetSearchTerm}
-                      onChange={handleAssetSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-
-                    <ul
-                      onScroll={handleAssetScroll}
-                      className="max-h-40 overflow-auto"
+                    <div
+                        ref={assetDropdownRef}
+                        className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow"
                     >
-                      {assets.map((asset) => {
-                        const isUnassigned = asset.status === "UNASSIGNED";
-                        const isCurrentAsset =
-                          selectedAssignment?.asset?.id === asset.id;
-
-                        const isDisabled = !isUnassigned && !isCurrentAsset;
-
-                        return (
-                            <li
-                                key={asset.id}
-                                onClick={() => {
-                                  if (!isDisabled) handleAssetSelect(asset);
-                                }}
-                                className={`px-4 py-2 hover:bg-gray-100 ${
-                                    isDisabled
-                                        ? "cursor-not-allowed text-gray-400"
-                                        : "cursor-pointer text-black"
-                                }`}
-                            >
-                            {asset.assetName}
-                            {!isUnassigned && (
-                              <span className="ml-2 text-sm text-red-500">
-                                {isCurrentAsset
-                                  ? "(Current)"
-                                  : `(${asset.status})`}
-                              </span>
-                            )}
-                          </li>
-                        );
-                      })}
-                      {loadingAssets && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            {
-                              assignAssetStrings.addAssignAsset.select
-                                  .loadingAssets
+                      <input
+                          type="text"
+                          placeholder="Search asset..."
+                          value={assetSearchTerm}
+                          onChange={handleAssetSearch}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
                             }
-                          </li>
-                      )}
-                      {assets.length === 0 && !loadingAssets && (
-                        <li className="px-4 py-2 text-sm text-gray-500">
-                          No available assets found
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )}
+                          }}
+                          className="p-2 w-full border-b outline-none"
+                      />
+                      <ul
+                          onScroll={handleAssetScroll}
+                          className="max-h-40 overflow-auto"
+                      >
+                        {assets.length === 0 && !loadingAssets ? (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              {assetSearchTerm ? "No assets found" : "No assets exist"}
+                            </li>
+                        ) : (
+                            <>
+                              {assets.map((asset) => {
+                                const isUnassigned = asset.status === "UNASSIGNED";
+                                const isCurrentAsset = selectedAssignment?.asset?.id === asset.id;
+                                const isDisabled = !isUnassigned && !isCurrentAsset;
 
+                                return (
+                                    <li
+                                        key={asset.id}
+                                        onClick={() => {
+                                          if (!isDisabled) handleAssetSelect(asset);
+                                        }}
+                                        className={`px-4 py-2 hover:bg-gray-100 ${
+                                            isDisabled
+                                                ? "cursor-not-allowed text-gray-400"
+                                                : "cursor-pointer text-black"
+                                        }`}
+                                    >
+                                      {asset.assetName}
+                                      {!isUnassigned && (
+                                          <span className="ml-2 text-sm text-red-500">
+                      {isCurrentAsset
+                          ? "(Current)"
+                          : `(${asset.status})`}
+                    </span>
+                                      )}
+                                    </li>
+                                );
+                              })}
+                              {loadingAssets && (
+                                  <li className="px-4 py-2 text-sm text-gray-500">
+                                    {assignAssetStrings.addAssignAsset.select.loadingAssets}
+                                  </li>
+                              )}
+                            </>
+                        )}
+                      </ul>
+                    </div>
+                )}
                 {errors.assetId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.assetId.message}
-                  </p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.assetId.message}
+                    </p>
                 )}
               </div>
 
@@ -837,58 +851,62 @@ const UpdateAssignAsset = ({ onClose }) => {
                     }`}
                 >
                   {users.find((u) => u.id === watch("userId"))
-                    ? `${users.find((u) => u.id === watch("userId")).userName} `
-                    : assignAssetStrings.updateAssignAsset.select.userDefault}
+                      ? `${users.find((u) => u.id === watch("userId")).userName} `
+                      : assignAssetStrings.updateAssignAsset.select.userDefault}
                 </div>
                 {errors.userId && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.userId.message}
-                  </p>
+                    <p className="text-red-500 text-sm mt-1">
+                      {errors.userId.message}
+                    </p>
                 )}
                 {showUserDropdown && !isSubmitting && (
-                  <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow">
-                    <input
-                      type="text"
-                      placeholder="Search user..."
-                      value={userSearchTerm}
-                      onChange={handleUserSearch}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}
-                      className="p-2 w-full border-b outline-none"
-                    />
-                    <ul
-                      onScroll={handleUserScroll}
-                      className="max-h-40 overflow-auto"
+                    <div
+                        ref={userDropdownRef}
+                        className="absolute z-10 mt-1 w-full border border-gray-300 bg-white rounded-md shadow"
                     >
-                      {users.map((user) => (
-                        <li
-                          key={user.id}
-                          onClick={() => handleUserSelect(user)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {user.userName}
-                        </li>
-                      ))}
-                      {loadingUsers && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            {
-                              assignAssetStrings.addAssignAsset.select
-                                  .loadingUsers
+                      <input
+                          type="text"
+                          placeholder="Search user..."
+                          value={userSearchTerm}
+                          onChange={handleUserSearch}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
                             }
-                          </li>
-                      )}
-                      {noUsersFound && !loadingUsers && (
-                          <li className="px-4 py-2 text-sm text-gray-500">
-                            No Users found
-                          </li>
-                      )}
-                    </ul>
-                  </div>
+                          }}
+                          className="p-2 w-full border-b outline-none"
+                      />
+                      <ul
+                          onScroll={handleUserScroll}
+                          className="max-h-40 overflow-auto"
+                      >
+                        {users.length === 0 && !loadingUsers ? (
+                            <li className="px-4 py-2 text-sm text-gray-500">
+                              {userSearchTerm ? "No users found" : "No users exist"}
+                            </li>
+                        ) : (
+                            <>
+                              {users.map((user) => (
+                                  <li
+                                      key={user.id}
+                                      onClick={() => handleUserSelect(user)}
+                                      className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                                  >
+                                    {user.userName}
+                                  </li>
+                              ))}
+                              {loadingUsers && (
+                                  <li className="px-4 py-2 text-sm text-gray-500">
+                                    {assignAssetStrings.addAssignAsset.select.loadingUsers}
+                                  </li>
+                              )}
+                            </>
+                        )}
+                      </ul>
+                    </div>
                 )}
               </div>
+
             </div>
 
             <hr className="mt-4" />

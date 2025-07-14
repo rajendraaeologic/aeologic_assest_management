@@ -682,6 +682,7 @@ const AssetHistory = () => {
                 onPageChange={handlePageChange}
                 previousLabel="Previous"
                 nextLabel="Next"
+                disabled={loading}
             />
           </div>
         </div>

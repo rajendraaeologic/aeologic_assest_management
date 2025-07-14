@@ -506,6 +506,7 @@ const Branch = () => {
             onPageChange={handlePageChange}
             previousLabel={branchStrings.branch.buttons.previous}
             nextLabel={branchStrings.branch.buttons.next}
+            disabled={loading}
           />
         </div>
       </div>

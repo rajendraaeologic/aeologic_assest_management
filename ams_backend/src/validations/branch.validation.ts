@@ -44,6 +44,7 @@ const getAllBranchesValidation = {
     searchTerm: Joi.string().allow("").optional(),
     createdAtFrom: Joi.date().iso().optional(),
     createdAtTo: Joi.date().iso().optional(),
+    selectedDate: Joi.date().iso().optional(),
   }),
 };
 

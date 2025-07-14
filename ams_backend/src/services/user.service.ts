@@ -18,6 +18,21 @@ const createUser = async (
 ): Promise<Omit<User, "password"> | null> => {
   if (!user) return null;
 
+  const deletedUser = await db.user.findFirst({
+    where: {
+      email: user.email,
+      deleted: true
+    }
+  });
+
+  if (deletedUser) {
+    throw new ApiError(
+        httpStatus.CONFLICT,
+        "This user has been deleted. Please contact SuperAdmin for further assistance."
+    );
+  }
+
+
   if (await getUserByEmail(user.email)) {
     throw new ApiError(httpStatus.CONFLICT, "Email already taken");
   }
@@ -356,15 +371,19 @@ const getSuperAdmin = async (): Promise<Omit<User, "password"> | null> => {
     where: { userRole: UserRole.SUPERADMIN, deleted: false },
   });
 };
+
+
 const getUserByEmail = async (
-  email: string,
-  excludeUserId: string = null
+    email: string,
+    excludeUserId: string = null
 ): Promise<Omit<User, "password"> | null> => {
-  if (!excludeUserId) {
-    return db.user.findFirst({
-      where: { email, deleted: false },
-    }) as Promise<Omit<User, "password"> | null>;
-  }
+  return db.user.findFirst({
+    where: {
+      email,
+      deleted: false,
+      ...(excludeUserId ? { id: { not: excludeUserId } } : {})
+    },
+  });
 };
 
 const getUserWithPasswordByEmail = async (

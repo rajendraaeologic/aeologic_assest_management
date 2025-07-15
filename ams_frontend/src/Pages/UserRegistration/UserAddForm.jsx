@@ -685,14 +685,7 @@ const AddUserForm = ({ onClose }) => {
                 </label>
 
                 <div
-                    onClick={!isSubmitting ? () => {
-                      handleBranchClick();
-                      if (!selectedOrgId) {
-                        toast.error("Please select an organization first");
-                        return;
-                      }
-                      setShowBranchDropdown(!showBranchDropdown);
-                    } : undefined}
+                    onClick={!isSubmitting ? handleBranchClick : undefined}
                     className={`mt-1 p-2 w-full border ${
                         errors.branchId ? "border-red-500" : "border-gray-300"
                     } rounded-md cursor-pointer bg-white truncate ${
@@ -762,14 +755,7 @@ const AddUserForm = ({ onClose }) => {
                 </label>
 
                 <div
-                    onClick={!isSubmitting ? () => {
-                      handleDeptClick();
-                      if (!branchId) {
-                        toast.error("Please select a branch first");
-                        return;
-                      }
-                      setShowDeptDropdown(!showDeptDropdown);
-                    } : undefined}
+                    onClick={!isSubmitting ? handleDeptClick : undefined}
                     className={`mt-1 p-2 w-full border ${
                         errors.departmentId ? "border-red-500" : "border-gray-300"
                     } rounded-md cursor-pointer bg-white truncate ${

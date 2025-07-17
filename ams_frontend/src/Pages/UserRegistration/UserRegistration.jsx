@@ -427,7 +427,7 @@ const UserRegistration = () => {
                   displayField="branchName"
                   valueField="id"
                   placeholder="Branch"
-                  parentFilterType="organization"
+                  parentFilterType="organizationName"
                   parentId={filters.organizationId}
                   allowIndependentSelection={true}
               />
@@ -440,7 +440,7 @@ const UserRegistration = () => {
                   displayField="departmentName"
                   valueField="id"
                   placeholder="Department"
-                  parentFilterType="branch"
+                  parentFilterType="branchName"
                   parentId={filters.branchId}
                   allowIndependentSelection={true}
               />

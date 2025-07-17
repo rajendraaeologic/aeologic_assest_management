@@ -21,8 +21,12 @@ const getUsers = {
       .optional()
       .valid(UserRole.ADMIN, UserRole.MANAGER, UserRole.USER),
     organizationName: Joi.string().optional(),
+    organizationId: Joi.string().optional().custom(isValidMongoDBObjectId),
     branchName: Joi.string().optional().trim(),
+    branchId: Joi.string().optional().custom(isValidMongoDBObjectId),
     departmentName: Joi.string().optional().trim(),
+    departmentId: Joi.string().optional().custom(isValidMongoDBObjectId),
+
     from_date: Joi.string().optional().isoDate(),
     to_date: Joi.string().optional().isoDate(),
     selectedDate: Joi.string().optional().isoDate(),

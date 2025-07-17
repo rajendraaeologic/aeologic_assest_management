@@ -164,9 +164,12 @@ export const getUsers = catchAsync(async (req, res) => {
     "to_date",
     "selectedDate",
     "searchTerm",
-    "department",
-    "organization",
-    "branch"
+    "departmentName",
+    "departmentId",
+    "organizationName",
+    "organizationId",
+    "branchName",
+    "branchId"
   ]);
 
   let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 5;
@@ -196,12 +199,6 @@ export const getUsers = catchAsync(async (req, res) => {
           lte: endOfDay
         }
       };
-
-      console.log('Date filter applied:', {
-        input: rawFilters.selectedDate,
-        startOfDay: startOfDay.toISOString(),
-        endOfDay: endOfDay.toISOString()
-      });
 
     } catch (error) {
       console.error('Date filter error:', error);
@@ -263,23 +260,38 @@ export const getUsers = catchAsync(async (req, res) => {
     filters.status = rawFilters.status;
   }
 
-  if (rawFilters.organization) {
+  if (rawFilters.organizationName) {
     filters.company = {
-      organizationName: { contains: rawFilters.organization, mode: "insensitive" },
+      ...(filters.company || {}),
+      organizationName: { contains: rawFilters.organizationName, mode: "insensitive" },
     };
   }
 
-  if (rawFilters.branch) {
+  if (rawFilters.organizationId) {
+    filters.companyId = rawFilters.organizationId;
+  }
+
+
+  if (rawFilters.branchName) {
     filters.branch = {
-      branchName: { contains: rawFilters.branch, mode: "insensitive" },
+      ...(filters.branch || {}),
+      branchName: { contains: rawFilters.branchName, mode: "insensitive" },
     };
+  }
+  if (rawFilters.branchId) {
+    filters.branchId = rawFilters.branchId;
   }
 
-  if (rawFilters.department) {
+  if (rawFilters.departmentName) {
     filters.department = {
-      departmentName: { contains: rawFilters.department, mode: "insensitive" },
+      ...(filters.department || {}),
+      departmentName: { contains: rawFilters.departmentName, mode: "insensitive" },
     };
   }
+  if (rawFilters.departmentId) {
+    filters.departmentId = rawFilters.departmentId;
+  }
+
 
 
   const searchTerm = (rawFilters.searchTerm as string)?.trim();
@@ -936,5 +948,5 @@ export default {
   deleteUsers,
   uploadUsersFromExcel,
   downloadUserExcelTemplate,
-  exportUsersToExcel
+  exportUsersToExcel,
 };

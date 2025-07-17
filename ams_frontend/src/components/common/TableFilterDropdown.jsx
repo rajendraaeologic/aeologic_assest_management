@@ -5,19 +5,18 @@ import API from '../../App/api/axiosInstance';
 import { toast } from 'react-toastify';
 
 const TableFilterDropdown = ({
-                                 filterType,
-                                 options = [],
-                                 fetchOnOpen = false,
-                                 apiUrl = null,
-                                 responseDataKey = 'organizations',
-                                 displayField = 'organizationName',
-                                 valueField = 'id',
-                                 placeholder = '',
-                                 disabled = false,
-                                 parentFilterType = null,
-                                 parentId = null,
-                                 allowIndependentSelection = false // Enable independent selection when true
-                             }) => {
+     filterType,
+     options = [],
+     fetchOnOpen = false,
+     apiUrl = null,
+     responseDataKey = 'organizations',
+     displayField = 'organizationName',
+     valueField = 'id',
+     placeholder = '',
+     disabled = false,
+     parentFilterType = null,
+     parentId = null,
+ }) => {
     const dispatch = useDispatch();
     const dropdownRef = useRef(null);
     const listRef = useRef(null);
@@ -32,29 +31,29 @@ const TableFilterDropdown = ({
     const [selectedItem, setSelectedItem] = useState(null);
 
     const filters = useSelector((state) => state.usersData.filters || {});
-    const selectedValue = filters[filterType] || null;
+    const selectedValue = useSelector((state) => {
+        if (filterType === 'organization') return state.usersData.filters?.organizationName;
+        if (filterType === 'branch') return state.usersData.filters?.branchName;
+        if (filterType === 'department') return state.usersData.filters?.departmentName;
+        return state.usersData.filters?.[filterType] || null;
+    });
 
     const LIMIT = 5;
-
     const fetchOptions = async (pageNum, search = '') => {
         if (!apiUrl) return;
-
         let url = apiUrl;
-        // Only use parent filter when not in independent mode
-        if (!allowIndependentSelection && parentFilterType && parentId) {
-            if (filterType === 'branch' && parentFilterType === 'organization') {
+        if (parentId) {
+            if (filterType === 'branch' && parentFilterType === 'organizationName') {
                 url = `/branch/${parentId}/branches`;
-            } else if (filterType === 'department' && parentFilterType === 'branch') {
+            } else if (filterType === 'department' && parentFilterType === 'branchName') {
                 url = `/department/${parentId}/departments`;
             }
         }
-
         try {
             setLoading(true);
             const response = await API.get(
                 `${url}?page=${pageNum}&limit=${LIMIT}&searchTerm=${search}`
             );
-
             const responseData = response?.data?.data || {};
             const items = responseDataKey ? responseData[responseDataKey] || [] : [];
             const pagination = responseData?.pagination || { totalPages: 0 };
@@ -75,16 +74,11 @@ const TableFilterDropdown = ({
 
     const handleDropdownClick = async () => {
         if (disabled) return;
-
-        // Only check parent filter when not in independent mode
-        if (!allowIndependentSelection && parentFilterType && !filters[parentFilterType]) {
-            toast.error(`Please select ${parentFilterType} first`);
-            return;
-        }
-
+        // if (parentFilterType && !filters[parentFilterType]) {
+        //     toast.info(`Showing all ${filterType}s. Select ${parentFilterType} to filter results.`);
+        // }
         const shouldFetch = !isOpen;
         setIsOpen((prev) => !prev);
-
         if (shouldFetch) {
             if (fetchOnOpen && apiUrl && searchTerm.trim() === "") {
                 await fetchOptions(1, "");
@@ -118,24 +112,30 @@ const TableFilterDropdown = ({
     };
 
     const handleItemSelect = (item) => {
-        const displayValue = typeof item === 'object' ? item[displayField] || item.name || item : item;
-        const newFilters = { ...filters, [filterType]: displayValue };
-
-        // Only clear child filters when not in independent mode
-        if (!allowIndependentSelection) {
-            if (filterType === 'organization') {
-                newFilters.branch = null;
-                newFilters.department = null;
-            } else if (filterType === 'branch') {
-                newFilters.department = null;
-            }
+        let keyName = filterType;
+        let displayValue = typeof item === 'object' ? item[displayField] || item.name || item : item;
+        if (filterType === 'organization') {
+            keyName = 'organizationName';
+        } else if (filterType === 'branch') {
+            keyName = 'branchName';
+        } else if (filterType === 'department') {
+            keyName = 'departmentName';
+        }
+        console.log('Selected item:', item, 'Display value:', displayValue);
+        const newFilters = { ...filters, [keyName]: displayValue };
+        if (filterType === 'organization') {
+            newFilters.branchName = null;
+            newFilters.branchId = null;
+            newFilters.departmentName = null;
+            newFilters.departmentId = null;
+        } else if (filterType === 'branch') {
+            newFilters.departmentName = null;
+            newFilters.departmentId = null;
         }
 
-        // Store the ID if it's an object
         if (typeof item === 'object') {
             newFilters[`${filterType}Id`] = item[valueField] || item.id;
         }
-
         dispatch(setFilters(newFilters));
         setIsOpen(false);
         setSearchTerm("");

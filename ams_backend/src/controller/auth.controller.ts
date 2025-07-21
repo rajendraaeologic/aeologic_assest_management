@@ -20,13 +20,11 @@ const login = catchAsync(async (req, res) => {
     const user = await authService.loginUserWithEmailAndPassword(email, password);
 
     if (user.status === 'IN_ACTIVE') {
-      throw new ApiError(
-          httpStatus.FORBIDDEN,
-          "Your account is inactive. Please contact the superadmin for assistance.",
-          true,
-          null,
-          "Account Inactive"
-      );
+      res.status(httpStatus.FORBIDDEN).send({
+        statusCode: httpStatus.FORBIDDEN,
+        message: "Your account is inactive. Please contact the superadmin for assistance.",
+        error: "Account Inactive"
+      });
     }
 
     const tokens = await tokenService.generateAuthTokens(user);
@@ -50,16 +48,18 @@ const login = catchAsync(async (req, res) => {
     });
   } catch (error) {
     if (error instanceof ApiError) {
-      throw error;
+      res.status(httpStatus.BAD_REQUEST).send({
+        statusCode:httpStatus.BAD_REQUEST,
+        message: error.message,
+        error: error.message
+      });
     }
 
-    throw new ApiError(
-        httpStatus.UNAUTHORIZED,
-        "Incorrect email or password",
-        true,
-        null,
-        "Unauthorized"
-    );
+    res.status(httpStatus.UNAUTHORIZED).send({
+      statusCode: httpStatus.UNAUTHORIZED,
+      message: "Incorrect email or password",
+      error: "Unauthorized",
+    });
   }
 });
 

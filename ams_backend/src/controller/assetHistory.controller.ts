@@ -156,32 +156,32 @@ const getAssetHistories = catchAsync(async (req, res) => {
   });
 });
 
-
 const getAssetHistoryById = catchAsync(async (req, res) => {
+  try {
   const history = await assetHistoryService.getAssetHistoryById(
       req.params.historyId
   );
 
   if (!history) {
-    res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
       message: "Asset history not found",
-      data: {
-        history: null,
-      },
+      data: { history: null },
     });
-    return;
   }
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Asset history fetched successfully",
-    data: {
-      history,
-    },
+    data: { history },
   });
+} catch (error) {
+  res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+    statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+    message: "Failed to fetch asset history",
+    error: error.message,
+  });
+}
 });
 
 const getAssetHistoryByAssetId = catchAsync(async (req, res) => {

@@ -29,7 +29,6 @@ const Header = () => {
       await dispatch(logoutUser(persistor)).unwrap();
       navigate("/login");
     } catch (error) {
-      console.error("Logout error:", error);
       navigate("/login");
     }
   };

@@ -98,7 +98,6 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
       setBranchPage(page);
       setHasMoreBranches(page < pagination.totalPages);
     } catch (error) {
-      console.error("Error fetching branches", error);
     } finally {
       setLoadingBranches(false);
     }
@@ -123,7 +122,6 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
       setDepartmentPage(page);
       setHasMoreDepts(page < pagination.totalPages);
     } catch (error) {
-      console.error("Error fetching departments", error);
     } finally {
       setLoadingDepartments(false);
     }
@@ -387,7 +385,6 @@ const UpdateAsset = ({ onClose, onSuccess }) => {
       onSuccess();
       handleClose();
     } catch (error) {
-      console.log("error", error);
       toast.error(error.message || assetStrings.updateAsset.toast.error, {
         position: "top-right",
         autoClose: 1500,

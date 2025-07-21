@@ -8,28 +8,40 @@ const getDashboardCounts = catchAsync(async (req, res) => {
   const { period } = req.query;
   const user = req.user as User;
 
+  if (!user) {
+    res.status(httpStatus.UNAUTHORIZED).json({
+      statusCode: httpStatus.UNAUTHORIZED,
+      message: "User not authenticated",
+    });
+  }
+
   const dashboardUser = {
     id: user.id,
     userRole: user.userRole,
-    companyId: user.companyId
+    companyId: user.companyId,
   };
 
-  const counts = await dashboardService.getDashboardCounts(period as string, dashboardUser);
+  try {
+    const counts = await dashboardService.getDashboardCounts(period as string, dashboardUser);
 
-  if (!counts) {
-    throw new ApiError(
-        httpStatus.INTERNAL_SERVER_ERROR,
-        "Unable to fetch dashboard counts"
-    );
+    if (!counts) {
+      res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+        statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+        message: "Unable to fetch dashboard counts",
+      });
+    }
+
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "Dashboard counts fetched successfully",
+      data: { counts },
+    });
+  } catch (error) {
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+      message: error.message || "An unexpected error occurred",
+    });
   }
-
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    message: "Dashboard counts fetched successfully",
-    data: {
-      counts,
-    },
-  });
 });
 
 

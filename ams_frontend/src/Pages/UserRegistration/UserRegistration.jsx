@@ -277,7 +277,6 @@ const UserRegistration = () => {
           return dispatch(getAllUsers()).unwrap();
         })
         .catch((error) => {
-          console.log("error", error);
           setIsProcessing(false);
           setUploadError(error);
         });

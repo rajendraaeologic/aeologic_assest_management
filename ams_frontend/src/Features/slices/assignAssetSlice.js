@@ -33,7 +33,6 @@ export const getAllAssignAssets = createAsyncThunk(
         searchTerm,
         status,
       });
-      console.log(response);
       return response.data.data || [];
     } catch (error) {
       return rejectWithValue(

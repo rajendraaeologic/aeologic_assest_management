@@ -1,7 +1,6 @@
 import API from "../../App/api/axiosInstance";
 
 export const createDepartmentService = async (data) => {
-  console.log(data);
   const response = await API.post("/department/createDepartment", {
     departmentName: data.departmentName,
     branchId: data.branchId,
@@ -21,7 +20,6 @@ export const getAllDepartmentsService = async ({
       searchTerm: searchTerm.trim(),
     },
   });
-  console.log(response);
   return response;
 };
 

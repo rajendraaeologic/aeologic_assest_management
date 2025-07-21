@@ -46,14 +46,17 @@ const createDepartment = catchAsync(async (req, res) => {
       companyId: companyId,
     } as Department);
 
-    res.status(httpStatus.CREATED).send({
-      status: httpStatus.CREATED,
-      success: true,
+    res.status(httpStatus.CREATED).json({
+      statusCode: httpStatus.CREATED,
       message: "Department Created Successfully",
       data: department,
     });
   } catch (error) {
-    throw new ApiError(httpStatus.CONFLICT, error.message);
+    res.status(httpStatus.CONFLICT).json({
+      statusCode: httpStatus.CONFLICT,
+      message: "Failed to create department",
+      error: error.message,
+    });
   }
 });
 
@@ -152,34 +155,21 @@ export const getAllDepartments = catchAsync(async (req, res) => {
       ? {
         OR: [
           { departmentName: { contains: searchTerm, mode: "insensitive" } },
-          // Add other searchable fields if needed
         ],
       }
       : {};
 
-  const where = {
-    ...filters,
-    ...searchConditions,
-  };
-
-  const options = {
-    limit,
-    page,
-    sortBy,
-    sortType,
-  };
+  const where = { ...filters, ...searchConditions };
+  const options = { limit, page, sortBy, sortType };
 
   const result = await departmentService.queryDepartments(where, options);
 
   if (!result || result.data.length === 0) {
-    const message = (rawFilters.selectedDate || (rawFilters.from_date && rawFilters.to_date))
-        ? "No departments found for the selected date range"
-        : "No departments found";
-
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
-      message,
+      statusCode: httpStatus.NOT_FOUND,
+      message: (rawFilters.selectedDate || (rawFilters.from_date && rawFilters.to_date))
+          ? "No departments found for the selected date range"
+          : "No departments found",
       data: {
         departments: [],
         pagination: {
@@ -195,8 +185,7 @@ export const getAllDepartments = catchAsync(async (req, res) => {
   }
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Departments fetched successfully",
     data: {
       departments: result.data,
@@ -216,13 +205,10 @@ const getDepartmentById = catchAsync(async (req, res) => {
   const department = await departmentService.getDepartmentById(req.params.departmentId);
 
   if (!department) {
-    res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
       message: "No Department found",
-      data: {
-        department: null,
-      },
+      data: { department: null },
     });
     return;
   }
@@ -232,12 +218,9 @@ const getDepartmentById = catchAsync(async (req, res) => {
   }
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Department fetched successfully",
-    data: {
-      department,
-    },
+    data: { department },
   });
 });
 
@@ -248,15 +231,16 @@ const updateDepartment = catchAsync(async (req, res) => {
       req.body
     );
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: true,
+      statusCode: httpStatus.OK,
       message: "Department updated successfully",
-      data: {
-        department,
-      },
+      data: { department },
     });
   } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
+      message: "Failed to update department",
+      error: error.message,
+    });
   }
 });
 
@@ -264,13 +248,16 @@ const deleteDepartment = catchAsync(async (req, res) => {
   try {
     await departmentService.deleteDepartmentById(req.params.departmentId);
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: true,
+      statusCode: httpStatus.OK,
       message: "Department deleted successfully",
       data: null,
     });
   } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
+      message: "Failed to delete department",
+      error: error.message,
+    });
   }
 });
 
@@ -278,13 +265,16 @@ const deleteDepartments = catchAsync(async (req, res) => {
   try {
     await departmentService.deleteDepartmentsByIds(req.body.departmentIds);
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: true,
+      statusCode: httpStatus.OK,
       message: "Departments deleted successfully",
       data: null,
     });
   } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
+      message: "Failed to delete departments",
+      error: error.message,
+    });
   }
 });
 
@@ -312,24 +302,16 @@ export const getDepartmentsByBranchId = catchAsync(async (req, res) => {
     sortBy: rawOptions.sortBy as string,
     sortType: rawOptions.sortType as "asc" | "desc",
     status: rawOptions.status as string,
-    createdAtFrom: rawOptions.createdAtFrom
-      ? new Date(rawOptions.createdAtFrom as string)
-      : undefined,
-    createdAtTo: rawOptions.createdAtTo
-      ? new Date(rawOptions.createdAtTo as string)
-      : undefined,
+    createdAtFrom: rawOptions.createdAtFrom ? new Date(rawOptions.createdAtFrom as string) : undefined,
+    createdAtTo: rawOptions.createdAtTo ? new Date(rawOptions.createdAtTo as string) : undefined,
     searchTerm: rawOptions.searchTerm as string,
   };
 
-  const result = await departmentService.getDepartmentsByBranchId(
-    branchId,
-    options
-  );
+  const result = await departmentService.getDepartmentsByBranchId(branchId, options);
 
   if (!result || result.data.length === 0) {
-    res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
       message: "No departments found for this branch",
       data: {
         departments: [],
@@ -345,8 +327,7 @@ export const getDepartmentsByBranchId = catchAsync(async (req, res) => {
   }
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Departments fetched successfully",
     data: {
       departments: result.data,
@@ -360,7 +341,6 @@ export const getDepartmentsByBranchId = catchAsync(async (req, res) => {
   });
 });
 
-// department.controller.ts
 const exportDepartmentsToExcel = catchAsync(async (req, res) => {
   const user = req.user as User;
   const filters = {

@@ -59,7 +59,6 @@ export const deleteUserService = async (ids) => {
 };
 
 export const uploadExcelService = async (file) => {
-  console.log("file", file);
   const formData = new FormData();
   formData.append("file", file);
 

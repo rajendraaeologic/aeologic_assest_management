@@ -104,7 +104,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
       setBranchPage(page);
       setHasMoreBranches(page < pagination.totalPages);
     } catch (error) {
-      console.error("Error fetching branches", error);
     } finally {
       setLoadingBranches(false);
     }
@@ -128,7 +127,6 @@ const AddAsset = ({ onClose, onSuccess }) => {
       setDepartmentPage(page);
       setHasMoreDepts(page < pagination.totalPages);
     } catch (error) {
-      console.error("Error fetching departments", error);
     } finally {
       setLoadingDepartments(false);
     }

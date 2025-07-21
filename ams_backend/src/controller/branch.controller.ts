@@ -7,11 +7,16 @@ import { applyDateFilter } from "@/utils/filters.utils";
 import pick from "@/lib/pick";
 import db from "@/lib/db";
 
-const createBranch = catchAsync(async (req, res) => {
+const createBranch = catchAsync(async (req, res): Promise<void> => {
   const user = req.user as User;
 
   if (!user) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, "User not authenticated");
+    res.status(httpStatus.UNAUTHORIZED).send({
+      statusCode: httpStatus.UNAUTHORIZED,
+      message: "User not authenticated",
+      error: "Unauthorized"
+    });
+    return;
   }
 
   let companyId = user.companyId;
@@ -19,13 +24,23 @@ const createBranch = catchAsync(async (req, res) => {
     companyId = req.body.companyId;
   } else if (user.userRole !== UserRole.SUPERADMIN) {
     if (!user.companyId) {
-      throw new ApiError(httpStatus.FORBIDDEN, "User is not associated with any company");
+      res.status(httpStatus.FORBIDDEN).send({
+        statusCode: httpStatus.FORBIDDEN,
+        message: "User is not associated with any company",
+        error: "Forbidden"
+      });
+      return;
     }
     companyId = user.companyId;
   }
 
   if (!req.body.branchName || !req.body.state || !req.body.city) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Missing required fields");
+    res.status(httpStatus.BAD_REQUEST).send({
+      statusCode: httpStatus.BAD_REQUEST,
+      message: "Missing required fields: branchName, state, or city",
+      error: "BadRequest"
+    });
+    return;
   }
 
   try {
@@ -37,108 +52,88 @@ const createBranch = catchAsync(async (req, res) => {
     } as Branch);
 
     res.status(httpStatus.CREATED).send({
-      status: httpStatus.CREATED,
+      statusCode: httpStatus.CREATED,
       success: true,
       message: "Branch Created Successfully",
       data: branch,
     });
   } catch (error) {
-    throw new ApiError(httpStatus.CONFLICT, error.message);
+    res.status(httpStatus.CONFLICT).send({
+      statusCode: httpStatus.CONFLICT,
+      message: error.message || "Failed to create branch",
+      error: error.message
+    });
   }
 });
 
-export const getAllBranches = catchAsync(async (req, res) => {
-  const user = req.user as User;
+export const getAllBranches = catchAsync(async (req, res): Promise<void> => {
+  try {
+    const user = req.user as User;
+    if (!user) {
+      res.status(httpStatus.UNAUTHORIZED).json({
+        statusCode: httpStatus.UNAUTHORIZED,
+        message: "User not authenticated",
+        error: "Unauthorized",
+      });
+      return;
+    }
 
-  if (!user) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, "User not authenticated");
-  }
-
-  const rawFilters = pick(req.query, [
-    "branchName",
-    "state",
-    "city",
-    "from_date",
-    "to_date",
-    "selectedDate",
-    "searchTerm",
-    "companyId",
-  ]);
+    const rawFilters = pick(req.query, [
+      "branchName", "state", "city", "from_date", "to_date",
+      "selectedDate", "searchTerm", "companyId",
+    ]);
 
   let limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
   const page = req.query.page ? parseInt(req.query.page as string, 10) : 1;
   let sortBy = (req.query.sortBy as string) || "createdAt";
   let sortType = (req.query.sortType as "asc" | "desc") || "desc";
 
-  let dateFilter = {};
-  if (rawFilters.selectedDate) {
-    const selectedDate = new Date(rawFilters.selectedDate as string);
-    const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
-    const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
+    let dateFilter = {};
+    if (rawFilters.selectedDate) {
+      const selectedDate = new Date(rawFilters.selectedDate as string);
+      const startOfDay = new Date(selectedDate.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(selectedDate.setHours(23, 59, 59, 999));
+      dateFilter = { createdAt: { gte: startOfDay, lte: endOfDay } };
+    } else if (rawFilters.from_date && rawFilters.to_date) {
+      const fromDate = new Date(rawFilters.from_date as string);
+      const toDate = new Date(rawFilters.to_date as string);
+      toDate.setHours(23, 59, 59, 999);
+      dateFilter = { createdAt: { gte: fromDate, lte: toDate } };
+    }
 
-    dateFilter = {
-      createdAt: {
-        gte: startOfDay,
-        lte: endOfDay
+    const filters: any = { ...dateFilter, deleted: false };
+
+    if (rawFilters.branchName) {
+      filters.branchName = { contains: rawFilters.branchName, mode: "insensitive" };
+      limit = 1;
+      sortBy = "createdAt";
+      sortType = "desc";
+    }
+
+    if (user.userRole === UserRole.SUPERADMIN) {
+      if (rawFilters.companyId) filters.companyId = rawFilters.companyId;
+    } else {
+      if (!user.companyId) {
+        res.status(httpStatus.FORBIDDEN).json({
+          statusCode: httpStatus.FORBIDDEN,
+          message: "User is not associated with any company",
+          error: "Forbidden",
+        });
+        return;
       }
-    };
-  } else if (rawFilters.from_date && rawFilters.to_date) {
-    const fromDate = new Date(rawFilters.from_date as string);
-    const toDate = new Date(rawFilters.to_date as string);
-
-    toDate.setHours(23, 59, 59, 999);
-
-    dateFilter = {
-      createdAt: {
-        gte: fromDate,
-        lte: toDate
+      filters.companyId = user.companyId;
+      if (rawFilters.companyId && rawFilters.companyId !== user.companyId) {
+        res.status(httpStatus.FORBIDDEN).json({
+          statusCode: httpStatus.FORBIDDEN,
+          message: "Access to this company's data is forbidden",
+          error: "Forbidden",
+        });
+        return;
       }
-    };
-  }
-
-  const filters: any = {
-    ...dateFilter,
-    deleted: false
-  };
-
-  if (rawFilters.branchName) {
-    filters.branchName = {
-      contains: rawFilters.branchName,
-      mode: "insensitive",
-    };
-    limit = 1;
-    sortBy = "createdAt";
-    sortType = "desc";
-  }
-
-  if (user.userRole === UserRole.SUPERADMIN) {
-    if (rawFilters.companyId) {
-      filters.companyId = rawFilters.companyId;
     }
-  } else {
-    if (!user.companyId) {
-      throw new ApiError(httpStatus.FORBIDDEN, "User is not associated with any company");
-    }
-    filters.companyId = user.companyId;
 
-    if (rawFilters.companyId && rawFilters.companyId !== user.companyId) {
-      throw new ApiError(httpStatus.FORBIDDEN, "Access to this company's data is forbidden");
-    }
-  }
-
-  if (rawFilters.state) {
-    filters.state = {
-      contains: rawFilters.state,
-      mode: "insensitive",
-    };
-  }
-
-  if (rawFilters.city) {
-    filters.city = {
-      contains: rawFilters.city,
-      mode: "insensitive",
-    };
-  }
+    if (rawFilters.state) filters.state = { contains: rawFilters.state, mode: "insensitive" };
+    if (rawFilters.city) filters.city = { contains: rawFilters.city, mode: "insensitive" };
 
   const searchTerm = (rawFilters.searchTerm as string)?.trim();
   const isSearchMode = !!searchTerm;
@@ -149,25 +144,12 @@ export const getAllBranches = catchAsync(async (req, res) => {
     sortType = "desc";
   }
 
-  const searchConditions = searchTerm
-      ? {
-        OR: [
-          { branchName: { contains: searchTerm, mode: "insensitive" } },
-        ],
-      }
-      : {};
+    const searchConditions = searchTerm
+        ? { OR: [{ branchName: { contains: searchTerm, mode: "insensitive" } }] }
+        : {};
 
-  const where = {
-    ...filters,
-    ...searchConditions,
-  };
-
-  const options = {
-    limit,
-    page,
-    sortBy,
-    sortType,
-  };
+    const where = { ...filters, ...searchConditions };
+    const options = { limit, page, sortBy, sortType };
 
   const result = await branchService.queryBranches(where, options);
 
@@ -177,8 +159,7 @@ export const getAllBranches = catchAsync(async (req, res) => {
         : "No branches found";
 
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
+      statusCode: httpStatus.OK,
       message,
       data: {
         branches: [],
@@ -194,118 +175,135 @@ export const getAllBranches = catchAsync(async (req, res) => {
     return;
   }
 
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Branches fetched successfully",
-    data: {
-      branches: result.data,
-      pagination: {
-        total: result.total,
-        page,
-        limit,
-        totalPages: Math.ceil(result.total / limit),
-        mode: isSearchMode ? "search" : "pagination",
-      },
-    },
-  });
-});
-
-const getBranchById = catchAsync(async (req, res) => {
-  const user = req.user as User;
-  const branch = await branchService.getBranchById(req.params.branchId);
-
-  if (!branch) {
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
-      message: "No Branch found",
+      statusCode: httpStatus.OK,
+      message: "Branches fetched successfully",
       data: {
-        branch: null,
-      },
-    });
-    return;
-  }
-
-  if (user.userRole !== UserRole.SUPERADMIN && branch.companyId !== user.companyId) {
-    throw new ApiError(httpStatus.FORBIDDEN, "Access to this branch is forbidden");
-  }
-
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Branch fetched successfully",
-    data: {
-      branch,
-    },
-  });
-});
-
-const updateBranch = catchAsync(async (req, res) => {
-  try {
-    const branch = await branchService.updateBranchById(
-      req.params.branchId,
-      req.body
-    );
-    res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: true,
-      message: "Branch updated successfully",
-      data: {
-        branch,
+        branches: result.data,
+        pagination: {
+          total: result.total,
+          page,
+          limit,
+          totalPages: Math.ceil(result.total / limit),
+          mode: isSearchMode ? "search" : "pagination",
+        },
       },
     });
   } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+      message: "Failed to fetch branches",
+      error: error.message,
+    });
   }
 });
 
-const deleteBranch = catchAsync(async (req, res) => {
+const getBranchById = catchAsync(async (req, res): Promise<void> => {
+  try {
+    const user = req.user as User;
+    const branch = await branchService.getBranchById(req.params.branchId);
+
+    if (!branch) {
+      res.status(httpStatus.OK).json({
+        statusCode: httpStatus.OK,
+        message: "No Branch found",
+        data: { branch: null },
+      });
+      return;
+    }
+
+    if (user.userRole !== UserRole.SUPERADMIN && branch.companyId !== user.companyId) {
+      res.status(httpStatus.FORBIDDEN).json({
+        statusCode: httpStatus.FORBIDDEN,
+        message: "Access to this branch is forbidden",
+        error: "Forbidden",
+      });
+      return;
+    }
+
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "Branch fetched successfully",
+      data: { branch },
+    });
+  } catch (error) {
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+      message: "Failed to fetch branch",
+      error: error.message,
+    });
+  }
+});
+
+const updateBranch = catchAsync(async (req, res): Promise<void> => {
+  try {
+    const branch = await branchService.updateBranchById(req.params.branchId, req.body);
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "Branch updated successfully",
+      data: { branch },
+    });
+  } catch (error) {
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
+      message: "Failed to update branch",
+      error: error.message,
+    });
+  }
+});
+
+const deleteBranch = catchAsync(async (req, res): Promise<void> => {
   try {
     await branchService.deleteBranchById(req.params.branchId);
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: true,
+      statusCode: httpStatus.OK,
       message: "Branch soft-deleted successfully",
       data: null,
     });
   } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
+      message: "Failed to delete branch",
+      error: error.message,
+    });
   }
 });
 
-const deleteBranches = catchAsync(async (req, res) => {
+const deleteBranches = catchAsync(async (req, res): Promise<void> => {
   try {
     await branchService.deleteBranchesByIds(req.body.branchIds);
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: true,
+      statusCode: httpStatus.OK,
       message: "Branches deleted successfully",
       data: null,
     });
   } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
+      message: "Failed to delete branches",
+      error: error.message,
+    });
   }
 });
 
-export const getBranchesByOrganizationId = catchAsync(async (req, res) => {
-  const user = req.user as User;
-  const { organizationId } = req.params;
+export const getBranchesByOrganizationId = catchAsync(async (req, res): Promise<void> => {
+  try {
+    const user = req.user as User;
+    const { organizationId } = req.params;
 
-  if (user.userRole !== UserRole.SUPERADMIN && organizationId !== user.companyId) {
-    throw new ApiError(httpStatus.FORBIDDEN, "Access to this organization's data is forbidden");
-  }
+    if (user.userRole !== UserRole.SUPERADMIN && organizationId !== user.companyId) {
+      res.status(httpStatus.FORBIDDEN).json({
+        statusCode: httpStatus.FORBIDDEN,
+        message: "Access to this organization's data is forbidden",
+        error: "Forbidden",
+      });
+      return;
+    }
 
-  const rawOptions = pick(req.query, [
-    "limit",
-    "page",
-    "sortBy",
-    "sortType",
-    "status",
-    "createdAtFrom",
-    "createdAtTo",
-    "searchTerm",
-  ]);
+    const rawOptions = pick(req.query, [
+      "limit", "page", "sortBy", "sortType", "status",
+      "createdAtFrom", "createdAtTo", "searchTerm",
+    ]);
 
   const options = {
     limit: rawOptions.searchTerm
@@ -326,43 +324,45 @@ export const getBranchesByOrganizationId = catchAsync(async (req, res) => {
     searchTerm: rawOptions.searchTerm as string,
   };
 
-  const result = await branchService.getBranchesByOrganizationId(
-      organizationId,
-      options
-  );
+    const result = await branchService.getBranchesByOrganizationId(organizationId, options);
 
-  if (!result || result.data.length === 0) {
+    if (!result || result.data.length === 0) {
+      res.status(httpStatus.OK).json({
+        statusCode: httpStatus.OK,
+        message: "No branch found for this organization",
+        data: {
+          branches: [],
+          pagination: {
+            total: result?.total || 0,
+            page: options.page,
+            limit: options.limit,
+            totalPages: Math.ceil((result?.total || 0) / options.limit),
+          },
+        },
+      });
+      return;
+    }
+
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
-      message: "No branch found for this organization",
+      statusCode: httpStatus.OK,
+      message: "Branches fetched successfully",
       data: {
-        branches: [],
+        branches: result.data,
         pagination: {
-          total: result?.total || 0,
+          total: result.total,
           page: options.page,
           limit: options.limit,
-          totalPages: Math.ceil((result?.total || 0) / options.limit),
+          totalPages: Math.ceil(result.total / options.limit),
         },
       },
     });
-    return;
+  } catch (error) {
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+      message: "Failed to fetch branches",
+      error: error.message,
+    });
   }
-
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Branches fetched successfully",
-    data: {
-      branches: result.data,
-      pagination: {
-        total: result.total,
-        page: options.page,
-        limit: options.limit,
-        totalPages: Math.ceil(result.total / options.limit),
-      },
-    },
-  });
 });
 
 const exportBranchesToExcel = catchAsync(async (req, res) => {

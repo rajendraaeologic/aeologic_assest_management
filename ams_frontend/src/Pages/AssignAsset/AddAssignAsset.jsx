@@ -88,7 +88,6 @@ const AddAssignAsset = ({ onClose }) => {
       const response = await API.get(
         `/assignAsset/${departmentId}/users?page=${page}&limit=5&searchTerm=${search}`
       );
-      console.log("users",response)
       const {
         data: {
           data: { users,pagination },
@@ -100,7 +99,6 @@ const AddAssignAsset = ({ onClose }) => {
       setUserPage(page);
       setHasMoreUsers(page < pagination.totalPages);
     } catch (error) {
-      console.error("Error fetching users", error);
     } finally {
       setLoadingUsers(false);
     }
@@ -140,7 +138,6 @@ const AddAssignAsset = ({ onClose }) => {
         setHasMoreAssets(page < data.data.pagination.totalPages);
       }
     } catch (error) {
-      console.error("Error fetching assets", error);
       toast.error("Failed to fetch assets");
     } finally {
       setLoadingAssets(false);
@@ -191,7 +188,6 @@ const AddAssignAsset = ({ onClose }) => {
       setBranchPage(page);
       setHasMoreBranches(page < pagination.totalPages);
     } catch (error) {
-      console.error("Error fetching branches", error);
     } finally {
       setLoadingBranches(false);
     }
@@ -205,7 +201,6 @@ const AddAssignAsset = ({ onClose }) => {
       const response = await API.get(
         `/department/${branchId}/departments?page=${page}&limit=5&searchTerm=${search}`
       );
-      console.log("depat",response)
       const {
         data: {
           data: { departments,pagination },
@@ -217,7 +212,6 @@ const AddAssignAsset = ({ onClose }) => {
       setDepartmentPage(page);
       setHasMoreDepts(page < pagination.totalPages);
     } catch (error) {
-      console.error("Error fetching departments", error);
     } finally {
       setLoadingDepartments(false);
     }

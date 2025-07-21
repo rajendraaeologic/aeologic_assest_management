@@ -394,8 +394,7 @@ const AddUserForm = ({ onClose }) => {
         return [];
     }
   };
-  console.log("Current user role:", currentUserRole);
-  console.log("Role options:", getRoleOptions());
+
 
   const onSubmit = async (data) => {
     try {
@@ -425,7 +424,7 @@ const AddUserForm = ({ onClose }) => {
         });
       }
 
-      if (errorMessage.includes("Email already taken")) {
+      if (errorMessage.includes("Email Id already taken")) {
         toast.error(userStrings.addUser.toast.emailTaken, { autoClose: 2000 });
         return setError("email", {
           type: "manual",
@@ -433,7 +432,7 @@ const AddUserForm = ({ onClose }) => {
         });
       }
 
-      if (errorMessage.includes("Phone already taken")) {
+      if (errorMessage.includes("Phone Number already taken")) {
         toast.error(userStrings.addUser.toast.phoneTaken, { autoClose: 2000 });
         return setError("phone", {
           type: "manual",

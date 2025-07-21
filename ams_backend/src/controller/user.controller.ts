@@ -5,7 +5,6 @@ import catchAsync from "@/lib/catchAsync";
 import { userService } from "@/services";
 import {User, UserRole} from "@prisma/client";
 import { encryptPassword } from "@/lib/encryption";
-import { applyDateFilter } from "@/utils/filters.utils";
 import xlsx from "xlsx";
 import { userValidation } from "@/validations";
 import { generateRandomPassword } from "@/utils/passwordGenerator";
@@ -35,7 +34,10 @@ export const createUser = catchAsync(async (req, res) => {
       data: { user }
     });
   } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+    res.status(httpStatus.BAD_REQUEST).send({
+      statusCode: httpStatus.BAD_REQUEST,
+      message: error.message || "Something went wrong",
+    });
   }
 });
 
@@ -201,7 +203,6 @@ export const getUsers = catchAsync(async (req, res) => {
       };
 
     } catch (error) {
-      console.error('Date filter error:', error);
       throw new ApiError(httpStatus.BAD_REQUEST, "Invalid selectedDate format");
     }
   }
@@ -325,7 +326,7 @@ export const getUsers = catchAsync(async (req, res) => {
     sortType,
   };
 
-  const result = await userService.queryUsers(where, options, user.id); // Pass the user IDconsole.log(result)
+  const result = await userService.queryUsers(where, options, user.id);
   if (!result || result.data.length === 0) {
     const message = (rawFilters.selectedDate || (rawFilters.from_date && rawFilters.to_date))
         ? "No users found for the selected date range"
@@ -370,7 +371,8 @@ export const getUsers = catchAsync(async (req, res) => {
 });
 
 const getUser = catchAsync(async (req, res) => {
-  const user = await userService.getUserById(req.params.userId);
+  try {
+    const user = await userService.getUserById(req.params.userId);
 
   if (!user) {
     res.status(httpStatus.NOT_FOUND).json({
@@ -381,11 +383,18 @@ const getUser = catchAsync(async (req, res) => {
     return;
   }
 
-  res.status(httpStatus.OK).json({
-    statusCode: httpStatus.OK,
-    message: "User fetched successfully",
-    data: { user }
-  });
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "User fetched successfully",
+      data: { user }
+    });
+  } catch (error) {
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode:httpStatus.INTERNAL_SERVER_ERROR,
+      message: error.message || "Failed to fetch user",
+      data: null
+    });
+  }
 });
 
 type UserWithRelations = Omit<User, "password"> & {
@@ -395,8 +404,9 @@ type UserWithRelations = Omit<User, "password"> & {
 };
 
 const updateUser = catchAsync(async (req, res) => {
-  const userId = req.params.userId;
-  const updateData = req.body;
+  try {
+    const userId = req.params.userId;
+    const updateData = req.body;
 
   const currentUser = await userService.getUserById(userId) as UserWithRelations;
   if (!currentUser) {
@@ -425,12 +435,19 @@ const updateUser = catchAsync(async (req, res) => {
     return;
   }
 
-  const user = await userService.updateUserById(userId, updateData);
-  res.status(httpStatus.OK).json({
-    statusCode: httpStatus.OK,
-    message: "User updated successfully",
-    data: { user }
-  });
+    const user = await userService.updateUserById(userId, updateData);
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "User updated successfully",
+      data: { user }
+    });
+  } catch (error) {
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode:httpStatus.INTERNAL_SERVER_ERROR,
+      message: error.message || "Failed to update user",
+      data: null
+    });
+  }
 });
 
 const deleteUser = catchAsync(async (req, res) => {
@@ -442,7 +459,11 @@ const deleteUser = catchAsync(async (req, res) => {
       data: null
     });
   } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode:httpStatus.INTERNAL_SERVER_ERROR,
+      message: error.message || "Failed to delete user",
+      data: null
+    });
   }
 });
 
@@ -457,7 +478,11 @@ const deleteUsers = catchAsync(async (req, res) => {
       }
     });
   } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode:httpStatus.INTERNAL_SERVER_ERROR,
+      message: error.message || "Failed to delete users",
+      data: null
+    });
   }
 });
 

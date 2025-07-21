@@ -33,15 +33,16 @@ const createAsset = catchAsync(async (req, res) => {
     });
 
     res.status(httpStatus.CREATED).json({
-      status: httpStatus.CREATED,
-      success: true,
+      statusCode: httpStatus.CREATED,
       message: "Asset Created Successfully",
-      data: {
-        asset,
-      },
+      data: { asset },
     });
   } catch (error) {
-    throw new ApiError(httpStatus.BAD_REQUEST, error.message);
+    res.status(httpStatus.BAD_REQUEST).json({
+      statusCode: httpStatus.BAD_REQUEST,
+      message: "Failed to create asset",
+      error: error.message,
+    });
   }
 });
 
@@ -169,8 +170,7 @@ export const getAllAssets = catchAsync(async (req, res) => {
         : "No assets found";
 
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
+      statusCode: httpStatus.OK,
       message,
       data: {
         assets: [],
@@ -187,8 +187,7 @@ export const getAllAssets = catchAsync(async (req, res) => {
   }
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Assets fetched successfully",
     data: {
       assets: result.data,
@@ -211,8 +210,7 @@ const getAssetById = catchAsync(async (req, res) => {
 
   if (!asset) {
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
+      statusCode: httpStatus.OK,
       message: "Asset not found",
       data: {
         asset: null,
@@ -222,8 +220,7 @@ const getAssetById = catchAsync(async (req, res) => {
   }
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Asset fetched successfully",
     data: {
       asset,
@@ -232,66 +229,90 @@ const getAssetById = catchAsync(async (req, res) => {
 });
 
 const updateAsset = catchAsync(async (req, res) => {
-  const assetId = req.params.assetId;
-  const updateBody = req.body;
+  try {
+    const assetId = req.params.assetId;
+    const updateBody = req.body;
 
   const updatedAsset = await assetService.updateAssetById(assetId, updateBody);
 
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Asset updated successfully",
-    data: {
-      asset: updatedAsset,
-    },
-  });
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "Asset updated successfully",
+      data: { asset: updatedAsset },
+    });
+  } catch (error) {
+    res.status(httpStatus.BAD_REQUEST).json({
+      statusCode: httpStatus.BAD_REQUEST,
+      success: false,
+      message: "Failed to update asset",
+      error: error.message,
+    });
+  }
 });
 
 const deleteAsset = catchAsync(async (req, res) => {
-  await assetService.deleteAssetById(req.params.assetId);
+  try {
+    await assetService.deleteAssetById(req.params.assetId);
 
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Asset deleted successfully",
-    data: null,
-  });
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "Asset deleted successfully",
+      data: null,
+    });
+  } catch (error) {
+    res.status(httpStatus.BAD_REQUEST).json({
+      statusCode: httpStatus.BAD_REQUEST,
+      message: "Failed to delete asset",
+      error: error.message,
+    });
+  }
 });
 
 const bulkDeleteAssets = catchAsync(async (req, res) => {
-  await assetService.deleteAssetsByIds(req.body.assetIds);
-  res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message: "Assets deleted successfully",
-    data: null,
-  });
+  try {
+    await assetService.deleteAssetsByIds(req.body.assetIds);
+
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "Assets deleted successfully",
+      data: null,
+    });
+  } catch (error) {
+    res.status(httpStatus.BAD_REQUEST).json({
+      statusCode: httpStatus.BAD_REQUEST,
+      message: "Failed to delete assets",
+      error: error.message,
+    });
+  }
 });
 
 const assignAsset = catchAsync(async (req, res) => {
-  // Create assignment record
-  const assignment = await prisma.assetAssignment.create({
-    data: {
-      assetId: req.params.assetId,
-      userId: req.body.assignedToUserId,
-    },
-    select: AssetAssignmentKeys,
-  });
+  try {
+    const assignment = await prisma.assetAssignment.create({
+      data: {
+        assetId: req.params.assetId,
+        userId: req.body.assignedToUserId,
+      },
+      select: AssetAssignmentKeys,
+    });
 
-  // Update asset's assigned user
-  await prisma.asset.update({
-    where: { id: req.params.assetId },
-    data: { assignedToUserId: req.body.assignedToUserId },
-  });
+    await prisma.asset.update({
+      where: { id: req.params.assetId },
+      data: { assignedToUserId: req.body.assignedToUserId },
+    });
 
-  res.status(httpStatus.CREATED).json({
-    status: httpStatus.CREATED,
-    success: true,
-    message: "Asset assigned successfully",
-    data: {
-      assignment,
-    },
-  });
+    res.status(httpStatus.CREATED).json({
+      statusCode: httpStatus.CREATED,
+      message: "Asset assigned successfully",
+      data: { assignment },
+    });
+  } catch (error) {
+    res.status(httpStatus.BAD_REQUEST).json({
+      statusCode: httpStatus.BAD_REQUEST,
+      message: "Failed to assign asset",
+      error: error.message,
+    });
+  }
 });
 
 const getAssetAssignments = catchAsync(async (req, res) => {
@@ -304,10 +325,8 @@ const getAssetAssignments = catchAsync(async (req, res) => {
   });
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message:
-      assignments.length > 0
+    statusCode: httpStatus.OK,
+    message: assignments.length > 0
         ? "Asset assignments fetched successfully"
         : "No assignments found",
     data: {
@@ -327,10 +346,8 @@ const getAssetHistory = catchAsync(async (req, res) => {
   });
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
-    message:
-      history.length > 0
+    statusCode: httpStatus.OK,
+    message: history.length > 0
         ? "Asset history fetched successfully"
         : "No history found",
     data: {
@@ -341,6 +358,7 @@ const getAssetHistory = catchAsync(async (req, res) => {
 });
 
 const exportAssetsToExcel = catchAsync(async (req, res) => {
+  try {
   const user = req.user as User;
   const filters = {
     assetName: req.query.assetName as string,
@@ -359,6 +377,13 @@ const exportAssetsToExcel = catchAsync(async (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
   res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   res.status(httpStatus.OK).send(buffer);
+} catch (error) {
+  res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+    statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+    message: "Failed to export assets",
+    error: error.message,
+  });
+}
 });
 
 /**

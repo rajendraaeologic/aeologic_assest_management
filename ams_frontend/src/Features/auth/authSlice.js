@@ -8,7 +8,6 @@ export const loginUser = createAsyncThunk(
     async (credentials, { rejectWithValue, dispatch }) => {
       try {
         const response = await API.post("/auth/login", credentials);
-        console.log(response);
 
         if (!response.data?.data?.tokens?.access) {
           return rejectWithValue("Invalid login response");
@@ -56,7 +55,6 @@ export const refreshToken = createAsyncThunk(
   "auth/refresh-tokens",
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      console.log("ssdfsdfds")
       const response = await API.get("/refresh-tokens");
       dispatch(setCredentials(response.data));
       return response.data.accessToken;

@@ -34,11 +34,11 @@ const createUser = async (
 
 
   if (await getUserByEmail(user.email)) {
-    throw new ApiError(httpStatus.CONFLICT, "Email already taken");
+    throw new ApiError(httpStatus.CONFLICT, "Email Id already taken");
   }
 
   if (await getUserByPhone(user.phone)) {
-    throw new ApiError(httpStatus.CONFLICT, "Phone already taken");
+    throw new ApiError(httpStatus.CONFLICT, "Phone Number already taken");
   }
 
   const { companyId, branchId, departmentId, plainPassword, ...rest } = user;

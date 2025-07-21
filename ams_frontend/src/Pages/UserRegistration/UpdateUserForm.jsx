@@ -416,8 +416,7 @@ const UpdateUserForm = ({ onClose }) => {
         return [];
     }
   };
-  console.log("Current user role:", currentUserRole);
-  console.log("Role options:", getRoleOptions());
+
 
   const onSubmit = async (data) => {
     if (!selectedOrg) {

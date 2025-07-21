@@ -20,7 +20,6 @@ const UserDashboard = () => {
     const fetchData = async () => {
       try {
         const response = await API.get("/userDashboard/");
-        console.log(response);
 
         if (response.data?.success) {
           setData(response.data.data.assignments);

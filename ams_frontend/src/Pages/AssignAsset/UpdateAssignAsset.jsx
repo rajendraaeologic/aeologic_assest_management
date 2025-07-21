@@ -96,7 +96,6 @@ const UpdateAssignAsset = ({ onClose }) => {
       setBranchPage(page);
       setHasMoreBranches(page < pagination.totalPages);
     } catch (error) {
-      console.error("Error fetching branches", error);
     } finally {
       setLoadingBranches(false);
     }
@@ -109,7 +108,6 @@ const UpdateAssignAsset = ({ onClose }) => {
       const response = await API.get(
         `/department/${branchId}/departments?page=${page}&limit=5&searchTerm=${search}`
       );
-      console.log("depat",response)
       const {
         data: {
           data: { departments,pagination },
@@ -121,7 +119,6 @@ const UpdateAssignAsset = ({ onClose }) => {
       setDepartmentPage(page);
       setHasMoreDepts(page < pagination.totalPages);
     } catch (error) {
-      console.error("Error fetching departments", error);
     } finally {
       setLoadingDepartments(false);
     }
@@ -134,7 +131,6 @@ const UpdateAssignAsset = ({ onClose }) => {
       const response = await API.get(
         `/assignAsset/${departmentId}/users?page=${page}&limit=5&searchTerm=${search}`
       );
-      console.log("users",response)
       const {
         data: {
           data: { users,pagination },
@@ -146,7 +142,6 @@ const UpdateAssignAsset = ({ onClose }) => {
       setUserPage(page);
       setHasMoreUsers(page < pagination.totalPages);
     } catch (error) {
-      console.error("Error fetching users", error);
     } finally {
       setLoadingUsers(false);
     }
@@ -174,7 +169,6 @@ const UpdateAssignAsset = ({ onClose }) => {
         setHasMoreAssets(page < data.data.pagination.totalPages);
       }
     } catch (error) {
-      console.error("Error fetching assets", error);
       toast.error("Failed to fetch assets");
     } finally {
       setLoadingAssets(false);
@@ -479,7 +473,6 @@ const UpdateAssignAsset = ({ onClose }) => {
         },
       };
 
-      console.log("Updating assignment with payload:", payload);
       await dispatch(updateAssignAsset(payload)).unwrap();
       await dispatch(
         getAllAssignAssets({
@@ -495,7 +488,6 @@ const UpdateAssignAsset = ({ onClose }) => {
 
       handleClose();
     } catch (error) {
-      console.error("Error updating assignment:", error);
 
       if (error?.message) {
         if (

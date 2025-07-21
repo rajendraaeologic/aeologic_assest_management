@@ -20,7 +20,6 @@ export const getAllAssignAssetsService = async ({
       status,
     },
   });
-  console.log(response);
   return response;
 
 };

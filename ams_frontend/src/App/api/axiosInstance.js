@@ -33,7 +33,6 @@ API.interceptors.response.use(
 
         const originalRequest = error.config;
 
-        // Don't attempt token refresh for auth endpoints
         const authEndpoints = ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/reset-password'];
         const isAuthEndpoint = authEndpoints.some(endpoint => originalRequest.url.includes(endpoint));
 
@@ -48,7 +47,6 @@ API.interceptors.response.use(
           "https://us-central1-asset-management-83e3b.cloudfunctions.net/ams_api/api/v1/auth/refresh-tokens",
           { withCredentials: true }
         );
-                console.log(refreshResponse);
 
                 if (!refreshResponse.data?.access?.token) {
                     throw new Error("No new access token received");
@@ -81,7 +79,6 @@ API.interceptors.response.use(
 
         // Handle 403 errors (forbidden) - but not for auth endpoints
         if (error.response?.status === 403 && !isAuthEndpoint) {
-            console.warn("Access forbidden. Logging out.");
             storeInstance.dispatch(logOut());
         }
 

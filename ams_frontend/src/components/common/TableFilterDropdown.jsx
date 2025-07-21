@@ -66,7 +66,6 @@ const TableFilterDropdown = ({
             setHasMore(pageNum < (pagination?.totalPages || 0));
         } catch (error) {
             toast.error(`Error fetching ${filterType}`);
-            console.error('Error fetching options:', error);
         } finally {
             setLoading(false);
         }
@@ -121,7 +120,6 @@ const TableFilterDropdown = ({
         } else if (filterType === 'department') {
             keyName = 'departmentName';
         }
-        console.log('Selected item:', item, 'Display value:', displayValue);
         const newFilters = { ...filters, [keyName]: displayValue };
         if (filterType === 'organization') {
             newFilters.branchName = null;

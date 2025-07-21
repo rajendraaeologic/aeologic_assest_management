@@ -19,7 +19,11 @@ const createOrganization = catchAsync(async (req, res) => {
       data: { organization },
     });
   } catch (error) {
-    throw new ApiError(httpStatus.CONFLICT, error.message);
+    res.status(httpStatus.CONFLICT).json({
+      statusCode: httpStatus.CONFLICT,
+      message: "Organization creation failed",
+      error: error?.message || "Internal server error",
+    });
   }
 });
 
@@ -148,71 +152,84 @@ export const getAllOrganizations = catchAsync(async (req, res) => {
 });
 
 const getOrganizationById = catchAsync(async (req, res) => {
-  const result = await organizationService.getOrganizationById(
-    req.params.organizationId
-  );
+  try {
+    const result = await organizationService.getOrganizationById(req.params.organizationId);
 
-  if (!result) {
-    res.status(httpStatus.NOT_FOUND).json({
-      statusCode: httpStatus.NOT_FOUND,
-      message: "No organization found",
-      data: [],
-    });
-    return;
-  }
-  res.status(httpStatus.OK).json({
-    statusCode: httpStatus.OK,
-    message: "Organization fetched successfully",
-    data:{
-      result
+    if (!result) {
+      res.status(httpStatus.NOT_FOUND).json({
+        statusCode: httpStatus.NOT_FOUND,
+        message: "No organization found",
+        data: [],
+      });
     }
-  });
+
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
+      message: "Organization fetched successfully",
+      data: { result },
+    });
+  } catch (error) {
+    res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode: httpStatus.INTERNAL_SERVER_ERROR,
+      message: "Failed to get organization",
+      error: error?.message || "Internal server error",
+    });
+  }
 });
 
 const updateOrganization = catchAsync(async (req, res) => {
-  try {
-    const result = await organizationService.updateOrganizationById(
-      req.params.organizationId,
-      req.body
-    );
-    res.status(httpStatus.OK).json({
-      statusCode: httpStatus.OK,
-      message: "Organization updated successfully",
-      data:{
-        result
-      }
-    });
-  } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
-  }
+    try {
+        const result = await organizationService.updateOrganizationById(
+            req.params.organizationId,
+            req.body
+        );
+        res.status(httpStatus.OK).json({
+            statusCode: httpStatus.OK,
+            message: "Organization updated successfully",
+            data: { result },
+        });
+    } catch (error) {
+        res.status(httpStatus.NOT_FOUND).json({
+            statusCode: httpStatus.NOT_FOUND,
+            message: "Failed to update organization",
+            error: error?.message || "Internal server error",
+        });
+    }
 });
 
 const deleteOrganization = catchAsync(async (req, res) => {
-  try {
-    await organizationService.deleteOrganizationById(req.params.organizationId);
-    res.status(httpStatus.OK).json({
-      statusCode: httpStatus.OK,
-      message: "Organization deleted successfully",
-      data: null,
-    });
-  } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
-  }
+    try {
+        await organizationService.deleteOrganizationById(req.params.organizationId);
+        res.status(httpStatus.OK).json({
+            statusCode: httpStatus.OK,
+            message: "Organization deleted successfully",
+            data: null,
+        });
+    } catch (error) {
+        res.status(httpStatus.NOT_FOUND).json({
+            statusCode: httpStatus.NOT_FOUND,
+            message: "Failed to delete organization",
+            error: error?.message || "Internal server error",
+        });
+    }
 });
 
 const bulkDeleteOrganizations = catchAsync(async (req, res) => {
-  try {
-    await organizationService.deleteOrganizationsByIds(
-      req.body.organizationIds
-    );
-    res.status(httpStatus.OK).json({
-      statusCode: httpStatus.OK,
-      message: "Organizations soft-deleted successfully",
-      data: null
-    });
-  } catch (error) {
-    throw new ApiError(httpStatus.NOT_FOUND, error.message);
-  }
+    try {
+        await organizationService.deleteOrganizationsByIds(req.body.organizationIds);
+
+        res.status(httpStatus.OK).json({
+            statusCode: httpStatus.OK,
+            message: "Organizations soft-deleted successfully",
+            data: null,
+        });
+    } catch (error) {
+        res.status(httpStatus.NOT_FOUND).json({
+            statusCode: httpStatus.NOT_FOUND,
+            message: "Failed to delete organizations",
+            error: error?.message || "Internal server error",
+        });
+    }
 });
 
 const exportOrganizationsToExcel = catchAsync(async (req, res) => {

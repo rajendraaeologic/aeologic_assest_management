@@ -105,7 +105,6 @@ const Dashboard = () => {
           assets,
           outForDelivery,
         } = res.data.data.counts;
-console.log(res)
         const data = [
           {
             name: dashboardStrings.dashboard.stats.users,
@@ -150,7 +149,6 @@ console.log(res)
         setChartData(data);
       }
     } catch (error) {
-      console.error("Dashboard API Error:", error);
     } finally {
       setLoading(false);
     }

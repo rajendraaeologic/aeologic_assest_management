@@ -54,8 +54,8 @@ const createDepartment = catchAsync(async (req, res) => {
   } catch (error) {
     res.status(httpStatus.CONFLICT).json({
       statusCode: httpStatus.CONFLICT,
-      message: "Failed to create department",
-      error: error.message,
+      message: error.message,
+      error: "Failed to create department",
     });
   }
 });
@@ -166,7 +166,7 @@ export const getAllDepartments = catchAsync(async (req, res) => {
 
   if (!result || result.data.length === 0) {
     res.status(httpStatus.OK).json({
-      statusCode: httpStatus.NOT_FOUND,
+      statusCode: httpStatus.OK,
       message: (rawFilters.selectedDate || (rawFilters.from_date && rawFilters.to_date))
           ? "No departments found for the selected date range"
           : "No departments found",
@@ -205,8 +205,8 @@ const getDepartmentById = catchAsync(async (req, res) => {
   const department = await departmentService.getDepartmentById(req.params.departmentId);
 
   if (!department) {
-    res.status(httpStatus.NOT_FOUND).json({
-      statusCode: httpStatus.NOT_FOUND,
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
       message: "No Department found",
       data: { department: null },
     });
@@ -238,8 +238,8 @@ const updateDepartment = catchAsync(async (req, res) => {
   } catch (error) {
     res.status(httpStatus.NOT_FOUND).json({
       statusCode: httpStatus.NOT_FOUND,
-      message: "Failed to update department",
-      error: error.message,
+      message: error.message,
+      error: "Failed to update department",
     });
   }
 });
@@ -255,8 +255,8 @@ const deleteDepartment = catchAsync(async (req, res) => {
   } catch (error) {
     res.status(httpStatus.NOT_FOUND).json({
       statusCode: httpStatus.NOT_FOUND,
-      message: "Failed to delete department",
-      error: error.message,
+      message: error.message,
+      error:  "Failed to delete department",
     });
   }
 });
@@ -272,8 +272,8 @@ const deleteDepartments = catchAsync(async (req, res) => {
   } catch (error) {
     res.status(httpStatus.NOT_FOUND).json({
       statusCode: httpStatus.NOT_FOUND,
-      message: "Failed to delete departments",
-      error: error.message,
+      message:  error.message,
+      error: "Failed to delete departments",
     });
   }
 });
@@ -310,8 +310,8 @@ export const getDepartmentsByBranchId = catchAsync(async (req, res) => {
   const result = await departmentService.getDepartmentsByBranchId(branchId, options);
 
   if (!result || result.data.length === 0) {
-    res.status(httpStatus.NOT_FOUND).json({
-      statusCode: httpStatus.NOT_FOUND,
+    res.status(httpStatus.OK).json({
+      statusCode: httpStatus.OK,
       message: "No departments found for this branch",
       data: {
         departments: [],

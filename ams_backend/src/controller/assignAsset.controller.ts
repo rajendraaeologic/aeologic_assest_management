@@ -12,6 +12,16 @@ const prisma = new PrismaClient();
 const assignAsset = catchAsync(async (req, res) => {
   const { assetId, userId } = req.body;
 
+  const result = await assignAssetService.assignAsset(assetId, userId);
+
+  res.status(httpStatus.CREATED).json({
+    statusCode: httpStatus.CREATED,
+    message: "Asset assigned successfully",
+    data: {
+      assignment: result,
+    },
+  });
+
   const isAssetAvailable = await db.asset.findFirst({
     where: {
       id: assetId,
@@ -31,16 +41,6 @@ const assignAsset = catchAsync(async (req, res) => {
       "Asset is no longer available for assignment"
     );
   }
-
-  const result = await assignAssetService.assignAsset(assetId, userId);
-
-  res.status(httpStatus.CREATED).json({
-    statusCode: httpStatus.CREATED,
-    message: "Asset assigned successfully",
-    data: {
-      assignment: result,
-    },
-  });
 });
 
 const unassignAsset = catchAsync(async (req, res) => {
@@ -49,8 +49,7 @@ const unassignAsset = catchAsync(async (req, res) => {
   const result = await assignAssetService.unassignAsset(assignmentId);
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Asset unassigned successfully",
     data: {
       assignment: result,
@@ -189,8 +188,7 @@ export const getAssetAssignments = catchAsync(async (req, res) => {
         : "No asset assignments found";
 
     res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
+      statusCode: httpStatus.OK,
       message,
       data: {
         assignments: [],
@@ -207,8 +205,7 @@ export const getAssetAssignments = catchAsync(async (req, res) => {
   }
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Asset assignments fetched successfully",
     data: {
       assignments: result.data,
@@ -230,9 +227,8 @@ const getAvailableAssets = catchAsync(async (req, res) => {
   );
 
   if (assets.length === 0) {
-    res.status(httpStatus.OK).json({
-      status: 404,
-      success: false,
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
       message: "No available assets found",
       data: [],
     });
@@ -240,8 +236,7 @@ const getAvailableAssets = catchAsync(async (req, res) => {
   }
 
   res.status(httpStatus.OK).json({
-    status: 200,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Available assets fetched successfully",
     data: assets,
   });
@@ -254,8 +249,7 @@ const getUsersForAssignment = catchAsync(async (req, res) => {
   );
 
   res.status(httpStatus.OK).json({
-    status: 200,
-    success: true,
+    statusCode:httpStatus.OK,
     message: users.length ? "Users fetched successfully" : "No users found",
     data: users,
   });
@@ -300,9 +294,8 @@ export const getAssetsByDepartmentId = catchAsync(async (req, res) => {
   );
 
   if (!result || result.data.length === 0) {
-    res.status(httpStatus.OK).json({
-      status: httpStatus.OK,
-      success: false,
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
       message: "No assets found for this department",
       data: {
         assets: [],
@@ -318,8 +311,7 @@ export const getAssetsByDepartmentId = catchAsync(async (req, res) => {
   }
 
   res.status(httpStatus.OK).json({
-    status: httpStatus.OK,
-    success: true,
+    statusCode: httpStatus.OK,
     message: "Assets fetched successfully",
     data: {
       assets: result.data,
@@ -372,8 +364,8 @@ export const getUsersByDepartmentId = catchAsync(async (req, res) => {
   );
 
   if (!result || result.data.length === 0) {
-    res.status(httpStatus.OK).json({
-      statusCode: httpStatus.OK,
+    res.status(httpStatus.NOT_FOUND).json({
+      statusCode: httpStatus.NOT_FOUND,
       message: "No users found for this department",
       data: {
         users: [],

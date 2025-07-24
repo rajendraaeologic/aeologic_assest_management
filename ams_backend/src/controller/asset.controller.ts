@@ -40,8 +40,8 @@ const createAsset = catchAsync(async (req, res) => {
   } catch (error) {
     res.status(httpStatus.BAD_REQUEST).json({
       statusCode: httpStatus.BAD_REQUEST,
-      message: "Failed to create asset",
-      error: error.message,
+      message: error.message,
+      error: "Failed to create asset",
     });
   }
 });
@@ -243,9 +243,8 @@ const updateAsset = catchAsync(async (req, res) => {
   } catch (error) {
     res.status(httpStatus.BAD_REQUEST).json({
       statusCode: httpStatus.BAD_REQUEST,
-      success: false,
-      message: "Failed to update asset",
-      error: error.message,
+      message: error.message,
+      error: "Failed to update asset",
     });
   }
 });
@@ -262,8 +261,8 @@ const deleteAsset = catchAsync(async (req, res) => {
   } catch (error) {
     res.status(httpStatus.BAD_REQUEST).json({
       statusCode: httpStatus.BAD_REQUEST,
-      message: "Failed to delete asset",
-      error: error.message,
+      message: error.message,
+      error: "Failed to delete asset",
     });
   }
 });
@@ -280,8 +279,8 @@ const bulkDeleteAssets = catchAsync(async (req, res) => {
   } catch (error) {
     res.status(httpStatus.BAD_REQUEST).json({
       statusCode: httpStatus.BAD_REQUEST,
-      message: "Failed to delete assets",
-      error: error.message,
+      message: error.message,
+      error: "Failed to delete assets",
     });
   }
 });
@@ -309,8 +308,8 @@ const assignAsset = catchAsync(async (req, res) => {
   } catch (error) {
     res.status(httpStatus.BAD_REQUEST).json({
       statusCode: httpStatus.BAD_REQUEST,
-      message: "Failed to assign asset",
-      error: error.message,
+      message:error.message,
+      error:"Failed to assign asset",
     });
   }
 });

@@ -21,6 +21,7 @@ const createUser = async (
   const deletedUser = await db.user.findFirst({
     where: {
       email: user.email,
+      phone: user.phone,
       deleted: true
     }
   });

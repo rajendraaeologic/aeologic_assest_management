@@ -178,8 +178,8 @@ const getAssetHistoryById = catchAsync(async (req, res) => {
 } catch (error) {
   res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
     statusCode: httpStatus.INTERNAL_SERVER_ERROR,
-    message: "Failed to fetch asset history",
-    error: error.message,
+    message: error.message,
+    error: "Failed to fetch asset history",
   });
 }
 });

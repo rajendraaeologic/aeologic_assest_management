@@ -192,8 +192,8 @@ export const getAllBranches = catchAsync(async (req, res): Promise<void> => {
   } catch (error) {
     res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: httpStatus.INTERNAL_SERVER_ERROR,
-      message: "Failed to fetch branches",
-      error: error.message,
+      message: error.message,
+      error: "Failed to fetch branches",
     });
   }
 });
@@ -229,8 +229,8 @@ const getBranchById = catchAsync(async (req, res): Promise<void> => {
   } catch (error) {
     res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: httpStatus.INTERNAL_SERVER_ERROR,
-      message: "Failed to fetch branch",
-      error: error.message,
+      message:  error.message,
+      error: "Failed to fetch branch",
     });
   }
 });
@@ -246,8 +246,8 @@ const updateBranch = catchAsync(async (req, res): Promise<void> => {
   } catch (error) {
     res.status(httpStatus.NOT_FOUND).json({
       statusCode: httpStatus.NOT_FOUND,
-      message: "Failed to update branch",
-      error: error.message,
+      message: error.message,
+      error: "Failed to update branch",
     });
   }
 });
@@ -263,8 +263,8 @@ const deleteBranch = catchAsync(async (req, res): Promise<void> => {
   } catch (error) {
     res.status(httpStatus.NOT_FOUND).json({
       statusCode: httpStatus.NOT_FOUND,
-      message: "Failed to delete branch",
-      error: error.message,
+      message: error.message,
+      error: "Failed to delete branch",
     });
   }
 });
@@ -280,8 +280,8 @@ const deleteBranches = catchAsync(async (req, res): Promise<void> => {
   } catch (error) {
     res.status(httpStatus.NOT_FOUND).json({
       statusCode: httpStatus.NOT_FOUND,
-      message: "Failed to delete branches",
-      error: error.message,
+      message: error.message,
+      error: "Failed to delete branches",
     });
   }
 });
@@ -359,8 +359,8 @@ export const getBranchesByOrganizationId = catchAsync(async (req, res): Promise<
   } catch (error) {
     res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: httpStatus.INTERNAL_SERVER_ERROR,
-      message: "Failed to fetch branches",
-      error: error.message,
+      message: error.message,
+      error:"Failed to fetch branches",
     });
   }
 });

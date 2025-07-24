@@ -21,8 +21,8 @@ const createOrganization = catchAsync(async (req, res) => {
   } catch (error) {
     res.status(httpStatus.CONFLICT).json({
       statusCode: httpStatus.CONFLICT,
-      message: "Organization creation failed",
-      error: error?.message || "Internal server error",
+      message:error.message,
+      error:"Organization creation failed",
     });
   }
 });
@@ -171,8 +171,8 @@ const getOrganizationById = catchAsync(async (req, res) => {
   } catch (error) {
     res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: httpStatus.INTERNAL_SERVER_ERROR,
-      message: "Failed to get organization",
-      error: error?.message || "Internal server error",
+      message: error.message,
+      error: "Failed to get organization",
     });
   }
 });
@@ -191,8 +191,8 @@ const updateOrganization = catchAsync(async (req, res) => {
     } catch (error) {
         res.status(httpStatus.NOT_FOUND).json({
             statusCode: httpStatus.NOT_FOUND,
-            message: "Failed to update organization",
-            error: error?.message || "Internal server error",
+            message: error.message,
+            error: "Failed to update organization",
         });
     }
 });
@@ -208,8 +208,8 @@ const deleteOrganization = catchAsync(async (req, res) => {
     } catch (error) {
         res.status(httpStatus.NOT_FOUND).json({
             statusCode: httpStatus.NOT_FOUND,
-            message: "Failed to delete organization",
-            error: error?.message || "Internal server error",
+            message: error.message,
+            error:"Failed to delete organization",
         });
     }
 });
@@ -226,8 +226,8 @@ const bulkDeleteOrganizations = catchAsync(async (req, res) => {
     } catch (error) {
         res.status(httpStatus.NOT_FOUND).json({
             statusCode: httpStatus.NOT_FOUND,
-            message: "Failed to delete organizations",
-            error: error?.message || "Internal server error",
+            message: error.message ,
+            error: "Failed to delete organizations",
         });
     }
 });
